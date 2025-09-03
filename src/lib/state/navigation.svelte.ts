@@ -6,6 +6,7 @@ import debounce from 'debounce';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
+import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
 import { page } from '$app/state';
@@ -31,6 +32,7 @@ export interface NavigationConfig {
   enableBrandLogo: boolean;
   homeRouteReplaceState: boolean;
   searchDebounceMs: number;
+  preloadDebounceMs: number;
   notificationRefreshIntervalMs: number;
 }
 
@@ -142,6 +144,7 @@ export class NavigationStateClass implements NavigationState {
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
   private pageStore: typeof page | null = null;
+  private preloadTimeout: number | null = null;
   private currentSearchTimestamp: number = 0;
   private searchInputRef: HTMLInputElement | null = null;
   private pendingValueUpdate: string | null = null;
@@ -180,6 +183,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 250, // Further reduced for better responsiveness
+    preloadDebounceMs: 125,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -631,12 +635,29 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
+    // Clear any existing preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
+    }
+
     // Capture the search value and timestamp at the time of creating the debounced function
     const capturedSearchValue = searchValue;
     const capturedTimestamp = searchTimestamp;
 
-    // Note: Removed search preloading to eliminate CSS preload warnings
-    // Search results will be loaded on-demand when user actually navigates
+    // Set up preloading at half the debounce time if search value is valid for navigation
+    if (capturedSearchValue.length >= 2) {
+      this.preloadTimeout = window.setTimeout(() => {
+        // Only preload if the search value hasn't changed and timestamp is still current
+        if (
+          this.searchQuery.trim() === capturedSearchValue &&
+          this.currentSearchTimestamp === capturedTimestamp
+        ) {
+          const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
+          preloadData(searchUrl);
+        }
+      }, this.config.preloadDebounceMs);
+    }
 
     // Always use debounced search for all cases (including empty)
     this.currentDebouncedSearch = debounce(() => {
@@ -821,6 +842,12 @@ export class NavigationStateClass implements NavigationState {
     if (this.searchAbortController) {
       this.searchAbortController.abort();
       this.searchAbortController = null;
+    }
+
+    // Clear preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
     }
 
     // Reset all state

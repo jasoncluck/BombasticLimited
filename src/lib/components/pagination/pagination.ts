@@ -1,4 +1,4 @@
-import { goto } from '$app/navigation';
+import { goto, preloadData } from '$app/navigation';
 
 export const PAGINATION_QUERY_KEY = 'page';
 
@@ -63,5 +63,21 @@ export function generatePaginationUrl({
   return newUrl.toString();
 }
 
-// Note: Removed preloadPaginationPage function to eliminate CSS preload warnings
-// Pages will be loaded on-demand when user actually navigates
+export async function preloadPaginationPage({
+  url,
+  pageNum,
+}: {
+  url: URL;
+  pageNum: number;
+}): Promise<void> {
+  try {
+    const paginationUrl = generatePaginationUrl({
+      url,
+      pageNum,
+    });
+    await preloadData(paginationUrl);
+  } catch (error) {
+    // Silently fail if preloading doesn't work
+    console.debug('Pagination preload failed:', error);
+  }
+}

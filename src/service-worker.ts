@@ -396,20 +396,25 @@ const addToQueue = (request: Request): Promise<Response> => {
   const now = Date.now();
 
   // Auto-cleanup if queue is getting too large (performance protection)
-  const totalQueueSize = state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+  const totalQueueSize =
+    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
   if (totalQueueSize > 50) {
-    console.warn(`Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`);
+    console.warn(
+      `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
+    );
     // Cancel oldest requests from normal queue first
     const normalEntries = Array.from(state.requestQueue.normal.entries());
     const oldestRequests = normalEntries
       .sort(([, a], [, b]) => a.timestamp - b.timestamp)
       .slice(0, 25);
-    
+
     for (const [url, request] of oldestRequests) {
       if (request.timeoutId) {
         clearTimeout(request.timeoutId);
       }
-      request.reject(createCancellation('Request cancelled due to queue overflow'));
+      request.reject(
+        createCancellation('Request cancelled due to queue overflow')
+      );
       state.requestQueue.normal.delete(url);
     }
   }
@@ -500,8 +505,9 @@ const createCancellation = (message: string): RequestCancellation => ({
 
 const cancelPendingRequests = (): void => {
   // Track metrics for debugging
-  const totalCancelled = state.requestQueue.highPriority.size + state.requestQueue.normal.size;
-  
+  const totalCancelled =
+    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+
   // Cancel all pending requests in high priority queue
   for (const [url, request] of state.requestQueue.highPriority) {
     if (request.timeoutId) {
@@ -528,10 +534,12 @@ const cancelPendingRequests = (): void => {
 
   // Reset processing state to allow new requests
   state.requestQueue.processing = false;
-  
+
   // Log for debugging queue performance issues
   if (totalCancelled > 10) {
-    console.log(`Service worker: Cancelled ${totalCancelled} queued requests on navigation`);
+    console.log(
+      `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
+    );
   }
 };
 

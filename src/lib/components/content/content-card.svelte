@@ -12,7 +12,7 @@
   import { ArrowDown, ArrowUp, Check, ListVideo, Circle } from '@lucide/svelte';
   import type { ContentDisplayProps } from './content';
   import ContentDropdown from './content-dropdown.svelte';
-  import { goto } from '$app/navigation';
+  import { goto, preloadData } from '$app/navigation';
   import { getSortDisplayName } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import LazyImage from './LazyImage.svelte';
@@ -168,8 +168,23 @@
     return classes;
   }
 
-  // Note: Removed programmatic preloading to eliminate CSS preload warnings
-  // Content will be loaded on-demand when user actually navigates
+  // Preload content data and images
+  async function preloadContent() {
+    if (!video) return;
+
+    try {
+      // Preload navigation data
+      const url = generateContentNavigationUrl({
+        video,
+        contentFilter,
+        playlist,
+      });
+      await preloadData(url);
+    } catch (error) {
+      // Silently fail if preloading doesn't work
+      console.debug('Preload failed:', error);
+    }
+  }
 
   // Mouse event handlers
   function handleMouseEnter() {
@@ -185,7 +200,8 @@
       sectionId,
     });
 
-    // Note: Removed preloading to eliminate CSS preload warnings
+    // Preload content on hover
+    preloadContent();
   }
 
   function handleMouseLeave() {
