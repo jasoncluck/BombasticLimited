@@ -378,9 +378,9 @@ const addToQueue = (request: Request): Promise<Response> => {
   const totalQueueSize =
     state.requestQueue.highPriority.size + state.requestQueue.normal.size;
   if (totalQueueSize > 50) {
-    console.warn(
-      `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
-    );
+    // console.warn(
+    //   `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
+    // );
     // Cancel oldest requests from normal queue first
     const normalEntries = Array.from(state.requestQueue.normal.entries());
     const oldestRequests = normalEntries
@@ -469,8 +469,8 @@ const removeFromQueue = (url: string): void => {
 
 const cancelPendingRequests = (): void => {
   // Track metrics for debugging
-  const totalCancelled =
-    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
+  // const totalCancelled =
+  //   state.requestQueue.highPriority.size + state.requestQueue.normal.size;
 
   // Cancel all pending requests in high priority queue
   for (const [, request] of state.requestQueue.highPriority) {
@@ -498,11 +498,11 @@ const cancelPendingRequests = (): void => {
   state.requestQueue.processing = false;
 
   // Log for debugging queue performance issues
-  if (totalCancelled > 10) {
-    console.log(
-      `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
-    );
-  }
+  // if (totalCancelled > 10) {
+  //   console.log(
+  //     `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
+  //   );
+  // }
 };
 
 const processRequestQueue = async (): Promise<void> => {
