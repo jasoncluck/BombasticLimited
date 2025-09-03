@@ -75,8 +75,6 @@ const IMAGE_DOMAINS = [
   'static-cdn.jtvnw.net',
 ] as const;
 
-type ImageDomain = (typeof IMAGE_DOMAINS)[number];
-
 // Supabase hostname for image caching
 const SUPABASE_HOSTNAME: string | null = (() => {
   try {
@@ -412,9 +410,7 @@ const addToQueue = (request: Request): Promise<Response> => {
       if (request.timeoutId) {
         clearTimeout(request.timeoutId);
       }
-      request.reject(
-        createCancellation('Request cancelled due to queue overflow')
-      );
+      request.reject(new Error('Request cancelled due to queue overflow'));
       state.requestQueue.normal.delete(url);
     }
   }
@@ -490,41 +486,26 @@ const removeFromQueue = (url: string): void => {
   }
 };
 
-// Custom cancellation object that doesn't inherit from Error to avoid console errors
-interface RequestCancellation {
-  readonly reason: 'NAVIGATION_CANCELLED';
-  readonly message: string;
-  readonly cancelled: true;
-}
-
-const createCancellation = (message: string): RequestCancellation => ({
-  reason: 'NAVIGATION_CANCELLED',
-  message,
-  cancelled: true,
-});
-
 const cancelPendingRequests = (): void => {
   // Track metrics for debugging
   const totalCancelled =
     state.requestQueue.highPriority.size + state.requestQueue.normal.size;
 
   // Cancel all pending requests in high priority queue
-  for (const [url, request] of state.requestQueue.highPriority) {
+  for (const [, request] of state.requestQueue.highPriority) {
     if (request.timeoutId) {
       clearTimeout(request.timeoutId);
     }
-    // Use custom cancellation object instead of Error to avoid console errors
-    request.reject(createCancellation('Request cancelled due to navigation'));
+    request.reject(new Error('Request cancelled due to navigation'));
   }
   state.requestQueue.highPriority.clear();
 
   // Cancel all pending requests in normal queue
-  for (const [url, request] of state.requestQueue.normal) {
+  for (const [, request] of state.requestQueue.normal) {
     if (request.timeoutId) {
       clearTimeout(request.timeoutId);
     }
-    // Use custom cancellation object instead of Error to avoid console errors
-    request.reject(createCancellation('Request cancelled due to navigation'));
+    request.reject(new Error('Request cancelled due to navigation'));
   }
   state.requestQueue.normal.clear();
 
@@ -843,20 +824,6 @@ const performSmartCacheCleanup = async (): Promise<void> => {
   }
 };
 
-// Helper function to check if a rejection is a cancellation
-const isCancellation = (
-  rejection: unknown
-): rejection is RequestCancellation => {
-  return (
-    typeof rejection === 'object' &&
-    rejection !== null &&
-    'reason' in rejection &&
-    'cancelled' in rejection &&
-    (rejection as RequestCancellation).reason === 'NAVIGATION_CANCELLED' &&
-    (rejection as RequestCancellation).cancelled === true
-  );
-};
-
 // Main image caching function with smart queuing
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
@@ -888,25 +855,21 @@ const cacheImage = async (request: Request): Promise<Response> => {
   // Use smart queuing for new requests with cancellation handling
   try {
     return await addToQueue(request);
-  } catch (rejection) {
+  } catch {
     // If this is a planned cancellation, fall back to network request
     // This prevents unhandled promise rejections in the console
-    if (isCancellation(rejection)) {
-      // For cancelled requests, try to fetch directly from network as fallback
-      // This ensures the fetch event always resolves with a response
-      try {
-        const corsRequest = createCorsRequest(request);
-        return await fetch(corsRequest);
-      } catch (networkError) {
-        // If network also fails, return a simple error response
-        return new Response('Request cancelled and network unavailable', {
-          status: 503,
-          statusText: 'Service Unavailable',
-        });
-      }
+    // For cancelled requests, try to fetch directly from network as fallback
+    // This ensures the fetch event always resolves with a response
+    try {
+      const corsRequest = createCorsRequest(request);
+      return await fetch(corsRequest);
+    } catch {
+      // If network also fails, return a simple error response
+      return new Response('Request cancelled and network unavailable', {
+        status: 503,
+        statusText: 'Service Unavailable',
+      });
     }
-    // Re-throw actual errors (not cancellations)
-    throw rejection;
   }
 };
 
