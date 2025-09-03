@@ -236,7 +236,7 @@
   });
 </script>
 
-<Drawer.Root bind:open handleOnly={true} {nested}>
+<Drawer.Root bind:open {nested}>
   {#if !isPlaylistOwner}
     <div class="w-full outline-hidden">
       {@render trigger()}
