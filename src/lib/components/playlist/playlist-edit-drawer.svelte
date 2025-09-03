@@ -175,15 +175,6 @@
       updateFlash(page);
 
       if (event.form.valid) {
-        // Update local playlist object
-        Object.assign(playlist, event.form.data);
-
-        if (event.form.data.isDeletingPlaylistImage) {
-          playlist.image_url = null;
-          playlist.image_properties = null;
-          playlist.thumbnail_url = null;
-        }
-
         // Refresh data and close drawer
         sidebarState.refreshData();
         invalidate('supabase:db:playlists');
