@@ -421,7 +421,7 @@
           <Dialog.Footer>
             <Dialog.Close>
               <Button
-                class="cursor-pointer"
+                class="w-full cursor-pointer sm:w-auto"
                 variant="secondary"
                 type="button"
                 onclick={(e) => {
