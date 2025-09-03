@@ -146,16 +146,19 @@
               <a
                 href="/getting-started"
                 class="text-muted-foreground text-xs hover:underline"
-                >Getting Started</a
+                >Documentation</a
               >
               <a
                 href="mailto:jason@bombastic.ltd"
                 class="text-muted-foreground text-xs hover:underline">Contact</a
               >
             </nav>
-            <p
-              class="text-xs leading-relaxed text-gray-500 dark:text-gray-400"
-            ></p>
+            <p class="text-xs leading-relaxed text-gray-500 dark:text-gray-400">
+              Bombastic Limited is not affiliated with, endorsed by, or
+              connected to any of the content creators featured on this website.
+              All video content is the property of their respective owners and
+              creators.
+            </p>
           </div>
         </div>
       </footer>
