@@ -152,6 +152,7 @@ export const populateVideos = async ({
         };
       });
 
+      console.log(videos);
 
       // Batch upsert for better performance
       const { error } = await supabaseClient
@@ -168,6 +169,13 @@ export const populateVideos = async ({
         );
         throw error;
       } else {
+        console.log(
+          JSON.stringify({
+            stage: 'batch_upsert_videos',
+            message: `Upserted ${videos.length} videos for source: ${source}`,
+            videoIds: videos.map((v) => v.id),
+          })
+        );
       }
 
       if (repopulate || curPage <= DEFAULT_NUM_PAGES) {
@@ -178,6 +186,14 @@ export const populateVideos = async ({
       }
     } while (pageToken);
 
+    console.log(
+      JSON.stringify({
+        stage: 'youtube_fetch_complete',
+        message: `Fetched ${youtubeVideoIds.size} videos from YouTube`,
+        source,
+        syncType: repopulate ? 'full_repopulate' : 'partial_sync',
+      })
+    );
 
     // Step 2: Now mark videos for deletion based on what YouTube actually returned
     let videosToMarkForDeletion: string[] = [];
@@ -250,6 +266,14 @@ export const populateVideos = async ({
         throw new Error('Failed to mark videos for deletion');
       }
 
+      console.log(
+        JSON.stringify({
+          stage: 'mark_videos_for_deletion',
+          message: `Marked ${videosToMarkForDeletion.length} videos for deletion (not found in YouTube response)`,
+          source,
+          videoIds: videosToMarkForDeletion,
+        })
+      );
     }
 
     // Step 4: Get details of videos to be deleted and actually delete them
@@ -291,7 +315,27 @@ export const populateVideos = async ({
         throw new Error('Failed to delete videos marked as pending_delete');
       }
 
+      console.log(
+        JSON.stringify({
+          stage: 'cleanup_complete',
+          message: `Processed ${youtubeVideoIds.size} videos from YouTube, deleted ${deletionCandidates.length} stale videos`,
+          source,
+          syncType: repopulate ? 'full_repopulate' : 'partial_sync',
+          deletedVideos: deletionCandidates.map((v) => ({
+            id: v.id,
+            title: v.title,
+          })),
+        })
+      );
     } else {
+      console.log(
+        JSON.stringify({
+          stage: 'no_deletions_needed',
+          message: `All videos are current. Processed ${youtubeVideoIds.size} videos from YouTube, no deletions needed.`,
+          source,
+          syncType: repopulate ? 'full_repopulate' : 'partial_sync',
+        })
+      );
     }
   } catch (e) {
     // Final catch-all for unhandled errors

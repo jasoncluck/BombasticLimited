@@ -55,6 +55,7 @@ async function updateStreamStatus() {
     // Log when streams go offline
     for (const prevSource of previouslyLive) {
       if (!streamingSources.has(prevSource)) {
+        console.log(`${prevSource} has ended the Twitch stream.`);
       }
     }
   } catch (error) {
@@ -90,6 +91,7 @@ export async function POST() {
 
             if (isClientDisconnection) {
               // This is normal - client closed the connection
+              console.log('Client disconnected from Twitch stream monitoring');
               return;
             } else {
               // This is an actual error we should log
@@ -109,6 +111,7 @@ export async function POST() {
     },
     {
       stop() {
+        console.log('Stopping Twitch stream monitoring');
       },
     }
   );

@@ -16,9 +16,13 @@ describe('YouTube Playlist Sync Image Processing Fix', () => {
           priority: number
         ) => {
           if (!thumbnailUrl) {
+            console.log(
+              `No thumbnail URL provided for playlist ${playlistId}, skipping image processing`
+            );
             return Promise.resolve();
           }
 
+          console.log(`Queuing image processing for playlist ${playlistId}`);
           return Promise.resolve();
         }
       );
@@ -50,9 +54,13 @@ describe('YouTube Playlist Sync Image Processing Fix', () => {
           priority: number
         ) => {
           if (!thumbnailUrl) {
+            console.log(
+              `No thumbnail URL provided for playlist ${playlistId}, skipping image processing`
+            );
             return Promise.resolve();
           }
 
+          console.log(`Queuing image processing for playlist ${playlistId}`);
           return Promise.resolve();
         }
       );

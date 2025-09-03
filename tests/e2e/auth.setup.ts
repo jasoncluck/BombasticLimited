@@ -6,6 +6,7 @@ import { TestDataManager } from './utils/TestDataManager';
 const authDir = path.join(process.cwd(), '.auth');
 
 export default async function globalSetup(config: FullConfig) {
+  console.log('Starting global setup...');
 
   // Create auth directory if it doesn't exist
   if (!fs.existsSync(authDir)) {
@@ -16,6 +17,9 @@ export default async function globalSetup(config: FullConfig) {
   const testDataManager = new TestDataManager();
   const maxWorkers = Math.min(config.workers || 2, 2); // Reduced worker count to prevent server overload
 
+  console.log(
+    `Checking for existing auth files for up to ${maxWorkers} workers (reduced from potential ${config.workers || 'default'} for server stability)`
+  );
 
   // Check if all required auth files exist and are recent (less than 24 hours old)
   const oneHourAgo = Date.now() - 60 * 60 * 1000;
@@ -32,12 +36,16 @@ export default async function globalSetup(config: FullConfig) {
 
     const stats = fs.statSync(authFile);
     if (stats.mtime.getTime() < twentyFourHoursAgo) {
+      console.log(
+        `Auth file for worker ${workerIndex} is older than 24 hours, will recreate`
+      );
       allAuthFilesValid = false;
       break;
     }
   }
 
   if (allAuthFilesValid) {
+    console.log('All auth files are valid and recent, skipping auth setup');
     return;
   }
 
@@ -49,10 +57,12 @@ export default async function globalSetup(config: FullConfig) {
       const stats = fs.statSync(filePath);
       if (stats.mtime.getTime() < oneHourAgo) {
         fs.unlinkSync(filePath);
+        console.log(`Cleaned up old auth file: ${file}`);
       }
     }
   }
 
+  console.log(`Creating/updating auth files for up to ${maxWorkers} workers`);
 
   for (let workerIndex = 0; workerIndex < maxWorkers; workerIndex++) {
     const authFile = path.join(authDir, `user-${workerIndex}.json`);
@@ -61,6 +71,7 @@ export default async function globalSetup(config: FullConfig) {
     if (fs.existsSync(authFile)) {
       const stats = fs.statSync(authFile);
       if (stats.mtime.getTime() > twentyFourHoursAgo) {
+        console.log(`Skipping worker ${workerIndex} - auth file is recent`);
         continue;
       }
     }
@@ -82,12 +93,18 @@ export default async function globalSetup(config: FullConfig) {
     try {
       const testUser = await testDataManager.getOrCreateTestUser(workerIndex);
 
+      console.log(
+        `Setting up authentication for worker ${workerIndex} with user ${testUser.email}`
+      );
 
       // Navigate to login page
       const baseUrl =
         config.projects[0].use?.baseURL || 'http://localhost:5173';
       await page.goto(`${baseUrl}/auth/login`);
 
+      console.log(baseUrl);
+      console.log(testUser.email);
+      console.log(testUser.password);
 
       // Fill in login form
       const emailField = page.locator('input[type="email"]');
@@ -113,10 +130,14 @@ export default async function globalSetup(config: FullConfig) {
         timeout: 5000,
       });
 
+      console.log('Found Profile button - authentication successful');
 
       // Save authentication state
       await context.storageState({ path: authFile });
 
+      console.log(
+        `Authentication saved for worker ${workerIndex} at ${authFile}`
+      );
     } catch (error) {
       console.error(`Failed to set up auth for worker ${workerIndex}:`, error);
       // Continue with other workers
@@ -126,4 +147,5 @@ export default async function globalSetup(config: FullConfig) {
     }
   }
 
+  console.log('Global setup completed');
 }

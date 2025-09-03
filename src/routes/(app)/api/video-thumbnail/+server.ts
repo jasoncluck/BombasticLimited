@@ -23,6 +23,9 @@ export const GET: RequestHandler = async ({ url, request }) => {
 
     // DISABLED: Server-side processing to prevent SvelteKit server overload
     // Background processing system handles optimization instead
+    console.warn(
+      '[DEPRECATED] video-thumbnail API called - use background processing system instead'
+    );
 
     // Return redirect to original image to avoid server-side processing
     if (responseType === 'image') {
@@ -60,6 +63,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
     // DISABLED: Batch processing to prevent SvelteKit server overload
     // Background processing system handles optimization instead
+    console.warn(
+      '[DEPRECATED] video-thumbnail batch API called - use background processing system instead'
+    );
 
     // Return original URLs without processing
     return json(

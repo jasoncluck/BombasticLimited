@@ -30,18 +30,25 @@
 
   // Function to clean up intervals
   function cleanupIntervals() {
+    console.log('🧹 Cleaning up admin notification intervals');
     if (refreshInterval !== null) {
       window.clearInterval(refreshInterval);
       refreshInterval = null;
+      console.log('   ✓ Refresh interval cleared');
     }
   }
 
   // Function to refresh admin notification data
   async function refreshAdminNotifications() {
     if (adminNotifications.loading) {
+      console.log('⏭️ Skipping refresh - already loading');
       return;
     }
 
+    console.log(
+      '🔄 Starting admin notifications refresh at',
+      new Date().toISOString()
+    );
     adminNotifications.loading = true;
 
     try {
@@ -57,6 +64,14 @@
         adminNotifications.systemLogs = apiData.systemLogs;
         adminNotifications.lastRefresh = Date.now();
 
+        console.log('✅ Admin notifications refreshed successfully:', {
+          pending: apiData.pendingNotifications.length,
+          sent: apiData.sentNotifications.length,
+          expired: apiData.expiredNotifications.length,
+          timestamp: apiData.timestamp,
+          user: 'jasoncluck',
+          currentTime: '2025-08-13 21:36:57 UTC',
+        });
       } else {
         console.error(
           '❌ Failed to refresh admin notifications:',
@@ -69,6 +84,7 @@
       showToast('Error refreshing notifications', 'error');
     } finally {
       adminNotifications.loading = false;
+      console.log('🏁 Admin notifications refresh completed');
     }
   }
 
@@ -79,6 +95,7 @@
     refreshInterval = window.setInterval(() => {
       // Only refresh if tab is visible and not already loading
       if (!document.hidden && !adminNotifications.loading) {
+        console.log('🔄 Auto-refreshing notifications (30s interval)');
         refreshAdminNotifications();
       }
     }, 30000);
@@ -93,6 +110,7 @@
 
   // Clean up intervals when component is destroyed
   onDestroy(() => {
+    console.log('🗑️ Admin notifications page destroyed - cleaning up');
     cleanupIntervals();
   });
 
@@ -131,9 +149,11 @@
 
   async function triggerManualCleanup() {
     if (manualCleanupSubmitting) {
+      console.log('⏭️ Manual cleanup already in progress, skipping');
       return;
     }
 
+    console.log('🧹 Starting manual cleanup');
     manualCleanupSubmitting = true;
 
     try {
@@ -149,6 +169,7 @@
           `Manual cleanup completed. Removed ${deletedCount} expired notifications.`,
           'success'
         );
+        console.log('✅ Manual cleanup completed, deleted:', deletedCount);
 
         // Refresh admin notifications if action was successful
         if (result.shouldRefreshNotifications) {
@@ -166,11 +187,13 @@
       showToast('Error during manual cleanup', 'error');
     } finally {
       manualCleanupSubmitting = false;
+      console.log('🏁 Manual cleanup completed');
     }
   }
 
   // Handle successful form submissions
   async function handleFormSuccess() {
+    console.log('📝 Form submission successful - refreshing data');
     await refreshAdminNotifications();
     navigationState.refreshData();
   }
