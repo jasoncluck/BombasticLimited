@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import { Input } from '$lib/components/ui/input';
@@ -14,7 +15,7 @@
   import * as Popover from '$lib/components/ui/popover';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
-  import { tick, type Snippet } from 'svelte';
+  import type { Snippet } from 'svelte';
   import type { Session } from '@supabase/supabase-js';
   import { page } from '$app/state';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
@@ -169,19 +170,30 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
-
-      await tick(); // Force DOM update before proceeding
+      await tick(); // Ensure DOM updates immediately
     },
     async onUpdated(event) {
-      isSubmitting = false;
-      updateFlash(page);
-
       if (event.form.valid) {
-        // Refresh data and close drawer
+        // Update local playlist object immediately before any UI updates
+        Object.assign(playlist, event.form.data);
+
+        if (event.form.data.isDeletingPlaylistImage) {
+          playlist.image_url = null;
+          playlist.image_properties = null;
+          playlist.thumbnail_url = null;
+        }
+
+        // Force DOM update before proceeding
+        await tick();
+
+        // Now close drawer and refresh data
+        open = false;
         sidebarState.refreshData();
         invalidate('supabase:db:playlists');
-        open = false;
       }
+
+      isSubmitting = false;
+      updateFlash(page);
     },
   });
 
@@ -238,7 +250,7 @@
   });
 </script>
 
-<Drawer.Root bind:open {nested}>
+<Drawer.Root bind:open handleOnly={true} {nested}>
   {#if !isPlaylistOwner}
     <div class="w-full outline-hidden">
       {@render trigger()}
@@ -439,7 +451,8 @@
               <Drawer.Footer class="flex gap-2">
                 <Button
                   type="submit"
-                  class="drawer-button-footer"
+                  class="drawer-button-footer tap-highlight-none"
+                  style="-webkit-tap-highlight-color: transparent;"
                   disabled={isSubmitting}
                 >
                   {#if isSubmitting}

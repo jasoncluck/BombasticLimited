@@ -1,4 +1,4 @@
--- Migration: 06_row_level_security_optimized_fixed.sql
+-- Migration: 06_row_level_security_fixed.sql
 -- Purpose: Enable RLS on tables and create all optimized security policies
 -- Date: 2025-08-10
 -- Author: jasoncluck
@@ -48,10 +48,10 @@ SELECT
   USING (TRUE);
 
 -- ============================================================================
--- 3. OPTIMIZED PLAYLISTS TABLE POLICIES (FIXED)
+-- 3. PLAYLISTS TABLE POLICIES 
 -- ============================================================================
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlists_select_optimized" ON "public"."playlists" FOR
+CREATE POLICY "playlists_select" ON "public"."playlists" FOR
 SELECT
   USING (
     -- Check user ownership first (most selective for authenticated users)
@@ -65,7 +65,7 @@ SELECT
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlists_insert_optimized" ON "public"."playlists" FOR INSERT TO authenticated
+CREATE POLICY "playlists_insert" ON "public"."playlists" FOR INSERT TO authenticated
 WITH
   CHECK (
     created_by = (
@@ -75,7 +75,7 @@ WITH
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlists_update_optimized" ON "public"."playlists"
+CREATE POLICY "playlists_update" ON "public"."playlists"
 FOR UPDATE
   TO authenticated USING (
     created_by = (
@@ -92,7 +92,7 @@ WITH
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlists_delete_optimized" ON "public"."playlists" FOR DELETE TO authenticated USING (
+CREATE POLICY "playlists_delete" ON "public"."playlists" FOR DELETE TO authenticated USING (
   created_by = (
     SELECT
       auth.uid ()
@@ -100,10 +100,10 @@ CREATE POLICY "playlists_delete_optimized" ON "public"."playlists" FOR DELETE TO
 );
 
 -- ============================================================================
--- 4. OPTIMIZED PLAYLIST_VIDEOS TABLE POLICIES (FIXED)
+-- 4. PLAYLIST_VIDEOS TABLE POLICIES (FIXED)
 -- ============================================================================
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlist_videos_select_optimized" ON "public"."playlist_videos" FOR
+CREATE POLICY "playlist_videos_select" ON "public"."playlist_videos" FOR
 SELECT
   TO authenticated,
   anon USING (
@@ -125,7 +125,7 @@ SELECT
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlist_videos_insert_optimized" ON "public"."playlist_videos" FOR INSERT TO authenticated
+CREATE POLICY "playlist_videos_insert" ON "public"."playlist_videos" FOR INSERT TO authenticated
 WITH
   CHECK (
     EXISTS (
@@ -143,7 +143,7 @@ WITH
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlist_videos_update_optimized" ON "public"."playlist_videos"
+CREATE POLICY "playlist_videos_update" ON "public"."playlist_videos"
 FOR UPDATE
   TO authenticated USING (
     EXISTS (
@@ -176,7 +176,7 @@ WITH
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "playlist_videos_delete_optimized" ON "public"."playlist_videos" FOR DELETE TO authenticated USING (
+CREATE POLICY "playlist_videos_delete" ON "public"."playlist_videos" FOR DELETE TO authenticated USING (
   EXISTS (
     SELECT
       1
@@ -192,7 +192,7 @@ CREATE POLICY "playlist_videos_delete_optimized" ON "public"."playlist_videos" F
 );
 
 -- ============================================================================
--- 5. OPTIMIZED TIMESTAMPS TABLE POLICIES (FIXED)
+-- 5. TIMESTAMPS TABLE POLICIES (FIXED)
 -- ============================================================================
 -- Fixed: auth.uid() wrapped in subquery
 CREATE POLICY "timestamps_user_access" ON "public"."timestamps" FOR ALL TO authenticated USING (
@@ -227,10 +227,10 @@ FOR UPDATE
   );
 
 -- ============================================================================
--- 7. OPTIMIZED USER_PLAYLISTS TABLE POLICIES (FIXED)
+-- 7. USER_PLAYLISTS TABLE POLICIES (FIXED)
 -- ============================================================================
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "user_playlists_select_optimized" ON "public"."user_playlists" FOR
+CREATE POLICY "user_playlists_select" ON "public"."user_playlists" FOR
 SELECT
   USING (
     -- Check user ownership first (most selective)
@@ -252,7 +252,7 @@ SELECT
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "user_playlists_insert_optimized" ON "public"."user_playlists" FOR INSERT TO authenticated
+CREATE POLICY "user_playlists_insert" ON "public"."user_playlists" FOR INSERT TO authenticated
 WITH
   CHECK (
     user_id = (
@@ -271,7 +271,7 @@ WITH
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "user_playlists_update_optimized" ON "public"."user_playlists"
+CREATE POLICY "user_playlists_update" ON "public"."user_playlists"
 FOR UPDATE
   TO authenticated USING (
     user_id = (
@@ -288,7 +288,7 @@ WITH
   );
 
 -- Fixed: auth.uid() wrapped in subquery
-CREATE POLICY "user_playlists_delete_optimized" ON "public"."user_playlists" FOR DELETE TO authenticated USING (
+CREATE POLICY "user_playlists_delete" ON "public"."user_playlists" FOR DELETE TO authenticated USING (
   user_id = (
     SELECT
       auth.uid ()

@@ -1,9 +1,196 @@
--- Migration: 08d_playlist_query_functions.sql
--- Purpose: Create playlist data retrieval functions
--- Dependencies: Requires base tables from 03_base_tables.sql (playlists, playlist_videos, user_playlists)
--- This migration includes playlist data access and search functions
--- ============================================================================
--- Optimized function to get comprehensive playlist data with pagination and sorting
+-- Migration: playlist_soft_delete_updated
+-- Description: Implements soft delete for playlists with 14-day cleanup period at midnight UTC
+
+BEGIN;
+
+-- Create the cleanup queue table
+CREATE TABLE IF NOT EXISTS public.playlist_cleanup_queue (
+  playlist_id bigint PRIMARY KEY REFERENCES public.playlists(id) ON DELETE CASCADE,
+  cleanup_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+  processed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
+);
+
+-- Create index for efficient cleanup processing
+CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_cleanup_at 
+ON public.playlist_cleanup_queue (cleanup_at) 
+WHERE processed_at IS NULL;
+
+-- Create index for cleanup of old processed records
+CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_processed_at 
+ON public.playlist_cleanup_queue (processed_at) 
+WHERE processed_at IS NOT NULL;
+
+-- Function to cleanup deleted playlists after 14 days
+CREATE OR REPLACE FUNCTION public.cleanup_deleted_playlists() 
+RETURNS INTEGER LANGUAGE plpgsql
+SET search_path = '' AS $$
+DECLARE
+  processed_count INTEGER := 0;
+  cleanup_record RECORD;
+BEGIN
+  -- Process all playlists that are ready for cleanup
+  FOR cleanup_record IN 
+    SELECT playlist_id 
+    FROM public.playlist_cleanup_queue 
+    WHERE cleanup_at <= NOW() AND processed_at IS NULL
+    ORDER BY cleanup_at
+  LOOP
+    -- Remove all user_playlists mappings for this playlist
+    DELETE FROM public.user_playlists 
+    WHERE id = cleanup_record.playlist_id;
+    
+    -- Mark as processed
+    UPDATE public.playlist_cleanup_queue 
+    SET processed_at = NOW() 
+    WHERE playlist_id = cleanup_record.playlist_id;
+    
+    processed_count := processed_count + 1;
+  END LOOP;
+  
+  -- Clean up old processed records (older than 30 days)
+  DELETE FROM public.playlist_cleanup_queue 
+  WHERE processed_at IS NOT NULL 
+  AND processed_at < NOW() - INTERVAL '30 days';
+  
+  RETURN processed_count;
+END;
+$$;
+
+-- Function for manual/immediate cleanup (useful for testing)
+CREATE OR REPLACE FUNCTION public.force_cleanup_playlist(p_playlist_id bigint) 
+RETURNS BOOLEAN LANGUAGE plpgsql
+SET search_path = '' AS $$
+BEGIN
+  -- Remove all user_playlists mappings for this playlist
+  DELETE FROM public.user_playlists WHERE id = p_playlist_id;
+  
+  -- Mark as processed in cleanup queue
+  UPDATE public.playlist_cleanup_queue 
+  SET processed_at = NOW() 
+  WHERE playlist_id = p_playlist_id;
+  
+  RETURN TRUE;
+END;
+$$;
+
+-- Updated delete_playlist function with soft delete and midnight UTC cleanup scheduling
+CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) 
+RETURNS BOOLEAN LANGUAGE plpgsql
+SET search_path = '' AS $$
+DECLARE
+  deleted_position int2;
+  playlist_owner uuid;
+  current_user_id uuid;
+  cleanup_timestamp TIMESTAMP WITH TIME ZONE;
+BEGIN
+  current_user_id := auth.uid();
+  
+  IF current_user_id IS NULL THEN
+    RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to delete playlists'
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
+  -- Get position and ownership info in one query
+  SELECT up.playlist_position, p.created_by
+  INTO deleted_position, playlist_owner
+  FROM public.user_playlists up
+  JOIN public.playlists p ON up.id = p.id
+  WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
+
+  IF deleted_position IS NULL THEN
+    RAISE EXCEPTION 'Playlist mapping not found for user_id: % and playlist_id: %', current_user_id, p_playlist_id;
+  END IF;
+
+  IF playlist_owner = current_user_id THEN
+    -- Owner: soft delete playlist and keep ALL user_playlists mappings for 14 days
+    UPDATE public.playlists SET deleted_at = NOW() WHERE id = p_playlist_id AND deleted_at IS NULL;
+    
+    -- Calculate cleanup timestamp: midnight UTC 14 days from now
+    -- Add 14 days to current date, then truncate to midnight UTC
+    cleanup_timestamp := date_trunc('day', (CURRENT_DATE + INTERVAL '14 days')::timestamp AT TIME ZONE 'UTC');
+    
+    -- Insert into cleanup queue for processing at midnight UTC 14 days later
+    INSERT INTO public.playlist_cleanup_queue (playlist_id, cleanup_at, created_at)
+    VALUES (p_playlist_id, cleanup_timestamp, NOW())
+    ON CONFLICT (playlist_id) DO UPDATE SET cleanup_at = EXCLUDED.cleanup_at;
+    
+  ELSE
+    -- Follower: remove mapping and reorder positions immediately
+    DELETE FROM public.user_playlists WHERE user_id = current_user_id AND id = p_playlist_id;
+    
+    UPDATE public.user_playlists 
+    SET playlist_position = playlist_position - 1
+    WHERE user_id = current_user_id AND playlist_position > deleted_position;
+  END IF;
+
+  RETURN TRUE;
+END;
+$$;
+
+-- Updated get_user_playlists to show deleted playlists during grace period
+CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
+  id bigint,
+  created_by uuid,
+  created_at timestamptz,
+  name text,
+  short_id text,
+  description text,
+  image_url text,
+  image_processing_status public.image_processing_status,
+  type public.playlist_type,
+  image_properties jsonb,
+  youtube_id text,
+  playlist_thumbnail_url text,
+  duration_seconds integer,
+  deleted_at TIMESTAMP WITH TIME ZONE,
+  profile_username text,
+  profile_avatar_url text,
+  sorted_by public.playlist_sorted_by,
+  sort_order public.playlist_sort_order,
+  playlist_position integer,
+  added_at TIMESTAMP WITH TIME ZONE
+)
+SET
+  search_path = '' LANGUAGE sql AS $$
+  SELECT
+    p.id,
+    -- Set created_by to NULL if playlist is deleted
+    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
+    p.created_at,
+    p.name,
+    p.short_id,
+    p.description,
+    public.select_best_image_format(
+      p.image_avif_url,
+      p.image_webp_url,
+      p_preferred_image_format
+    ) as image_url,
+    p.image_processing_status,
+    p.type,
+    p.image_properties,
+    p.youtube_id,
+    p.thumbnail_url,
+    p.duration_seconds,
+    p.deleted_at,
+    -- Set profile info to NULL if playlist is deleted
+    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
+    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
+    up.sorted_by,
+    up.sort_order,
+    up.playlist_position,
+    up.added_at
+  FROM public.user_playlists up
+  JOIN public.playlists p ON up.id = p.id
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  WHERE up.user_id = auth.uid()
+    -- Allow deleted playlists to remain visible for 14 days
+  ORDER BY up.playlist_position ASC;
+$$;
+
+-- Updated get_playlist_data function to return NULL for created_by when playlist is deleted
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
@@ -51,8 +238,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   total_duration_seconds integer,
   is_duration_row boolean
 )
-SET
-  search_path = '' LANGUAGE plpgsql AS $$
+SET search_path = '' LANGUAGE plpgsql AS $$
 DECLARE
   playlist_record RECORD;
   video_count bigint;
@@ -89,8 +275,9 @@ BEGIN
       p.thumbnail_url,
       p.deleted_at,
       p.duration_seconds,
-      prof.username AS profile_username,
-      prof.avatar_url AS profile_avatar_url,
+      -- Set profile info to NULL if playlist is deleted
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
       -- Get video count in the same query
@@ -238,309 +425,7 @@ BEGIN
 END;
 $$;
 
--- Optimized function to get playlist video context
-CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
-  p_short_id text,
-  p_video_id text,
-  p_context_limit integer DEFAULT 5,
-  p_preferred_image_format text DEFAULT 'avif'
-) RETURNS TABLE (
-  -- Playlist metadata
-  playlist_id bigint,
-  playlist_created_at TIMESTAMP WITH TIME ZONE,
-  playlist_name text,
-  playlist_short_id text,
-  playlist_created_by uuid,
-  playlist_description text,
-  playlist_image_url text,
-  playlist_image_processing_status public.image_processing_status,
-  playlist_type public.playlist_type,
-  playlist_image_properties jsonb,
-  playlist_youtube_id text,
-  playlist_thumbnail_url text,
-  playlist_deleted_at TIMESTAMP WITH TIME ZONE,
-  profile_username text,
-  profile_avatar_url text,
-  playlist_sorted_by public.playlist_sorted_by,
-  playlist_sort_order public.playlist_sort_order,
-  -- Video data
-  video_id text,
-  video_position int2,
-  video_source public.source,
-  video_title text,
-  video_description text,
-  video_thumbnail_url text,
-  video_image_url text,
-  video_published_at TIMESTAMP WITH TIME ZONE,
-  video_duration text,
-  video_start_seconds numeric,
-  video_watched_at TIMESTAMP WITH TIME ZONE,
-  video_updated_at TIMESTAMP WITH TIME ZONE,
-  video_timestamp_playlist_id bigint,
-  video_timestamp_sorted_by public.playlist_sorted_by,
-  video_timestamp_sort_order public.playlist_sort_order,
-  -- Context data
-  is_current_video boolean,
-  total_videos_count bigint,
-  current_video_index int2
-)
-SET
-  search_path = '' LANGUAGE sql SECURITY DEFINER AS $$
-  WITH playlist_info AS (
-    SELECT 
-      p.id,
-      p.created_at,
-      p.name,
-      p.short_id,
-      p.created_by,
-      p.description,
-      public.select_best_image_format(
-        p.image_avif_url,
-        p.image_webp_url,
-        p_preferred_image_format
-      ) as best_playlist_image_url,
-      p.image_processing_status,
-      p.type,
-      p.image_properties,
-      p.youtube_id,
-      p.thumbnail_url,
-      p.deleted_at,
-      prof.username AS profile_username,
-      prof.avatar_url AS profile_avatar_url,
-      COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) AS sorted_by,
-      COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) AS sort_order
-    FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
-    WHERE p.short_id = p_short_id
-      AND p.deleted_at IS NULL
-  ),
-  target_video AS (
-    SELECT COALESCE(pv.video_position, 1) as position
-    FROM playlist_info pi
-    LEFT JOIN public.playlist_videos pv ON pv.playlist_id = pi.id AND pv.video_id = p_video_id
-  ),
-  total_count AS (
-    SELECT COUNT(*) as total
-    FROM public.playlist_videos pv
-    JOIN playlist_info pi ON pv.playlist_id = pi.id
-  )
-  SELECT 
-    -- Playlist columns (with proper aliases)
-    pi.id as playlist_id,
-    pi.created_at as playlist_created_at,
-    pi.name as playlist_name,
-    pi.short_id as playlist_short_id,
-    pi.created_by as playlist_created_by,
-    pi.description as playlist_description,
-    pi.best_playlist_image_url as playlist_image_url,
-    pi.image_processing_status as playlist_image_processing_status,
-    pi.type as playlist_type,
-    pi.image_properties as playlist_image_properties,
-    pi.youtube_id as playlist_youtube_id,
-    pi.thumbnail_url as playlist_thumbnail_url,
-    pi.deleted_at as playlist_deleted_at,
-    pi.profile_username,
-    pi.profile_avatar_url,
-    pi.sorted_by as playlist_sorted_by,
-    pi.sort_order as playlist_sort_order,
-    
-    -- Video columns (with proper aliases)
-    pv.video_id,
-    pv.video_position,
-    v.source as video_source,
-    v.title as video_title,
-    v.description as video_description,
-    v.thumbnail_url as video_thumbnail_url,
-    public.select_best_image_format(
-      v.thumbnail_avif_url,
-      v.thumbnail_webp_url,
-      p_preferred_image_format
-    ) as video_image_url,
-    v.published_at as video_published_at,
-    v.duration as video_duration,
-    t.video_start_seconds,
-    t.watched_at as video_watched_at,
-    t.updated_at as video_updated_at,
-    t.playlist_id as video_timestamp_playlist_id,
-    t.sorted_by as video_timestamp_sorted_by,
-    t.sort_order as video_timestamp_sort_order,
-    
-    -- Context columns
-    (pv.video_id = p_video_id) as is_current_video,
-    tc.total as total_videos_count,
-    pv.video_position as current_video_index
-    
-  FROM playlist_info pi
-  JOIN public.playlist_videos pv ON pi.id = pv.playlist_id
-  JOIN public.videos v ON pv.video_id = v.id AND v.pending_delete = FALSE
-  LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
-  CROSS JOIN total_count tc
-  CROSS JOIN target_video tv
-  WHERE pv.video_position BETWEEN tv.position AND (tv.position + p_context_limit - 1)
-  ORDER BY pv.video_position;
-$$;
-
--- Optimized function to get playlist by youtube_id
-CREATE OR REPLACE FUNCTION public.get_playlist_by_youtube_id (
-  p_youtube_id text,
-  p_preferred_image_format text DEFAULT 'avif'
-) RETURNS TABLE (
-  id bigint,
-  created_at TIMESTAMP WITH TIME ZONE,
-  name text,
-  short_id text,
-  created_by uuid,
-  description text,
-  type public.playlist_type,
-  image_properties jsonb,
-  youtube_id text,
-  duration_seconds integer,
-  profile_username text,
-  profile_avatar_url text,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order
-)
-SET
-  search_path = '' LANGUAGE sql AS $$
-  SELECT
-    p.id,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.created_by,
-    p.description,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    p.duration_seconds,
-    prof.username AS profile_username,
-    prof.avatar_url AS profile_avatar_url,
-    up.sorted_by,
-    up.sort_order
-  FROM public.playlists p
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up ON up.id = p.id 
-  WHERE p.youtube_id = p_youtube_id
-    AND p.deleted_at IS NULL
-  LIMIT 1;
-$$;
-
--- Optimized function to get user playlists
-CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
-  id bigint,
-  created_by uuid,
-  created_at timestamptz,
-  name text,
-  short_id text,
-  description text,
-  image_url text,
-  image_processing_status public.image_processing_status,
-  type public.playlist_type,
-  image_properties jsonb,
-  youtube_id text,
-  playlist_thumbnail_url text,
-  duration_seconds integer,
-  deleted_at TIMESTAMP WITH TIME ZONE,
-  profile_username text,
-  profile_avatar_url text,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order,
-  playlist_position integer,
-  added_at TIMESTAMP WITH TIME ZONE
-)
-SET
-  search_path = '' LANGUAGE sql AS $$
-  SELECT
-    p.id,
-    p.created_by,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.description,
-    public.select_best_image_format(
-      p.image_avif_url,
-      p.image_webp_url,
-      p_preferred_image_format
-    ) as image_url,
-    p.image_processing_status,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    p.thumbnail_url,
-    p.duration_seconds,
-    p.deleted_at,
-    prof.username AS profile_username,
-    prof.avatar_url AS profile_avatar_url,
-    up.sorted_by,
-    up.sort_order,
-    up.playlist_position,
-    up.added_at
-  FROM public.user_playlists up
-  JOIN public.playlists p ON up.id = p.id
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
-  WHERE up.user_id = auth.uid()
-    AND p.deleted_at IS NULL
-  ORDER BY up.playlist_position ASC;
-$$;
-
--- Optimized function to get playlists for a specific username 
-CREATE OR REPLACE FUNCTION public.get_playlists_for_username (
-  p_username text,
-  p_preferred_image_format text DEFAULT 'avif'
-) RETURNS TABLE (
-  id bigint,
-  created_at TIMESTAMP WITH TIME ZONE,
-  name text,
-  short_id text,
-  created_by uuid,
-  description text,
-  image_url text,
-  image_processing_status public.image_processing_status,
-  type public.playlist_type,
-  image_properties jsonb,
-  youtube_id text,
-  playlist_thumbnail_url text,
-  duration_seconds integer,
-  profile_username text,
-  profile_avatar_url text,
-  sorted_by public.playlist_sorted_by,
-  sort_order public.playlist_sort_order,
-  deleted_at TIMESTAMP WITH TIME ZONE
-)
-SET
-  search_path = '' LANGUAGE sql AS $$
-  SELECT
-    p.id,
-    p.created_at,
-    p.name,
-    p.short_id,
-    p.created_by,
-    p.description,
-    public.select_best_image_format(
-      p.image_avif_url,
-      p.image_webp_url,
-      p_preferred_image_format
-    ) as image_url,
-    p.image_processing_status,
-    p.type,
-    p.image_properties,
-    p.youtube_id,
-    p.thumbnail_url,
-    p.duration_seconds,
-    prof.username AS profile_username,
-    prof.avatar_url AS profile_avatar_url,
-    up.sorted_by,
-    up.sort_order,
-    p.deleted_at
-  FROM public.playlists p
-  JOIN public.profiles prof ON p.created_by = prof.id
-  LEFT JOIN public.user_playlists up ON up.id = p.id
-  WHERE prof.username = p_username
-  ORDER BY p.created_at DESC;
-$$;
-
--- Search playlists function
+-- Updated search_playlists function to exclude soft deleted playlists
 CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "search_term" "text",
   "current_user_id" uuid DEFAULT NULL,
@@ -699,6 +584,8 @@ BEGIN
     WHERE 
         -- Only return Public playlists (the whole point of search)
         p.type = 'Public'
+        -- Exclude soft deleted playlists
+        AND p.deleted_at IS NULL
         -- Exclude playlists created by the current user
         AND (current_user_id IS NULL OR p.created_by != current_user_id)
         -- Existing search criteria
@@ -753,3 +640,21 @@ BEGIN
     OFFSET offset_count;
 END;
 $$;
+
+-- Schedule the cleanup job to run every hour with midnight UTC scheduling
+SELECT
+  cron.schedule (
+    'playlist-cleanup-midnight-utc',
+    '0 * * * *', -- every hour at minute 0
+    $$
+    SELECT net.http_post(
+        url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'project_url') || '/functions/v1/cleanup-playlists',
+        headers := jsonb_build_object(
+            'Content-Type', 'application/json'
+        ),
+        body := jsonb_build_object('time', now()::text)
+    );
+    $$
+  );
+
+COMMIT;

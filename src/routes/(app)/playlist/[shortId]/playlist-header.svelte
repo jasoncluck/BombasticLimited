@@ -18,6 +18,8 @@
   import * as Avatar from '$lib/components/ui/avatar';
   import type { PlaylistSchema } from '$lib/schema/playlist-schema';
   import { getUserInitials } from '$lib/components/profile/profile-service';
+  import { utcToLocalDateTime } from '$lib/utils/datetime';
+  import { SvelteDate } from 'svelte/reactivity';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -76,6 +78,26 @@
     if (playlistDuration.minutes > 0)
       parts.push(`${playlistDuration.minutes} min`);
     return parts.join(', ');
+  });
+
+  const deletionMessage = $derived.by(() => {
+    if (!playlist.deleted_at) return null;
+
+    const deletedDate = new Date(utcToLocalDateTime(playlist.deleted_at));
+    const deletionDate = new SvelteDate(deletedDate);
+    deletionDate.setDate(deletionDate.getDate() + 14);
+
+    // Round up to next midnight UTC
+    deletionDate.setUTCDate(deletionDate.getUTCDate() + 1);
+    deletionDate.setUTCHours(0, 0, 0, 0);
+
+    const month = deletionDate.toLocaleDateString('en-US', {
+      month: 'short',
+    });
+    const day = deletionDate.getUTCDate();
+    const year = deletionDate.getUTCFullYear();
+
+    return `The playlist owner has deleted this playlist and it will no longer be available on: ${month} ${day}, ${year}`;
   });
 
   const videosLabel = $derived(
@@ -290,6 +312,11 @@
               {formattedDuration}
             </p>
           </div>
+          {#if deletionMessage}
+            <p class="text-sm">
+              {deletionMessage}
+            </p>
+          {/if}
         </div>
       </div>
 

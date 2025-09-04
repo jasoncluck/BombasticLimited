@@ -1,45 +1,73 @@
-node_modules
-supabase/content-images
+# Dependencies
+node_modules/
+.pnpm/
 
-# Output
-.output
-.vercel
-.netlify
-.wrangler
-/.svelte-kit
-/build
-/cdk.out
+# Build outputs
+.svelte-kit/
+build/
+dist/
+.output/
+.vercel/
 
-# Environment files
+# Environment variables
 .env
-.env.*
+.env.local
+.env.production
 
-# Testing files
-test-playlist-*.sql
-test-playlist-*.mjs
-test-playlist-*.js
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# OS
+# OS generated files
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
 
-# Env
-.env
-.env.*
-!.env.example
-!.env.test
+# Logs
+logs/
+*.log
 
-# Vite
-vite.config.js.timestamp-*
-vite.config.ts.timestamp-*
+# Coverage and test outputs
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
 
-# Test results
-/test-results/
-/playwright-report/
-/playwright/.cache/
-/coverage/
+# Cache directories
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
 
-# Authentication states (temporary test files)
-/.auth/
+# Temporary folders
+tmp/
+temp/
 
-.trigger
+# CDK
+cdk.out/
+*.js.map
+
+# Supabase
+supabase/.branches
+supabase/.temp
+
+# Trigger.dev
+.trigger/
+
+# Package manager files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ESLint cache
+.eslintcache
