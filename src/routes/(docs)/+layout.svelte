@@ -162,8 +162,8 @@
   }
 
   /* Special styling for Table of Contents */
-  /* Target the first unordered list after an h2 (Table of Contents) */
-  :global(.prose h2 + ul) {
+  /* Target the first unordered list after an h2 within .toc container */
+  :global(.prose .toc h2 + ul) {
     padding-left: 0;
     line-height: 0.9;
     list-style-type: none;
@@ -171,12 +171,12 @@
     padding: 1rem;
   }
 
-  :global(.prose h2 + ul li) {
+  :global(.prose .toc h2 + ul li) {
     margin: 0; /* Tight spacing between TOC items */
     position: relative;
   }
 
-  :global(.prose h2 + ul li::before) {
+  :global(.prose .toc h2 + ul li::before) {
     content: '•';
     color: var(--color-primary); /* Primary color for all TOC bullets */
     margin-right: 0.5rem;
@@ -184,7 +184,7 @@
   }
 
   /* Nested items in TOC */
-  :global(.prose h2 + ul ul) {
+  :global(.prose .toc h2 + ul ul) {
     list-style-type: none;
     border-left: 1px solid var(--color-border);
     background-color: transparent;
@@ -192,34 +192,34 @@
     padding: 0.75rem 0 0 0.5rem;
   }
 
-  :global(.prose h2 + ul ul li::before) {
+  :global(.prose .toc h2 + ul ul li::before) {
     content: '•';
     color: var(--color-primary); /* Primary color for nested bullets too */
     font-weight: normal;
   }
 
   /* Third level nesting in TOC */
-  :global(.prose h2 + ul ul ul) {
+  :global(.prose .toc h2 + ul ul ul) {
     border-left: 1px solid var(--color-border);
     margin: 0.125rem 0 0.125rem 0; /* Consistent tight spacing */
     padding: 0.75rem 0 0 0.5rem;
   }
 
-  :global(.prose h2 + ul ul ul li::before) {
+  :global(.prose .toc h2 + ul ul ul li::before) {
     content: '•';
     color: var(--color-primary); /* Primary color for third level too */
     font-weight: normal;
   }
 
   /* TOC links styling */
-  :global(.prose h2 + ul a) {
+  :global(.prose .toc h2 + ul a) {
     color: var(--color-foreground);
     text-decoration: none;
     font-weight: 500;
     transition: color 0.15s ease-in-out;
   }
 
-  :global(.prose h2 + ul a:hover) {
+  :global(.prose .toc h2 + ul a:hover) {
     color: var(--color-primary);
     text-decoration: underline;
   }
@@ -385,7 +385,7 @@
     }
 
     /* Hide TOC styling for print */
-    :global(.prose h2 + ul) {
+    :global(.prose .toc h2 + ul) {
       background-color: transparent;
       border: none;
       padding: 0;
