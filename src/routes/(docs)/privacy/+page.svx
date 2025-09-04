@@ -1,9 +1,3 @@
-<script lang="ts">
-  import { browser } from '$app/environment';
-
-  let lastUpdated = 'January 2025';
-</script>
-
 <svelte:head>
   <title>Privacy Policy - Bombastic</title>
   <meta
@@ -12,9 +6,9 @@
   />
 </svelte:head>
 
-# Privacy Policy 
+# Bombastic - Privacy Policy 
 
-*Last updated: {lastUpdated}*
+*Last updated: September 2025*
 
 ## Introduction
 
@@ -29,7 +23,7 @@ Bombastic Limited ("we", "our", or "us") is committed to protecting your privacy
 
 ### Usage Information
 - **Playlist Data**: Playlists you create, modify, or interact with
-- **User Preferences**: UI settings like sidebar state and preferred image formats
+- **User Preferences**: UI settings such as sidebar state
 - **Technical Data**: Error reports, performance metrics (collected anonymously via PostHog in cookieless mode)
 
 ### Automatically Collected Information
@@ -63,16 +57,6 @@ We do not sell, trade, or rent your personal information to third parties. We ma
 - **Security Measures**: We implement industry-standard security measures including encryption, secure authentication, and regular security audits
 - **Data Retention**: We retain your data as long as your account is active or as needed to provide services
 
-## Your Rights and Choices
-
-You have the right to:
-- **Access**: Request a copy of your personal data
-- **Rectification**: Correct inaccurate or incomplete information
-- **Erasure**: Request deletion of your personal data (subject to legal requirements)
-- **Portability**: Request transfer of your data to another service
-- **Objection**: Object to certain processing of your data
-- **Account Management**: Delete your account at any time through account settings
-
 ## Cookies and Tracking
 
 For detailed information about our use of cookies and tracking technologies, please see our [Cookie Policy](/cookies).
@@ -103,8 +87,10 @@ We may update this Privacy Policy from time to time. We will notify you of any m
 ## Contact Us
 
 If you have any questions about this Privacy Policy, please contact us at:
-- **Email**: privacy@bombastic.ltd
-- **Website**: https://bombastic.ltd
+
+**Email**: privacy@bombastic.ltd
+
+**Website**: https://bombastic.ltd
 
 For data protection inquiries, you may also contact your local data protection authority.
 

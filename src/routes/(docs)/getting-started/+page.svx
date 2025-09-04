@@ -17,6 +17,7 @@ Bombastic Limited is a no-frills video consolidation service with a focus on con
 
 Bombastic retrieves data from YouTube for the video game media creators that have been onboarded.  This not only creates a simplified cross-channel search view, but also allows for the creation of custom playlists that can contain content from multiple YouTube channels.  Bombastic's watch tracking feature allows users to easily resume watching videos and playlists where they previously left off. 
 
+<div class="toc">
 ## Table of Contents
 - [Features](#features)
   - [Account Management](#account-management)
@@ -36,6 +37,7 @@ Bombastic retrieves data from YouTube for the video game media creators that hav
   - [Notifications](#notifications)
 - [Reporting Issues](#reporting-issues)
 
+</div>
 
 ## Features
 All features of Bombastic are available for free.  An account is required to use all features except for searching.
