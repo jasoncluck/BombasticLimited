@@ -18,6 +18,8 @@
   import * as Avatar from '$lib/components/ui/avatar';
   import type { PlaylistSchema } from '$lib/schema/playlist-schema';
   import { getUserInitials } from '$lib/components/profile/profile-service';
+  import { utcToLocalDateTime } from '$lib/utils/datetime';
+  import { SvelteDate } from 'svelte/reactivity';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -76,6 +78,28 @@
     if (playlistDuration.minutes > 0)
       parts.push(`${playlistDuration.minutes} min`);
     return parts.join(', ');
+  });
+
+  const deletionMessage = $derived.by(() => {
+    if (!playlist.deleted_at) return null;
+
+    // Parse the deletion timestamp and convert to UTC
+    const deletedDate = new Date(utcToLocalDateTime(playlist.deleted_at));
+
+    // Create cleanup date: add 14 days to deletion date and set to midnight UTC
+    // This matches the SQL: date_trunc('day', (deletion_timestamp AT TIME ZONE 'UTC')::date + INTERVAL '14 days') AT TIME ZONE 'UTC'
+    const cleanupDate = new SvelteDate(deletedDate);
+    cleanupDate.setUTCDate(cleanupDate.getUTCDate() + 14);
+    cleanupDate.setUTCHours(0, 0, 0, 0);
+
+    const month = cleanupDate.toLocaleDateString('en-US', {
+      month: 'short',
+      timeZone: 'UTC',
+    });
+    const day = cleanupDate.getUTCDate();
+    const year = cleanupDate.getUTCFullYear();
+
+    return `The playlist owner has deleted this playlist and it will no longer be available starting: ${month} ${day}, ${year}`;
   });
 
   const videosLabel = $derived(
@@ -146,8 +170,8 @@
         </div>
 
         <div
-          class="relative flex w-full flex-col justify-start gap-2 {mediaQueryState.canHover
-            ? 'min-w-4xs mt-4 '
+          class="relative flex w-full flex-col justify-start {mediaQueryState.canHover
+            ? 'min-w-4xs  '
             : 'min-w-2xs'}"
         >
           <div class="flex w-full flex-col items-start text-left">
@@ -155,9 +179,7 @@
             {#if isPlaylistOwner}
               <button
                 type="button"
-                class="flex w-full cursor-pointer items-start border-none bg-transparent p-0 text-left transition-opacity hover:opacity-80 {mediaQueryState.canHover
-                  ? 'mb-2'
-                  : 'mb-1'}"
+                class="flex w-full cursor-pointer items-start border-none bg-transparent p-0 text-left transition-opacity hover:opacity-80"
                 onclick={handleEditClick}
                 aria-label="Edit playlist settings"
               >
@@ -168,11 +190,7 @@
                 </p>
               </button>
             {:else}
-              <p
-                class="text-muted-foreground text-sm tracking-tight {mediaQueryState.canHover
-                  ? 'mb-2'
-                  : 'mb-1'}"
-              >
+              <p class="text-muted-foreground text-sm tracking-tight">
                 {playlist.type === 'Public'
                   ? 'Public Playlist'
                   : 'Private Playlist'}
@@ -210,9 +228,7 @@
               {#if isPlaylistOwner}
                 <button
                   type="button"
-                  class="flex w-full cursor-pointer items-start border-none bg-transparent p-0 text-left transition-opacity hover:opacity-80 {mediaQueryState.canHover
-                    ? 'my-2'
-                    : 'mb-2'}"
+                  class="mb-2 flex w-full cursor-pointer items-start border-none bg-transparent p-0 text-left transition-opacity hover:opacity-80"
                   onclick={handleEditClick}
                   aria-label="Edit playlist description"
                 >
@@ -222,9 +238,7 @@
                 </button>
               {:else}
                 <p
-                  class="text-muted-foreground text-left text-sm break-all {mediaQueryState.canHover
-                    ? 'my-2'
-                    : 'mb-2'}"
+                  class="text-muted-foreground my-2 text-left text-sm break-all"
                 >
                   {playlist.description}
                 </p>
@@ -233,11 +247,7 @@
           </div>
 
           <!-- Username, video count and duration - non-interactive metadata -->
-          <div
-            class="flex flex-wrap items-center gap-2 {mediaQueryState.canHover
-              ? 'mt-0 max-w-fit'
-              : 'mt-2'}"
-          >
+          <div class="mt-0 flex flex-wrap items-center gap-2">
             {#if playlist.profile_username}
               {#if isSource(playlist.profile_username)}
                 {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}
@@ -294,6 +304,11 @@
               {formattedDuration}
             </p>
           </div>
+          {#if deletionMessage}
+            <p class="mt-2 text-sm">
+              {deletionMessage}
+            </p>
+          {/if}
         </div>
       </div>
 

@@ -50,6 +50,37 @@ export function handlePlaylistNavigation({
   goto(targetUrl);
 }
 
+/**
+ * Navigate by short ID for instances where the full playlist isn't available
+ */
+export function handlePlaylistNavigationByShortId({
+  playlistShortId,
+  contentFilter,
+}: {
+  playlistShortId: string;
+  contentFilter?: CombinedContentFilter;
+}) {
+  const url = new URL(window.location.href);
+  const searchParams = url.searchParams;
+
+  // Build the base URL path
+  const targetPath = `/playlist/${playlistShortId}`;
+
+  // Clear existing playlist sorting parameters
+  getSortKeysForView('playlist').forEach((key) => {
+    searchParams.delete(key);
+  });
+
+  // First check if there's an active content filter for playlist videos
+  if (contentFilter && isPlaylistVideosFilter(contentFilter)) {
+    searchParams.set(contentFilter.sort.key, contentFilter.sort.order);
+  }
+
+  // Navigate to the playlist page with updated search parameters
+  const targetUrl = `${targetPath}?${searchParams.toString()}`;
+  goto(targetUrl);
+}
+
 export function parseImageProperties(
   jsonb: Json
 ): PlaylistImageProperties | null {

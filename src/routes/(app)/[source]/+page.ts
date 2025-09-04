@@ -24,8 +24,11 @@ export const load: PageLoad = ({ data }) => {
           new Image().src = video.thumbnail_url;
         }
       });
-
-      return data;
+    }
+    for (const playlist of data.sourcePlaylists) {
+      if (playlist.image_url) {
+        new Image().src = playlist.image_url;
+      }
     }
   }
 

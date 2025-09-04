@@ -74,7 +74,8 @@ BEGIN
       p.created_at,
       p.name,
       p.short_id,
-      p.created_by,
+      -- Set created_by to NULL if playlist is deleted
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
       p.description,
       public.select_best_image_format(
         p.image_avif_url,
@@ -242,7 +243,9 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
   p_context_limit integer DEFAULT 5,
-  p_preferred_image_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif',
+  p_sorted_by public.playlist_sorted_by DEFAULT NULL,
+  p_sort_order public.playlist_sort_order DEFAULT NULL
 ) RETURNS TABLE (
   -- Playlist metadata
   playlist_id bigint,
@@ -306,11 +309,26 @@ SET
       p.deleted_at,
       prof.username AS profile_username,
       prof.avatar_url AS profile_avatar_url,
-      COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) AS sorted_by,
-      COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) AS sort_order
+      -- Prioritize function parameters, then user_playlists, then defaults
+      COALESCE(
+        p_sorted_by,
+        up.sorted_by,
+        'playlistOrder'::public.playlist_sorted_by
+      ) AS sorted_by,
+      COALESCE(
+        p_sort_order,
+        up.sort_order,
+        'ascending'::public.playlist_sort_order
+      ) AS sort_order
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
+    LEFT JOIN public.user_playlists up ON (
+      p.id = up.id 
+      AND up.user_id = auth.uid()
+      -- Only use user_playlists when function parameters are not provided
+      AND p_sorted_by IS NULL 
+      AND p_sort_order IS NULL
+    )
     WHERE p.short_id = p_short_id
       AND p.deleted_at IS NULL
   ),
@@ -539,7 +557,7 @@ SET
   ORDER BY p.created_at DESC;
 $$;
 
--- Optimized function to search playlists
+-- Search playlists function
 CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "search_term" "text",
   "current_user_id" uuid DEFAULT NULL,
@@ -695,21 +713,27 @@ BEGIN
         p.deleted_at
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    WHERE (
-        -- Basic text matching
-        lower(p.name) LIKE '%' || clean_term || '%'
-        OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
-        -- Full-text search with filtered terms
-        OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
-        OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
-        OR (stemmed_query IS NOT NULL AND p.search_vector @@ stemmed_query)
-        -- Individual filtered word matching
-        OR (filtered_word_count > 0 AND EXISTS (
-            SELECT 1 FROM unnest(filtered_words) AS word 
-            WHERE lower(p.name) LIKE '%' || word || '%'
-               OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || word || '%')
-        ))
-    )
+    WHERE 
+        -- Only return Public playlists (the whole point of search)
+        p.type = 'Public'
+        -- Exclude playlists created by the current user
+        AND (current_user_id IS NULL OR p.created_by != current_user_id)
+        -- Existing search criteria
+        AND (
+            -- Basic text matching
+            lower(p.name) LIKE '%' || clean_term || '%'
+            OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || clean_term || '%')
+            -- Full-text search with filtered terms
+            OR (phrase_query IS NOT NULL AND p.search_vector @@ phrase_query)
+            OR (plain_query IS NOT NULL AND p.search_vector @@ plain_query)
+            OR (stemmed_query IS NOT NULL AND p.search_vector @@ stemmed_query)
+            -- Individual filtered word matching
+            OR (filtered_word_count > 0 AND EXISTS (
+                SELECT 1 FROM unnest(filtered_words) AS word 
+                WHERE lower(p.name) LIKE '%' || word || '%'
+                   OR (p.description IS NOT NULL AND lower(p.description) LIKE '%' || word || '%')
+            ))
+        )
     ORDER BY 
         (CASE 
             -- Exact name match (highest priority)

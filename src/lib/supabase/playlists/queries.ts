@@ -107,9 +107,9 @@ export async function getPlaylistData({
     // Add user-specific playlist fields if they exist (when user is authenticated and it's their playlist)
     ...(firstRow.playlist_sorted_by &&
       firstRow.playlist_sort_order && {
-        sorted_by: firstRow.playlist_sorted_by,
-        sort_order: firstRow.playlist_sort_order,
-      }),
+      sorted_by: firstRow.playlist_sorted_by,
+      sort_order: firstRow.playlist_sort_order,
+    }),
   };
 
   // Transform videos with supabase client
@@ -290,6 +290,8 @@ export async function getPlaylistVideoContext({
     p_video_id: videoId,
     p_context_limit: contextLimit,
     p_preferred_image_format: preferredImageFormat,
+    p_sorted_by: contentFilter.sort.key,
+    p_sort_order: contentFilter.sort.order,
   });
 
   // Apply sorting based on contentFilter

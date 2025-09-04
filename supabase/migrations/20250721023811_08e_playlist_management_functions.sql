@@ -357,13 +357,13 @@ BEGIN
     -- Owner: soft delete playlist and remove all mappings
     UPDATE public.playlists SET deleted_at = NOW() WHERE id = p_playlist_id AND deleted_at IS NULL;
     DELETE FROM public.user_playlists WHERE id = p_playlist_id;
-  ELSE
+  -- ELSE
     -- Follower: remove mapping and reorder positions - FIXED: Add table alias
-    DELETE FROM public.user_playlists up WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
+    -- DELETE FROM public.user_playlists up WHERE up.user_id = current_user_id AND up.id = p_playlist_id;
     
-    UPDATE public.user_playlists up
-    SET playlist_position = up.playlist_position - 1
-    WHERE up.user_id = current_user_id AND up.playlist_position > deleted_position;
+    -- UPDATE public.user_playlists up
+    -- SET playlist_position = up.playlist_position - 1
+    -- WHERE up.user_id = current_user_id AND up.playlist_position > deleted_position;
   END IF;
 
   RETURN TRUE;

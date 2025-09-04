@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import { Input } from '$lib/components/ui/input';
@@ -169,13 +170,11 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
+      await tick(); // Ensure DOM updates immediately
     },
     async onUpdated(event) {
-      isSubmitting = false;
-      updateFlash(page);
-
       if (event.form.valid) {
-        // Update local playlist object
+        // Update local playlist object immediately before any UI updates
         Object.assign(playlist, event.form.data);
 
         if (event.form.data.isDeletingPlaylistImage) {
@@ -184,11 +183,17 @@
           playlist.thumbnail_url = null;
         }
 
-        // Refresh data and close drawer
+        // Force DOM update before proceeding
+        await tick();
+
+        // Now close drawer and refresh data
+        open = false;
         sidebarState.refreshData();
         invalidate('supabase:db:playlists');
-        open = false;
       }
+
+      isSubmitting = false;
+      updateFlash(page);
     },
   });
 
@@ -443,10 +448,11 @@
 
             <!-- Form Footer -->
             <div class="flex flex-col gap-2 pt-4">
-              <Drawer.Footer class="drawer-footer flex gap-2">
+              <Drawer.Footer class="flex gap-2">
                 <Button
                   type="submit"
-                  class="drawer-button-footer"
+                  class="drawer-button-footer tap-highlight-none"
+                  style="-webkit-tap-highlight-color: transparent;"
                   disabled={isSubmitting}
                 >
                   {#if isSubmitting}

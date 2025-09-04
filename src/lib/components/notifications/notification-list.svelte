@@ -20,6 +20,8 @@
     supabase,
     filterType,
     session,
+    showActions = true,
+    onNotificationClick,
   }: {
     supabase: SupabaseClient<Database>;
     showActions?: boolean;
@@ -67,6 +69,15 @@
       return `${days} day${days === 1 ? '' : 's'} ago`;
     } else {
       return notificationTime.toLocaleDateString();
+    }
+  }
+
+  // Handle link clicks in notification messages
+  function handleNotificationMessageClick(event: Event) {
+    const target = event.target as Element;
+    if (target.tagName.toLowerCase() === 'a') {
+      // If a link was clicked, call the callback to close the drawer
+      onNotificationClick?.();
     }
   }
 </script>
@@ -133,6 +144,8 @@
                         text-sm leading-relaxed [&_a]:inline-block [&_a]:cursor-pointer [&_a]:break-words
                         [&_a]:transition-colors
                         [&_b]:font-semibold [&_em]:italic [&_i]:italic [&_strong]:font-semibold [&_u]:underline"
+                      onclick={handleNotificationMessageClick}
+                      role="presentation"
                     >
                       <!-- eslint-disable-next-line svelte/no-at-html-tags -->
                       {@html createSafeHtml(userNotification.message)}
@@ -146,18 +159,20 @@
                   </div>
 
                   <!-- Actions -->
-                  <div class="ml-2 flex items-center space-x-1">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
-                      onclick={() => handleDelete(userNotification)}
-                      title="Remove notification"
-                    >
-                      <X class="h-3 w-3" />
-                      <span class="sr-only"> Remove notification </span>
-                    </Button>
-                  </div>
+                  {#if showActions}
+                    <div class="ml-2 flex items-center space-x-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
+                        onclick={() => handleDelete(userNotification)}
+                        title="Remove notification"
+                      >
+                        <X class="h-3 w-3" />
+                        <span class="sr-only"> Remove notification </span>
+                      </Button>
+                    </div>
+                  {/if}
                 </div>
               </div>
             </div>

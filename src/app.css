@@ -197,7 +197,7 @@
   }
 
   .drawer-button-footer {
-    @apply mt-2 flex h-8 w-full justify-center tracking-wide;
+    @apply mt-2 h-8 w-full;
   }
 
   .drawer-playlist-button {

@@ -20,6 +20,7 @@
   const {
     videos = [],
     highlightPlaylists,
+    playlistContentFilter,
     userProfile,
     session,
     supabase,
@@ -157,13 +158,14 @@
         </a>
         <Content
           videos={highlightPlaylist.videos}
+          playlist={highlightPlaylist.playlist}
           bind:carouselState={
             carouselsState[highlightPlaylist.playlist.short_id]
           }
           {userProfile}
           sectionId={highlightPlaylist.playlist.short_id}
           tilesDisplay="CAROUSEL"
-          {contentFilter}
+          contentFilter={playlistContentFilter}
           {session}
           {supabase}
         />

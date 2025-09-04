@@ -12,8 +12,11 @@
   import { ArrowDown, ArrowUp, Check, ListVideo, Circle } from '@lucide/svelte';
   import type { ContentDisplayProps } from './content';
   import ContentDropdown from './content-dropdown.svelte';
-  import { goto, preloadData } from '$app/navigation';
-  import { getSortDisplayName } from './content-filter';
+  import { preloadData } from '$app/navigation';
+  import {
+    getSortDisplayName,
+    type PlaylistVideosFilter,
+  } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import LazyImage from './LazyImage.svelte';
   import { onMount } from 'svelte';
@@ -21,6 +24,7 @@
     handleContentNavigation,
     generateContentNavigationUrl,
   } from './content';
+  import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { UserProfile } from '$lib/supabase/user-profiles';
 
@@ -247,6 +251,8 @@
       carouselState.lastViewedIndex = index;
     }
 
+    console.log(playlist);
+
     // Use the updated handleVideoClick with context menu handling
     contentState.handleVideoClick({
       event,
@@ -467,7 +473,26 @@
               onclick={(e) => {
                 e.stopPropagation();
                 e.preventDefault();
-                goto(`playlist/${video.playlist_short_id}`);
+                if (
+                  video.playlist_short_id &&
+                  video.playlist_sorted_by &&
+                  video.playlist_sort_order
+                ) {
+                  const playlistContentFilter: PlaylistVideosFilter = {
+                    type: 'playlist',
+                    sort: {
+                      key: video.playlist_sorted_by,
+                      order: video.playlist_sort_order,
+                    },
+                  };
+                  handlePlaylistNavigationByShortId({
+                    playlistShortId: video.playlist_short_id,
+                    contentFilter: playlistContentFilter ?? {
+                      type: 'playlist',
+                      sort: { key: 'playlistOrder', order: 'ascending' },
+                    },
+                  });
+                }
               }}
               href={`playlist/${video.playlist_short_id}`}
               class="flex items-center gap-2 truncate tracking-tight whitespace-normal"
@@ -482,7 +507,7 @@
                   size="5"
                   class="stroke-muted-foreground fill-muted-foreground mr-2 shrink-0 justify-center"
                 />
-                <div class="flex shrink-0 items-center">
+                <div class="flex shrink-1 items-center">
                   <span class="truncate text-xs">
                     {getSortDisplayName({
                       key: video.playlist_sorted_by,
