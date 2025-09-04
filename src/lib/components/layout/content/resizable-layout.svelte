@@ -169,7 +169,7 @@
               Bombastic Limited is not affiliated with, endorsed by, or
               connected to any of the content creators featured on this website.
               All video content is the property of their respective owners and
-              creators.
+              creators
             </p>
           </div>
         </div>
