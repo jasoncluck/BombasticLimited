@@ -19,7 +19,6 @@
   import type { PlaylistSchema } from '$lib/schema/playlist-schema';
   import { getUserInitials } from '$lib/components/profile/profile-service';
   import { utcToLocalDateTime } from '$lib/utils/datetime';
-  import { SvelteDate } from 'svelte/reactivity';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
     breadcrumbs: BreadcrumbItem[];
@@ -83,21 +82,23 @@
   const deletionMessage = $derived.by(() => {
     if (!playlist.deleted_at) return null;
 
+    // Parse the deletion timestamp and convert to UTC
     const deletedDate = new Date(utcToLocalDateTime(playlist.deleted_at));
-    const deletionDate = new SvelteDate(deletedDate);
-    deletionDate.setDate(deletionDate.getDate() + 14);
 
-    // Round up to next midnight UTC
-    deletionDate.setUTCDate(deletionDate.getUTCDate() + 1);
-    deletionDate.setUTCHours(0, 0, 0, 0);
+    // Create cleanup date: add 14 days to deletion date and set to midnight UTC
+    // This matches the SQL: date_trunc('day', (deletion_timestamp AT TIME ZONE 'UTC')::date + INTERVAL '14 days') AT TIME ZONE 'UTC'
+    const cleanupDate = new Date(deletedDate);
+    cleanupDate.setUTCDate(cleanupDate.getUTCDate() + 14);
+    cleanupDate.setUTCHours(0, 0, 0, 0);
 
-    const month = deletionDate.toLocaleDateString('en-US', {
+    const month = cleanupDate.toLocaleDateString('en-US', {
       month: 'short',
+      timeZone: 'UTC',
     });
-    const day = deletionDate.getUTCDate();
-    const year = deletionDate.getUTCFullYear();
+    const day = cleanupDate.getUTCDate();
+    const year = cleanupDate.getUTCFullYear();
 
-    return `The playlist owner has deleted this playlist and it will no longer be available on: ${month} ${day}, ${year}`;
+    return `The playlist owner has deleted this playlist and it will no longer be available starting: ${month} ${day}, ${year}`;
   });
 
   const videosLabel = $derived(

@@ -45,12 +45,16 @@ DECLARE
     follower_users uuid[];
     cleanup_timestamp timestamp with time zone;
     notification_message text;
+    formatted_cleanup_date text;
 BEGIN
     -- Only proceed if this is a public playlist being soft-deleted
     IF OLD.type = 'Public' AND NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
         
         -- Calculate the cleanup timestamp (midnight UTC 14 days from now)
         cleanup_timestamp := date_trunc('day', (CURRENT_DATE + INTERVAL '14 days')::timestamp AT TIME ZONE 'UTC');
+        
+        -- Format the cleanup date for display (you can adjust the format as needed)
+        formatted_cleanup_date := to_char(cleanup_timestamp, 'FMMonth DD, YYYY');
         
         -- Get all followers in one query (excluding creator)
         SELECT array_agg(DISTINCT up.user_id)
@@ -62,8 +66,13 @@ BEGIN
         -- Only proceed if there are followers
         IF follower_users IS NOT NULL AND array_length(follower_users, 1) > 0 THEN
             
-            -- Create base notification message
-            notification_message := 'The playlist you were following: <b>' || OLD.name || '</b> has been deleted. It will be permanently removed on <b>%s</b>.';
+            -- Create notification message with playlist link using short_id
+            notification_message := format(
+                'The playlist you were following: <b><a href="/playlist/%s">%s</a></b> has been deleted. It will be removed from your profile on <b>%s</b>.',
+                OLD.short_id,
+                OLD.name,
+                formatted_cleanup_date
+            );
             
             -- Create single notification with cleanup timing
             INSERT INTO public.notifications (
@@ -75,16 +84,17 @@ BEGIN
                 created_by
             ) VALUES (
                 'system',
-                'Playlist Deleted',
+                'Followed Playlist Deleted',
                 notification_message,
                 jsonb_build_object(
                     'source', 'playlist_deletion',
                     'deleted_playlist_id', OLD.id,
                     'deleted_playlist_name', OLD.name,
+                    'deleted_playlist_short_id', OLD.short_id,
                     'playlist_creator', OLD.created_by,
                     'cleanup_timestamp', cleanup_timestamp,
                     'deletion_timestamp', NEW.deleted_at,
-                    'message_template', notification_message
+                    'formatted_cleanup_date', formatted_cleanup_date
                 ),
                 now(),
                 OLD.created_by

@@ -2,24 +2,29 @@ import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 interface CleanupRequestBody {
-  time: string;
+  readonly time: string;
 }
 
 interface CleanupResponse {
-  success: boolean;
-  processedCount: number;
-  error?: string;
-  timestamp: string;
+  readonly success: boolean;
+  readonly processedCount: number;
+  readonly error?: string;
+  readonly timestamp: string;
 }
 
 interface SupabaseRpcResponse {
-  data: number | null;
-  error: {
-    message: string;
-    details?: string;
-    hint?: string;
-    code?: string;
+  readonly data: number | null;
+  readonly error: {
+    readonly message: string;
+    readonly details?: string;
+    readonly hint?: string;
+    readonly code?: string;
   } | null;
+}
+
+interface EnvironmentVariables {
+  readonly SUPABASE_URL: string | undefined;
+  readonly SUPABASE_SERVICE_ROLE_KEY: string | undefined;
 }
 
 serve(async (req: Request): Promise<Response> => {
@@ -45,8 +50,9 @@ serve(async (req: Request): Promise<Response> => {
     // Parse request body
     let requestBody: CleanupRequestBody;
     try {
-      requestBody = (await req.json()) as CleanupRequestBody;
-    } catch (parseError) {
+      const bodyText = await req.text();
+      requestBody = JSON.parse(bodyText) as CleanupRequestBody;
+    } catch (parseError: unknown) {
       const errorResponse: CleanupResponse = {
         success: false,
         processedCount: 0,
@@ -61,19 +67,22 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Validate environment variables
-    const supabaseUrl: string | undefined = Deno.env.get('SUPABASE_URL');
-    const supabaseServiceKey: string | undefined = Deno.env.get(
-      'SUPABASE_SERVICE_ROLE_KEY'
-    );
+    const env: EnvironmentVariables = {
+      SUPABASE_URL: Deno.env.get('SUPABASE_URL'),
+      SUPABASE_SERVICE_ROLE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
+    };
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
       throw new Error(
         'Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
       );
     }
 
     // Create Supabase client with service role key for admin operations
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(
+      env.SUPABASE_URL,
+      env.SUPABASE_SERVICE_ROLE_KEY
+    );
 
     // Call the cleanup function
     const { data, error }: SupabaseRpcResponse = await supabase.rpc(
@@ -104,7 +113,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const processedCount: number = data ?? 0;
 
-    console.log(`Playlist cleanup completed successfully`, {
+    console.log('Playlist cleanup completed successfully', {
       processedCount,
       requestTime: requestBody.time,
       completedAt: new Date().toISOString(),

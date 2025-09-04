@@ -74,7 +74,7 @@ BEGIN
 END;
 $$;
 
--- Updated delete_playlist function with soft delete and midnight UTC cleanup scheduling
+-- Updated delete_playlist function with proper timezone-aware cleanup scheduling
 CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) 
 RETURNS BOOLEAN LANGUAGE plpgsql
 SET search_path = '' AS $$
@@ -82,6 +82,7 @@ DECLARE
   deleted_position int2;
   playlist_owner uuid;
   current_user_id uuid;
+  deletion_timestamp TIMESTAMP WITH TIME ZONE;
   cleanup_timestamp TIMESTAMP WITH TIME ZONE;
 BEGIN
   current_user_id := auth.uid();
@@ -105,20 +106,33 @@ BEGIN
   END IF;
 
   IF playlist_owner = current_user_id THEN
-    -- Owner: soft delete playlist and keep ALL user_playlists mappings for 14 days
-    UPDATE public.playlists SET deleted_at = NOW() WHERE id = p_playlist_id AND deleted_at IS NULL;
+    -- Get the current timestamp for deletion
+    deletion_timestamp := NOW();
     
-    -- Calculate cleanup timestamp: midnight UTC 14 days from now
-    -- Add 14 days to current date, then truncate to midnight UTC
-    cleanup_timestamp := date_trunc('day', (CURRENT_DATE + INTERVAL '14 days')::timestamp AT TIME ZONE 'UTC');
+    -- OWNER DELETION: Soft delete playlist and schedule cleanup
+    UPDATE public.playlists SET deleted_at = deletion_timestamp WHERE id = p_playlist_id AND deleted_at IS NULL;
     
-    -- Insert into cleanup queue for processing at midnight UTC 14 days later
+    -- Calculate cleanup timestamp: midnight UTC 14 days from deletion timestamp
+    -- Convert deletion timestamp to UTC date, add 14 days, then set to midnight UTC
+    cleanup_timestamp := date_trunc('day', (deletion_timestamp AT TIME ZONE 'UTC')::date + INTERVAL '14 days') AT TIME ZONE 'UTC';
+    
+    -- Schedule cleanup for all user_playlists mappings after 14 days
     INSERT INTO public.playlist_cleanup_queue (playlist_id, cleanup_at, created_at)
-    VALUES (p_playlist_id, cleanup_timestamp, NOW())
-    ON CONFLICT (playlist_id) DO UPDATE SET cleanup_at = EXCLUDED.cleanup_at;
+    VALUES (p_playlist_id, cleanup_timestamp, deletion_timestamp)
+    ON CONFLICT (playlist_id) DO UPDATE SET 
+      cleanup_at = EXCLUDED.cleanup_at,
+      created_at = EXCLUDED.created_at;
+    
+    -- Remove the creator's own mapping immediately (they deleted it, they shouldn't see it)
+    DELETE FROM public.user_playlists WHERE user_id = current_user_id AND id = p_playlist_id;
+    
+    -- Reorder positions for the creator
+    UPDATE public.user_playlists 
+    SET playlist_position = playlist_position - 1
+    WHERE user_id = current_user_id AND playlist_position > deleted_position;
     
   ELSE
-    -- Follower: remove mapping and reorder positions immediately
+    -- FOLLOWER UNFOLLOWING: Remove mapping and reorder positions immediately
     DELETE FROM public.user_playlists WHERE user_id = current_user_id AND id = p_playlist_id;
     
     UPDATE public.user_playlists 
@@ -130,7 +144,7 @@ BEGIN
 END;
 $$;
 
--- Updated get_user_playlists to show deleted playlists during grace period
+-- Updated get_user_playlists to only show deleted playlists to followers
 CREATE OR REPLACE FUNCTION public.get_user_playlists (p_preferred_image_format text DEFAULT 'avif') RETURNS TABLE (
   id bigint,
   created_by uuid,
@@ -186,7 +200,13 @@ SET
   JOIN public.playlists p ON up.id = p.id
   LEFT JOIN public.profiles prof ON p.created_by = prof.id
   WHERE up.user_id = auth.uid()
-    -- Allow deleted playlists to remain visible for 14 days
+    AND (
+      -- Show non-deleted playlists to everyone (owner or follower)
+      p.deleted_at IS NULL
+      OR 
+      -- Show deleted playlists ONLY to followers (not to the creator who deleted it)
+      (p.deleted_at IS NOT NULL AND p.created_by != auth.uid())
+    )
   ORDER BY up.playlist_position ASC;
 $$;
 
