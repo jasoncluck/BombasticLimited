@@ -52,6 +52,8 @@ We do not sell, trade, or rent your personal information to third parties. We ma
 
 ## Data Storage and Security
 
+We implement comprehensive security measures to protect your personal information:
+
 - **Data Storage**: Your data is stored securely using Supabase with encryption at rest
 - **Data Location**: Data is processed and stored in accordance with our service providers' data centers
 - **Security Measures**: We implement industry-standard security measures including encryption, secure authentication, and regular security audits
@@ -60,6 +62,10 @@ We do not sell, trade, or rent your personal information to third parties. We ma
 ## Cookies and Tracking
 
 For detailed information about our use of cookies and tracking technologies, please see our [Cookie Policy](/cookies).
+
+## Your Data Protection Rights
+
+Under applicable data protection laws (including GDPR), you have rights regarding your personal data, including the right to access, rectify, erase, restrict processing, data portability, and object to processing. To exercise any of these rights, please contact us at privacy@bombastic.ltd. You can also delete your account directly through your account settings.
 
 ## Third-Party Services
 
