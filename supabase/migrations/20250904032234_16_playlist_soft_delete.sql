@@ -1,11 +1,10 @@
 -- Migration: playlist_soft_delete_updated
 -- Description: Implements soft delete for playlists with 14-day cleanup period
-
 BEGIN;
 
 -- Create the cleanup queue table
 CREATE TABLE IF NOT EXISTS public.playlist_cleanup_queue (
-  playlist_id bigint PRIMARY KEY REFERENCES public.playlists(id) ON DELETE CASCADE,
+  playlist_id bigint PRIMARY KEY REFERENCES public.playlists (id) ON DELETE CASCADE,
   cleanup_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   processed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
@@ -19,8 +18,15 @@ SELECT
   USING (
     -- Allow users to see cleanup queue entries for playlists they created
     playlist_id IN (
-      SELECT id FROM public.playlists 
-      WHERE created_by = (SELECT auth.uid())
+      SELECT
+        id
+      FROM
+        public.playlists
+      WHERE
+        created_by = (
+          SELECT
+            auth.uid ()
+        )
     )
   );
 
@@ -29,25 +35,32 @@ WITH
   CHECK (
     -- Allow users to insert cleanup queue entries for playlists they created
     playlist_id IN (
-      SELECT id FROM public.playlists 
-      WHERE created_by = (SELECT auth.uid())
+      SELECT
+        id
+      FROM
+        public.playlists
+      WHERE
+        created_by = (
+          SELECT
+            auth.uid ()
+        )
     )
   );
 
 -- Create index for efficient cleanup processing
-CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_cleanup_at 
-ON public.playlist_cleanup_queue (cleanup_at) 
-WHERE processed_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_cleanup_at ON public.playlist_cleanup_queue (cleanup_at)
+WHERE
+  processed_at IS NULL;
 
 -- Create index for cleanup of old processed records
-CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_processed_at 
-ON public.playlist_cleanup_queue (processed_at) 
-WHERE processed_at IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_processed_at ON public.playlist_cleanup_queue (processed_at)
+WHERE
+  processed_at IS NOT NULL;
 
 -- Function to cleanup deleted playlists after 14 days
-CREATE OR REPLACE FUNCTION public.cleanup_deleted_playlists() 
-RETURNS INTEGER LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.cleanup_deleted_playlists () RETURNS INTEGER LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   processed_count INTEGER := 0;
   cleanup_record RECORD;
@@ -81,9 +94,9 @@ END;
 $$;
 
 -- Function for manual/immediate cleanup (useful for testing)
-CREATE OR REPLACE FUNCTION public.force_cleanup_playlist(p_playlist_id bigint) 
-RETURNS BOOLEAN LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.force_cleanup_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 BEGIN
   -- Remove all user_playlists mappings for this playlist
   DELETE FROM public.user_playlists WHERE id = p_playlist_id;
@@ -98,9 +111,9 @@ END;
 $$;
 
 -- Updated delete_playlist function with exact 14-day cleanup scheduling
-CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) 
-RETURNS BOOLEAN LANGUAGE plpgsql
-SET search_path = '' AS $$
+CREATE OR REPLACE FUNCTION public.delete_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
+SET
+  search_path = '' AS $$
 DECLARE
   deleted_position int2;
   playlist_owner uuid;
@@ -280,7 +293,8 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   total_duration_seconds integer,
   is_duration_row boolean
 )
-SET search_path = '' LANGUAGE plpgsql AS $$
+SET
+  search_path = '' LANGUAGE plpgsql AS $$
 DECLARE
   playlist_record RECORD;
   video_count bigint;
@@ -700,11 +714,12 @@ SELECT
   );
 
 -- Helper function to format cleanup time in user's timezone using deleted_at + 14 days (DATE ONLY)
-CREATE OR REPLACE FUNCTION public.format_cleanup_time_for_user(
-    p_user_id uuid,
-    p_deleted_at timestamp with time zone
+CREATE OR REPLACE FUNCTION public.format_cleanup_time_for_user (
+  p_user_id uuid,
+  p_deleted_at TIMESTAMP WITH TIME ZONE
 ) RETURNS text LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
     user_timezone text;
     cleanup_timestamp timestamp with time zone;
@@ -739,7 +754,8 @@ $$;
 
 -- Updated function to notify followers when a public playlist is deleted
 CREATE OR REPLACE FUNCTION public.notify_playlist_deletion () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
     notification_count integer := 0;
     new_notification_id integer;
@@ -820,26 +836,27 @@ END;
 $$;
 
 -- Function to get user notifications with personalized cleanup times
-CREATE OR REPLACE FUNCTION public.get_user_notifications_with_timing(
-    p_user_id uuid DEFAULT NULL,
-    p_limit integer DEFAULT 50,
-    p_offset integer DEFAULT 0
+CREATE OR REPLACE FUNCTION public.get_user_notifications_with_timing (
+  p_user_id uuid DEFAULT NULL,
+  p_limit integer DEFAULT 50,
+  p_offset integer DEFAULT 0
 ) RETURNS TABLE (
-    id integer,
-    type public.notification_type,
-    title text,
-    message text,
-    metadata jsonb,
-    start_datetime timestamp with time zone,
-    end_datetime timestamp with time zone,
-    created_by uuid,
-    created_at timestamp with time zone,
-    updated_at timestamp with time zone,
-    is_read boolean,
-    read_at timestamp with time zone,
-    formatted_message text
+  id integer,
+  type public.notification_type,
+  title text,
+  message text,
+  metadata jsonb,
+  start_datetime TIMESTAMP WITH TIME ZONE,
+  end_datetime TIMESTAMP WITH TIME ZONE,
+  created_by uuid,
+  created_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE,
+  is_read boolean,
+  read_at TIMESTAMP WITH TIME ZONE,
+  formatted_message text
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
     target_user_id uuid;
 BEGIN
@@ -887,18 +904,16 @@ END;
 $$;
 
 -- Function to get remaining time until cleanup for a specific playlist
-CREATE OR REPLACE FUNCTION public.get_playlist_cleanup_info(
-    p_playlist_id bigint,
-    p_user_id uuid DEFAULT NULL
-) RETURNS TABLE (
-    playlist_id bigint,
-    deleted_at timestamp with time zone,
-    cleanup_at timestamp with time zone,
-    days_remaining numeric,
-    hours_remaining numeric,
-    formatted_cleanup_time text
+CREATE OR REPLACE FUNCTION public.get_playlist_cleanup_info (p_playlist_id bigint, p_user_id uuid DEFAULT NULL) RETURNS TABLE (
+  playlist_id bigint,
+  deleted_at TIMESTAMP WITH TIME ZONE,
+  cleanup_at TIMESTAMP WITH TIME ZONE,
+  days_remaining numeric,
+  hours_remaining numeric,
+  formatted_cleanup_time text
 ) LANGUAGE plpgsql SECURITY DEFINER
-SET search_path = '' AS $$
+SET
+  search_path = '' AS $$
 DECLARE
     target_user_id uuid;
     playlist_deleted_at timestamp with time zone;
@@ -937,19 +952,20 @@ $$;
 
 -- Create optimized trigger
 DROP TRIGGER IF EXISTS playlist_deletion_notification_trigger ON public.playlists;
+
 CREATE TRIGGER playlist_deletion_notification_trigger
-AFTER UPDATE OF deleted_at ON public.playlists 
-FOR EACH ROW
-EXECUTE FUNCTION public.notify_playlist_deletion();
+AFTER
+UPDATE OF deleted_at ON public.playlists FOR EACH ROW
+EXECUTE FUNCTION public.notify_playlist_deletion ();
 
 -- Add documentation
-COMMENT ON FUNCTION public.notify_playlist_deletion() IS 'Sends notifications to followers when a public playlist is deleted, using deleted_at + 14 days for cleanup timing (date only format)';
+COMMENT ON FUNCTION public.notify_playlist_deletion () IS 'Sends notifications to followers when a public playlist is deleted, using deleted_at + 14 days for cleanup timing (date only format)';
 
-COMMENT ON FUNCTION public.format_cleanup_time_for_user(uuid, timestamp with time zone) IS 'Formats cleanup timestamp (deleted_at + 14 days) in user''s local timezone showing only the date (Month DD, YYYY)';
+COMMENT ON FUNCTION public.format_cleanup_time_for_user (uuid, TIMESTAMP WITH TIME ZONE) IS 'Formats cleanup timestamp (deleted_at + 14 days) in user''s local timezone showing only the date (Month DD, YYYY)';
 
-COMMENT ON FUNCTION public.get_user_notifications_with_timing(uuid, integer, integer) IS 'Gets user notifications with personalized timing for playlist deletion messages using deleted_at + 14 days (date only format)';
+COMMENT ON FUNCTION public.get_user_notifications_with_timing (uuid, integer, integer) IS 'Gets user notifications with personalized timing for playlist deletion messages using deleted_at + 14 days (date only format)';
 
-COMMENT ON FUNCTION public.get_playlist_cleanup_info(bigint, uuid) IS 'Gets cleanup information for a playlist using deleted_at + 14 days calculation';
+COMMENT ON FUNCTION public.get_playlist_cleanup_info (bigint, uuid) IS 'Gets cleanup information for a playlist using deleted_at + 14 days calculation';
 
 COMMENT ON TRIGGER playlist_deletion_notification_trigger ON public.playlists IS 'Triggers notifications when public playlists are soft-deleted with exact 14-day timing from deletion timestamp';
 

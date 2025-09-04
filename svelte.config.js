@@ -185,21 +185,6 @@ const config = {
         },
       },
     }),
-    // Add file watching exclusions to reduce file descriptor usage
-    files: {
-      lib: 'src/lib',
-      routes: 'src/routes',
-      serviceWorker: 'src/service-worker',
-      appTemplate: 'src/app.html',
-    },
-    // Explicitly exclude large directories from being watched
-    serviceWorker: {
-      register: false,
-    },
-  },
-  // Configure Vite to ignore certain patterns
-  vitePlugin: {
-    inspector: false, // Disable Svelte inspector to reduce file watching
   },
 };
 

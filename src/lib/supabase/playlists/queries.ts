@@ -107,9 +107,9 @@ export async function getPlaylistData({
     // Add user-specific playlist fields if they exist (when user is authenticated and it's their playlist)
     ...(firstRow.playlist_sorted_by &&
       firstRow.playlist_sort_order && {
-      sorted_by: firstRow.playlist_sorted_by,
-      sort_order: firstRow.playlist_sort_order,
-    }),
+        sorted_by: firstRow.playlist_sorted_by,
+        sort_order: firstRow.playlist_sort_order,
+      }),
   };
 
   // Transform videos with supabase client
