@@ -139,7 +139,7 @@
           </div>
         </div>
       </div>
-      <footer class="mt-20 px-4 pb-8 text-center">
+      <footer class="mt-10 px-4 pb-8 text-center">
         <div class="mx-auto max-w-4xl">
           <div class="border-t border-gray-200 pt-8 dark:border-gray-700">
             <nav class="mb-4 flex justify-center gap-8">
