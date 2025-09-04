@@ -251,6 +251,8 @@
       carouselState.lastViewedIndex = index;
     }
 
+    console.log(playlist);
+
     // Use the updated handleVideoClick with context menu handling
     contentState.handleVideoClick({
       event,

@@ -243,7 +243,9 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_short_id text,
   p_video_id text,
   p_context_limit integer DEFAULT 5,
-  p_preferred_image_format text DEFAULT 'avif'
+  p_preferred_image_format text DEFAULT 'avif',
+  p_sorted_by public.playlist_sorted_by DEFAULT NULL,
+  p_sort_order public.playlist_sort_order DEFAULT NULL
 ) RETURNS TABLE (
   -- Playlist metadata
   playlist_id bigint,
@@ -307,11 +309,26 @@ SET
       p.deleted_at,
       prof.username AS profile_username,
       prof.avatar_url AS profile_avatar_url,
-      COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) AS sorted_by,
-      COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) AS sort_order
+      -- Prioritize function parameters, then user_playlists, then defaults
+      COALESCE(
+        p_sorted_by,
+        up.sorted_by,
+        'playlistOrder'::public.playlist_sorted_by
+      ) AS sorted_by,
+      COALESCE(
+        p_sort_order,
+        up.sort_order,
+        'ascending'::public.playlist_sort_order
+      ) AS sort_order
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON p.id = up.id AND up.user_id = auth.uid()
+    LEFT JOIN public.user_playlists up ON (
+      p.id = up.id 
+      AND up.user_id = auth.uid()
+      -- Only use user_playlists when function parameters are not provided
+      AND p_sorted_by IS NULL 
+      AND p_sort_order IS NULL
+    )
     WHERE p.short_id = p_short_id
       AND p.deleted_at IS NULL
   ),
