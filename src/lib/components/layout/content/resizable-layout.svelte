@@ -139,7 +139,7 @@
           </div>
         </div>
       </div>
-      <footer class="mt-20 px-4 pb-8 text-center">
+      <footer class="mt-10 px-4 pb-8 text-center">
         <div class="mx-auto max-w-4xl">
           <div class="border-t border-gray-200 pt-8 dark:border-gray-700">
             <nav class="mb-4 flex justify-center gap-8">
@@ -147,6 +147,18 @@
                 href="/getting-started"
                 class="text-muted-foreground text-xs hover:underline"
                 >Documentation</a
+              >
+              <a
+                href="/privacy"
+                class="text-muted-foreground text-xs hover:underline"
+                target="_blank"
+                rel="noopener">Privacy Policy</a
+              >
+              <a
+                href="/cookies"
+                class="text-muted-foreground text-xs hover:underline"
+                target="_blank"
+                rel="noopener">Cookie Policy</a
               >
               <a
                 href="mailto:jason@bombastic.ltd"
@@ -157,7 +169,7 @@
               Bombastic Limited is not affiliated with, endorsed by, or
               connected to any of the content creators featured on this website.
               All video content is the property of their respective owners and
-              creators.
+              creators
             </p>
           </div>
         </div>
