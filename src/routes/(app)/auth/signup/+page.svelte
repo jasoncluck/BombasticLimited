@@ -31,25 +31,29 @@
 
     <SignupForm data={{ form: data.signupForm, ...data }} />
 
-    <div class="text-muted-foreground mt-6 text-center text-sm">
-      By creating an account, you agree to our
-      <a
-        href="/privacy"
-        class="text-primary underline hover:opacity-80"
-        target="_blank"
-        rel="noopener"
+    <div class="flex w-full justify-center">
+      <div
+        class="text-muted-foreground mx-2 mt-6 w-full max-w-[300px] text-center text-sm"
       >
-        Privacy Policy
-      </a>
-      and
-      <a
-        href="/cookies"
-        class="text-primary underline hover:opacity-80"
-        target="_blank"
-        rel="noopener"
-      >
-        Cookie Policy
-      </a>
+        By creating an account, you agree to our
+        <a
+          href="/privacy"
+          class="text-primary underline hover:opacity-80"
+          target="_blank"
+          rel="noopener"
+        >
+          Privacy Policy
+        </a>
+        and
+        <a
+          href="/cookies"
+          class="text-primary underline hover:opacity-80"
+          target="_blank"
+          rel="noopener"
+        >
+          Cookie Policy
+        </a>
+      </div>
     </div>
   </div>
 </div>
