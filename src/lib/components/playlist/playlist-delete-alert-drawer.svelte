@@ -65,11 +65,6 @@
   <Drawer.Content class="outline-hiddden" data-drawer-content>
     <Drawer.Header class="mx-4 text-left">
       <div class="mb-4 flex items-center gap-3">
-        <div
-          class="bg-destructive/10 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-lg"
-        >
-          <CircleMinus class="text-destructive !h-6 !w-6" />
-        </div>
         <div class="flex flex-col gap-1">
           <Drawer.Title class="text-lg font-semibold">
             Delete Public Playlist
@@ -104,47 +99,31 @@
       </div>
 
       <Drawer.Description class="text-muted-foreground text-sm leading-relaxed">
-        You are about to delete the public playlist "{playlist.name}". This
-        action will:
-        <br /><br />
-        • Permanently remove this playlist
-        <br />
-        • Remove it from all followers' profiles
-        <br />
-        • This action cannot be undone
+        You are about to delete the public playlist: <b>{playlist.name} </b>.
+        Deleting this will also remove the playlist from any followers'
+        accounts.
       </Drawer.Description>
     </Drawer.Header>
 
     <hr />
 
-    <div class="space-y-3 px-4 py-6">
-      <Button
-        class="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full justify-center"
-        onclick={confirmDelete}
-      >
-        <CircleMinus class="drawer-icon" />
-        Delete Playlist
-      </Button>
-
-      <Button
-        variant="outline"
-        class="w-full justify-center"
-        onclick={cancelDelete}
-      >
-        Cancel
-      </Button>
-    </div>
-
     <Drawer.Footer class="drawer-footer">
-      <Drawer.Close
-        class={buttonVariants({
-          class: 'drawer-button-footer',
-          variant: 'ghost',
-        })}
-        data-drawer-close
-      >
-        Close
-      </Drawer.Close>
+      <div class="space-y-3 px-4 py-6">
+        <Button
+          class="bg-destructive text-destructive-foreground hover:bg-destructive/90 w-full justify-center"
+          onclick={confirmDelete}
+        >
+          Delete Playlist
+        </Button>
+
+        <Button
+          variant="outline"
+          class="w-full justify-center"
+          onclick={cancelDelete}
+        >
+          Close
+        </Button>
+      </div>
     </Drawer.Footer>
   </Drawer.Content>
 </Drawer.Root>

@@ -35,12 +35,20 @@
     userNotifications.filter((n) => n.read === false) ?? []
   );
 
+  // State to control drawer open/close
+  let isDrawerOpen = $state(false);
+
   // Auto-mark all notifications as read when bell menu opens
   async function handleMenuOpen() {
     if (unreadNotifications) {
       await markAsRead({ notificationIds, supabase, session });
       navigationState.refreshData();
     }
+  }
+
+  // Function to close the drawer
+  function closeDrawer() {
+    isDrawerOpen = false;
   }
 </script>
 
@@ -78,7 +86,10 @@
   </DropdownMenu.Root>
 {:else}
   <!-- Mobile Notification Drawer -->
-  <Drawer.Root onOpenChange={(open) => open && handleMenuOpen()}>
+  <Drawer.Root
+    bind:open={isDrawerOpen}
+    onOpenChange={(open) => open && handleMenuOpen()}
+  >
     <Drawer.Trigger
       data-testid="notification-bell-mobile"
       class="relative cursor-pointer outline-hidden {buttonVariants({
@@ -107,7 +118,12 @@
         </div>
 
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
-          <NotificationList {supabase} {session} showActions={false} />
+          <NotificationList
+            {supabase}
+            {session}
+            showActions={false}
+            onNotificationClick={closeDrawer}
+          />
         </div>
 
         <Drawer.Footer>
