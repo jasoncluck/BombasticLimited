@@ -233,11 +233,7 @@
           </div>
 
           <!-- Username, video count and duration - non-interactive metadata -->
-          <div
-            class="flex flex-wrap items-center gap-2 {mediaQueryState.canHover
-              ? 'mt-0 max-w-fit'
-              : 'mt-2'}"
-          >
+          <div class="mt-0 flex flex-wrap items-center gap-2">
             {#if playlist.profile_username}
               {#if isSource(playlist.profile_username)}
                 {@const sourceInfo = SOURCE_INFO[playlist.profile_username]}

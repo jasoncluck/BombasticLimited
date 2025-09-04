@@ -14,7 +14,7 @@
   import * as Popover from '$lib/components/ui/popover';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
-  import type { Snippet } from 'svelte';
+  import { tick, type Snippet } from 'svelte';
   import type { Session } from '@supabase/supabase-js';
   import { page } from '$app/state';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
@@ -169,6 +169,8 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
+
+      await tick(); // Force DOM update before proceeding
     },
     async onUpdated(event) {
       isSubmitting = false;
