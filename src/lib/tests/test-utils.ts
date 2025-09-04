@@ -83,6 +83,8 @@ export function createMockUserProfile(
     avatar_url: null,
     providers: ['email'],
     sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
+    username_history: {},
+
     content_display: 'TILES',
     content_description: 'FULL',
     account_type: 'default',
