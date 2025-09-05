@@ -141,7 +141,6 @@ describe('continue/+page.server.ts load function', () => {
         },
         preferredImageFormat: 'webp',
         supabase: mockSupabase,
-        session: mockSession,
       });
 
       expect((result as any).videos).toEqual(mockContinueVideos);
@@ -168,7 +167,6 @@ describe('continue/+page.server.ts load function', () => {
         },
         preferredImageFormat: 'webp',
         supabase: mockSupabase,
-        session: mockSession,
       });
     });
 

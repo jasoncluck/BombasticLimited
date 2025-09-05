@@ -10,7 +10,7 @@ export const load: PageServerLoad = async ({
   params,
   parent,
   url,
-  locals: { supabase, session },
+  locals: { supabase },
 }) => {
   depends('supabase:db:playlistsForProfile');
 
@@ -28,7 +28,6 @@ export const load: PageServerLoad = async ({
       limit: DEFAULT_NUM_PLAYLISTS_PAGINATION,
       currentPage,
       supabase,
-      session,
       preferredImageFormat,
     });
 

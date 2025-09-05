@@ -175,7 +175,6 @@
           await updateProfileSources({
             sources: orderedSources,
             supabase,
-            session,
           });
 
           // Refresh sidebar to get updated profile

@@ -39,7 +39,6 @@
     await deleteNotifications({
       notificationIds: [notification.notification_id],
       supabase,
-      session,
     });
 
     console.log('refreshing after delete');

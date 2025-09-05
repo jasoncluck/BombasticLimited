@@ -33,7 +33,7 @@
   const contentState = setContentState(pageState);
   const mediaQueryState = setMediaQueryState();
   const sidebarState = $derived(setSidebarState(preferredImageFormat));
-  const navigationState = setNavigationState();
+  const navigationState = $derived(setNavigationState(session));
 
   setSourceState(pageState);
 
@@ -162,7 +162,7 @@
 
     if (is403Error) {
       console.warn(
-        `🔐 Auth 403 error detected in ${context}, cleaning up auth state:`,
+        `Auth 403 error detected in ${context}, cleaning up auth state:`,
         error
       );
 
@@ -177,12 +177,12 @@
         await invalidate('supabase:auth');
 
         console.log(
-          `✅ Auth state cleaned up successfully after 403 error in ${context}`
+          `Auth state cleaned up successfully after 403 error in ${context}`
         );
         return true; // Indicate successful cleanup
       } catch (cleanupError) {
         console.error(
-          `❌ Failed to clean up auth state after 403 error in ${context}:`,
+          `Failed to clean up auth state after 403 error in ${context}:`,
           cleanupError
         );
         return false;

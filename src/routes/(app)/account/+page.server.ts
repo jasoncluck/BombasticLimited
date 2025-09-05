@@ -16,10 +16,13 @@ import { Filter } from 'bad-words';
 
 export const load: PageServerLoad = async ({
   depends,
-  locals: { supabase, session },
+  locals: { supabase },
 }) => {
   depends('supabase:db:profiles');
-  if (!session) {
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+
+  if (!claimsData?.claims || claimsError) {
     redirect(303, '/auth/login');
   }
 
@@ -28,12 +31,11 @@ export const load: PageServerLoad = async ({
     await Promise.all([
       getUserProfile({
         supabase,
-        session,
       }),
       getUserDiscordIdentity({
         supabase,
       }),
-      superValidate({ email: session.user.email }, zod(emailSchema), {
+      superValidate({ email: claimsData.claims.email }, zod(emailSchema), {
         errors: true,
       }),
       superValidate(zod(passwordSchema), {
@@ -163,13 +165,18 @@ export const actions: Actions = {
     }
   },
 
-  resetPassword: async ({ cookies, locals: { supabase, session } }) => {
-    if (!session || !session.user.email) {
-      throw new Error(`Could not find email for account: ${session?.user.id}`);
+  resetPassword: async ({ cookies, locals: { supabase } }) => {
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
+
+    if (!claimsData?.claims || claimsError || !claimsData.claims.email) {
+      throw new Error(
+        `Could not find email for account: ${claimsData?.claims?.sub}`
+      );
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(
-      session.user.email,
+      claimsData.claims.email,
       { redirectTo: `/auth/password/update` }
     );
     if (error) {
@@ -182,7 +189,7 @@ export const actions: Actions = {
       setFlash(
         {
           type: 'success',
-          message: `Password reset email sent to ${session.user.email}.`,
+          message: `Password reset email sent to ${claimsData.claims.email}.`,
           field: 'password',
         },
         cookies
@@ -190,8 +197,10 @@ export const actions: Actions = {
     }
   },
 
-  deleteAccount: async ({ cookies, locals: { supabase, session } }) => {
-    if (!session) {
+  deleteAccount: async ({ cookies, locals: { supabase } }) => {
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
+    if (!claimsData?.claims || claimsError) {
       redirect(303, '/login');
     }
 

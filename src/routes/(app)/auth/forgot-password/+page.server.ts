@@ -5,10 +5,11 @@ import { forgotPasswordSchema } from '$lib/schema/auth-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { session } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase } }) => {
   const form = await superValidate(zod(forgotPasswordSchema));
 
-  if (session) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (claimsData?.claims) {
     redirect(303, '/');
   }
 

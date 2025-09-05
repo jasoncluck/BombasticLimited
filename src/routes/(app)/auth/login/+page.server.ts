@@ -5,8 +5,9 @@ import { loginSchema } from '$lib/schema/auth-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { session } }) => {
-  if (session) {
+export const load: PageServerLoad = async ({ locals: { supabase } }) => {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (claimsData?.claims) {
     redirect(303, '/');
   }
 

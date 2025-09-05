@@ -28,20 +28,20 @@ export async function checkIfUsernameIsUnique({
 }
 
 export async function getUserProfile({
-  session,
   supabase,
 }: {
-  session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
-  if (!session) {
-    return { profile: null, error: null };
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
+    return { profile: null, error: claimsError };
   }
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .select()
-    .eq('id', session.user.id)
+    .eq('id', claimsData.claims.sub)
     .single();
 
   if (error) {
@@ -182,20 +182,20 @@ export async function unlinkDiscordIdentity({
 export async function updateProfileContentDisplay({
   contentDisplay,
   supabase,
-  session,
 }: {
   contentDisplay: ContentDisplay;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
 }) {
-  if (!session) {
-    return { profile: null, error: null };
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
+    return { profile: null, error: claimsError };
   }
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .update({ content_display: contentDisplay })
-    .eq('id', session.user.id)
+    .eq('id', claimsData.claims.sub)
     .select()
     .single();
 
@@ -213,20 +213,20 @@ export async function updateProfileContentDisplay({
 export async function updateProfileSources({
   sources,
   supabase,
-  session,
 }: {
   sources: Database['public']['Enums']['source'][];
   supabase: SupabaseClient<Database>;
-  session: Session | null;
 }) {
-  if (!session) {
-    return { profile: null, error: null };
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
+    return { profile: null, error: claimsError };
   }
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .update({ sources })
-    .eq('id', session.user.id)
+    .eq('id', claimsData.claims.sub)
     .select()
     .single();
 
@@ -247,20 +247,20 @@ export async function updateProfileSources({
  * but can be useful for UI display purposes
  */
 export async function getUserProviders({
-  session,
   supabase,
 }: {
-  session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
-  if (!session) {
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
     return { providers: [], error: null };
   }
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .select('providers')
-    .eq('id', session.user.id)
+    .eq('id', claimsData.claims.sub)
     .single();
 
   if (error) {
