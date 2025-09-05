@@ -247,8 +247,15 @@ $$;
 
 -- Updated get_playlist_data function to return NULL for created_by when playlist is deleted
 -- Drop the existing function first
-DROP FUNCTION IF EXISTS public.get_playlist_data(
-  text, text, uuid, integer, integer, text, text, text
+DROP FUNCTION IF EXISTS public.get_playlist_data (
+  text,
+  text,
+  uuid,
+  integer,
+  integer,
+  text,
+  text,
+  text
 );
 
 -- Now recreate it with the correct return type
@@ -280,7 +287,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
-  playlist_position int2,  -- Changed from integer to int2 to match the database column type
+  playlist_position int2, -- Changed from integer to int2 to match the database column type
   -- Video data with optimized image paths  
   video_id text,
   video_position int2,

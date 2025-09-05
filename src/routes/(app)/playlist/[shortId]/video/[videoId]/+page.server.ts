@@ -25,7 +25,6 @@ export const load: PageServerLoad = async ({
     throw new Error(`Invalid content filter`);
   }
 
-  console.log(contentFilter);
   // Get playlist video context - sorting will be applied in the TypeScript function
   const videoContextResult = await getPlaylistVideoContext({
     shortId: params.shortId,

@@ -116,9 +116,6 @@ export interface SidebarState {
 
   // Cleanup method
   cleanup: () => void;
-
-  // Backward compatibility
-  setSidebarState: (state: any) => void;
 }
 
 // Key for localStorage to track shown notifications
