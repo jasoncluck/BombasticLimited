@@ -4,18 +4,19 @@ import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({
   request,
-  locals: { supabase, session },
+  locals: { supabase },
 }) => {
   const data = await request.json();
 
   // You may want to validate the payload, check auth, etc.
   const { videoTimestamp }: { videoTimestamp: TimestampWithVideoId } = data;
 
-  if (session) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (claimsData?.claims) {
     // Save to Supabase (adapt to your schema/method)
     const { error } = await supabase.from('timestamps').upsert(
       {
-        user_id: session.user.id,
+        user_id: claimsData.claims.sub,
         video_id: videoTimestamp.videoId,
         video_start_seconds: videoTimestamp.timestampStartSeconds,
         watched_at: videoTimestamp.watchedAt?.toISOString() ?? null,

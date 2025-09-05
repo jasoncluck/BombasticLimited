@@ -28,20 +28,19 @@ export async function checkIfUsernameIsUnique({
 }
 
 export async function getUserProfile({
-  session,
   supabase,
 }: {
-  session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
-  if (!session) {
-    return { profile: null, error: null };
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
+    return { profile: null, error: claimsError };
   }
 
   const { data: profile, error } = await supabase
     .from('profiles')
     .select()
-    .eq('id', session.user.id)
+    .eq('id', claimsData.claims.sub)
     .single();
 
   if (error) {

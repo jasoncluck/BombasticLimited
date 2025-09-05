@@ -13,7 +13,7 @@ interface RequestBody {
 }
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-  const { session, supabase } = locals;
+  const { supabase } = locals;
 
   // Parse the request body
   const body: RequestBody = await request.json();
@@ -21,7 +21,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     body.preferredImageFormat ??
     detectOptimalFormat(request.headers.get('accept') || '');
 
-  if (!session) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (!claimsData?.claims) {
     return json({ playlists: [], userProfile: null, userPlaylistsCount: 0 });
   }
 
@@ -29,8 +30,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     { userPlaylists, count: userPlaylistsCount },
     { profile: userProfile },
   ] = await Promise.all([
-    getUserPlaylists({ session, supabase, preferredImageFormat }),
-    getProfile({ supabase, session }),
+    getUserPlaylists({ supabase, preferredImageFormat }),
+    getProfile({ supabase }),
   ]);
 
   // Process image URLs in parallel

@@ -41,7 +41,7 @@
   // Auto-mark all notifications as read when bell menu opens
   async function handleMenuOpen() {
     if (unreadNotifications) {
-      await markAsRead({ notificationIds, supabase, session });
+      await markAsRead({ notificationIds, supabase });
       navigationState.refreshData();
     }
   }

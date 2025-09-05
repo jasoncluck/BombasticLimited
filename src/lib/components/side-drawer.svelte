@@ -89,7 +89,6 @@
     try {
       await updateProfileSources({
         sources,
-        session,
         supabase,
       });
     } catch (error) {
