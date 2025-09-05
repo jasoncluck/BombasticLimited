@@ -1,10 +1,7 @@
 import type { Video, VideoWithTimestamp } from '$lib/supabase/videos';
 import { type DateValue } from '@internationalized/date';
 import { goto } from '$app/navigation';
-import type {
-  PlaylistVideo,
-  PlaylistVideoWithTimestamp,
-} from '$lib/supabase/playlists';
+import type { PlaylistVideo } from '$lib/supabase/playlists';
 import type { ContentView } from './content';
 import { PAGINATION_QUERY_KEY } from '../pagination/pagination';
 

@@ -98,17 +98,16 @@ export async function getPlaylistData({
   const basePlaylist = transformPlaylistFromRPC(firstRow, supabase);
 
   // Properly construct the playlist with all available fields
-  const playlist: Playlist = {
+  const playlist: UserPlaylist = {
     ...basePlaylist,
     // Add profile username which is always available
     profile_username: firstRow.profile_username,
     profile_avatar_url: firstRow.profile_avatar_url,
-    // Add user-specific playlist fields if they exist (when user is authenticated and it's their playlist)
-    ...(firstRow.playlist_sorted_by &&
-      firstRow.playlist_sort_order && {
-        sorted_by: firstRow.playlist_sorted_by,
-        sort_order: firstRow.playlist_sort_order,
-      }),
+    // Always include sorted_by and sort_order from the database response
+    // The SQL function already handles the three-tier fallback system
+    sorted_by: firstRow.playlist_sorted_by,
+    sort_order: firstRow.playlist_sort_order,
+    playlist_position: firstRow.playlist_position,
   };
 
   // Transform videos with supabase client

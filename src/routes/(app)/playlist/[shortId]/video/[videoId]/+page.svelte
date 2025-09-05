@@ -55,7 +55,6 @@
               if ('sorted_by' in playlist && 'sort_order' in playlist) {
                 // The playlist sort and order is the current contentFilter if it exists otherwise we fallback to the
                 // saved user playlist settings and if those doen't exist then we use the default 'playlistOrder'
-                console.log('should navigate');
                 handlePlaylistNavigationByShortId({
                   playlistShortId: playlist.short_id,
                   contentFilter: contentFilter ?? {

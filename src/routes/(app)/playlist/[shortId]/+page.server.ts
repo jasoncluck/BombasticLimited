@@ -16,6 +16,7 @@ import {
   isPlaylistVideosFilter,
   type SortKey,
   type SortOrder,
+  type PlaylistVideosFilter,
 } from '$lib/components/content/content-filter';
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
@@ -43,8 +44,13 @@ export const load: PageServerLoad = async ({
     searchParams: url.searchParams,
   });
 
+  // Check if URL has explicit sort parameters
   const hasExplicitSortInUrl =
-    url.searchParams.has('sort') || url.searchParams.has('order');
+    url.searchParams.has('sort') ||
+    url.searchParams.has('order') ||
+    url.searchParams.has('playlistOrder') ||
+    url.searchParams.has('datePublished') ||
+    url.searchParams.has('title');
 
   const { playlist, videos, videosCount, playlistDuration } =
     await getPlaylistData({
@@ -84,19 +90,37 @@ export const load: PageServerLoad = async ({
     ),
   ]);
 
-  const effectiveContentFilter =
-    isUserPlaylist(playlist) &&
-    playlist.sorted_by &&
-    playlist.sort_order &&
-    !hasExplicitSortInUrl
-      ? {
-          type: 'playlist' as const,
-          sort: {
-            key: playlist.sorted_by as SortKey<PlaylistVideo>,
-            order: playlist.sort_order as SortOrder,
-          },
-        }
-      : contentFilter;
+  // FIXED: Priority order - URL params first, then user playlist settings, then defaults
+  const effectiveContentFilter: PlaylistVideosFilter = (() => {
+    // If URL has explicit sort parameters, use the current contentFilter (which was built from URL)
+    if (hasExplicitSortInUrl) {
+      return contentFilter;
+    }
+
+    // If no URL params but playlist has user settings, use those
+    if (isUserPlaylist(playlist) && playlist.sorted_by && playlist.sort_order) {
+      return {
+        type: 'playlist' as const,
+        sort: {
+          key: playlist.sorted_by as SortKey<PlaylistVideo>,
+          order: playlist.sort_order as SortOrder,
+        },
+        startDate: contentFilter.startDate,
+        endDate: contentFilter.endDate,
+      };
+    }
+
+    // Fall back to defaults (playlistOrder ascending)
+    return {
+      type: 'playlist' as const,
+      sort: {
+        key: 'playlistOrder' as SortKey<PlaylistVideo>,
+        order: 'ascending' as SortOrder,
+      },
+      startDate: contentFilter.startDate,
+      endDate: contentFilter.endDate,
+    };
+  })();
 
   return {
     playlist,
@@ -199,8 +223,6 @@ export const actions: Actions = {
       supabase,
       session,
     });
-
-    console.log(currentPlaylist);
 
     if (!currentPlaylist) {
       return fail(404, { form });
