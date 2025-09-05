@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import { Input } from '$lib/components/ui/input';
@@ -170,7 +169,6 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
-      await tick(); // Ensure DOM updates immediately
     },
     async onUpdated(event) {
       if (event.form.valid) {
@@ -183,8 +181,6 @@
           playlist.thumbnail_url = null;
         }
 
-        // Force DOM update before proceeding
-        await tick();
 
         // Now close drawer and refresh data
         open = false;
