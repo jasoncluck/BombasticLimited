@@ -1,8 +1,4 @@
-import type {
-  PostgrestError,
-  Session,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from './database.types';
 
 // Infer types from Supabase RPC functions
@@ -187,21 +183,15 @@ function isWithinLastHour(timestamp: string): boolean {
  */
 export async function getNotifications({
   supabase,
-  session,
   filters = {},
 }: {
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   filters?: NotificationFilters;
 }): Promise<{
   notifications: NotificationWithMeta[];
   error: PostgrestError | null;
   count?: number;
 }> {
-  if (!session?.user.id) {
-    return { notifications: [], error: null, count: 0 };
-  }
-
   const { data, error } = await supabase.rpc('get_user_notifications', {
     limit_count: filters.limit ?? 20,
     offset_count: filters.offset ?? 0,
@@ -234,15 +224,9 @@ export async function getNotifications({
  */
 export async function getUnreadCount({
   supabase,
-  session,
 }: {
   supabase: SupabaseClient<Database>;
-  session: Session | null;
 }): Promise<{ data: number; error: PostgrestError | null }> {
-  if (!session?.user.id) {
-    return { data: 0, error: null };
-  }
-
   const { data, error } = await supabase.rpc('get_unread_notification_count');
 
   if (error) {
@@ -261,25 +245,12 @@ export async function getUnreadCount({
  */
 export async function getNotificationCounts({
   supabase,
-  session,
 }: {
   supabase: SupabaseClient<Database>;
-  session: Session | null;
 }): Promise<{
   data: NotificationCounts;
   error: PostgrestError | null;
 }> {
-  if (!session?.user.id) {
-    const emptyCounts: NotificationCounts = {
-      total: 0,
-      unread: 0,
-      by_type: {
-        system: 0,
-      },
-    };
-    return { data: emptyCounts, error: null };
-  }
-
   // Use the RPC function to get all notifications for counting
   const { data: notifications, error } = await supabase.rpc(
     'get_user_notifications',
@@ -322,17 +293,11 @@ export async function getNotificationCounts({
  */
 export async function markAsRead({
   supabase,
-  session,
   notificationIds,
 }: {
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   notificationIds?: number[]; // Made optional since function can mark all as read
 }): Promise<{ error: PostgrestError | null }> {
-  if (!session?.user.id) {
-    return { error: { message: 'User not authenticated' } as PostgrestError };
-  }
-
   const { error } = await supabase.rpc('mark_notifications_as_read', {
     notification_ids: notificationIds,
   });
@@ -388,20 +353,11 @@ export async function createNotification({
  */
 export async function deleteNotifications({
   supabase,
-  session,
   notificationIds,
 }: {
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   notificationIds: number[];
 }): Promise<{ data: number | null; error: PostgrestError | null }> {
-  if (!session) {
-    return {
-      data: null,
-      error: { message: 'User not authenticated' } as PostgrestError,
-    };
-  }
-
   const { data, error } = await supabase.rpc('remove_user_notification', {
     notification_ids: notificationIds,
   });

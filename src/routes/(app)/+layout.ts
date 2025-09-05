@@ -40,25 +40,10 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
         },
       });
 
-  /**
-   * Use `getClaims` for enhanced security by validating JWT claims directly.
-   * If getClaims is not available, fall back to getSession.
-   */
   let session = null;
-  try {
-    const { data: claimsData, error } = await supabase.auth.getClaims();
 
-    if (!error && claimsData?.claims) {
-      // If claims are valid, get the session
-      const { data: sessionData } = await supabase.auth.getSession();
-      session = sessionData.session;
-    }
-  } catch (error) {
-    // Fallback to getSession if getClaims is not available
-    console.warn('getClaims not available, falling back to getSession:', error);
-    const { data: sessionData } = await supabase.auth.getSession();
-    session = sessionData.session;
-  }
+  const { data: sessionData } = await supabase.auth.getSession();
+  session = sessionData.session;
 
   // Destructure the simplified data without complex caching
   const {

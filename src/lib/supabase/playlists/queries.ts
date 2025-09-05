@@ -34,7 +34,6 @@ export async function getPlaylistData({
   currentPage = 1,
   limit = DEFAULT_NUM_VIDEOS_PAGINATION,
   supabase,
-  session,
   preferredImageFormat,
 }: {
   shortId?: string;
@@ -43,7 +42,6 @@ export async function getPlaylistData({
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   preferredImageFormat: string;
 }): Promise<{
   playlist: Playlist | null;
@@ -63,7 +61,6 @@ export async function getPlaylistData({
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
     p_youtube_id: youtubeId,
-    p_user_id: session?.user.id,
     p_current_page: currentPage,
     p_limit: limit,
     p_sort_key: sortKey,
