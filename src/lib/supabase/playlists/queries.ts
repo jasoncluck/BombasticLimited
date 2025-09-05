@@ -10,7 +10,6 @@ import {
   DEFAULT_NUM_VIDEOS_PAGINATION,
   type Video,
 } from '../videos';
-import { getSortField } from './utils';
 import {
   transformPlaylistFromRPC,
   transformUserPlaylistFromRPC,
@@ -285,7 +284,7 @@ export async function getPlaylistVideoContext({
   error: PostgrestError | null;
 }> {
   // Call the simplified RPC function
-  let query = supabase.rpc('get_playlist_video_context', {
+  const query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
     p_context_limit: contextLimit,
@@ -293,14 +292,6 @@ export async function getPlaylistVideoContext({
     p_sorted_by: contentFilter.sort.key,
     p_sort_order: contentFilter.sort.order,
   });
-
-  // Apply sorting based on contentFilter
-  const sortField = getSortField(contentFilter.sort.key);
-  const ascending = contentFilter.sort.order === 'ascending';
-
-  if (sortField) {
-    query = query.order(sortField, { ascending });
-  }
 
   const { data, error } = await query;
 

@@ -4,7 +4,6 @@
   import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist.js';
   import VideoPlayer from '$lib/components/video/video-player.svelte';
   import type { CarouselState } from '$lib/state/content.svelte';
-  import { isUserPlaylist } from '$lib/supabase/playlists/utils.js';
   import { ListVideo } from '@lucide/svelte';
 
   const { data } = $props();
@@ -56,17 +55,10 @@
               if ('sorted_by' in playlist && 'sort_order' in playlist) {
                 // The playlist sort and order is the current contentFilter if it exists otherwise we fallback to the
                 // saved user playlist settings and if those doen't exist then we use the default 'playlistOrder'
-                const playlistContentFilter: PlaylistVideosFilter = {
-                  type: 'playlist',
-                  sort: {
-                    key: playlist.sorted_by,
-                    order: playlist.sort_order,
-                  },
-                };
                 console.log('should navigate');
                 handlePlaylistNavigationByShortId({
                   playlistShortId: playlist.short_id,
-                  contentFilter: playlistContentFilter ?? {
+                  contentFilter: contentFilter ?? {
                     type: 'playlist',
                     sort: { key: 'playlistOrder', order: 'ascending' },
                   },
