@@ -163,12 +163,18 @@
 
   /* Special styling for Table of Contents */
   /* Target the first unordered list after an h2 (Table of Contents) */
-  :global(.prose h2 + ul) {
+  :global(.toc ul) {
     padding-left: 0;
     line-height: 0.9;
     list-style-type: none;
     border-left: 2px solid var(--color-border);
-    padding: 1rem;
+    padding: 0.5rem;
+  }
+
+  /* Remove the left border for the first UL immediately following the H2 */
+  :global(.toc h2 + ul) {
+    border-left: none;
+    padding-left: 0;
   }
 
   :global(.prose h2 + ul li) {

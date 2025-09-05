@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { type PlaylistVideosFilter } from '$lib/components/content/content-filter.js';
+  import {
+    getSortDisplayName,
+    type PlaylistVideosFilter,
+  } from '$lib/components/content/content-filter.js';
   import Content from '$lib/components/content/content.svelte';
   import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist.js';
   import VideoPlayer from '$lib/components/video/video-player.svelte';
   import type { CarouselState } from '$lib/state/content.svelte';
-  import { ListVideo } from '@lucide/svelte';
+  import { ArrowDown, ArrowUp, ListVideo } from '@lucide/svelte';
 
   const { data } = $props();
   let {
@@ -69,6 +72,24 @@
           >
             {playlist.name}
           </a>
+
+          <div class="text-muted-foreground flex shrink-1 items-center">
+            <span class="truncate text-xs">
+              {getSortDisplayName({
+                key: contentFilter.sort.key,
+                view: 'playlist',
+              })}
+            </span>
+            {#if contentFilter.sort.order}
+              {#if contentFilter.sort.order === 'ascending'}
+                <ArrowUp size="14" class="ml-1 shrink-0" />
+                <span class="sr-only">Sorted Ascending</span>
+              {:else}
+                <ArrowDown size="14" class="ml-1 shrink-0" />
+                <span class="sr-only">Sorted Descending</span>
+              {/if}
+            {/if}
+          </div>
         </div>
       </div>
       <Content
