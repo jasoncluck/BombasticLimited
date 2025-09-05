@@ -4,7 +4,7 @@
 -- This migration adds automatic playlist duration calculation in seconds
 -- ============================================================================
 -- Add duration_seconds column to playlists table
-ALTER TABLE "public"."playlists" 
+ALTER TABLE "public"."playlists"
 ADD COLUMN IF NOT EXISTS "duration_seconds" integer DEFAULT 0 NOT NULL;
 
 COMMENT ON COLUMN "public"."playlists"."duration_seconds" IS 'Total duration of all videos in playlist, calculated automatically in seconds';

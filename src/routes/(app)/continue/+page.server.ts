@@ -1,5 +1,4 @@
 import { getInProgressVideos } from '$lib/supabase/videos';
-import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { isTimestampFilter } from '$lib/components/content/content-filter';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
@@ -7,14 +6,10 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 export const load: PageServerLoad = async ({
   parent,
   url,
-  locals: { supabase, session },
+  locals: { supabase },
   depends,
 }) => {
   depends('supabase:db:videos');
-
-  if (!session) {
-    redirect(303, '/');
-  }
 
   // Run parent() and pagination parsing in parallel (though pagination is synchronous)
   const [{ contentFilter, preferredImageFormat }, currentPage] =
@@ -35,7 +30,6 @@ export const load: PageServerLoad = async ({
     currentPage,
     contentFilter,
     supabase,
-    session,
     preferredImageFormat,
   });
 

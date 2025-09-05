@@ -4,7 +4,8 @@
 -- This migration adds storage paths for optimized images and job processing queue
 -- ============================================================================
 -- Add optimized image storage paths to playlists table (WebP-first approach)
-ALTER TABLE "public"."playlists" ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK (
+ALTER TABLE "public"."playlists"
+ADD COLUMN IF NOT EXISTS "image_processing_status" text DEFAULT 'pending' CHECK (
   image_processing_status IN ('pending', 'processing', 'completed', 'failed')
 ),
 ADD COLUMN IF NOT EXISTS "image_processing_updated_at" TIMESTAMP WITH TIME ZONE DEFAULT now(),

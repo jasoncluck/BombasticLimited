@@ -7,11 +7,7 @@ import {
 } from '$lib/components/content/content-filter';
 import type { Source } from '$lib/constants/source';
 import type { Tables } from '$lib/supabase/database.types';
-import type {
-  PostgrestError,
-  Session,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './database.types';
 import { getFullImageUrl, type PlaylistVideo } from './playlists';
 
@@ -138,7 +134,6 @@ function transformVideoFromGetInProgressVideos(
 
 interface VideoQueryCommonProps {
   supabase: SupabaseClient<Database>;
-  session?: Session | null;
 }
 
 interface VideoQuerySingleProps extends VideoQueryCommonProps {
@@ -272,7 +267,6 @@ export async function getInProgressVideos({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   contentFilter,
   supabase,
-  session,
   preferredImageFormat = 'avif',
 }: VideoQueryMultipleProps<VideoWithTimestamp> & {
   preferredImageFormat?: string;
@@ -281,10 +275,6 @@ export async function getInProgressVideos({
   count: number | null;
   error?: PostgrestError | null;
 }> {
-  if (!session) {
-    return { videos: [], count: 0 };
-  }
-
   const sortOptionInfo = SORT_OPTIONS_TIMESTAMPS[contentFilter.sort.key];
 
   const query = supabase

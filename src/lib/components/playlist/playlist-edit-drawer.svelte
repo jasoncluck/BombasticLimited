@@ -181,7 +181,6 @@
           playlist.thumbnail_url = null;
         }
 
-
         // Now close drawer and refresh data
         open = false;
         sidebarState.refreshData();

@@ -123,7 +123,6 @@ describe('account/+page.server.ts', () => {
       depends: vi.fn(),
       locals: {
         supabase: mockSupabase,
-        session: mockSession,
       },
     };
 
@@ -151,7 +150,6 @@ describe('account/+page.server.ts', () => {
       );
       expect(mockGetUserProfile).toHaveBeenCalledWith({
         supabase: mockSupabase,
-        session: mockSession,
       });
       expect(mockGetUserDiscordIdentity).toHaveBeenCalledWith({
         supabase: mockSupabase,
@@ -164,7 +162,6 @@ describe('account/+page.server.ts', () => {
         ...mockLoadEvent,
         locals: {
           ...mockLoadEvent.locals,
-          session: null,
         },
       };
 

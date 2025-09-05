@@ -2,7 +2,7 @@ import { getVideo, incrementVideoView } from '$lib/supabase/videos';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, session },
+  locals: { supabase },
   parent,
   params,
 }) => {
@@ -13,7 +13,6 @@ export const load: PageServerLoad = async ({
   const { video } = await getVideo({
     supabase,
     videoId,
-    session,
     preferredImageFormat,
   });
 

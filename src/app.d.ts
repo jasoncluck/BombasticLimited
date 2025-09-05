@@ -51,12 +51,9 @@ declare global {
     // interface Error {}
     interface Locals {
       supabase: SupabaseClient<Database>;
-      safeGetSession: () => Promise<{
-        userId: string | null;
-      }>;
+      userId: string | null;
     }
     interface PageData {
-      session: Session | null;
       flash?: {
         type: 'success' | 'error';
         message: string;
