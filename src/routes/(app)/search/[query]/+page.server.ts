@@ -12,7 +12,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({
   params,
   parent,
-  locals: { supabase, session },
+  locals: { supabase },
   depends,
 }) => {
   depends('supabase:db:videos');
@@ -38,7 +38,6 @@ export const load: PageServerLoad = async ({
           contentFilter,
           searchString,
           supabase,
-          session,
           preferredImageFormat,
         });
         return { source, videos, count };
@@ -49,7 +48,6 @@ export const load: PageServerLoad = async ({
       searchString,
       limit: 6,
       supabase,
-      session,
       preferredImageFormat,
     }),
   ]);

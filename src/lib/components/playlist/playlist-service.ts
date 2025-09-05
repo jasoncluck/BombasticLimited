@@ -46,7 +46,6 @@ export async function handleCreatePlaylist({
   }
 
   const { playlist, error } = await createPlaylist({
-    session,
     supabase,
   });
 
@@ -131,7 +130,6 @@ export async function handleAddVideosToPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
     supabase,
-    session,
   });
 
   if (error) {
@@ -273,7 +271,6 @@ export async function handleUpdatePlaylistPosition({
     playlistId: playlist.id,
     position,
     supabase,
-    session,
   });
 }
 
@@ -306,7 +303,6 @@ export async function handleFollowPlaylist({
     playlistId: playlist.id,
     position,
     supabase,
-    session,
   });
 
   if (
@@ -360,7 +356,6 @@ export async function handleUnfollowPlaylist({
   const { error } = await unfollowPlaylist({
     playlistId: playlist.id,
     supabase,
-    session,
   });
 
   sidebarState.refreshData();
@@ -396,7 +391,6 @@ export async function handleUpdatePlaylistSort({
     sortedBy,
     sortOrder,
     supabase,
-    session,
   });
 
   if (error) {

@@ -26,7 +26,7 @@ import { getProfileById } from '$lib/supabase/user-profiles';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, session },
+  locals: { supabase },
   url,
   parent,
   params,
@@ -60,7 +60,6 @@ export const load: PageServerLoad = async ({
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
       preferredImageFormat,
       supabase,
-      session,
     });
 
   if (!playlist) {
@@ -157,11 +156,12 @@ function imagePropertiesChanged(
 export const actions: Actions = {
   default: async ({
     request,
-    locals: { supabase, session },
+    locals: { supabase },
     cookies,
     params,
   }: RequestEvent) => {
-    if (!session) {
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    if (!claimsData?.claims || claimsError) {
       redirect(302, '/auth');
     }
 
@@ -221,7 +221,6 @@ export const actions: Actions = {
       limit: 1,
       preferredImageFormat: 'avif',
       supabase,
-      session,
     });
 
     if (!currentPlaylist) {
@@ -275,7 +274,6 @@ export const actions: Actions = {
       imageProperties: image_properties,
       type,
       supabase,
-      session,
     });
 
     // Return the updated playlist data for optimistic updates

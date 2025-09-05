@@ -136,7 +136,6 @@ export async function getPlaylistDataByYoutubeId({
   currentPage = 1,
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   supabase,
-  session,
   preferredImageFormat,
 }: {
   youtubeId: string;
@@ -144,7 +143,6 @@ export async function getPlaylistDataByYoutubeId({
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   preferredImageFormat: string;
 }) {
   return getPlaylistData({
@@ -153,7 +151,6 @@ export async function getPlaylistDataByYoutubeId({
     currentPage,
     limit,
     supabase,
-    session,
     preferredImageFormat,
   });
 }
@@ -387,11 +384,9 @@ export async function getPlaylistVideoContext({
  * Get user's playlists
  */
 export async function getUserPlaylists({
-  session,
   supabase,
   preferredImageFormat,
 }: {
-  session: Session | null;
   supabase: SupabaseClient<Database>;
   preferredImageFormat: string;
 }): Promise<{
@@ -399,7 +394,8 @@ export async function getUserPlaylists({
   count: number | null;
   error: PostgrestError | null;
 }> {
-  if (!session) {
+  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
     return { userPlaylists: [], count: null, error: null };
   }
 
@@ -430,19 +426,20 @@ export async function searchPlaylists({
   currentPage = 1,
   preferredImageFormat,
   supabase,
-  session,
 }: {
   searchString: string;
   limit?: number;
   currentPage?: number;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   preferredImageFormat: string;
 }): Promise<{
   playlists: Playlist[];
   error: PostgrestError | null;
   count?: number | null;
 }> {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const currentUserId = claimsData?.claims?.sub || undefined;
+
   const {
     data: playlists,
     error,
@@ -452,7 +449,7 @@ export async function searchPlaylists({
       'search_playlists',
       {
         search_term: searchString,
-        current_user_id: session?.user.id,
+        current_user_id: currentUserId,
         p_preferred_image_format: preferredImageFormat,
       },
       { count: 'exact' }
