@@ -19,7 +19,9 @@ export const load: PageServerLoad = async ({
   locals: { supabase },
 }) => {
   depends('supabase:db:profiles');
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+
   if (!claimsData?.claims || claimsError) {
     redirect(303, '/auth/login');
   }
@@ -164,9 +166,13 @@ export const actions: Actions = {
   },
 
   resetPassword: async ({ cookies, locals: { supabase } }) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
+
     if (!claimsData?.claims || claimsError || !claimsData.claims.email) {
-      throw new Error(`Could not find email for account: ${claimsData?.claims?.sub}`);
+      throw new Error(
+        `Could not find email for account: ${claimsData?.claims?.sub}`
+      );
     }
 
     const { error } = await supabase.auth.resetPasswordForEmail(
@@ -192,7 +198,8 @@ export const actions: Actions = {
   },
 
   deleteAccount: async ({ cookies, locals: { supabase } }) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       redirect(303, '/login');
     }

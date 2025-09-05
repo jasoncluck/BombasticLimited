@@ -14,14 +14,11 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-  updatePassword: async ({
-    request,
-    cookies,
-    locals: { supabase },
-  }) => {
+  updatePassword: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(passwordConfirmationSchema));
 
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       throw new Error(`Could not find valid claims for user`);
     }

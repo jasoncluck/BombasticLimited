@@ -32,7 +32,8 @@ export async function getUserProfile({
 }: {
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     return { profile: null, error: claimsError };
   }
@@ -185,7 +186,8 @@ export async function updateProfileContentDisplay({
   contentDisplay: ContentDisplay;
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     return { profile: null, error: claimsError };
   }
@@ -215,7 +217,8 @@ export async function updateProfileSources({
   sources: Database['public']['Enums']['source'][];
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     return { profile: null, error: claimsError };
   }
@@ -248,7 +251,8 @@ export async function getUserProviders({
 }: {
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     return { providers: [], error: null };
   }

@@ -1,10 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({
-  locals: { supabase },
-}) => {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+export const GET: RequestHandler = async ({ locals: { supabase } }) => {
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     return json({ error: 'Not authenticated' }, { status: 401 });
   }

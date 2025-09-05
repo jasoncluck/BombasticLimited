@@ -12,7 +12,8 @@ export const load: PageServerLoad = async ({
   locals: { supabase },
   parent,
 }) => {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     throw redirect(302, '/auth/login');
   }
@@ -52,7 +53,8 @@ export const actions: Actions = {
     cookies,
     locals: { supabase },
   }) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       return fail(401, { error: 'Not authenticated' });
     }
@@ -116,12 +118,9 @@ export const actions: Actions = {
     };
   },
 
-  sendTestNotification: async ({
-    request,
-    cookies,
-    locals: { supabase },
-  }) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  sendTestNotification: async ({ request, cookies, locals: { supabase } }) => {
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       return fail(401, { error: 'Not authenticated' });
     }
@@ -206,7 +205,8 @@ export const actions: Actions = {
   },
 
   manualCleanup: async ({ cookies, locals: { supabase } }) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       return fail(401, { error: 'Not authenticated' });
     }
@@ -254,12 +254,9 @@ export const actions: Actions = {
     }
   },
 
-  cancelNotification: async ({
-    request,
-    cookies,
-    locals: { supabase },
-  }) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  cancelNotification: async ({ request, cookies, locals: { supabase } }) => {
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       return fail(401, { error: 'Not authenticated' });
     }

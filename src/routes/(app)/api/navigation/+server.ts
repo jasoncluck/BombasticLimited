@@ -6,11 +6,7 @@ import { getNotifications } from '$lib/supabase/notifications';
 export const GET: RequestHandler = async ({ locals }) => {
   const { supabase } = locals;
 
-  // Check authentication using getClaims
-  const { data: claimsData } = await supabase.auth.getClaims();
-
   // For navigation, we mainly need user profile for personalization
-
   const [{ profile: userProfile }, { notifications }] = await Promise.all([
     getProfile({ supabase }),
     getNotifications({ supabase }),
@@ -20,7 +16,6 @@ export const GET: RequestHandler = async ({ locals }) => {
     {
       userProfile,
       notifications,
-      claims: claimsData?.claims,
     },
     {
       headers: {

@@ -160,7 +160,8 @@ export const actions: Actions = {
     cookies,
     params,
   }: RequestEvent) => {
-    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
       redirect(302, '/auth');
     }

@@ -23,7 +23,8 @@ export async function createPlaylist({
   name?: string;
   supabase: SupabaseClient<Database>;
 }) {
-  const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
   if (!claimsData?.claims || claimsError) {
     throw new Error('Unable to create playlist, invalid authentication');
   }
