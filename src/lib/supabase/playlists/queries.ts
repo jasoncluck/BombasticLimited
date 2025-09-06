@@ -1,6 +1,10 @@
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types';
-import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
+import type {
+  PlaylistVideosFilter,
+  SortKey,
+  SortOrder,
+} from '$lib/components/content/content-filter';
 import {
   DEFAULT_NUM_VIDEOS_OVERVIEW,
   DEFAULT_NUM_VIDEOS_PAGINATION,
@@ -18,6 +22,7 @@ import {
   type UserPlaylist,
   type PlaylistVideoWithTimestamp,
   DEFAULT_NUM_PLAYLISTS_OVERVIEW,
+  type PlaylistVideo,
 } from './types';
 
 /**
@@ -34,7 +39,7 @@ export async function getPlaylistData({
 }: {
   shortId?: string;
   youtubeId?: string;
-  contentFilter?: PlaylistVideosFilter;
+  contentFilter: PlaylistVideosFilter;
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
@@ -51,8 +56,16 @@ export async function getPlaylistData({
     throw new Error('Exactly one of shortId or youtubeId must be provided');
   }
 
-  const sortKey = contentFilter ? contentFilter.sort.key : undefined;
-  const sortOrder = contentFilter ? contentFilter.sort.order : undefined;
+  let sortKey: SortKey<PlaylistVideo> | undefined;
+  let sortOrder: SortOrder | undefined;
+
+  if (
+    contentFilter.sort.key !== 'playlistOrder' &&
+    contentFilter.sort.order === 'ascending'
+  ) {
+    sortKey = contentFilter.sort.key;
+    sortOrder = contentFilter.sort.order;
+  }
 
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
