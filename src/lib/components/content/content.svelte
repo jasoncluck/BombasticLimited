@@ -160,7 +160,7 @@
   });
 </script>
 
-<div class="mt-2">
+<div class="pt-2">
   {#if videos.length < 1}
     <div {...restProps} class="flex h-[180px] items-center justify-center">
       <p>{playlist ? 'Playlist is empty' : 'No results found'}</p>
