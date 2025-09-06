@@ -16,6 +16,7 @@ import {
   isPlaylistVideosFilter,
   type SortKey,
   type SortOrder,
+  type PlaylistVideosFilter,
 } from '$lib/components/content/content-filter';
 import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
@@ -25,7 +26,7 @@ import { getProfileById } from '$lib/supabase/user-profiles';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, session },
+  locals: { supabase },
   url,
   parent,
   params,
@@ -43,8 +44,13 @@ export const load: PageServerLoad = async ({
     searchParams: url.searchParams,
   });
 
+  // Check if URL has explicit sort parameters
   const hasExplicitSortInUrl =
-    url.searchParams.has('sort') || url.searchParams.has('order');
+    url.searchParams.has('sort') ||
+    url.searchParams.has('order') ||
+    url.searchParams.has('playlistOrder') ||
+    url.searchParams.has('datePublished') ||
+    url.searchParams.has('title');
 
   const { playlist, videos, videosCount, playlistDuration } =
     await getPlaylistData({
@@ -54,7 +60,6 @@ export const load: PageServerLoad = async ({
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
       preferredImageFormat,
       supabase,
-      session,
     });
 
   if (!playlist) {
@@ -84,19 +89,37 @@ export const load: PageServerLoad = async ({
     ),
   ]);
 
-  const effectiveContentFilter =
-    isUserPlaylist(playlist) &&
-    playlist.sorted_by &&
-    playlist.sort_order &&
-    !hasExplicitSortInUrl
-      ? {
-          type: 'playlist' as const,
-          sort: {
-            key: playlist.sorted_by as SortKey<PlaylistVideo>,
-            order: playlist.sort_order as SortOrder,
-          },
-        }
-      : contentFilter;
+  // FIXED: Priority order - URL params first, then user playlist settings, then defaults
+  const effectiveContentFilter: PlaylistVideosFilter = (() => {
+    // If URL has explicit sort parameters, use the current contentFilter (which was built from URL)
+    if (hasExplicitSortInUrl) {
+      return contentFilter;
+    }
+
+    // If no URL params but playlist has user settings, use those
+    if (isUserPlaylist(playlist) && playlist.sorted_by && playlist.sort_order) {
+      return {
+        type: 'playlist' as const,
+        sort: {
+          key: playlist.sorted_by as SortKey<PlaylistVideo>,
+          order: playlist.sort_order as SortOrder,
+        },
+        startDate: contentFilter.startDate,
+        endDate: contentFilter.endDate,
+      };
+    }
+
+    // Fall back to defaults (playlistOrder ascending)
+    return {
+      type: 'playlist' as const,
+      sort: {
+        key: 'playlistOrder' as SortKey<PlaylistVideo>,
+        order: 'ascending' as SortOrder,
+      },
+      startDate: contentFilter.startDate,
+      endDate: contentFilter.endDate,
+    };
+  })();
 
   return {
     playlist,
@@ -133,11 +156,13 @@ function imagePropertiesChanged(
 export const actions: Actions = {
   default: async ({
     request,
-    locals: { supabase, session },
+    locals: { supabase },
     cookies,
     params,
   }: RequestEvent) => {
-    if (!session) {
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
+    if (!claimsData?.claims || claimsError) {
       redirect(302, '/auth');
     }
 
@@ -197,10 +222,7 @@ export const actions: Actions = {
       limit: 1,
       preferredImageFormat: 'avif',
       supabase,
-      session,
     });
-
-    console.log(currentPlaylist);
 
     if (!currentPlaylist) {
       return fail(404, { form });
@@ -253,7 +275,6 @@ export const actions: Actions = {
       imageProperties: image_properties,
       type,
       supabase,
-      session,
     });
 
     // Return the updated playlist data for optimistic updates

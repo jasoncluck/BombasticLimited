@@ -847,6 +847,7 @@ export type Database = {
           playlist_image_properties: Json;
           playlist_image_url: string;
           playlist_name: string;
+          playlist_position: number;
           playlist_short_id: string;
           playlist_sort_order: Database['public']['Enums']['playlist_sort_order'];
           playlist_sorted_by: Database['public']['Enums']['playlist_sorted_by'];
@@ -877,8 +878,9 @@ export type Database = {
           p_context_limit?: number;
           p_preferred_image_format?: string;
           p_short_id: string;
-          p_sort_order?: Database['public']['Enums']['playlist_sort_order'];
-          p_sorted_by?: Database['public']['Enums']['playlist_sorted_by'];
+          p_sort_order?: string;
+          p_sorted_by?: string;
+          p_user_id?: string;
           p_video_id: string;
         };
         Returns: {

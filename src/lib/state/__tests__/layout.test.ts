@@ -131,6 +131,7 @@ vi.mock('$app/environment', () => ({
 
 // Now import the module under test
 import { NavigationStateClass } from '../navigation.svelte.js';
+import { createMockSession } from '$lib/tests/test-utils.js';
 
 describe('Navigation State with Layout Functionality', () => {
   let navigationState: NavigationStateClass;
@@ -138,7 +139,8 @@ describe('Navigation State with Layout Functionality', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue('false'); // Return valid JSON for sidebar state
-    navigationState = new NavigationStateClass();
+    const mockSession = createMockSession();
+    navigationState = new NavigationStateClass(mockSession);
   });
 
   afterEach(() => {

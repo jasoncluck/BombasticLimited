@@ -3,10 +3,11 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   depends,
-  locals: { session },
+  locals: { supabase },
 }) => {
   depends('supabase:auth');
-  if (session) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (claimsData?.claims) {
     redirect(303, '/');
   }
 };

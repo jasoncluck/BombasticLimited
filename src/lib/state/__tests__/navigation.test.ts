@@ -3,12 +3,13 @@
  */
 import { describe, it, expect, beforeEach } from 'vitest';
 import { NavigationStateClass } from '$lib/state/navigation.svelte';
+import { createMockSession } from '$lib/tests/test-utils';
 
 describe('Navigation State Management', () => {
   let navigationState: NavigationStateClass;
-
+  const mockSession = createMockSession();
   beforeEach(() => {
-    navigationState = new NavigationStateClass();
+    navigationState = new NavigationStateClass(mockSession);
   });
 
   it('should initialize with default navigation items', () => {

@@ -7,7 +7,7 @@ import { loadFlash } from 'sveltekit-flash-message/server';
 
 export const load: LayoutServerLoad = loadFlash(
   async ({
-    locals: { safeGetSession, supabase },
+    locals: { supabase },
     cookies,
     parent,
     url,
@@ -17,7 +17,7 @@ export const load: LayoutServerLoad = loadFlash(
   }) => {
     depends('supabase:db:profiles');
 
-    const sessionPromise = safeGetSession();
+    const claimsPromise = supabase.auth.getClaims();
 
     const { preferredImageFormat } = await parent();
 
@@ -37,12 +37,12 @@ export const load: LayoutServerLoad = loadFlash(
       view,
     });
 
-    const { session } = await sessionPromise;
+    const { data: claimsData } = await claimsPromise;
 
     // Simple cache headers for static assets only
     if (!isDataRequest && !url.pathname.startsWith('/api/')) {
       try {
-        const cacheControl = session
+        const cacheControl = claimsData?.claims
           ? 'private, max-age=300, must-revalidate'
           : 'public, max-age=600, s-maxage=1200';
 
@@ -57,13 +57,12 @@ export const load: LayoutServerLoad = loadFlash(
 
     const [{ profile: userProfile }] = await Promise.all([
       getProfile({
-        session,
         supabase,
       }),
     ]);
 
     return {
-      session,
+      claims: claimsData?.claims,
       contentFilter,
       cookies: cookies.getAll(),
       userProfile,

@@ -1,10 +1,10 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({
-  locals: { supabase, session },
-}) => {
-  if (!session) {
+export const GET: RequestHandler = async ({ locals: { supabase } }) => {
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
     return json({ error: 'Not authenticated' }, { status: 401 });
   }
 
@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({
   const { data: userProfile, error: profileError } = await supabase
     .from('profiles')
     .select('account_type')
-    .eq('id', session.user.id)
+    .eq('id', claimsData.claims.sub)
     .single();
 
   if (profileError || !userProfile || userProfile.account_type !== 'admin') {

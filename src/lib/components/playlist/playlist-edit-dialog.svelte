@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import * as Dialog from '$lib/components/ui/dialog';
@@ -64,7 +63,6 @@
   let previewImageUrl = $state<string | null>(null);
 
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
-  console.log(playlist.thumbnail_url);
   const imageSrc = $derived(playlist.thumbnail_url);
   const displayImageUrl = $derived(previewImageUrl || playlist.image_url);
 
@@ -167,7 +165,6 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
-      await tick(); // Ensure DOM updates immediately
     },
     async onUpdated(event) {
       if (event.form.valid) {
@@ -179,9 +176,6 @@
           playlist.image_properties = null;
           playlist.thumbnail_url = null;
         }
-
-        // Force DOM update before proceeding
-        await tick();
 
         // Now close dialog and refresh data
         open = false;

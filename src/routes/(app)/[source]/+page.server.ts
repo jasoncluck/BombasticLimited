@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({
   params,
   parent,
   depends,
-  locals: { supabase, session },
+  locals: { supabase },
 }) => {
   depends('supabase:db:videos');
 
@@ -59,7 +59,6 @@ export const load: PageServerLoad = async ({
               contentFilter: playlistContentFilter,
               limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
               supabase,
-              session,
               preferredImageFormat,
             });
 

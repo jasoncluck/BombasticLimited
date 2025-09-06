@@ -140,10 +140,8 @@ export interface NavigationState {
  */
 export class NavigationStateClass implements NavigationState {
   // Private tracking variables
-  private lastSearchValue: string = '';
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
-  private pageStore: typeof page | null = null;
   private preloadTimeout: number | null = null;
   private currentSearchTimestamp: number = 0;
   private searchInputRef: HTMLInputElement | null = null;
@@ -195,8 +193,9 @@ export class NavigationStateClass implements NavigationState {
   // Account drawer state (shared with user menu)
   openAccountDrawer = $state(false);
 
-  constructor() {
+  constructor(session: Session | null) {
     this.initializeNavigationItems();
+    this.session = session;
   }
 
   /**
@@ -287,9 +286,6 @@ export class NavigationStateClass implements NavigationState {
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
-      // Store reference to page store
-      this.pageStore = page;
-
       // Initialize navigation items from data when loaded
       $effect(() => {
         if (this.data?.navigationItems) {
@@ -526,7 +522,6 @@ export class NavigationStateClass implements NavigationState {
 
   clearSearchQuery = (): void => {
     this.searchQuery = '';
-    this.lastSearchValue = '';
     this.currentSearchTimestamp = 0;
     this.pendingValueUpdate = null;
   };
@@ -671,7 +666,6 @@ export class NavigationStateClass implements NavigationState {
         (document.activeElement !== this.searchInputRef ||
           currentInputValue === capturedSearchValue)
       ) {
-        this.lastSearchValue = capturedSearchValue;
         this.searchRedirect(e, capturedSearchValue, capturedTimestamp);
       }
     }, this.config.searchDebounceMs);
@@ -865,7 +859,6 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = '';
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
-    this.pageStore = null;
     this.currentSearchTimestamp = 0;
     this.searchInputRef = null;
     this.pendingValueUpdate = null;
@@ -877,8 +870,11 @@ const DEFAULT_KEY = '$_navigation_state';
 /**
  * Set navigation state in context
  */
-export function setNavigationState(key = DEFAULT_KEY): NavigationStateClass {
-  const navigationState = new NavigationStateClass();
+export function setNavigationState(
+  session: Session | null,
+  key = DEFAULT_KEY
+): NavigationStateClass {
+  const navigationState = new NavigationStateClass(session);
   return setContext(key, navigationState);
 }
 

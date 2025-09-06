@@ -251,8 +251,6 @@
       carouselState.lastViewedIndex = index;
     }
 
-    console.log(playlist);
-
     // Use the updated handleVideoClick with context menu handling
     contentState.handleVideoClick({
       event,
@@ -466,13 +464,12 @@
         <!-- Playlist section with flex-shrink-0 to prevent compression -->
         {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
           <div
-            class="text-secondary-foreground hover:text-primary z-10 flex flex-shrink-0 items-center gap-2 text-xs"
+            class="text-secondary-foreground z-10 flex flex-shrink-0 items-center gap-2 text-xs"
           >
-            <ListVideo size="16" class="shrink-0" />
             <a
               onclick={(e) => {
-                e.stopPropagation();
                 e.preventDefault();
+                e.stopPropagation();
                 if (
                   video.playlist_short_id &&
                   video.playlist_sorted_by &&
@@ -495,8 +492,9 @@
                 }
               }}
               href={`playlist/${video.playlist_short_id}`}
-              class="flex items-center gap-2 truncate tracking-tight whitespace-normal"
+              class="hover:text-primary flex items-center gap-2 truncate tracking-tight whitespace-normal"
             >
+              <ListVideo size="16" class="shrink-0" />
               <span class="truncate">{video.playlist_name}</span>
             </a>
             <div

@@ -116,9 +116,6 @@ export interface SidebarState {
 
   // Cleanup method
   cleanup: () => void;
-
-  // Backward compatibility
-  setSidebarState: (state: any) => void;
 }
 
 // Key for localStorage to track shown notifications
@@ -470,14 +467,12 @@ export class SidebarStateClass implements SidebarState {
     this.#isInitialStreamLoad = true;
 
     try {
-      console.log('Starting SSE connection to /api/twitch...');
       this.#sseConnection = source('/api/twitch');
 
       this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
         try {
           // Check if we received complete data
           if (!data || data.trim() === '') {
-            console.log('Received empty SSE data, skipping');
             return;
           }
 
@@ -489,9 +484,6 @@ export class SidebarStateClass implements SidebarState {
             error.message.includes('Unexpected end of JSON input')
           ) {
             // This is likely due to server disconnection - ignore and let reconnection handle it
-            console.log(
-              'SSE connection interrupted during JSON transmission, will reconnect'
-            );
             return;
           }
           // Log other JSON parsing errors as they might be genuine issues
@@ -501,15 +493,10 @@ export class SidebarStateClass implements SidebarState {
 
       this.#sseConnection.select('open').subscribe(() => {
         this.#sseConnected = true;
-        console.log('Twitch streaming SSE connection established');
       });
 
       this.#sseConnection.select('error').subscribe((event) => {
         this.#sseConnected = false;
-        console.log(
-          'Twitch streaming SSE connection error (will auto-reconnect):',
-          event
-        );
       });
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
@@ -524,7 +511,6 @@ export class SidebarStateClass implements SidebarState {
       this.#sseConnection.close();
       this.#sseConnection = null;
       this.#sseConnected = false;
-      console.log('Twitch streaming SSE connection closed');
     }
   }
 
@@ -640,7 +626,6 @@ export class SidebarStateClass implements SidebarState {
   async refreshData(): Promise<void> {
     // Only refresh if tab is visible to save resources
     if (!tabVisibility.isVisible) {
-      console.log('Sidebar: Skipping refresh - tab not visible');
       return;
     }
 
@@ -710,13 +695,6 @@ export class SidebarStateClass implements SidebarState {
    */
   getInitialStreamLoadFlag(): boolean {
     return this.#isInitialStreamLoad;
-  }
-
-  // Convenience methods for backward compatibility
-  setSidebarState(): void {
-    // This method exists for compatibility but doesn't need to do anything
-    // since the sidebar state is already "this"
-    console.log('setSidebarState called - sidebar state is already set');
   }
 
   start(): void {

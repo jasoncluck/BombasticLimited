@@ -7,10 +7,11 @@ import { signupSchema } from '$lib/schema/auth-schema';
 import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
 import { Filter } from 'bad-words';
 
-export const load: PageServerLoad = async ({ locals: { session } }) => {
+export const load: PageServerLoad = async ({ locals: { supabase } }) => {
   const signupForm = await superValidate(zod(signupSchema));
 
-  if (session) {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  if (claimsData?.claims) {
     redirect(303, '/');
   }
 

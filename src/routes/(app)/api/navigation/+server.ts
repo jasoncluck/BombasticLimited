@@ -4,20 +4,18 @@ import { getProfile } from '$lib/supabase/user-profiles';
 import { getNotifications } from '$lib/supabase/notifications';
 
 export const GET: RequestHandler = async ({ locals }) => {
-  const { session, supabase } = locals;
+  const { supabase } = locals;
 
   // For navigation, we mainly need user profile for personalization
-
   const [{ profile: userProfile }, { notifications }] = await Promise.all([
-    getProfile({ supabase, session }),
-    getNotifications({ supabase, session }),
+    getProfile({ supabase }),
+    getNotifications({ supabase }),
   ]);
 
   return json(
     {
       userProfile,
       notifications,
-      session,
     },
     {
       headers: {

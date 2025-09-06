@@ -1,8 +1,4 @@
-import type {
-  PostgrestError,
-  Session,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types';
 import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
 import {
@@ -10,7 +6,6 @@ import {
   DEFAULT_NUM_VIDEOS_PAGINATION,
   type Video,
 } from '../videos';
-import { getSortField } from './utils';
 import {
   transformPlaylistFromRPC,
   transformUserPlaylistFromRPC,
@@ -35,7 +30,6 @@ export async function getPlaylistData({
   currentPage = 1,
   limit = DEFAULT_NUM_VIDEOS_PAGINATION,
   supabase,
-  session,
   preferredImageFormat,
 }: {
   shortId?: string;
@@ -44,7 +38,6 @@ export async function getPlaylistData({
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   preferredImageFormat: string;
 }): Promise<{
   playlist: Playlist | null;
@@ -64,7 +57,6 @@ export async function getPlaylistData({
   const { data, error } = await supabase.rpc('get_playlist_data', {
     p_short_id: shortId,
     p_youtube_id: youtubeId,
-    p_user_id: session?.user.id,
     p_current_page: currentPage,
     p_limit: limit,
     p_sort_key: sortKey,
@@ -99,17 +91,16 @@ export async function getPlaylistData({
   const basePlaylist = transformPlaylistFromRPC(firstRow, supabase);
 
   // Properly construct the playlist with all available fields
-  const playlist: Playlist = {
+  const playlist: UserPlaylist = {
     ...basePlaylist,
     // Add profile username which is always available
     profile_username: firstRow.profile_username,
     profile_avatar_url: firstRow.profile_avatar_url,
-    // Add user-specific playlist fields if they exist (when user is authenticated and it's their playlist)
-    ...(firstRow.playlist_sorted_by &&
-      firstRow.playlist_sort_order && {
-        sorted_by: firstRow.playlist_sorted_by,
-        sort_order: firstRow.playlist_sort_order,
-      }),
+    // Always include sorted_by and sort_order from the database response
+    // The SQL function already handles the three-tier fallback system
+    sorted_by: firstRow.playlist_sorted_by,
+    sort_order: firstRow.playlist_sort_order,
+    playlist_position: firstRow.playlist_position,
   };
 
   // Transform videos with supabase client
@@ -141,7 +132,6 @@ export async function getPlaylistDataByYoutubeId({
   currentPage = 1,
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   supabase,
-  session,
   preferredImageFormat,
 }: {
   youtubeId: string;
@@ -149,7 +139,6 @@ export async function getPlaylistDataByYoutubeId({
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   preferredImageFormat: string;
 }) {
   return getPlaylistData({
@@ -158,7 +147,6 @@ export async function getPlaylistDataByYoutubeId({
     currentPage,
     limit,
     supabase,
-    session,
     preferredImageFormat,
   });
 }
@@ -285,7 +273,7 @@ export async function getPlaylistVideoContext({
   error: PostgrestError | null;
 }> {
   // Call the simplified RPC function
-  let query = supabase.rpc('get_playlist_video_context', {
+  const query = supabase.rpc('get_playlist_video_context', {
     p_short_id: shortId,
     p_video_id: videoId,
     p_context_limit: contextLimit,
@@ -293,14 +281,6 @@ export async function getPlaylistVideoContext({
     p_sorted_by: contentFilter.sort.key,
     p_sort_order: contentFilter.sort.order,
   });
-
-  // Apply sorting based on contentFilter
-  const sortField = getSortField(contentFilter.sort.key);
-  const ascending = contentFilter.sort.order === 'ascending';
-
-  if (sortField) {
-    query = query.order(sortField, { ascending });
-  }
 
   const { data, error } = await query;
 
@@ -400,11 +380,9 @@ export async function getPlaylistVideoContext({
  * Get user's playlists
  */
 export async function getUserPlaylists({
-  session,
   supabase,
   preferredImageFormat,
 }: {
-  session: Session | null;
   supabase: SupabaseClient<Database>;
   preferredImageFormat: string;
 }): Promise<{
@@ -412,7 +390,9 @@ export async function getUserPlaylists({
   count: number | null;
   error: PostgrestError | null;
 }> {
-  if (!session) {
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
     return { userPlaylists: [], count: null, error: null };
   }
 
@@ -443,19 +423,20 @@ export async function searchPlaylists({
   currentPage = 1,
   preferredImageFormat,
   supabase,
-  session,
 }: {
   searchString: string;
   limit?: number;
   currentPage?: number;
   supabase: SupabaseClient<Database>;
-  session: Session | null;
   preferredImageFormat: string;
 }): Promise<{
   playlists: Playlist[];
   error: PostgrestError | null;
   count?: number | null;
 }> {
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const currentUserId = claimsData?.claims?.sub || undefined;
+
   const {
     data: playlists,
     error,
@@ -465,7 +446,7 @@ export async function searchPlaylists({
       'search_playlists',
       {
         search_term: searchString,
-        current_user_id: session?.user.id,
+        current_user_id: currentUserId,
         p_preferred_image_format: preferredImageFormat,
       },
       { count: 'exact' }

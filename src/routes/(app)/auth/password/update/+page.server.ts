@@ -14,15 +14,13 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-  updatePassword: async ({
-    request,
-    cookies,
-    locals: { supabase, session },
-  }) => {
+  updatePassword: async ({ request, cookies, locals: { supabase } }) => {
     const form = await superValidate(request, zod(passwordConfirmationSchema));
 
-    if (!session || !session.user.email) {
-      throw new Error(`Could not find email for account: ${session?.user.id}`);
+    const { data: claimsData, error: claimsError } =
+      await supabase.auth.getClaims();
+    if (!claimsData?.claims || claimsError) {
+      throw new Error(`Could not find valid claims for user`);
     }
 
     const { error } = await supabase.auth.updateUser({

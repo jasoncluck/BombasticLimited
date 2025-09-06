@@ -128,6 +128,7 @@
               {userProfile}
               videos={sourceVideos[source]}
               bind:carouselState={carouselsState[source]}
+              sectionId={source}
               {contentFilter}
               {session}
               {supabase}

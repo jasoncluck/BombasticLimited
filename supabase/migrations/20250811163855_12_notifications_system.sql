@@ -212,7 +212,7 @@ VALUES
   (
     'system',
     'Welcome to Bombastic',
-    'Take a look at the <a href="/getting-started">getting started</a> guide for an overview of the website. If you have any problems using Bombastic let me know by clicking the Report Issue button in the user dropdown. You can click the X button in the upper right to remove notifications like this. Hope you enjoy Bombastic!',
+    'Take a look at the <a href="/getting-started">getting started</a> guide for an overview. If you have any problems using Bombastic let us know by clicking the Report Issue button in the user dropdown. You can click the X button in the upper right to remove notifications like this. Hope you enjoy Bombastic!',
     '{"source": "welcome_new_user", "is_welcome": true, "reusable": true}'::jsonb,
     FALSE,
     now(),

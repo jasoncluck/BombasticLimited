@@ -246,6 +246,19 @@ SET
 $$;
 
 -- Updated get_playlist_data function to return NULL for created_by when playlist is deleted
+-- Drop the existing function first
+DROP FUNCTION IF EXISTS public.get_playlist_data (
+  text,
+  text,
+  uuid,
+  integer,
+  integer,
+  text,
+  text,
+  text
+);
+
+-- Now recreate it with the correct return type
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
@@ -274,6 +287,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
+  playlist_position int2, -- Changed from integer to int2 to match the database column type
   -- Video data with optimized image paths  
   video_id text,
   video_position int2,
@@ -336,6 +350,7 @@ BEGIN
       CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
+      up.playlist_position,  -- Added this field
       -- Get video count in the same query
       (
         SELECT COUNT(*)
@@ -359,8 +374,20 @@ BEGIN
   -- Set variables from record
   video_count := playlist_record.video_count;
   total_duration := playlist_record.duration_seconds;
-  effective_sort_key := COALESCE(p_sort_key, playlist_record.sorted_by::text, 'playlistOrder');
-  effective_sort_order := COALESCE(p_sort_order, playlist_record.sort_order::text, 'ascending');
+  
+  -- FIXED: Prioritize passed parameters first, then fall back to user settings
+  effective_sort_key := COALESCE(
+    p_sort_key,                           -- 1st priority: passed parameter
+    playlist_record.sorted_by::text,      -- 2nd priority: user playlist setting
+    'playlistOrder'                       -- 3rd priority: default
+  );
+  
+  effective_sort_order := COALESCE(
+    p_sort_order,                         -- 1st priority: passed parameter
+    playlist_record.sort_order::text,     -- 2nd priority: user playlist setting
+    'ascending'                           -- 3rd priority: default
+  );
+  
   start_index := (p_current_page - 1) * p_limit;
   
   -- If no videos in playlist, return just the playlist metadata
@@ -384,6 +411,7 @@ BEGIN
       playlist_record.profile_avatar_url,
       playlist_record.sorted_by,
       playlist_record.sort_order,
+      playlist_record.playlist_position,  -- Added this field
       -- Video data (all NULL since no videos)
       NULL::text, NULL::int2, NULL::public.source, NULL::text, NULL::text,
       NULL::text, NULL::text, NULL::public.image_processing_status,
@@ -413,6 +441,7 @@ BEGIN
     playlist_record.profile_avatar_url,
     playlist_record.sorted_by,
     playlist_record.sort_order,
+    playlist_record.playlist_position,  -- Added this field
     -- Video data from JOIN
     pv.video_id,
     pv.video_position,

@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({
   const videoContextResult = await getPlaylistVideoContext({
     shortId: params.shortId,
     videoId,
-    contentFilter, // This will be used for sorting in the query
+    contentFilter,
     supabase,
     contextLimit: 5,
     preferredImageFormat,

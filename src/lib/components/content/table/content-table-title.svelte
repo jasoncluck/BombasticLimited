@@ -1,8 +1,11 @@
 <script lang="ts">
   import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
   import { ArrowDown, ArrowUp, Circle, ListVideo } from '@lucide/svelte';
-  import { goto } from '$app/navigation';
-  import { getSortDisplayName } from '../content-filter';
+  import {
+    getSortDisplayName,
+    type PlaylistVideosFilter,
+  } from '../content-filter';
+  import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist';
 
   let { video, isContinueVideos }: { video: Video; isContinueVideos: boolean } =
     $props();
@@ -36,18 +39,37 @@
   </p>
   {#if isVideoInPlaylist && isVideoWithTimestamp(video)}
     <div
-      class="text-secondary-foreground hover:text-primary mt-1 flex items-center gap-2 text-xs transition-colors"
+      class="text-secondary-foreground mt-1 flex items-center gap-2 text-xs transition-colors"
     >
-      <ListVideo size="16" class="shrink-0" />
       <a
         onclick={(e) => {
-          e.stopPropagation();
           e.preventDefault();
-          goto(`playlist/${video.playlist_short_id}`);
+          e.stopPropagation();
+          if (
+            video.playlist_short_id &&
+            video.playlist_sorted_by &&
+            video.playlist_sort_order
+          ) {
+            const playlistContentFilter: PlaylistVideosFilter = {
+              type: 'playlist',
+              sort: {
+                key: video.playlist_sorted_by,
+                order: video.playlist_sort_order,
+              },
+            };
+            handlePlaylistNavigationByShortId({
+              playlistShortId: video.playlist_short_id,
+              contentFilter: playlistContentFilter ?? {
+                type: 'playlist',
+                sort: { key: 'playlistOrder', order: 'ascending' },
+              },
+            });
+          }
         }}
         href={`playlist/${video.playlist_short_id}`}
-        class="flex items-center gap-2 truncate tracking-tight whitespace-normal"
+        class="hover:text-primary flex items-center gap-2 truncate tracking-tight whitespace-normal"
       >
+        <ListVideo size="16" class="shrink-0" />
         <span class="truncate">{video.playlist_name}</span>
       </a>
       <div

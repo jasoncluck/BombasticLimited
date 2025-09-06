@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { tick } from 'svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import * as Alert from '$lib/components/ui/alert/index.js';
   import { Input } from '$lib/components/ui/input';
@@ -170,7 +169,6 @@
     async onSubmit() {
       $flash = undefined;
       isSubmitting = true;
-      await tick(); // Ensure DOM updates immediately
     },
     async onUpdated(event) {
       if (event.form.valid) {
@@ -182,9 +180,6 @@
           playlist.image_properties = null;
           playlist.thumbnail_url = null;
         }
-
-        // Force DOM update before proceeding
-        await tick();
 
         // Now close drawer and refresh data
         open = false;
@@ -449,19 +444,24 @@
             <!-- Form Footer -->
             <div class="flex flex-col gap-2 pt-4">
               <Drawer.Footer class="flex gap-2">
-                <Button
-                  type="submit"
-                  class="drawer-button-footer tap-highlight-none"
-                  style="-webkit-tap-highlight-color: transparent;"
-                  disabled={isSubmitting}
-                >
-                  {#if isSubmitting}
+                {#if isSubmitting}
+                  <Button
+                    type="submit"
+                    class="drawer-button-footer"
+                    disabled={isSubmitting}
+                  >
                     <Loader class="mr-2 animate-spin" />
                     Saving...
-                  {:else}
+                  </Button>
+                {:else}
+                  <Button
+                    type="submit"
+                    class="drawer-button-footer"
+                    disabled={isSubmitting}
+                  >
                     Save Changes
-                  {/if}
-                </Button>
+                  </Button>
+                {/if}
                 <Drawer.Close
                   class={buttonVariants({
                     class: 'drawer-button-footer',

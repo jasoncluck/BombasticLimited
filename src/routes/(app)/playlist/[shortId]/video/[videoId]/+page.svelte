@@ -1,11 +1,13 @@
 <script lang="ts">
-  import { type PlaylistVideosFilter } from '$lib/components/content/content-filter.js';
+  import {
+    getSortDisplayName,
+    type PlaylistVideosFilter,
+  } from '$lib/components/content/content-filter.js';
   import Content from '$lib/components/content/content.svelte';
   import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist.js';
   import VideoPlayer from '$lib/components/video/video-player.svelte';
   import type { CarouselState } from '$lib/state/content.svelte';
-  import { isUserPlaylist } from '$lib/supabase/playlists/utils.js';
-  import { ListVideo } from '@lucide/svelte';
+  import { ArrowDown, ArrowUp, ListVideo } from '@lucide/svelte';
 
   const { data } = $props();
   let {
@@ -56,17 +58,9 @@
               if ('sorted_by' in playlist && 'sort_order' in playlist) {
                 // The playlist sort and order is the current contentFilter if it exists otherwise we fallback to the
                 // saved user playlist settings and if those doen't exist then we use the default 'playlistOrder'
-                const playlistContentFilter: PlaylistVideosFilter = {
-                  type: 'playlist',
-                  sort: {
-                    key: playlist.sorted_by,
-                    order: playlist.sort_order,
-                  },
-                };
-                console.log('should navigate');
                 handlePlaylistNavigationByShortId({
                   playlistShortId: playlist.short_id,
-                  contentFilter: playlistContentFilter ?? {
+                  contentFilter: contentFilter ?? {
                     type: 'playlist',
                     sort: { key: 'playlistOrder', order: 'ascending' },
                   },
@@ -78,6 +72,24 @@
           >
             {playlist.name}
           </a>
+
+          <div class="text-muted-foreground flex shrink-1 items-center">
+            <span class="truncate text-xs">
+              {getSortDisplayName({
+                key: contentFilter.sort.key,
+                view: 'playlist',
+              })}
+            </span>
+            {#if contentFilter.sort.order}
+              {#if contentFilter.sort.order === 'ascending'}
+                <ArrowUp size="14" class="ml-1 shrink-0" />
+                <span class="sr-only">Sorted Ascending</span>
+              {:else}
+                <ArrowDown size="14" class="ml-1 shrink-0" />
+                <span class="sr-only">Sorted Descending</span>
+              {/if}
+            {/if}
+          </div>
         </div>
       </div>
       <Content

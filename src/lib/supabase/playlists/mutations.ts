@@ -18,20 +18,20 @@ import { playlistImagePropertiesToJson } from '$lib/components/playlist/playlist
  */
 export async function createPlaylist({
   name,
-  session,
   supabase,
 }: {
   name?: string;
-  session: Session | null;
   supabase: SupabaseClient<Database>;
 }) {
-  if (!session) {
-    throw new Error('Unable to create playlist, invalid session');
+  const { data: claimsData, error: claimsError } =
+    await supabase.auth.getClaims();
+  if (!claimsData?.claims || claimsError) {
+    throw new Error('Unable to create playlist, invalid authentication');
   }
 
   const { data: playlist, error } = await supabase
     .rpc('insert_playlist', {
-      p_created_by: session?.user.id,
+      p_created_by: claimsData.claims.sub,
       p_name: name,
       p_type: 'Private',
     })
@@ -55,7 +55,6 @@ export async function updatePlaylistPosition({
   playlistId: number;
   position: number;
   supabase: SupabaseClient<Database>;
-  session: Session;
 }) {
   const { error } = await supabase.rpc('update_playlist_position', {
     p_playlist_id: playlistId,
@@ -104,7 +103,6 @@ export async function addVideosToPlaylist({
   videoIds: string[];
   position?: number;
   supabase: SupabaseClient<Database>;
-  session: Session;
 }) {
   const { error } = await supabase.rpc('insert_playlist_videos', {
     p_playlist_id: playlistId,
@@ -192,7 +190,6 @@ export async function updatePlaylistInfo({
   playlistId: number;
   name: string;
   description: string | null;
-  session: Session;
   imageProperties: PlaylistImageProperties | null;
   type: PlaylistType;
   supabase: SupabaseClient<Database>;
@@ -281,7 +278,6 @@ export async function followPlaylist({
 }: {
   playlistId: number;
   supabase: SupabaseClient<Database>;
-  session: Session;
   position?: number;
 }) {
   const { error } = await supabase
@@ -307,7 +303,6 @@ export async function unfollowPlaylist({
 }: {
   playlistId: number;
   supabase: SupabaseClient<Database>;
-  session: Session;
 }) {
   const { error } = await supabase
     .rpc('unfollow_playlist', {
@@ -335,7 +330,6 @@ export async function updatePlaylistSort({
   sortedBy: SortKey<PlaylistVideo>;
   sortOrder: SortOrder;
   supabase: SupabaseClient<Database>;
-  session: Session;
 }) {
   const { data: updatedPlaylist, error } = await supabase
     .from('user_playlists')

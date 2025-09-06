@@ -13,7 +13,7 @@ const supabase: Handle = async ({ event, resolve }) => {
    *
    * The Supabase client gets the Auth token from the request cookies.
    */
-  // @ts-ignore - Type compatibility issue with Supabase client generics
+  // @ts-expect-error - Type compatibility issue with Supabase client generics
   event.locals.supabase = createServerClient(
     PUBLIC_SUPABASE_URL,
     PUBLIC_SUPABASE_ANON_KEY,
@@ -37,6 +37,7 @@ const supabase: Handle = async ({ event, resolve }) => {
       },
     }
   );
+
   const code = event.url.searchParams.get('code');
   if (code && event.url.pathname === '/auth/password/update') {
     try {
@@ -51,66 +52,18 @@ const supabase: Handle = async ({ event, resolve }) => {
     }
   }
 
-  /**
-   * Unlike `supabase.auth.getSession()`, which returns the session _without_
-   * validating the JWT, this function uses `getClaims()` to get validated
-   * JWT claims directly from the server, ensuring security.
-   */
-  event.locals.safeGetSession = async () => {
-    try {
-      const { data, error } = await event.locals.supabase.auth.getClaims();
-
-      if (error || !data?.claims) {
-        return { session: null, user: null };
-      }
-
-      // If claims exist, get the session (claims validate the JWT)
-      const {
-        data: { session },
-      } = await event.locals.supabase.auth.getSession();
-
-      // Create user object from claims
-      const user = session?.user || null;
-
-      return { session, user };
-    } catch (error) {
-      // Fallback to getUser if getClaims is not available
-      console.warn('getClaims not available, falling back to getUser:', error);
-      const {
-        data: { user },
-        error: userError,
-      } = await event.locals.supabase.auth.getUser();
-
-      if (userError || !user) {
-        return { session: null, user: null };
-      }
-
-      // If user exists, we can safely get the session
-      const {
-        data: { session },
-      } = await event.locals.supabase.auth.getSession();
-
-      return { session, user };
-    }
-  };
-
-  return resolve(event, {
-    filterSerializedResponseHeaders(name) {
-      /**
-       * Supabase libraries use the `content-range` and `x-supabase-api-version`
-       * headers, so we need to tell SvelteKit to pass it through.
-       */
-      return name === 'content-range' || name === 'x-supabase-api-version';
-    },
-  });
+  return resolve(event);
 };
 
 const authGuard: Handle = async ({ event, resolve }) => {
-  const { session, user } = await event.locals.safeGetSession();
-  event.locals.session = session;
-  event.locals.user = user;
+  const { data, error } = await event.locals.supabase.auth.getClaims();
+  if (error) {
+    redirect(303, '/auth/login');
+  }
 
-  if (!event.locals.session && event.url.pathname.startsWith('/account')) {
+  const userId = data?.claims.sub;
+
+  if (!userId && event.url.pathname.startsWith('/account')) {
     redirect(303, '/auth/login');
   }
 

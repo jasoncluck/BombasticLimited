@@ -38,7 +38,6 @@ const mockGetPaginationQueryParams = vi.mocked(getPaginationQueryParams);
 
 describe('continue/+page.server.ts load function', () => {
   const mockSupabase = {} as any;
-  const mockSession = createMockSession();
 
   const mockContinueVideos = [
     createMockVideoWithTimestamp({
@@ -60,7 +59,6 @@ describe('continue/+page.server.ts load function', () => {
     url: new URL('http://localhost:5173/continue'),
     locals: {
       supabase: mockSupabase,
-      session: mockSession,
     },
     depends: vi.fn(),
     request: {
@@ -107,7 +105,6 @@ describe('continue/+page.server.ts load function', () => {
         ...mockLoadEvent,
         locals: {
           ...mockLoadEvent.locals,
-          session: null,
         },
       };
 
@@ -120,7 +117,6 @@ describe('continue/+page.server.ts load function', () => {
         ...mockLoadEvent,
         locals: {
           ...mockLoadEvent.locals,
-          session: undefined,
         },
       };
 
@@ -145,7 +141,6 @@ describe('continue/+page.server.ts load function', () => {
         },
         preferredImageFormat: 'webp',
         supabase: mockSupabase,
-        session: mockSession,
       });
 
       expect((result as any).videos).toEqual(mockContinueVideos);
@@ -172,7 +167,6 @@ describe('continue/+page.server.ts load function', () => {
         },
         preferredImageFormat: 'webp',
         supabase: mockSupabase,
-        session: mockSession,
       });
     });
 
@@ -409,16 +403,10 @@ describe('continue/+page.server.ts load function', () => {
 
   describe('session handling edge cases', () => {
     it('should handle session with missing user', async () => {
-      const sessionWithoutUser = {
-        ...mockSession,
-        user: null,
-      } as any;
-
       const loadEventWithIncompleteSession = {
         ...mockLoadEvent,
         locals: {
           ...mockLoadEvent.locals,
-          session: sessionWithoutUser,
         },
       };
 
@@ -439,7 +427,6 @@ describe('continue/+page.server.ts load function', () => {
           ...mockLoadEvent,
           locals: {
             ...mockLoadEvent.locals,
-            session: falsyValue,
           },
         };
 
