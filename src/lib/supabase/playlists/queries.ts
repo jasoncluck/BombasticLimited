@@ -1,8 +1,4 @@
-import type {
-  PostgrestError,
-  Session,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types';
 import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
 import {
