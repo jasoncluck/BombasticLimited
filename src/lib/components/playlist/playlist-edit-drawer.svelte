@@ -446,11 +446,11 @@
               <Drawer.Footer class="flex gap-2">
                 <Button
                   type="submit"
-                  class="drawer-button-footer"
+                  class="drawer-button-footer tap-highlight-none"
                   disabled={isSubmitting}
                 >
+                  <Loader class="mr-2 animate-spin" />
                   {#if isSubmitting}
-                    <Loader class="animate-spin pr-2" />
                     Saving...
                   {:else}
                     Save Changes

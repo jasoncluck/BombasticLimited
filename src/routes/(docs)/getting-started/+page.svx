@@ -13,7 +13,7 @@
 
 # Bombastic - Getting Started
 
-Bombastic Limited is a no-frills video consolidation service with a focus on content produced by past and present members of Giant Bomb.  Between modern video platforms primarily recommending new content creators and folks associated with Giant Bomb starting new companies, it has become challenging to track all the available content.  Bombastic's goal is to provide a consolidated platform for the expanded Giant Bomb community.
+Bombastic Limited is a no-frills video consolidation service with a focus on content produced by past and present members of Giant Bomb. Modern video platforms have made it difficult to follow specific creators and browse older content. Bombastic's goal is to provide a more curated experience and a consolidated platform for the expanded Giant Bomb community.
 
 Bombastic retrieves data from YouTube for the video game media creators that have been onboarded.  This not only creates a simplified cross-channel search view, but also allows for the creation of custom playlists that can contain content from multiple YouTube channels.  Bombastic's watch tracking feature allows users to easily resume watching videos and playlists where they previously left off. 
 
