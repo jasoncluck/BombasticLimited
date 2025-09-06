@@ -39,7 +39,7 @@ export async function getPlaylistData({
 }: {
   shortId?: string;
   youtubeId?: string;
-  contentFilter: PlaylistVideosFilter;
+  contentFilter?: PlaylistVideosFilter;
   currentPage?: number;
   limit?: number;
   supabase: SupabaseClient<Database>;
@@ -60,6 +60,7 @@ export async function getPlaylistData({
   let sortOrder: SortOrder | undefined;
 
   if (
+    contentFilter &&
     contentFilter.sort.key !== 'playlistOrder' &&
     contentFilter.sort.order === 'ascending'
   ) {

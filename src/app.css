@@ -197,7 +197,7 @@
   }
 
   .drawer-button-footer {
-    @apply mt-2 h-8 w-full flex gap-2;
+    @apply mt-2 flex h-8 w-full gap-2;
   }
 
   .drawer-playlist-button {
