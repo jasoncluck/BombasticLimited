@@ -262,7 +262,6 @@ DROP FUNCTION IF EXISTS public.get_playlist_data (
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
-  p_user_id uuid DEFAULT NULL,
   p_current_page integer DEFAULT 1,
   p_limit integer DEFAULT 20,
   p_sort_key text DEFAULT NULL,
@@ -287,7 +286,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
-  playlist_position int2, -- Changed from integer to int2 to match the database column type
+  playlist_position int2,
   -- Video data with optimized image paths  
   video_id text,
   video_position int2,
@@ -350,7 +349,7 @@ BEGIN
       CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
-      up.playlist_position,  -- Added this field
+      up.playlist_position,
       -- Get video count in the same query
       (
         SELECT COUNT(*)
@@ -360,7 +359,8 @@ BEGIN
       ) as video_count
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
+    -- FIXED: Use auth.uid() instead of p_user_id parameter
+    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
     WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
        OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
   )
@@ -411,7 +411,7 @@ BEGIN
       playlist_record.profile_avatar_url,
       playlist_record.sorted_by,
       playlist_record.sort_order,
-      playlist_record.playlist_position,  -- Added this field
+      playlist_record.playlist_position,
       -- Video data (all NULL since no videos)
       NULL::text, NULL::int2, NULL::public.source, NULL::text, NULL::text,
       NULL::text, NULL::text, NULL::public.image_processing_status,
@@ -441,7 +441,7 @@ BEGIN
     playlist_record.profile_avatar_url,
     playlist_record.sorted_by,
     playlist_record.sort_order,
-    playlist_record.playlist_position,  -- Added this field
+    playlist_record.playlist_position,
     -- Video data from JOIN
     pv.video_id,
     pv.video_position,
@@ -465,7 +465,8 @@ BEGIN
     false
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
-  LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = p_user_id
+  -- FIXED: Use auth.uid() instead of p_user_id parameter
+  LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
   WHERE pv.playlist_id = playlist_record.id
     AND v.pending_delete = FALSE
   ORDER BY 
