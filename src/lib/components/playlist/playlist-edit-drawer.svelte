@@ -444,18 +444,24 @@
             <!-- Form Footer -->
             <div class="flex flex-col gap-2 pt-4">
               <Drawer.Footer class="flex gap-2">
-                <Button
-                  type="submit"
-                  class="drawer-button-footer tap-highlight-none"
-                  disabled={isSubmitting}
-                >
-                  <Loader class="mr-2 animate-spin" />
-                  {#if isSubmitting}
+                {#if isSubmitting}
+                  <Button
+                    type="submit"
+                    class="drawer-button-footer"
+                    disabled={isSubmitting}
+                  >
+                    <Loader class="mr-2 animate-spin" />
                     Saving...
-                  {:else}
+                  </Button>
+                {:else}
+                  <Button
+                    type="submit"
+                    class="drawer-button-footer"
+                    disabled={isSubmitting}
+                  >
                     Save Changes
-                  {/if}
-                </Button>
+                  </Button>
+                {/if}
                 <Drawer.Close
                   class={buttonVariants({
                     class: 'drawer-button-footer',
