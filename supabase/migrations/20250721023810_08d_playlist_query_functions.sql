@@ -245,8 +245,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
   p_context_limit integer DEFAULT 5,
   p_preferred_image_format text DEFAULT 'avif',
   p_sorted_by text DEFAULT NULL,
-  p_sort_order text DEFAULT NULL,
-  p_user_id uuid DEFAULT NULL
+  p_sort_order text DEFAULT NULL
 ) RETURNS TABLE (
   -- Playlist metadata
   playlist_id bigint,
@@ -329,7 +328,7 @@ BEGIN
       ) as video_count
     FROM public.playlists p
     LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
+    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
     WHERE p.short_id = p_short_id AND p.deleted_at IS NULL
   )
   SELECT * INTO playlist_record FROM playlist_data;
@@ -457,7 +456,7 @@ BEGIN
       ) as sorted_row_number
     FROM public.playlist_videos pv
     JOIN public.videos v ON pv.video_id = v.id AND v.pending_delete = FALSE
-    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = p_user_id
+    LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
     WHERE pv.playlist_id = playlist_record.id
   )
   SELECT 

@@ -328,7 +328,7 @@
   }
 
   // Set up periodic seeking detection
-  let seekDetectionInterval: NodeJS.Timeout | null = null;
+  let seekDetectionInterval: ReturnType<typeof setInterval> | null = null;
   $effect(() => {
     if (player && watchTimeTracker) {
       seekDetectionInterval = setInterval(handleSeekingEvents, 1000);
