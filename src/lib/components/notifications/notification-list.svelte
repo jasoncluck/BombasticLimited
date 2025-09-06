@@ -2,7 +2,7 @@
   import { Button } from '$lib/components/ui/button';
   import { ScrollArea } from '$lib/components/ui/scroll-area';
   import { X, Bell } from '@lucide/svelte';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import {
     type NotificationWithMeta,
@@ -19,13 +19,9 @@
   let {
     supabase,
     filterType,
-    session,
-    showActions = true,
     onNotificationClick,
   }: {
     supabase: SupabaseClient<Database>;
-    showActions?: boolean;
-    session: Session | null;
     filterType?: NotificationType;
     onNotificationClick?: () => void;
   } = $props();
@@ -158,20 +154,18 @@
                   </div>
 
                   <!-- Actions -->
-                  {#if showActions}
-                    <div class="ml-2 flex items-center space-x-1">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
-                        onclick={() => handleDelete(userNotification)}
-                        title="Remove notification"
-                      >
-                        <X class="h-3 w-3" />
-                        <span class="sr-only"> Remove notification </span>
-                      </Button>
-                    </div>
-                  {/if}
+                  <div class="ml-2 flex items-center space-x-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      class="ghost-button-minimal text-muted-foreground h-6 w-6 p-0 opacity-60 transition-opacity hover:text-red-500 hover:opacity-100"
+                      onclick={() => handleDelete(userNotification)}
+                      title="Remove notification"
+                    >
+                      <X class="h-3 w-3" />
+                      <span class="sr-only"> Remove notification </span>
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>

@@ -123,7 +123,7 @@
 <!-- Notifications Bell -->
 {#if session && userNotifications.length > 0}
   <div class="relative">
-    <NotificationBell {supabase} {session} />
+    <NotificationBell {supabase} />
   </div>
 {/if}
 
