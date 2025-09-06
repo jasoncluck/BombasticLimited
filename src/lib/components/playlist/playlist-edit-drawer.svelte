@@ -446,12 +446,11 @@
               <Drawer.Footer class="flex gap-2">
                 <Button
                   type="submit"
-                  class="drawer-button-footer tap-highlight-none"
-                  style="-webkit-tap-highlight-color: transparent;"
+                  class="drawer-button-footer"
                   disabled={isSubmitting}
                 >
                   {#if isSubmitting}
-                    <Loader class="mr-2 animate-spin" />
+                    <Loader class="animate-spin pr-2" />
                     Saving...
                   {:else}
                     Save Changes
