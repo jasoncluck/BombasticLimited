@@ -366,7 +366,7 @@
   <div
     bind:this={cardElement}
     class="{getCardClasses()} flex flex-col"
-    data-testid="content-card"
+    data-testid="content-item"
     role="button"
     tabindex="0"
     draggable={!!dragDrop}

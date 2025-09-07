@@ -263,6 +263,7 @@
         <Button
           {...props}
           variant="ghost"
+          data-testid="content-dropdown-trigger"
           onclick={(e) => {
             if (variant === 'list-items' && videos.length > 0) {
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
@@ -289,7 +290,11 @@
       {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content align="end" class="stable-dropdown outline-none">
+    <DropdownMenu.Content
+      align="end"
+      class="stable-dropdown outline-none"
+      data-testid="content-dropdown-content"
+    >
       {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
         <DropdownMenu.Item
           class="p-2"

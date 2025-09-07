@@ -155,6 +155,7 @@
 
   {#if operationVideos.length > 0 && session}
     <ContextMenu.Content
+      data-testid="content-context-menu-content"
       class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
         'hidden'} 
         transition-opacity duration-75"
