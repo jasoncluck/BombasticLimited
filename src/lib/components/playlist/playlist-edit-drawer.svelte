@@ -25,6 +25,7 @@
     type PlaylistSchema,
     playlistSchema,
   } from '$lib/schema/playlist-schema';
+  import { browser } from '$app/environment';
 
   let {
     form,
@@ -53,6 +54,11 @@
   let isPublic = $state(playlist.type === 'Public');
   let nestedDrawerOpen = $state(false);
 
+  // Mobile Safari keyboard handling
+  let initialViewportHeight = $state(0);
+  let isKeyboardOpen = $state(false);
+  let drawerContainer: HTMLElement | null = null;
+
   // Cropper state
   let cropperDialogOpen = $state(false);
   let crop = $state({ x: 0, y: 0 });
@@ -67,6 +73,77 @@
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
   const imageSrc = $derived(playlist.thumbnail_url);
   const displayImageUrl = $derived(previewImageUrl || playlist.image_url);
+
+  // Mobile Safari viewport handling
+  function handleViewportChange(): void {
+    if (!browser) return;
+    
+    const currentHeight = window.visualViewport?.height || window.innerHeight;
+    
+    if (initialViewportHeight === 0) {
+      initialViewportHeight = currentHeight;
+      return;
+    }
+
+    const heightDifference = initialViewportHeight - currentHeight;
+    const threshold = 150; // Keyboard threshold in pixels
+
+    isKeyboardOpen = heightDifference > threshold;
+    
+    if (drawerContainer) {
+      if (isKeyboardOpen) {
+        // When keyboard is open, fix the height and prevent scrolling issues
+        drawerContainer.style.height = `${currentHeight}px`;
+        drawerContainer.style.maxHeight = `${currentHeight}px`;
+        drawerContainer.classList.add('keyboard-open');
+      } else {
+        // When keyboard is closed, restore normal behavior
+        drawerContainer.style.height = '';
+        drawerContainer.style.maxHeight = '';
+        drawerContainer.classList.remove('keyboard-open');
+      }
+    }
+  }
+
+  // Set up viewport listeners for mobile Safari
+  $effect(() => {
+    if (!browser || !open) return;
+
+    // Initialize viewport height when drawer opens
+    initialViewportHeight = window.visualViewport?.height || window.innerHeight;
+
+    // Listen for viewport changes
+    const handleResize = () => handleViewportChange();
+    
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    } else {
+      window.addEventListener('resize', handleResize);
+    }
+
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      } else {
+        window.removeEventListener('resize', handleResize);
+      }
+    };
+  });
+
+  // Handle input focus/blur for additional keyboard detection
+  function handleInputFocus(): void {
+    // Small delay to allow keyboard to appear
+    setTimeout(() => {
+      handleViewportChange();
+    }, 300);
+  }
+
+  function handleInputBlur(): void {
+    // Small delay to allow keyboard to disappear
+    setTimeout(() => {
+      handleViewportChange();
+    }, 300);
+  }
 
   // Create cropped preview
   async function createCroppedPreview(
@@ -200,6 +277,7 @@
       isSubmitting = false;
       isPublic = playlist.type === 'Public';
       previewImageUrl = null;
+      initialViewportHeight = 0; // Reset viewport height tracking
 
       // Set form data
       $formData.id = playlist.id;
@@ -241,9 +319,60 @@
     if (!open) {
       playlistForm.reset();
       playlistState.openEditPlaylist = false;
+      // Reset keyboard state
+      isKeyboardOpen = false;
+      initialViewportHeight = 0;
+      if (drawerContainer) {
+        drawerContainer.style.height = '';
+        drawerContainer.style.maxHeight = '';
+        drawerContainer.classList.remove('keyboard-open');
+      }
     }
   });
 </script>
+
+<!-- Add mobile-specific styles -->
+<style>
+  :global(.drawer-mobile-safe) {
+    /* Use dvh (dynamic viewport height) for mobile Safari */
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+  
+  :global(.drawer-mobile-safe.keyboard-open) {
+    /* When keyboard is open, use fixed height to prevent layout shifts */
+    overflow: hidden;
+  }
+  
+  :global(.drawer-content-mobile) {
+    /* Ensure content area is properly contained */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+  }
+  
+  :global(.drawer-form-container) {
+    /* Make form scrollable when keyboard is open */
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+  
+  :global(.keyboard-open .drawer-form-container) {
+    /* Adjust padding when keyboard is open to prevent content being hidden */
+    padding-bottom: 2rem;
+  }
+
+  /* Prevent zoom on input focus for iOS */
+  :global(.drawer input),
+  :global(.drawer textarea),
+  :global(.drawer select) {
+    font-size: 16px !important;
+    transform-origin: left top;
+  }
+</style>
 
 <Drawer.Root bind:open handleOnly={true} {nested}>
   {#if !isPlaylistOwner}
@@ -256,14 +385,17 @@
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
+  <Drawer.Content 
+    bind:this={drawerContainer}
+    class="bg-background drawer drawer-mobile-safe drawer-content-mobile flex min-h-[100%] flex-col"
+  >
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
       </Drawer.Header>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto p-1">
+    <div class="drawer-form-container min-h-0 flex-1 overflow-y-auto p-1">
       <div class="px-4 pb-2">
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <!-- Image Section -->
@@ -374,6 +506,8 @@
                       autocomplete="off"
                       autocapitalize="words"
                       spellcheck="true"
+                      onfocus={handleInputFocus}
+                      onblur={handleInputBlur}
                     />
                   {/snippet}
                 </Form.Control>
@@ -402,6 +536,8 @@
                       autocomplete="off"
                       autocapitalize="sentences"
                       spellcheck="true"
+                      onfocus={handleInputFocus}
+                      onblur={handleInputBlur}
                     />
                   {/snippet}
                 </Form.Control>
