@@ -25,18 +25,6 @@
     type PlaylistSchema,
     playlistSchema,
   } from '$lib/schema/playlist-schema';
-  import { browser } from '$app/environment';
-  import { tick } from 'svelte';
-
-  interface DrawerProps {
-    form: SuperValidated<PlaylistSchema>;
-    formId?: string;
-    trigger: Snippet;
-    playlist: Playlist;
-    open: boolean;
-    session: Session | null;
-    nested?: boolean;
-  }
 
   let {
     form,
@@ -46,7 +34,15 @@
     open = $bindable(),
     session,
     nested = false,
-  }: DrawerProps = $props();
+  }: {
+    form: SuperValidated<PlaylistSchema>;
+    formId?: string;
+    trigger: Snippet;
+    playlist: Playlist;
+    open: boolean;
+    session: Session | null;
+    nested?: boolean;
+  } = $props();
 
   const playlistState = getPlaylistState();
   const sidebarState = getSidebarState();
@@ -56,12 +52,6 @@
   let isSubmitting = $state(false);
   let isPublic = $state(playlist.type === 'Public');
   let nestedDrawerOpen = $state(false);
-
-  // Mobile Safari keyboard handling
-  let initialViewportHeight = $state(0);
-  let isKeyboardOpen = $state(false);
-  let isAnimating = $state(false);
-  let animationTimeoutId: number | undefined = undefined;
 
   // Cropper state
   let cropperDialogOpen = $state(false);
@@ -77,181 +67,6 @@
   const isPlaylistOwner = $derived(playlist.created_by === session?.user.id);
   const imageSrc = $derived(playlist.thumbnail_url);
   const displayImageUrl = $derived(previewImageUrl || playlist.image_url);
-
-  // Debounce function for viewport changes
-  function debounce<T extends (...args: unknown[]) => void>(
-    func: T,
-    wait: number
-  ): (...args: Parameters<T>) => void {
-    let timeout: number | undefined;
-    return (...args: Parameters<T>): void => {
-      const later = (): void => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = window.setTimeout(later, wait);
-    };
-  }
-
-  // Mobile Safari viewport handling with better detection
-  function handleViewportChange(): void {
-    if (!browser || !open || isAnimating) return;
-
-    const currentHeight = window.visualViewport?.height || window.innerHeight;
-
-    if (initialViewportHeight === 0) {
-      initialViewportHeight = currentHeight;
-      return;
-    }
-
-    const heightDifference = initialViewportHeight - currentHeight;
-    const threshold = 150; // Keyboard threshold in pixels
-
-    const newKeyboardState = heightDifference > threshold;
-
-    if (newKeyboardState !== isKeyboardOpen) {
-      isKeyboardOpen = newKeyboardState;
-
-      // Apply styles to document root for mobile Safari fixes
-      requestAnimationFrame(() => {
-        if (isKeyboardOpen) {
-          // Keyboard is open - apply mobile Safari fixes
-          document.documentElement.style.setProperty(
-            '--drawer-mobile-height',
-            `${currentHeight}px`
-          );
-          document.body.classList.add('drawer-keyboard-open');
-          // Prevent scrolling issues on body but allow drawer scrolling
-          document.body.style.setProperty('overflow', 'hidden');
-        } else {
-          // Keyboard is closed - restore layout
-          document.documentElement.style.removeProperty(
-            '--drawer-mobile-height'
-          );
-          document.body.classList.remove('drawer-keyboard-open');
-          // Restore scrolling
-          document.body.style.removeProperty('overflow');
-        }
-      });
-    }
-  }
-
-  // Debounced version of viewport change handler
-  const debouncedViewportChange = debounce(handleViewportChange, 50);
-
-  // Handle drawer animation states
-  function handleDrawerStateChange(isOpen: boolean): void {
-    if (isOpen) {
-      // Drawer is opening
-      isAnimating = true;
-
-      // Clear any existing timeout
-      if (animationTimeoutId) {
-        clearTimeout(animationTimeoutId);
-      }
-
-      // Set animation complete after transition duration
-      animationTimeoutId = window.setTimeout(() => {
-        isAnimating = false;
-
-        // Initialize viewport height tracking after animation
-        if (browser) {
-          initialViewportHeight =
-            window.visualViewport?.height || window.innerHeight;
-        }
-      }, 300); // Typical drawer animation duration
-    } else {
-      // Drawer is closing
-      isAnimating = true;
-
-      // Clear any existing timeout
-      if (animationTimeoutId) {
-        clearTimeout(animationTimeoutId);
-      }
-
-      // Clean up mobile states
-      isKeyboardOpen = false;
-      initialViewportHeight = 0;
-
-      // Clean up document styles
-      try {
-        document.documentElement.style.removeProperty('--drawer-mobile-height');
-        document.body.classList.remove('drawer-keyboard-open');
-        document.body.style.removeProperty('overflow');
-      } catch (error) {
-        console.warn('Error cleaning up document styles:', error);
-      }
-
-      // Set animation complete after transition duration
-      animationTimeoutId = window.setTimeout(() => {
-        isAnimating = false;
-      }, 300);
-    }
-  }
-
-  // Watch for drawer open/close changes
-  $effect(() => {
-    handleDrawerStateChange(open);
-  });
-
-  // Set up viewport listeners for mobile Safari
-  $effect(() => {
-    if (!browser || !open || isAnimating) return;
-
-    // Listen for viewport changes
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', debouncedViewportChange);
-      window.visualViewport.addEventListener('scroll', debouncedViewportChange);
-    } else {
-      window.addEventListener('resize', debouncedViewportChange);
-    }
-
-    return () => {
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener(
-          'resize',
-          debouncedViewportChange
-        );
-        window.visualViewport.removeEventListener(
-          'scroll',
-          debouncedViewportChange
-        );
-      } else {
-        window.removeEventListener('resize', debouncedViewportChange);
-      }
-    };
-  });
-
-  // Handle input focus with better mobile Safari support
-  function handleInputFocus(event: Event): void {
-    if (!browser || isAnimating) return;
-
-    const target = event.target as HTMLElement;
-
-    // Scroll element into view with proper options
-    setTimeout(() => {
-      if (target && typeof target.scrollIntoView === 'function') {
-        target.scrollIntoView({
-          behavior: 'smooth',
-          block: 'center',
-          inline: 'nearest',
-        });
-      }
-
-      // Check viewport after focus
-      debouncedViewportChange();
-    }, 100);
-  }
-
-  function handleInputBlur(): void {
-    if (!browser || isAnimating) return;
-
-    // Check viewport after blur with longer delay
-    setTimeout(() => {
-      debouncedViewportChange();
-    }, 300);
-  }
 
   // Create cropped preview
   async function createCroppedPreview(
@@ -366,9 +181,6 @@
           playlist.thumbnail_url = null;
         }
 
-        // Wait for next tick before closing to ensure updates are processed
-        await tick();
-
         // Now close drawer and refresh data
         open = false;
         sidebarState.refreshData();
@@ -384,7 +196,7 @@
 
   // Initialize form when drawer opens
   $effect(() => {
-    if (open && !isAnimating) {
+    if (open) {
       isSubmitting = false;
       isPublic = playlist.type === 'Public';
       previewImageUrl = null;
@@ -404,9 +216,7 @@
 
   // Update type when checkbox changes
   $effect(() => {
-    if (!isAnimating) {
-      $formData.type = isPublic ? 'Public' : 'Private';
-    }
+    $formData.type = isPublic ? 'Public' : 'Private';
   });
 
   // Reset cropper state when dialog opens
@@ -428,28 +238,10 @@
 
   // Reset form when drawer closes
   $effect(() => {
-    if (!open && !isAnimating) {
+    if (!open) {
       playlistForm.reset();
       playlistState.openEditPlaylist = false;
     }
-  });
-
-  // Cleanup on component unmount
-  $effect(() => {
-    return () => {
-      if (animationTimeoutId) {
-        clearTimeout(animationTimeoutId);
-      }
-
-      // Clean up styles with safety checks
-      try {
-        document.documentElement.style.removeProperty('--drawer-mobile-height');
-        document.body.classList.remove('drawer-keyboard-open');
-        document.body.style.removeProperty('overflow');
-      } catch (error) {
-        console.warn('Error during cleanup:', error);
-      }
-    };
   });
 </script>
 
@@ -464,11 +256,7 @@
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content
-    class="bg-background drawer flex min-h-[100%] flex-col"
-    data-keyboard-open={isKeyboardOpen}
-    data-animating={isAnimating}
-  >
+  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
@@ -586,8 +374,6 @@
                       autocomplete="off"
                       autocapitalize="words"
                       spellcheck="true"
-                      onfocus={handleInputFocus}
-                      onblur={handleInputBlur}
                     />
                   {/snippet}
                 </Form.Control>
@@ -616,8 +402,6 @@
                       autocomplete="off"
                       autocapitalize="sentences"
                       spellcheck="true"
-                      onfocus={handleInputFocus}
-                      onblur={handleInputBlur}
                     />
                   {/snippet}
                 </Form.Control>
@@ -683,7 +467,6 @@
                     class: 'drawer-button-footer',
                     variant: 'outline',
                   })}
-                  disabled={isAnimating}
                 >
                   Close
                 </Drawer.Close>
@@ -738,65 +521,3 @@
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
-
-<style>
-  /* Mobile Safari viewport and keyboard handling */
-  :global(body.drawer-keyboard-open .drawer[data-keyboard-open='true']) {
-    height: var(--drawer-mobile-height, 100dvh) !important;
-    max-height: var(--drawer-mobile-height, 100dvh) !important;
-  }
-
-  /* Prevent zoom on input focus for iOS and ensure proper font size */
-  :global(.drawer input),
-  :global(.drawer textarea),
-  :global(.drawer select) {
-    font-size: max(16px, 1rem) !important;
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
-
-  /* Ensure proper touch behavior */
-  :global(.drawer) {
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    user-select: none;
-    touch-action: pan-y;
-  }
-
-  :global(.drawer input),
-  :global(.drawer textarea) {
-    -webkit-user-select: text;
-    user-select: text;
-    touch-action: manipulation;
-  }
-
-  /* Animation state management */
-  :global([data-animating='true']) {
-    pointer-events: none;
-  }
-
-  :global([data-animating='false']) {
-    pointer-events: auto;
-  }
-
-  /* iOS specific fixes */
-  @supports (-webkit-touch-callout: none) {
-    :global(body.drawer-keyboard-open .drawer[data-keyboard-open='true']) {
-      /* Use fixed positioning to prevent viewport issues on iOS */
-      position: fixed !important;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-    }
-  }
-
-  /* Ensure scrolling works properly when keyboard is open */
-  :global(
-    body.drawer-keyboard-open .drawer[data-keyboard-open='true'] .min-h-0
-  ) {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: env(keyboard-inset-height, 2rem);
-  }
-</style>
