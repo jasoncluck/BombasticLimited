@@ -105,6 +105,7 @@
 
 <Sheet.Root bind:open={isOpen}>
   <Sheet.Trigger
+    data-testid="navigation-drawer-trigger"
     class={buttonVariants({
       variant: 'ghost',
       class: 'ghost-button-minimal',

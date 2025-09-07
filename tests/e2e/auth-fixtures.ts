@@ -20,6 +20,12 @@ export interface UnauthenticatedFixtures {
   unauthenticatedContext: BrowserContext;
 }
 
+// Helper function to get the correct worker index within the configured range
+function getValidWorkerIndex(workerIndex: number): number {
+  const maxWorkers = process.env.CI ? 1 : 2;
+  return workerIndex % maxWorkers;
+}
+
 // Test with authenticated user context
 export const authenticatedTest = base.extend<AuthenticatedFixtures>({
   testDataManager: async ({}, use) => {
@@ -28,22 +34,23 @@ export const authenticatedTest = base.extend<AuthenticatedFixtures>({
   },
 
   testUser: async ({ testDataManager }, use, workerInfo) => {
-    const testUser = await testDataManager.getOrCreateTestUser(
-      workerInfo.workerIndex
-    );
+    const validWorkerIndex = getValidWorkerIndex(workerInfo.workerIndex);
+    const testUser =
+      await testDataManager.getOrCreateTestUser(validWorkerIndex);
     await use(testUser);
   },
 
   authenticatedContext: async ({ browser }, use, workerInfo) => {
+    const validWorkerIndex = getValidWorkerIndex(workerInfo.workerIndex);
     const authFile = path.join(
       process.cwd(),
       '.auth',
-      `user-${workerInfo.workerIndex}.json`
+      `user-${validWorkerIndex}.json`
     );
 
     if (!fs.existsSync(authFile)) {
       throw new Error(
-        `Authentication file not found for worker ${workerInfo.workerIndex}. Make sure global setup ran successfully.`
+        `Authentication file not found for worker ${validWorkerIndex} (original: ${workerInfo.workerIndex}). Make sure global setup ran successfully.`
       );
     }
 
@@ -130,22 +137,23 @@ export const mixedTest = base.extend<
   },
 
   testUser: async ({ testDataManager }, use, workerInfo) => {
-    const testUser = await testDataManager.getOrCreateTestUser(
-      workerInfo.workerIndex
-    );
+    const validWorkerIndex = getValidWorkerIndex(workerInfo.workerIndex);
+    const testUser =
+      await testDataManager.getOrCreateTestUser(validWorkerIndex);
     await use(testUser);
   },
 
   authenticatedContext: async ({ browser }, use, workerInfo) => {
+    const validWorkerIndex = getValidWorkerIndex(workerInfo.workerIndex);
     const authFile = path.join(
       process.cwd(),
       '.auth',
-      `user-${workerInfo.workerIndex}.json`
+      `user-${validWorkerIndex}.json`
     );
 
     if (!fs.existsSync(authFile)) {
       throw new Error(
-        `Authentication file not found for worker ${workerInfo.workerIndex}.`
+        `Authentication file not found for worker ${validWorkerIndex} (original: ${workerInfo.workerIndex}).`
       );
     }
 

@@ -8,8 +8,10 @@ export default async function globalTeardown() {
   try {
     const testDataManager = new TestDataManager();
 
-    // Clean up test data for all known workers
-    for (let workerId = 0; workerId < 10; workerId++) {
+    // Clean up test data for the correct number of workers (match config)
+    const maxWorkers = process.env.CI ? 1 : 2; // Match the config from playwright.config.ts
+
+    for (let workerId = 0; workerId < maxWorkers; workerId++) {
       try {
         const testUser = await testDataManager.getOrCreateTestUser(workerId);
         await testDataManager.cleanupUserTestData(testUser.id);

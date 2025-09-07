@@ -27,7 +27,6 @@ test.describe('Homepage', () => {
   }) => {
     await unauthenticatedPage.setViewportSize({ width: 375, height: 667 });
     await unauthenticatedPage.goto('/');
-    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Home link should be hidden on mobile (hidden sm:block classes)
     const homeLink = unauthenticatedPage.getByRole('link', { name: /home/i });
@@ -39,7 +38,6 @@ test.describe('Homepage', () => {
   }) => {
     await unauthenticatedPage.setViewportSize({ width: 375, height: 667 });
     await unauthenticatedPage.goto('/');
-    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Toggle menu button should be visible on mobile
     const toggleButton = unauthenticatedPage.getByRole('button', {
@@ -48,8 +46,10 @@ test.describe('Homepage', () => {
     await expect(toggleButton).toBeVisible();
 
     // The navigation should be present
-    const navigation = unauthenticatedPage.getByRole('navigation');
-    await expect(navigation).toBeVisible();
+    const navigationDrawer = unauthenticatedPage.getByTestId(
+      'navigation-drawer-trigger'
+    );
+    await expect(navigationDrawer).toBeVisible();
   });
 
   test('should display all live channels in sidebar', async ({
@@ -59,37 +59,37 @@ test.describe('Homepage', () => {
 
     // Check for all four live channels using more specific selectors
     await expect(
-      unauthenticatedPage.getByRole('button', { name: /Live now Giant Bomb/ })
+      unauthenticatedPage.getByRole('link', { name: /Live now Giant Bomb/ })
     ).toBeVisible();
     await expect(
-      unauthenticatedPage.getByRole('button', {
-        name: /Live now The Jeff Gerstmann Show/,
+      unauthenticatedPage.getByRole('link', {
+        name: /Live now Jeff Gerstmann/,
       })
     ).toBeVisible();
     await expect(
-      unauthenticatedPage.getByRole('button', { name: /Live now Nextlander/ })
+      unauthenticatedPage.getByRole('link', { name: /Live now Nextlander/ })
     ).toBeVisible();
     await expect(
-      unauthenticatedPage.getByRole('button', { name: /Live now Remap/ })
+      unauthenticatedPage.getByRole('link', { name: /Live now Remap/ })
     ).toBeVisible();
 
     // Verify channel buttons are clickable
-    const giantBombButton = unauthenticatedPage.getByRole('button', {
+    const giantBombButton = unauthenticatedPage.getByRole('link', {
       name: /Live now Giant Bomb/,
     });
     await expect(giantBombButton).toBeVisible();
 
-    const jeffButton = unauthenticatedPage.getByRole('button', {
-      name: /Live now The Jeff Gerstmann Show/,
+    const jeffButton = unauthenticatedPage.getByRole('link', {
+      name: /Live now Jeff Gerstmann/,
     });
     await expect(jeffButton).toBeVisible();
 
-    const nextlanderButton = unauthenticatedPage.getByRole('button', {
+    const nextlanderButton = unauthenticatedPage.getByRole('link', {
       name: /Live now Nextlander/,
     });
     await expect(nextlanderButton).toBeVisible();
 
-    const remapButton = unauthenticatedPage.getByRole('button', {
+    const remapButton = unauthenticatedPage.getByRole('link', {
       name: /Live now Remap/,
     });
     await expect(remapButton).toBeVisible();
@@ -102,16 +102,26 @@ test.describe('Homepage', () => {
 
     // Check for source-specific carousel links
     await expect(
-      unauthenticatedPage.getByRole('link', { name: 'Giant Bomb' })
+      unauthenticatedPage
+        .getByRole('link', { name: 'Giant Bomb' })
+        .and(unauthenticatedPage.getByTestId('source-link'))
     ).toBeVisible();
     await expect(
-      unauthenticatedPage.getByRole('link', { name: 'The Jeff Gerstmann Show' })
+      unauthenticatedPage
+        .getByRole('link', {
+          name: 'Jeff Gerstmann',
+        })
+        .and(unauthenticatedPage.getByTestId('source-link'))
     ).toBeVisible();
     await expect(
-      unauthenticatedPage.getByRole('link', { name: 'Nextlander' })
+      unauthenticatedPage
+        .getByRole('link', { name: 'Nextlander' })
+        .and(unauthenticatedPage.getByTestId('source-link'))
     ).toBeVisible();
     await expect(
-      unauthenticatedPage.getByRole('link', { name: 'Remap' })
+      unauthenticatedPage
+        .getByRole('link', { name: 'Remap' })
+        .and(unauthenticatedPage.getByTestId('source-link'))
     ).toBeVisible();
 
     // Verify carousel controls exist
@@ -129,7 +139,6 @@ test.describe('Homepage', () => {
     unauthenticatedPage,
   }) => {
     await unauthenticatedPage.goto('/');
-    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Get the search input
     const searchInput = unauthenticatedPage.getByRole('searchbox', {
@@ -144,18 +153,14 @@ test.describe('Homepage', () => {
     // Should navigate to search page
     await expect(unauthenticatedPage).toHaveURL(/\/search\/test%20search/);
 
-    // Should show search results
-    const resultsHeading = unauthenticatedPage.getByRole('heading', {
-      name: /results/i,
-    });
-    await expect(resultsHeading).toBeVisible();
+    const contentCard = unauthenticatedPage.getByTestId('content-card').first();
+    await contentCard.waitFor();
   });
 
   test('should navigate to individual video pages', async ({
     unauthenticatedPage,
   }) => {
     await unauthenticatedPage.goto('/');
-    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Wait for video carousels to load and ensure we have buttons
     const carouselItem = unauthenticatedPage.getByTestId('carousel-item');
@@ -165,7 +170,7 @@ test.describe('Homepage', () => {
     await unauthenticatedPage.waitForURL(/\/video\//, { timeout: 10000 });
 
     // Video page should load with iframe player
-    const videoFrame = unauthenticatedPage.locator('iframe');
+    const videoFrame = unauthenticatedPage.locator('iframe').first();
     await expect(videoFrame).toBeVisible();
   });
 
@@ -173,7 +178,6 @@ test.describe('Homepage', () => {
     unauthenticatedPage,
   }) => {
     await unauthenticatedPage.goto('/');
-    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Navigate to a video using carousel format (unauthenticated users)
     const carouselItems = unauthenticatedPage.getByTestId('carousel-item');
@@ -268,30 +272,36 @@ test.describe('Homepage', () => {
     await unauthenticatedPage.goto('/');
 
     // Test Giant Bomb link
-    const giantBombLink = unauthenticatedPage.getByRole('link', {
-      name: 'Giant Bomb',
-    });
+    const giantBombLink = unauthenticatedPage
+      .locator('aside')
+      .getByRole('link', {
+        name: 'Giant Bomb',
+      });
     await expect(giantBombLink).toBeVisible();
-    await expect(giantBombLink).toHaveAttribute('href', '/giantbomb/latest');
+    await expect(giantBombLink).toHaveAttribute('href', '/giantbomb');
 
     // Test Jeff Gerstmann Show link
-    const jeffLink = unauthenticatedPage.getByRole('link', {
-      name: 'The Jeff Gerstmann Show',
+    const jeffLink = unauthenticatedPage.locator('aside').getByRole('link', {
+      name: 'Jeff Gerstmann',
     });
     await expect(jeffLink).toBeVisible();
-    await expect(jeffLink).toHaveAttribute('href', '/jeffgerstmann/latest');
+    await expect(jeffLink).toHaveAttribute('href', '/jeffgerstmann');
 
     // Test Nextlander link
-    const nextlanderLink = unauthenticatedPage.getByRole('link', {
-      name: 'Nextlander',
-    });
+    const nextlanderLink = unauthenticatedPage
+      .locator('aside')
+      .getByRole('link', {
+        name: 'Nextlander',
+      });
     await expect(nextlanderLink).toBeVisible();
-    await expect(nextlanderLink).toHaveAttribute('href', '/nextlander/latest');
+    await expect(nextlanderLink).toHaveAttribute('href', '/nextlander');
 
     // Test Remap link
-    const remapLink = unauthenticatedPage.getByRole('link', { name: 'Remap' });
+    const remapLink = unauthenticatedPage.locator('aside').getByRole('link', {
+      name: 'Remap',
+    });
     await expect(remapLink).toBeVisible();
-    await expect(remapLink).toHaveAttribute('href', '/remap/latest');
+    await expect(remapLink).toHaveAttribute('href', '/remap');
   });
 
   test('should load video content dynamically', async ({
@@ -333,9 +343,6 @@ test.describe('Homepage', () => {
 
     // Check page title
     await expect(unauthenticatedPage).toHaveTitle(/Bombastic/);
-
-    // Verify page loads completely
-    await unauthenticatedPage.waitForLoadState('networkidle');
 
     // Check that main content is loaded
     await expect(

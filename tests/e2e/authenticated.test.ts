@@ -83,7 +83,7 @@ test.describe('Authenticated User Features', () => {
     await expect(profileButton).toBeVisible();
 
     // Should also show the Card button for authenticated users
-    const cardButton = authenticatedPage.locator('button:has-text("Card")');
+    const cardButton = authenticatedPage.getByTestId('user-preferences');
     await expect(cardButton).toBeVisible();
   });
 
@@ -94,7 +94,6 @@ test.describe('Authenticated User Features', () => {
 
     // Reload the page
     await authenticatedPage.reload();
-    await authenticatedPage.waitForLoadState('networkidle');
 
     // Should still be authenticated - check for Profile button
     const profileButton = authenticatedPage.locator(
@@ -111,10 +110,6 @@ test.describe('Authenticated User Features', () => {
     authenticatedPage,
   }) => {
     await authenticatedPage.goto('/');
-
-    // Check if user preferences are loaded (this might vary based on your implementation)
-    // For example, user might have custom source preferences or content display settings
-    await authenticatedPage.waitForLoadState('networkidle');
 
     // Verify authenticated user sees the expected layout
     await expect(
