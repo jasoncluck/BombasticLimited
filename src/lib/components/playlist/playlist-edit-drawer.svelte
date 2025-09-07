@@ -229,7 +229,7 @@
     }
   });
 
-  // Close nested drawer when main drawer closes
+  // Close nested drawer if it's open
   $effect(() => {
     if (!open && nestedDrawerOpen) {
       nestedDrawerOpen = false;
@@ -515,9 +515,9 @@
       {/if}
     </div>
 
-    <Dialog.Footer class="flex justify-between">
-      <Button variant="outline" onclick={handleCropCancel}>Cancel</Button>
+    <Dialog.Footer class="flex flex-col justify-between gap-4">
       <Button onclick={handleCropConfirm}>Apply Crop</Button>
+      <Button variant="outline" onclick={handleCropCancel}>Cancel</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
