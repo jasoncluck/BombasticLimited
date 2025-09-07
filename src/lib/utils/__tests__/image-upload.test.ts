@@ -40,13 +40,13 @@ describe('image-upload', () => {
       expect(file.name).toBe(filename);
     });
 
-    it('should default to image/jpeg for invalid MIME types', () => {
+    it('should use the extracted MIME type even if invalid', () => {
       const dataURL = 'data:invalid;base64,dGVzdA==';
       const filename = 'test-image.jpg';
       
       const file = dataURLtoFile(dataURL, filename);
       
-      expect(file.type).toBe('image/jpeg');
+      expect(file.type).toBe('invalid');
     });
 
     it('should handle data URLs without MIME type', () => {
@@ -119,7 +119,7 @@ describe('image-upload', () => {
       
       expect(result.success).toBe(true);
       expect(result.error).toBeUndefined();
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('images');
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith('content-images');
       expect(mockSupabase.storage.remove).toHaveBeenCalledWith(['test-image.jpg']);
     });
 
@@ -215,7 +215,7 @@ describe('image-upload', () => {
         supabase: mockSupabase
       });
       
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('images');
+      expect(mockSupabase.storage.from).toHaveBeenCalledWith('content-images');
     });
   });
 

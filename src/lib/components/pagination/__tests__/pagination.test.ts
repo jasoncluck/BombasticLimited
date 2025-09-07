@@ -14,6 +14,9 @@ vi.mock('$app/navigation', () => ({
   preloadData: vi.fn()
 }));
 
+// Import the mocked functions for use in tests
+import { goto, preloadData } from '$app/navigation';
+
 describe('pagination', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -172,12 +175,10 @@ describe('pagination', () => {
   });
 
   describe('updatePaginationQueryParams', () => {
-    const { goto } = require('$app/navigation');
-
     it('should call goto with updated URL', () => {
       const url = new URL('https://example.com/videos');
       const pageNum = 3;
-      const invalidate = ['app:videos'];
+      const invalidate: string[] = ['app:videos'];
 
       updatePaginationQueryParams({ url, pageNum, invalidate });
 
@@ -189,7 +190,7 @@ describe('pagination', () => {
     it('should preserve existing query parameters', () => {
       const url = new URL('https://example.com/videos?sort=name&limit=25');
       const pageNum = 2;
-      const invalidate = [];
+      const invalidate: string[] = [];
 
       updatePaginationQueryParams({ url, pageNum, invalidate });
 
@@ -225,7 +226,7 @@ describe('pagination', () => {
     it('should handle page number 0', () => {
       const url = new URL('https://example.com/videos');
       const pageNum = 0;
-      const invalidate = [];
+      const invalidate: string[] = [];
 
       updatePaginationQueryParams({ url, pageNum, invalidate });
 
@@ -236,15 +237,13 @@ describe('pagination', () => {
   });
 
   describe('preloadPaginationPage', () => {
-    const { preloadData } = require('$app/navigation');
-
     beforeEach(() => {
       // Mock console.debug to prevent test output
       vi.spyOn(console, 'debug').mockImplementation(() => {});
     });
 
     it('should preload data for pagination URL', async () => {
-      preloadData.mockResolvedValue(undefined);
+      vi.mocked(preloadData).mockResolvedValue(undefined as any);
       
       const url = new URL('https://example.com/videos');
       await preloadPaginationPage({ url, pageNum: 3 });
@@ -254,7 +253,7 @@ describe('pagination', () => {
 
     it('should handle preload errors silently', async () => {
       const preloadError = new Error('Preload failed');
-      preloadData.mockRejectedValue(preloadError);
+      vi.mocked(preloadData).mockRejectedValue(preloadError);
       
       const url = new URL('https://example.com/videos');
       
@@ -266,7 +265,7 @@ describe('pagination', () => {
     });
 
     it('should preserve existing query parameters in preload URL', async () => {
-      preloadData.mockResolvedValue(undefined);
+      vi.mocked(preloadData).mockResolvedValue(undefined as any);
       
       const url = new URL('https://example.com/videos?sort=date&limit=50');
       await preloadPaginationPage({ url, pageNum: 5 });
@@ -275,7 +274,7 @@ describe('pagination', () => {
     });
 
     it('should handle different page numbers', async () => {
-      preloadData.mockResolvedValue(undefined);
+      vi.mocked(preloadData).mockResolvedValue(undefined as any);
       
       const url = new URL('https://example.com/videos');
       
@@ -290,7 +289,7 @@ describe('pagination', () => {
     });
 
     it('should handle complex URLs', async () => {
-      preloadData.mockResolvedValue(undefined);
+      vi.mocked(preloadData).mockResolvedValue(undefined as any);
       
       const url = new URL('https://example.com/path/to/content?filter=active&search=test');
       await preloadPaginationPage({ url, pageNum: 7 });

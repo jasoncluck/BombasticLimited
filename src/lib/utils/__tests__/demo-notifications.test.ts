@@ -59,15 +59,13 @@ describe('demo-notifications', () => {
       });
     });
 
-    it('should include different notification types', () => {
+    it('should only include system notification type', () => {
       const notifications = createDemoNotifications();
       const types = notifications.map(n => n.type);
       
       expect(types).toContain('system');
-      expect(types).toContain('content');
-      expect(types).toContain('playlist_update');
-      expect(types).toContain('mention');
-      expect(types).toContain('user');
+      // All notifications should be 'system' type as per the database schema
+      expect(types.every(type => type === 'system')).toBe(true);
     });
 
     it('should have system maintenance notification', () => {

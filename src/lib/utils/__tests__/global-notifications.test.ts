@@ -63,7 +63,7 @@ describe('global-notifications', () => {
       );
 
       expect(mockSupabase.mockRpc).toHaveBeenCalledWith('create_notification_for_all_users', {
-        notification_type: 'content',
+        notification_type: 'system',
         notification_title: 'Simple Title',
         notification_message: 'Simple Message',
         notification_metadata: {},
@@ -217,7 +217,7 @@ describe('global-notifications', () => {
       const template = NOTIFICATION_TEMPLATES.newFeature;
 
       expect(template).toEqual({
-        type: 'content',
+        type: 'system',
         title: 'New Feature Available',
         message: 'Check out our latest feature update with enhanced functionality!',
         metadata: { source: 'feature_announcement' },
@@ -317,7 +317,7 @@ describe('global-notifications', () => {
       const result = await sendTemplateNotification(mockSupabase, 'newFeature');
 
       expect(mockSupabase.mockRpc).toHaveBeenCalledWith('create_notification_for_all_users', {
-        notification_type: 'content',
+        notification_type: 'system',
         notification_title: 'New Feature Available',
         notification_message: 'Check out our latest feature update with enhanced functionality!',
         notification_metadata: { source: 'feature_announcement' },
@@ -374,7 +374,7 @@ describe('global-notifications', () => {
       });
 
       expect(mockSupabase.mockRpc).toHaveBeenCalledWith('create_notification_for_all_users', {
-        notification_type: 'content',
+        notification_type: 'system',
         notification_title: 'New Feature Available',
         notification_message: 'Check out our latest feature update with enhanced functionality!',
         notification_metadata: {
@@ -445,7 +445,7 @@ describe('global-notifications', () => {
       });
 
       expect(mockSupabase.mockRpc).toHaveBeenCalledWith('create_notification_for_all_users', {
-        notification_type: 'content',
+        notification_type: 'system',
         notification_title: 'Awesome New Feature!',
         notification_message: 'We have launched an incredible new feature that will change everything!',
         notification_metadata: {
