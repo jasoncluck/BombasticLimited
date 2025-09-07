@@ -100,7 +100,7 @@ describe('routes constants', () => {
 
     it('should work in routing utilities', () => {
       // Test common routing use cases
-      const isMainRoute = (path: string) => MAIN_ROUTE_PATHS.includes(path);
+      const isMainRoute = (path: string) => MAIN_ROUTE_PATHS.includes(path as any);
       
       expect(isMainRoute('/giantbomb')).toBe(true);
       expect(isMainRoute('/unknown')).toBe(false);
@@ -255,7 +255,7 @@ describe('routes constants', () => {
 
     it('should work with route validation', () => {
       const isValidMainRoute = (path: string): boolean => {
-        return MAIN_ROUTE_PATHS.includes(path);
+        return MAIN_ROUTE_PATHS.includes(path as any);
       };
       
       expect(isValidMainRoute('/')).toBe(true);

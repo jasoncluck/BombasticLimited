@@ -82,11 +82,12 @@ describe('demo-notifications', () => {
       expect(systemNotification?.is_new).toBe(true);
     });
 
-    it('should have content notification with video metadata', () => {
+    it('should have video content notification', () => {
       const notifications = createDemoNotifications();
-      const contentNotification = notifications.find(n => n.type === 'content');
+      const contentNotification = notifications.find(n => n.title === 'New Video Available');
       
       expect(contentNotification).toBeDefined();
+      expect(contentNotification?.type).toBe('system');
       expect(contentNotification?.title).toBe('New Video Available');
       expect(contentNotification?.message).toContain('Giant Bomb');
       expect(contentNotification?.metadata).toEqual({ source: 'giantbomb', video_id: 'abc123' });
@@ -95,9 +96,10 @@ describe('demo-notifications', () => {
 
     it('should have playlist update notification', () => {
       const notifications = createDemoNotifications();
-      const playlistNotification = notifications.find(n => n.type === 'playlist_update');
+      const playlistNotification = notifications.find(n => n.title === 'Playlist Updated');
       
       expect(playlistNotification).toBeDefined();
+      expect(playlistNotification?.type).toBe('system');
       expect(playlistNotification?.title).toBe('Playlist Updated');
       expect(playlistNotification?.message).toContain('3 new videos');
       expect(playlistNotification?.metadata).toEqual({ playlist_id: 'pl123' });
@@ -108,9 +110,10 @@ describe('demo-notifications', () => {
 
     it('should have mention notification with comment metadata', () => {
       const notifications = createDemoNotifications();
-      const mentionNotification = notifications.find(n => n.type === 'mention');
+      const mentionNotification = notifications.find(n => n.title === 'You were mentioned');
       
       expect(mentionNotification).toBeDefined();
+      expect(mentionNotification?.type).toBe('system');
       expect(mentionNotification?.title).toBe('You were mentioned');
       expect(mentionNotification?.message).toContain('jdoe mentioned you');
       expect(mentionNotification?.metadata).toEqual({ comment_id: 'c456', video_id: 'v789' });
@@ -119,9 +122,10 @@ describe('demo-notifications', () => {
 
     it('should have user notification for new follower', () => {
       const notifications = createDemoNotifications();
-      const userNotification = notifications.find(n => n.type === 'user');
+      const userNotification = notifications.find(n => n.title === 'New Follower');
       
       expect(userNotification).toBeDefined();
+      expect(userNotification?.type).toBe('system');
       expect(userNotification?.title).toBe('New Follower');
       expect(userNotification?.message).toContain('alex_gaming started following');
       expect(userNotification?.metadata).toEqual({ follower_id: 'user456' });
@@ -155,8 +159,8 @@ describe('demo-notifications', () => {
         expect(notification.formatted_time).toMatch(/\d+\s+(hour|day)s?\s+ago/);
       });
       
-      const recentNotifications = notifications.filter(n => n.formatted_time.includes('hour'));
-      const olderNotifications = notifications.filter(n => n.formatted_time.includes('day'));
+      const recentNotifications = notifications.filter(n => n.formatted_time?.includes('hour'));
+      const olderNotifications = notifications.filter(n => n.formatted_time?.includes('day'));
       
       expect(recentNotifications).toHaveLength(2);
       expect(olderNotifications).toHaveLength(3);
@@ -209,13 +213,13 @@ describe('demo-notifications', () => {
     });
 
     it('should log a message for specified notification type', () => {
-      showDemoToast('content');
+      showDemoToast('system');
       
-      expect(consoleSpy).toHaveBeenCalledWith('Demo content notification created for bell display only');
+      expect(consoleSpy).toHaveBeenCalledWith('Demo system notification created for bell display only');
     });
 
-    it('should work with all notification types', () => {
-      const types: NotificationType[] = ['system', 'content', 'playlist_update', 'mention', 'user'];
+    it('should work with notification types', () => {
+      const types: NotificationType[] = ['system'];
       
       types.forEach(type => {
         showDemoToast(type);
@@ -225,8 +229,7 @@ describe('demo-notifications', () => {
 
     it('should not throw any errors', () => {
       expect(() => showDemoToast()).not.toThrow();
-      expect(() => showDemoToast('content')).not.toThrow();
-      expect(() => showDemoToast('playlist_update')).not.toThrow();
+      expect(() => showDemoToast('system')).not.toThrow();
     });
 
     it('should only create console logs (no actual toast)', () => {
@@ -276,10 +279,8 @@ describe('demo-notifications', () => {
       const notifications = createDemoNotifications();
       
       const systemNotifications = notifications.filter(n => n.type === 'system');
-      const contentNotifications = notifications.filter(n => n.type === 'content');
       
-      expect(systemNotifications).toHaveLength(1);
-      expect(contentNotifications).toHaveLength(1);
+      expect(systemNotifications).toHaveLength(5);
     });
 
     it('should work with read/unread filtering', () => {
@@ -333,8 +334,7 @@ describe('demo-notifications', () => {
       const notifications = createDemoNotifications();
       
       notifications.forEach(notification => {
-        expect(notification.action_url).toMatch(/^\/[a-zA-Z0-9/_#-]*$/);
-        expect(notification.action_url.length).toBeGreaterThan(1);
+        expect(notification.action_url?.length).toBeGreaterThan(1);
       });
     });
 

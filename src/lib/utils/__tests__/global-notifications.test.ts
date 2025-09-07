@@ -57,7 +57,7 @@ describe('global-notifications', () => {
 
       const result = await sendGlobalNotification(
         mockSupabase,
-        'content',
+        'system',
         'Simple Title',
         'Simple Message'
       );
@@ -102,8 +102,8 @@ describe('global-notifications', () => {
       expect(result).toEqual({ count: null, error: thrownError });
     });
 
-    it('should work with different notification types', async () => {
-      const types: NotificationType[] = ['system', 'content', 'playlist_update', 'mention', 'user'];
+    it('should work with notification types', async () => {
+      const types: NotificationType[] = ['system'];
       
       for (const type of types) {
         mockSupabase.mockRpc.mockResolvedValue({ data: 10, error: null });
@@ -270,7 +270,7 @@ describe('global-notifications', () => {
     });
 
     it('should have appropriate notification types', () => {
-      const validTypes: NotificationType[] = ['system', 'content', 'playlist_update', 'mention', 'user'];
+      const validTypes: NotificationType[] = ['system'];
       
       Object.values(NOTIFICATION_TEMPLATES).forEach(template => {
         expect(validTypes).toContain(template.type);
