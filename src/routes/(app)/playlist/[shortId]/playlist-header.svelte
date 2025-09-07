@@ -337,7 +337,7 @@
         >
           {#snippet trigger()}
             <!-- Empty trigger since we handle clicks directly -->
-            <div style="display: none;"></div>
+            <div class="hidden"></div>
           {/snippet}
         </PlaylistEditDrawer>
       {/if}

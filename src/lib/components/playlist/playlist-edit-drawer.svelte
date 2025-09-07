@@ -229,7 +229,7 @@
     }
   });
 
-  // Close nested drawer when main drawer closes
+  // Close nested drawer if it's open
   $effect(() => {
     if (!open && nestedDrawerOpen) {
       nestedDrawerOpen = false;
@@ -263,8 +263,9 @@
       </Drawer.Header>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto p-1">
-      <div class="px-4 pb-2">
+    <!-- Scrollable content area -->
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      <div class="p-4">
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <!-- Image Section -->
           <div class="relative m-6 flex justify-center">
@@ -440,39 +441,43 @@
                 <Alert.Description>{$flash.message}</Alert.Description>
               </Alert.Root>
             {/if}
-
-            <!-- Form Footer -->
-            <div class="flex flex-col gap-2 pt-4">
-              <Drawer.Footer class="flex gap-2">
-                {#if isSubmitting}
-                  <Button
-                    type="submit"
-                    class="drawer-button-footer"
-                    disabled={isSubmitting}
-                  >
-                    <Loader class="mr-2 animate-spin" />
-                    Saving...
-                  </Button>
-                {:else}
-                  <Button
-                    type="submit"
-                    class="drawer-button-footer"
-                    disabled={isSubmitting}
-                  >
-                    Save Changes
-                  </Button>
-                {/if}
-                <Drawer.Close
-                  class={buttonVariants({
-                    class: 'drawer-button-footer',
-                    variant: 'outline',
-                  })}
-                >
-                  Close
-                </Drawer.Close>
-              </Drawer.Footer>
-            </div>
           </form>
+        </div>
+
+        <!-- Action buttons positioned below content but within scrollable area -->
+        <div class="border-t pt-4 pb-8">
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-2">
+              {#if isSubmitting}
+                <Button
+                  type="submit"
+                  form="playlist-drawer-form"
+                  class="drawer-button-footer"
+                  disabled={isSubmitting}
+                >
+                  <Loader class="mr-2 animate-spin" />
+                  Saving...
+                </Button>
+              {:else}
+                <Button
+                  type="submit"
+                  form="playlist-drawer-form"
+                  class="drawer-button-footer"
+                  disabled={isSubmitting}
+                >
+                  Save Changes
+                </Button>
+              {/if}
+              <Drawer.Close
+                class={buttonVariants({
+                  class: 'drawer-button-footer',
+                  variant: 'outline',
+                })}
+              >
+                Close
+              </Drawer.Close>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -515,9 +520,9 @@
       {/if}
     </div>
 
-    <Dialog.Footer class="flex justify-between">
-      <Button variant="outline" onclick={handleCropCancel}>Cancel</Button>
+    <Dialog.Footer class="flex flex-col justify-between gap-4">
       <Button onclick={handleCropConfirm}>Apply Crop</Button>
+      <Button variant="outline" onclick={handleCropCancel}>Cancel</Button>
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>

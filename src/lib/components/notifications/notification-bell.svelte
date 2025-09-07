@@ -6,17 +6,15 @@
   import * as Drawer from '$lib/components/ui/drawer';
   import NotificationList from './notification-list.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
   import { markAsRead } from '$lib/supabase/notifications';
   import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {
     supabase,
-    session,
   }: {
     supabase: SupabaseClient<Database>;
-    session: Session | null;
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
@@ -80,7 +78,7 @@
       </div>
 
       <div class="max-h-80 overflow-y-auto">
-        <NotificationList {supabase} {session} showActions={false} />
+        <NotificationList {supabase} />
       </div>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
@@ -118,12 +116,7 @@
         </div>
 
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
-          <NotificationList
-            {supabase}
-            {session}
-            showActions={false}
-            onNotificationClick={closeDrawer}
-          />
+          <NotificationList {supabase} onNotificationClick={closeDrawer} />
         </div>
 
         <Drawer.Footer>
