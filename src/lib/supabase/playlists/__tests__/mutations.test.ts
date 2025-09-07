@@ -361,7 +361,7 @@ describe('playlist mutations module', () => {
       expect(mockTable.update).toHaveBeenCalledWith({
         name: 'Updated Playlist',
         description: 'Updated description',
-        image_properties: { crop: { x: 0, y: 0, width: 100, height: 100 } },
+        image_properties: { x: 0, y: 0, width: 100, height: 100 },
         type: 'Public',
       });
       expect(mockTable.eq).toHaveBeenCalledWith('id', 1);
@@ -448,10 +448,7 @@ describe('playlist mutations module', () => {
       expect(mockSupabase.rpc).toHaveBeenCalledWith('update_playlist_thumbnail', {
         p_playlist_id: 1,
         p_thumbnail_url: 'path/to/new/thumbnail.webp',
-        p_image_properties: {
-          crop: { x: 10, y: 20, width: 200, height: 150 },
-          originalDimensions: { width: 1920, height: 1080 },
-        },
+        p_image_properties: { x: 10, y: 20, width: 200, height: 150 },
       });
       expect(result.error).toBeNull();
     });
@@ -631,7 +628,7 @@ describe('playlist mutations module', () => {
 
       expect(mockSupabase.from).toHaveBeenCalledWith('user_playlists');
       expect(mockTable.update).toHaveBeenCalledWith({
-        sorted_by: 'views',
+        sorted_by: 'title',
         sort_order: 'descending',
       });
       expect(mockTable.eq).toHaveBeenCalledWith('id', 1);

@@ -85,7 +85,7 @@ describe('video service module', () => {
         supabase: mockSupabase,
       });
       expect(result.updatedVideos).toEqual(mockUpdatedVideos);
-      expect(result.error).toBeUndefined();
+      expect(result.error).toBeNull();
     });
 
     it('should handle timestamp save errors', async () => {
@@ -140,7 +140,7 @@ describe('video service module', () => {
       });
       expect(invalidate).toHaveBeenCalledWith('supabase:db:videos');
       expect(result.updatedVideos).toEqual(mockUpdatedVideos);
-      expect(result.error).toBeUndefined();
+      expect(result.error).toBeNull();
     });
 
     it('should handle batch timestamp save errors', async () => {
@@ -365,7 +365,7 @@ describe('video service module', () => {
 
     it('should handle empty duration string', () => {
       expect(() => getVideoDuration('')).toThrow(
-        'Invalid ISO 8601 duration format'
+        'Invalid duration, unable to get duration of video'
       );
     });
   });
@@ -430,10 +430,10 @@ describe('video service module', () => {
   });
 
   describe('createVideoWatchTimeTracker', () => {
-    it('should create VideoWatchTimeTracker instance', () => {
-      const { VideoWatchTimeTracker } = require('$lib/supabase/video-history');
+    it('should create VideoWatchTimeTracker instance', async () => {
+      const { VideoWatchTimeTracker } = await import('$lib/supabase/video-history');
       const mockConstructor = vi.fn();
-      VideoWatchTimeTracker.mockImplementation(mockConstructor);
+      (VideoWatchTimeTracker as any).mockImplementation(mockConstructor);
 
       createVideoWatchTimeTracker({
         videoId: 'video123',

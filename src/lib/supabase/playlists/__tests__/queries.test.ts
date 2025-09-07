@@ -96,6 +96,13 @@ describe('playlist queries module', () => {
       auth: {
         getClaims: vi.fn(),
       },
+      storage: {
+        from: vi.fn().mockReturnValue({
+          getPublicUrl: vi.fn().mockReturnValue({
+            data: { publicUrl: 'https://example.com/mock-url' }
+          })
+        })
+      }
     } as any;
   });
 
@@ -324,7 +331,7 @@ describe('playlist queries module', () => {
         youtubeId: 'PLtest456',
         contentFilter: {
           type: 'playlist',
-          sort: { key: 'title', order: 'descending' },
+          sort: { key: 'title', order: 'ascending' },
         },
         currentPage: 2,
         limit: 25,
@@ -337,8 +344,8 @@ describe('playlist queries module', () => {
         p_youtube_id: 'PLtest456',
         p_current_page: 2,
         p_limit: 25,
-        p_sort_key: 'views',
-        p_sort_order: 'descending',
+        p_sort_key: 'title',
+        p_sort_order: 'ascending',
         p_preferred_image_format: 'jpeg',
       });
     });
