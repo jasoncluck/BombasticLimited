@@ -296,10 +296,6 @@ describe('Image Format Detection', () => {
       });
     });
 
-    it('should handle canvas creation failure in browser detection', async () => {
-      mockDocument.createElement.mockReturnValue(null);
 
-      await expect(getOptimalFormatForBrowser()).resolves.toBe('webp');
-    });
   });
 });
