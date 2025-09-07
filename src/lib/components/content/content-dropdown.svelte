@@ -254,12 +254,11 @@
       }
     }}
   >
-    <DropdownMenu.Trigger>
+    <DropdownMenu.Trigger data-testid="content-dropdown-trigger">
       {#snippet child({ props })}
         <Button
           {...props}
           variant="ghost"
-          data-testid="content-dropdown-trigger"
           onclick={(e) => {
             if (variant === 'list-items' && videos.length > 0) {
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
