@@ -256,15 +256,16 @@
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content class="bg-background drawer flex min-h-[95vh] flex-col">
+  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
       </Drawer.Header>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto p-1">
-      <div class="px-4 pb-2">
+    <!-- Changed: Simplified scrolling container structure -->
+    <div class="min-h-0 overflow-auto">
+      <div class="p-4">
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <!-- Image Section -->
           <div class="relative m-6 flex justify-center">
@@ -440,40 +441,44 @@
                 <Alert.Description>{$flash.message}</Alert.Description>
               </Alert.Root>
             {/if}
-
-            <!-- Form Footer -->
-            <div class="flex flex-col gap-2 pt-4">
-              <Drawer.Footer class="flex gap-2">
-                {#if isSubmitting}
-                  <Button
-                    type="submit"
-                    class="drawer-button-footer"
-                    disabled={isSubmitting}
-                  >
-                    <Loader class="mr-2 animate-spin" />
-                    Saving...
-                  </Button>
-                {:else}
-                  <Button
-                    type="submit"
-                    class="drawer-button-footer"
-                    disabled={isSubmitting}
-                  >
-                    Save Changes
-                  </Button>
-                {/if}
-                <Drawer.Close
-                  class={buttonVariants({
-                    class: 'drawer-button-footer',
-                    variant: 'outline',
-                  })}
-                >
-                  Close
-                </Drawer.Close>
-              </Drawer.Footer>
-            </div>
           </form>
         </div>
+      </div>
+    </div>
+
+    <!-- Changed: Moved footer outside of scrolling container -->
+    <div class="bg-background flex-shrink-0 border-t p-4 pt-2">
+      <div class="flex flex-col gap-2">
+        <Drawer.Footer class="flex gap-2">
+          {#if isSubmitting}
+            <Button
+              type="submit"
+              form="playlist-drawer-form"
+              class="drawer-button-footer"
+              disabled={isSubmitting}
+            >
+              <Loader class="mr-2 animate-spin" />
+              Saving...
+            </Button>
+          {:else}
+            <Button
+              type="submit"
+              form="playlist-drawer-form"
+              class="drawer-button-footer"
+              disabled={isSubmitting}
+            >
+              Save Changes
+            </Button>
+          {/if}
+          <Drawer.Close
+            class={buttonVariants({
+              class: 'drawer-button-footer',
+              variant: 'outline',
+            })}
+          >
+            Close
+          </Drawer.Close>
+        </Drawer.Footer>
       </div>
     </div>
   </Drawer.Content>

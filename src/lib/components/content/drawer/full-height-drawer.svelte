@@ -41,7 +41,7 @@
     {@render trigger()}
   </Drawer.Trigger>
 
-  <Drawer.Content class="bg-background drawer flex min-h-[95%] flex-col">
+  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">{title}</Drawer.Title>
