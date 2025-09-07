@@ -196,11 +196,7 @@
   const shouldShowButton = $derived.by(() => {
     return (
       hasAvailableActions &&
-      (variant !== 'list-items' ||
-        isHovering ||
-        open ||
-        subMenuOpen ||
-        isFocused)
+      (variant !== 'list-items' || isHovering || open || subMenuOpen)
     );
   });
 
