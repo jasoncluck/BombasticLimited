@@ -56,8 +56,6 @@
 
   // Mobile Safari keyboard handling
   let initialViewportHeight = $state(0);
-  let isKeyboardOpen = $state(false);
-  let drawerContainer: HTMLElement | null = null;
 
   // Cropper state
   let cropperDialogOpen = $state(false);
@@ -77,31 +75,12 @@
   // Mobile Safari viewport handling
   function handleViewportChange(): void {
     if (!browser) return;
-    
+
     const currentHeight = window.visualViewport?.height || window.innerHeight;
-    
+
     if (initialViewportHeight === 0) {
       initialViewportHeight = currentHeight;
       return;
-    }
-
-    const heightDifference = initialViewportHeight - currentHeight;
-    const threshold = 150; // Keyboard threshold in pixels
-
-    isKeyboardOpen = heightDifference > threshold;
-    
-    if (drawerContainer) {
-      if (isKeyboardOpen) {
-        // When keyboard is open, fix the height and prevent scrolling issues
-        drawerContainer.style.height = `${currentHeight}px`;
-        drawerContainer.style.maxHeight = `${currentHeight}px`;
-        drawerContainer.classList.add('keyboard-open');
-      } else {
-        // When keyboard is closed, restore normal behavior
-        drawerContainer.style.height = '';
-        drawerContainer.style.maxHeight = '';
-        drawerContainer.classList.remove('keyboard-open');
-      }
     }
   }
 
@@ -114,7 +93,7 @@
 
     // Listen for viewport changes
     const handleResize = () => handleViewportChange();
-    
+
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleResize);
     } else {
@@ -319,60 +298,10 @@
     if (!open) {
       playlistForm.reset();
       playlistState.openEditPlaylist = false;
-      // Reset keyboard state
-      isKeyboardOpen = false;
       initialViewportHeight = 0;
-      if (drawerContainer) {
-        drawerContainer.style.height = '';
-        drawerContainer.style.maxHeight = '';
-        drawerContainer.classList.remove('keyboard-open');
-      }
     }
   });
 </script>
-
-<!-- Add mobile-specific styles -->
-<style>
-  :global(.drawer-mobile-safe) {
-    /* Use dvh (dynamic viewport height) for mobile Safari */
-    min-height: 100dvh;
-    height: 100dvh;
-    max-height: 100dvh;
-  }
-  
-  :global(.drawer-mobile-safe.keyboard-open) {
-    /* When keyboard is open, use fixed height to prevent layout shifts */
-    overflow: hidden;
-  }
-  
-  :global(.drawer-content-mobile) {
-    /* Ensure content area is properly contained */
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    max-height: 100%;
-  }
-  
-  :global(.drawer-form-container) {
-    /* Make form scrollable when keyboard is open */
-    overflow-y: auto;
-    flex: 1;
-    min-height: 0;
-  }
-  
-  :global(.keyboard-open .drawer-form-container) {
-    /* Adjust padding when keyboard is open to prevent content being hidden */
-    padding-bottom: 2rem;
-  }
-
-  /* Prevent zoom on input focus for iOS */
-  :global(.drawer input),
-  :global(.drawer textarea),
-  :global(.drawer select) {
-    font-size: 16px !important;
-    transform-origin: left top;
-  }
-</style>
 
 <Drawer.Root bind:open handleOnly={true} {nested}>
   {#if !isPlaylistOwner}
@@ -385,8 +314,7 @@
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content 
-    bind:this={drawerContainer}
+  <Drawer.Content
     class="bg-background drawer drawer-mobile-safe drawer-content-mobile flex min-h-[100%] flex-col"
   >
     <div class="flex-shrink-0 p-4 pb-0">
@@ -657,3 +585,46 @@
     </Dialog.Footer>
   </Dialog.Content>
 </Dialog.Root>
+
+<!-- Add mobile-specific styles -->
+<style>
+  :global(.drawer-mobile-safe) {
+    /* Use dvh (dynamic viewport height) for mobile Safari */
+    min-height: 100dvh;
+    height: 100dvh;
+    max-height: 100dvh;
+  }
+
+  :global(.drawer-mobile-safe.keyboard-open) {
+    /* When keyboard is open, use fixed height to prevent layout shifts */
+    overflow: hidden;
+  }
+
+  :global(.drawer-content-mobile) {
+    /* Ensure content area is properly contained */
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+  }
+
+  :global(.drawer-form-container) {
+    /* Make form scrollable when keyboard is open */
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
+  }
+
+  :global(.keyboard-open .drawer-form-container) {
+    /* Adjust padding when keyboard is open to prevent content being hidden */
+    padding-bottom: 2rem;
+  }
+
+  /* Prevent zoom on input focus for iOS */
+  :global(.drawer input),
+  :global(.drawer textarea),
+  :global(.drawer select) {
+    font-size: 16px !important;
+    transform-origin: left top;
+  }
+</style>
