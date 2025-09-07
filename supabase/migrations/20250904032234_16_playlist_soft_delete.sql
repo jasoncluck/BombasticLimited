@@ -797,8 +797,8 @@ BEGIN
     -- Only proceed if this is a public playlist being soft-deleted
     IF OLD.type = 'Public' AND NEW.deleted_at IS NOT NULL AND OLD.deleted_at IS NULL THEN
         
-        -- Calculate the cleanup timestamp: exactly 14 days from deleted_at
-        cleanup_timestamp := NEW.deleted_at + INTERVAL '14 days';
+        -- Calculate the cleanup timestamp: should be around 14 days but in order to correctly message before the day in UTC we will set 13 days as a buffer
+        cleanup_timestamp := NEW.deleted_at + INTERVAL '13 days';
         
         -- Format the cleanup date for display (DATE ONLY - no time)
         formatted_cleanup_date := to_char(cleanup_timestamp, 'FMMonth DD, YYYY');
