@@ -445,7 +445,14 @@ export class ContentState {
 
       // If a dropdown is open just close that and don't redirect
       if (this.isDropdownMenuOpen) {
-        this.closeAllDropdowns();
+        // Close the context menu by clearing the open section
+        this.openContextMenuSection = null;
+
+        // Clear selections from ALL sections, not just the current one
+        this.clearAllSections();
+
+        // Set the clicked video as the new hovered video for the current section
+        this.hoveredVideosBySection[sectionId] = video;
         return;
       }
       // Single-click behavior - no selection, just navigate immediately
@@ -847,7 +854,6 @@ export class ContentState {
         // - Dropdown menu is open
         // - Clicking on dropdown elements
         if (
-          this.isDropdownMenuOpen ||
           this.dragContentType ||
           event.shiftKey ||
           event.ctrlKey ||
