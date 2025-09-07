@@ -263,8 +263,8 @@
       </Drawer.Header>
     </div>
 
-    <!-- Changed: Simplified scrolling container structure -->
-    <div class="min-h-0 overflow-auto">
+    <!-- Scrollable content area -->
+    <div class="min-h-0 flex-1 overflow-y-auto">
       <div class="p-4">
         <div class="mb-4 flex flex-col justify-center gap-4 sm:flex-row">
           <!-- Image Section -->
@@ -443,42 +443,42 @@
             {/if}
           </form>
         </div>
-      </div>
-    </div>
 
-    <!-- Changed: Moved footer outside of scrolling container -->
-    <div class="bg-background flex-shrink-0 border-t p-4 pt-2">
-      <div class="flex flex-col gap-2">
-        <Drawer.Footer class="flex gap-2">
-          {#if isSubmitting}
-            <Button
-              type="submit"
-              form="playlist-drawer-form"
-              class="drawer-button-footer"
-              disabled={isSubmitting}
-            >
-              <Loader class="mr-2 animate-spin" />
-              Saving...
-            </Button>
-          {:else}
-            <Button
-              type="submit"
-              form="playlist-drawer-form"
-              class="drawer-button-footer"
-              disabled={isSubmitting}
-            >
-              Save Changes
-            </Button>
-          {/if}
-          <Drawer.Close
-            class={buttonVariants({
-              class: 'drawer-button-footer',
-              variant: 'outline',
-            })}
-          >
-            Close
-          </Drawer.Close>
-        </Drawer.Footer>
+        <!-- Action buttons positioned below content but within scrollable area -->
+        <div class="border-t pt-4 pb-8">
+          <div class="flex flex-col gap-2">
+            <div class="flex flex-col gap-2">
+              {#if isSubmitting}
+                <Button
+                  type="submit"
+                  form="playlist-drawer-form"
+                  class="drawer-button-footer"
+                  disabled={isSubmitting}
+                >
+                  <Loader class="mr-2 animate-spin" />
+                  Saving...
+                </Button>
+              {:else}
+                <Button
+                  type="submit"
+                  form="playlist-drawer-form"
+                  class="drawer-button-footer"
+                  disabled={isSubmitting}
+                >
+                  Save Changes
+                </Button>
+              {/if}
+              <Drawer.Close
+                class={buttonVariants({
+                  class: 'drawer-button-footer',
+                  variant: 'outline',
+                })}
+              >
+                Close
+              </Drawer.Close>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </Drawer.Content>
