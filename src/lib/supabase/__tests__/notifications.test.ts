@@ -211,26 +211,30 @@ describe('notifications module', () => {
 
   describe('getNotificationCounts', () => {
     it('should fetch notification counts successfully', async () => {
-      const mockCountsData = [
-        { type: 'system', count: 3 },
-        { type: 'security', count: 1 },
+      const mockNotificationsData = [
+        { type: 'system', read: true },
+        { type: 'system', read: false },
+        { type: 'system', read: false },
+        { type: 'security', read: true },
       ];
 
       (mockSupabase.rpc as any).mockResolvedValue({
-        data: mockCountsData,
+        data: mockNotificationsData,
         error: null,
       });
 
       const result = await getNotificationCounts({ supabase: mockSupabase });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_notification_counts_by_type');
+      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_user_notifications', {
+        limit_count: 1000,
+        offset_count: 0,
+      });
       expect(result.error).toBeNull();
       expect(result.data).toEqual({
         total: 4,
-        unread: 0,
+        unread: 2,
         by_type: {
           system: 3,
-          security: 1,
         },
       });
     });
@@ -248,7 +252,9 @@ describe('notifications module', () => {
       expect(result.data).toEqual({
         total: 0,
         unread: 0,
-        by_type: {},
+        by_type: {
+          system: 0, // Default includes system: 0
+        },
       });
     });
 

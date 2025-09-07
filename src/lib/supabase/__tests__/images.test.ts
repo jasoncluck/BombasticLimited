@@ -73,7 +73,7 @@ describe('images module', () => {
     it('should handle empty Accept header', () => {
       const acceptHeader = '';
       const format = detectOptimalImageFormat(acceptHeader);
-      expect(format).toBe('jpeg');
+      expect(format).toBe('webp'); // Server-side fallback is webp, not jpeg
     });
   });
 
@@ -82,7 +82,7 @@ describe('images module', () => {
       const priority = getFormatPriority('playlist');
       expect(Array.isArray(priority)).toBe(true);
       expect(priority.length).toBeGreaterThan(0);
-      expect(priority).toContain('jpeg'); // Should always include jpeg as fallback
+      expect(priority).toEqual(['avif', 'webp']); // Playlist doesn't include jpeg fallback
     });
 
     it('should return format priority for video content', () => {
@@ -128,15 +128,15 @@ describe('images module', () => {
 
   describe('getFormatExtension', () => {
     it('should return correct extension for AVIF', () => {
-      expect(getFormatExtension('avif')).toBe('avif');
+      expect(getFormatExtension('avif')).toBe('.avif'); // Returns with dot
     });
 
     it('should return correct extension for WebP', () => {
-      expect(getFormatExtension('webp')).toBe('webp');
+      expect(getFormatExtension('webp')).toBe('.webp'); // Returns with dot
     });
 
     it('should return correct extension for JPEG', () => {
-      expect(getFormatExtension('jpeg')).toBe('jpg');
+      expect(getFormatExtension('jpeg')).toBe('.jpg'); // Returns with dot
     });
   });
 
