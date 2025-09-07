@@ -142,7 +142,7 @@ describe('playlist service module', () => {
         'success'
       );
       expect(mockSidebarState.refreshData).toHaveBeenCalled();
-      expect(result.error).toBeNull();
+      expect(result?.error).toBeNull();
     });
 
     it('should handle deletion errors', async () => {
@@ -163,7 +163,7 @@ describe('playlist service module', () => {
         'Unable to delete playlist: Test Playlist.',
         'error'
       );
-      expect(result.error).toEqual(mockError);
+      expect(result?.error).toEqual(mockError);
     });
 
     it('should redirect to login when user ID is missing', async () => {
@@ -567,7 +567,7 @@ describe('playlist service module', () => {
     });
 
     it('should return early when content filter is missing', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation();
+      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
       await handleFollowPlaylist({
         playlist: {} as any,
@@ -606,7 +606,7 @@ describe('playlist service module', () => {
         'success'
       );
       expect(mockSidebarState.refreshData).toHaveBeenCalled();
-      expect(result.error).toBeNull();
+      expect(result?.error).toBeNull();
     });
 
     it('should handle unfollow errors', async () => {
@@ -627,7 +627,7 @@ describe('playlist service module', () => {
         'Unable to unfollow playlist: Database error',
         'error'
       );
-      expect(result.error).toEqual(mockError);
+      expect(result?.error).toEqual(mockError);
     });
 
     it('should redirect when session is null', async () => {
@@ -668,8 +668,8 @@ describe('playlist service module', () => {
         sortOrder: 'ascending',
         supabase: mockSupabase,
       });
-      expect(result.updatedPlaylist).toEqual(mockUpdatedPlaylist);
-      expect(result.error).toBeNull();
+      expect(result?.updatedPlaylist).toEqual(mockUpdatedPlaylist);
+      expect(result?.error).toBeNull();
     });
 
     it('should handle sort update errors', async () => {
@@ -693,7 +693,7 @@ describe('playlist service module', () => {
         'Unable to update playlist sort settings',
         'error'
       );
-      expect(result.error).toEqual(mockError);
+      expect(result?.error).toEqual(mockError);
     });
 
     it('should redirect when session is null', async () => {
