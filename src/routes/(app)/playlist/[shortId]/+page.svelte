@@ -60,7 +60,7 @@
   });
 </script>
 
-<div class="relative flex grow flex-col">
+<div class="relative flex grow flex-col" data-testid="playlist-content">
   <PlaylistHeader
     {userProfile}
     {...playlistHeaderProps}

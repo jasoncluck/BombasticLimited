@@ -380,6 +380,7 @@
     bind:this={cardElement}
     class="{getCardClasses()} flex flex-col"
     data-testid="content-item"
+    data-video-id={video.id}
     role="button"
     tabindex="0"
     draggable={!!dragDrop}

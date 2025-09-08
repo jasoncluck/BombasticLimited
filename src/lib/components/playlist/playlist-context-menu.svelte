@@ -118,8 +118,11 @@
 </script>
 
 <ContextMenu.Root bind:open={openContextMenu}>
-  <ContextMenu.Content class="p-1">
-    <ContextMenu.Item onclick={handleDeleteOrUnfollow}>
+  <ContextMenu.Content class="p-1" data-testid="playlist-context-content">
+    <ContextMenu.Item
+      onclick={handleDeleteOrUnfollow}
+      data-testid="playlist-context-item"
+    >
       {playlist.created_by === session?.user.id
         ? 'Delete playlist'
         : 'Unfollow playlist'}

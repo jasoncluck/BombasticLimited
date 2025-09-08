@@ -337,6 +337,7 @@
               <DropdownMenu.SubContent
                 side="right"
                 align="start"
+                data-testid="add-playlist-content"
                 class="stable-submenu z-50 overflow-hidden"
                 sideOffset={-4}
                 alignOffset={0}
@@ -351,6 +352,7 @@
                     {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                       <DropdownMenu.Item
                         class="p-2"
+                        data-playlist-id={addPlaylist.id}
                         onclick={async () => {
                           const { error } = await handleAddVideosToPlaylist({
                             videos: frozenOperationVideos,

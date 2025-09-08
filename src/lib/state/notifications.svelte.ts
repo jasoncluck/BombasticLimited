@@ -6,7 +6,6 @@ import type {
 } from '$lib/supabase/notifications';
 
 export class NotificationStateClass {
-  // State properties using Svelte 5 runes
   notifications = $state<NotificationWithMeta[]>([]);
   unreadCount = $state<number>(0);
   isLoading = $state<boolean>(false);
@@ -27,19 +26,19 @@ export function showToast(
 ) {
   switch (type) {
     case 'success':
-      toast.success(message);
+      toast.success(message, { class: 'toast-success' });
       break;
     case 'error':
-      toast.error(message);
+      toast.error(message, { class: 'toast-error' });
       break;
     case 'warning':
-      toast.warning(message);
+      toast.warning(message, { class: 'toast-warning' });
       break;
     case 'info':
-      toast.info(message);
+      toast.info(message, { class: 'toast-info' });
       break;
     default:
-      toast(message);
+      toast(message, { class: 'toast-default' });
       break;
   }
 }

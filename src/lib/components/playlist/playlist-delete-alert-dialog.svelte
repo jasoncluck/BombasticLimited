@@ -58,7 +58,10 @@
 </script>
 
 <AlertDialog.Root bind:open {onOpenChange}>
-  <AlertDialog.Content class="sm:max-w-[425px]">
+  <AlertDialog.Content
+    class="sm:max-w-[425px]"
+    data-testid="confirm-delete-playlist"
+  >
     <AlertDialog.Header>
       <AlertDialog.Title>Delete Public Playlist</AlertDialog.Title>
       <AlertDialog.Description>
