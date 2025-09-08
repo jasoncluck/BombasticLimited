@@ -25,16 +25,16 @@ vi.mock('$lib/supabase/notifications', () => ({
 }));
 
 vi.mock('$lib/supabase/playlists', () => ({
-  createPlaylist: vi.fn(),
-  deletePlaylist: vi.fn(),
-  addVideosToPlaylist: vi.fn(),
-  deleteVideosFromPlaylist: vi.fn(),
-  updatePlaylistThumbnail: vi.fn(),
-  updatePlaylistPosition: vi.fn(),
-  updatePlaylistSort: vi.fn(),
-  updatePlaylistVideoPosition: vi.fn(),
-  followPlaylist: vi.fn(),
-  unfollowPlaylist: vi.fn(),
+  createPlaylist: vi.fn().mockResolvedValue({ playlist: null, error: null }),
+  deletePlaylist: vi.fn().mockResolvedValue({ error: null }),
+  addVideosToPlaylist: vi.fn().mockResolvedValue({ error: null }),
+  deleteVideosFromPlaylist: vi.fn().mockResolvedValue({ error: null }),
+  updatePlaylistThumbnail: vi.fn().mockResolvedValue({ error: null }),
+  updatePlaylistPosition: vi.fn().mockResolvedValue({ error: null }),
+  updatePlaylistSort: vi.fn().mockResolvedValue({ updatedPlaylist: null, error: null }),
+  updatePlaylistVideoPosition: vi.fn().mockResolvedValue({ error: null }),
+  followPlaylist: vi.fn().mockResolvedValue({ error: null }),
+  unfollowPlaylist: vi.fn().mockResolvedValue({ error: null }),
   PLAYLIST_VIDEO_LIMIT: 500,
   USER_PLAYLIST_LIMIT: 25,
 }));
