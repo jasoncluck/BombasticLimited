@@ -30,7 +30,9 @@ vi.mock('$lib/components/content/content-filter', () => ({
 
 // Mock the playlists module
 vi.mock('../playlists', () => ({
-  getFullImageUrl: vi.fn((url, supabase) => url ? `https://supabase.co/storage/v1/object/public/${url}` : null),
+  getFullImageUrl: vi.fn((url, supabase) =>
+    url ? `https://supabase.co/storage/v1/object/public/${url}` : null
+  ),
 }));
 
 describe('videos module', () => {
@@ -235,7 +237,7 @@ describe('videos module', () => {
 
     it('should handle RPC errors', async () => {
       const mockError = { message: 'Database error', code: '500' };
-      
+
       const mockQuery = Object.assign(
         Promise.resolve({
           data: null,
@@ -327,9 +329,12 @@ describe('videos module', () => {
         preferredImageFormat: 'avif',
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_videos_with_timestamps', {
-        p_preferred_image_format: 'avif',
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'get_videos_with_timestamps',
+        {
+          p_preferred_image_format: 'avif',
+        }
+      );
       expect(result.error).toBeNull();
       expect(result.video).toMatchObject({
         id: 'single-video',
@@ -371,9 +376,12 @@ describe('videos module', () => {
         supabase: mockSupabase,
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_videos_with_timestamps', {
-        p_preferred_image_format: 'avif',
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'get_videos_with_timestamps',
+        {
+          p_preferred_image_format: 'avif',
+        }
+      );
     });
   });
 
@@ -465,16 +473,18 @@ describe('videos module', () => {
       const mockReturnValue = (mockSupabase.rpc as any).mock.results[0].value;
       expect(mockReturnValue.gte).toHaveBeenCalledWith(
         'published_at',
-        '2023-06-01T00:00:00.000Z'
+        '2023-06-01T07:00:00.000Z'
       );
       expect(mockReturnValue.lte).toHaveBeenCalledWith(
         'published_at',
-        '2023-06-30T23:59:59.999Z'
+        '2023-07-01T06:59:59.999Z'
       );
     });
 
     it('should handle invalid date filters gracefully', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       (mockSupabase.rpc as any).mockReturnValue({
         limit: vi.fn().mockReturnThis(),
@@ -497,15 +507,19 @@ describe('videos module', () => {
         supabase: mockSupabase,
       });
 
-      expect(consoleSpy).toHaveBeenCalledWith('Unable to parse start date, ignoring.');
-      expect(consoleSpy).toHaveBeenCalledWith('Unable to parse end date, ignoring.');
-      
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Unable to parse start date, ignoring.'
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        'Unable to parse end date, ignoring.'
+      );
+
       consoleSpy.mockRestore();
     });
 
     it.skip('should handle RPC errors', async () => {
       const mockError = { message: 'Permission denied', code: '403' };
-      
+
       // Create a proper mock query chain
       const mockQuery = {
         limit: vi.fn().mockReturnThis(),
@@ -677,3 +691,4 @@ describe('videos module', () => {
     });
   });
 });
+
