@@ -241,24 +241,22 @@ describe('[source]/+page.server.ts load function', () => {
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
         youtubeId: 'playlist1',
         contentFilter: {
-          sort: { key: 'datePublished', order: 'descending' },
+          sort: { key: 'playlistOrder', order: 'ascending' },
           type: 'playlist',
         },
         limit: 10,
         supabase: mockSupabase,
-        session: mockSession,
         preferredImageFormat: 'webp',
       });
 
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
         youtubeId: 'playlist2',
         contentFilter: {
-          sort: { key: 'datePublished', order: 'descending' },
+          sort: { key: 'playlistOrder', order: 'ascending' },
           type: 'playlist',
         },
         limit: 10,
         supabase: mockSupabase,
-        session: mockSession,
         preferredImageFormat: 'webp',
       });
     });
@@ -292,12 +290,11 @@ describe('[source]/+page.server.ts load function', () => {
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
         youtubeId: 'playlist1',
         contentFilter: {
-          sort: { key: 'datePublished', order: 'descending' },
+          sort: { key: 'playlistOrder', order: 'ascending' },
           type: 'playlist',
         },
         limit: 10,
         supabase: mockSupabase,
-        session: mockSession,
         preferredImageFormat: 'webp',
       });
 
@@ -485,7 +482,11 @@ describe('[source]/+page.server.ts load function', () => {
             videos: [mockVideos[0]],
           },
         ],
-        processedSourcePlaylists: [
+        playlistContentFilter: {
+          sort: { key: 'playlistOrder', order: 'ascending' },
+          type: 'playlist',
+        },
+        sourcePlaylists: [
           {
             ...mockSourcePlaylists[0],
           },
@@ -517,7 +518,7 @@ describe('[source]/+page.server.ts load function', () => {
 
       expect((result as any).videos).toEqual([]);
       expect((result as any).highlightPlaylists).toEqual([]);
-      expect((result as any).processedSourcePlaylists).toEqual([]);
+      expect((result as any).sourcePlaylists).toEqual([]);
     });
   });
 });
