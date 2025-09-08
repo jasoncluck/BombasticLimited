@@ -97,7 +97,20 @@ const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockGetProfileById = vi.mocked(getProfileById);
 
 describe('playlist/[shortId]/+page.server.ts', () => {
-  const mockSupabase = {} as any;
+  const mockSupabase = {
+    auth: {
+      getClaims: vi.fn().mockResolvedValue({
+        data: {
+          claims: {
+            sub: 'user-1',
+            email: 'test@example.com',
+            role: 'authenticated',
+          },
+        },
+        error: null,
+      }),
+    },
+  } as any;
   const mockSession = createMockSession();
   const mockPlaylist = createMockPlaylist();
   const mockVideos: any[] = [];
@@ -197,7 +210,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         currentPage: 1,
         limit: 100,
         supabase: mockSupabase,
-        session: mockSession,
       });
 
       expect(result).toEqual({

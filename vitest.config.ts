@@ -1,9 +1,9 @@
 import { defineConfig } from 'vitest/config';
-import { sveltekit } from '@sveltejs/kit/vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import path from 'path';
 
 export default defineConfig({
-  plugins: [sveltekit()],
+  plugins: [svelte()],
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/lib/tests/setup-globals.ts'],
@@ -15,6 +15,8 @@ export default defineConfig({
   resolve: {
     alias: {
       $lib: path.resolve(__dirname, 'src/lib'),
+      '$app/stores': path.resolve(__dirname, 'src/lib/tests/__mocks__/app-stores.js'),
+      '$app/navigation': path.resolve(__dirname, 'src/lib/tests/__mocks__/app-navigation.js'),
     },
   },
 });

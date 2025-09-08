@@ -104,6 +104,7 @@ describe('Content module', () => {
       published_at: '2023-01-01T00:00:00Z',
       duration: '00:30:00',
       updated_at: '2023-01-01T00:00:00Z',
+      views: 0,
     };
 
     const mockContentFilter = {

@@ -91,19 +91,29 @@ const mockCheckIfUsernameIsUnique = vi.mocked(checkIfUsernameIsUnique);
 const mockGetUserDiscordIdentity = vi.mocked(getUserDiscordIdentity);
 
 describe('account/+page.server.ts', () => {
+  const mockSession = createMockSession();
+  const mockUserProfile = createMockUserProfile();
+  const mockCookies = {
+    delete: vi.fn(),
+  } as any;
+
   const mockSupabase = {
     auth: {
+      getClaims: vi.fn().mockResolvedValue({
+        data: {
+          claims: {
+            sub: mockSession.user.id,
+            email: mockSession.user.email,
+            role: 'authenticated',
+          },
+        },
+        error: null,
+      }),
       updateUser: vi.fn(),
       resetPasswordForEmail: vi.fn(),
       signOut: vi.fn(),
     },
     rpc: vi.fn(),
-  } as any;
-
-  const mockSession = createMockSession();
-  const mockUserProfile = createMockUserProfile();
-  const mockCookies = {
-    delete: vi.fn(),
   } as any;
 
   beforeEach(() => {
