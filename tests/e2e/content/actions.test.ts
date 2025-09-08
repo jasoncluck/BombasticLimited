@@ -2,9 +2,9 @@ import {
   unauthenticatedTest as unauthTest,
   authenticatedTest as authTest,
   expect,
-} from './auth-fixtures';
+} from '../auth-fixtures';
 
-unauthTest.describe('Unauthenticated content interactions', () => {
+unauthTest.describe('Unauthenticated content actions', () => {
   unauthTest(
     'should not be able to open context menu',
     async ({ unauthenticatedPage: page }) => {
@@ -37,7 +37,7 @@ unauthTest.describe('Unauthenticated content interactions', () => {
   );
 });
 
-authTest.describe('Authenticated content interactions', () => {
+authTest.describe('Authenticated content actions', () => {
   authTest(
     'clicking a card while a context menu is open should close the context menu but not redirect',
     async ({ authenticatedPage: page }) => {

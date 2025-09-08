@@ -135,6 +135,14 @@ export function generateContentNavigationUrl({
     targetPath = `/playlist/${video.playlist_short_id}/video/${video.id}`;
   }
 
+  // Remove the query parameter if it is the default sort (playlistOrder + ascending)
+  if (
+    contentFilter.sort.key === 'playlistOrder' &&
+    contentFilter.sort.order === 'ascending'
+  ) {
+    searchParams.delete(contentFilter.sort.key);
+  }
+
   // Apply any existing search params to the new URL
   const newUrl = new URL(targetPath, window.location.origin);
   newUrl.search = searchParams.toString();
