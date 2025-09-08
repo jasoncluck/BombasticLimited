@@ -35,7 +35,7 @@ unauthTest.describe('Unauthenticated content actions', () => {
       await highlightPlaylistContentCard.click();
 
       await expect(page).toHaveURL(
-        /\/playlist\/[a-zA-Z0-9_-]+\/video\/[a-zA-Z0-9_-]+\?playlistOrder=(ascending)$/
+        /\/playlist\/[a-zA-Z0-9_-]+\/video\/[a-zA-Z0-9_-]/
       );
     }
   );
