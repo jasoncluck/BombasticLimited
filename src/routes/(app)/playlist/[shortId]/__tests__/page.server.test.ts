@@ -97,7 +97,20 @@ const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockGetProfileById = vi.mocked(getProfileById);
 
 describe('playlist/[shortId]/+page.server.ts', () => {
-  const mockSupabase = {} as any;
+  const mockSupabase = {
+    auth: {
+      getClaims: vi.fn().mockResolvedValue({
+        data: {
+          claims: {
+            sub: 'user-1',
+            email: 'test@example.com',
+            role: 'authenticated',
+          },
+        },
+        error: null,
+      }),
+    },
+  } as any;
   const mockSession = createMockSession();
   const mockPlaylist = createMockPlaylist();
   const mockVideos: any[] = [];
@@ -197,7 +210,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         currentPage: 1,
         limit: 100,
         supabase: mockSupabase,
-        session: mockSession,
       });
 
       expect(result).toEqual({
@@ -306,9 +318,22 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should redirect when user is not authenticated', async () => {
+      const unauthenticatedSupabase = {
+        ...mockSupabase,
+        auth: {
+          getClaims: vi.fn().mockResolvedValue({
+            data: null,
+            error: { message: 'Not authenticated' },
+          }),
+        },
+      };
+
       const unauthenticatedEvent = {
         ...mockActionEvent,
-        locals: { ...mockActionEvent.locals, session: null },
+        locals: { 
+          ...mockActionEvent.locals, 
+          supabase: unauthenticatedSupabase 
+        },
       };
 
       await expect(actions.default(unauthenticatedEvent)).rejects.toThrow(
@@ -358,7 +383,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         imageProperties: { x: 10, y: 10, width: 200, height: 200 },
         type: 'Public',
         supabase: mockSupabase,
-        session: mockSession,
       });
 
       expect(result).toEqual({
@@ -420,7 +444,6 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         imageProperties: null, // Should be null when all values are 0
         type: 'Private',
         supabase: mockSupabase,
-        session: mockSession,
       });
     });
   });

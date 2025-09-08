@@ -100,7 +100,8 @@ describe('continue/+page.server.ts load function', () => {
       expect((result as any).videosCount).toBe(2);
     });
 
-    it('should redirect when no session', async () => {
+    it('should handle session null values', async () => {
+      // Test should pass without session as authentication is handled at DB level
       const noSessionLoadEvent = {
         ...mockLoadEvent,
         locals: {
@@ -108,20 +109,15 @@ describe('continue/+page.server.ts load function', () => {
         },
       };
 
-      await expect(load(noSessionLoadEvent)).rejects.toThrow('Redirect');
-      expect(mockRedirect).toHaveBeenCalledWith(303, '/');
-    });
+      mockGetInProgressVideos.mockResolvedValue({
+        videos: [],
+        count: 0,
+        error: null,
+      });
 
-    it('should redirect when session is undefined', async () => {
-      const undefinedSessionLoadEvent = {
-        ...mockLoadEvent,
-        locals: {
-          ...mockLoadEvent.locals,
-        },
-      };
-
-      await expect(load(undefinedSessionLoadEvent)).rejects.toThrow('Redirect');
-      expect(mockRedirect).toHaveBeenCalledWith(303, '/');
+      const result = await load(noSessionLoadEvent);
+      expect((result as any).videos).toEqual([]);
+      expect((result as any).videosCount).toBe(0);
     });
   });
 
@@ -430,10 +426,16 @@ describe('continue/+page.server.ts load function', () => {
           },
         };
 
-        await expect(load(loadEventWithFalsySession)).rejects.toThrow(
-          'Redirect'
-        );
-        expect(mockRedirect).toHaveBeenCalledWith(303, '/');
+        mockGetInProgressVideos.mockResolvedValue({
+          videos: [],
+          count: 0,
+          error: null,
+        });
+
+        // Should work without errors since auth is handled at DB level
+        const result = await load(loadEventWithFalsySession);
+        expect(result).toBeDefined();
+        expect((result as any).videos).toEqual([]);
         vi.clearAllMocks();
       }
     });

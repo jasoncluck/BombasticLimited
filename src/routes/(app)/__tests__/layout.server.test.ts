@@ -23,7 +23,11 @@ const mockGetFilterOptionFromQueryParams = vi.mocked(
 );
 
 describe('+layout.server.ts load function', () => {
-  const mockSupabase = {} as any;
+  const mockSupabase = {
+    auth: {
+      getClaims: vi.fn(),
+    },
+  } as any;
   const mockSession = createMockSession();
   const mockUserProfile = createMockUserProfile();
   const mockSafeGetSession = vi.fn();
@@ -54,6 +58,12 @@ describe('+layout.server.ts load function', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSafeGetSession.mockResolvedValue({ session: mockSession });
+    mockSupabase.auth.getClaims.mockResolvedValue({
+      data: {
+        claims: { sub: 'user-1' },
+      },
+      error: null,
+    });
     mockGetProfile.mockResolvedValue(
       createMockProfileResponse(mockUserProfile)
     );
@@ -66,13 +76,12 @@ describe('+layout.server.ts load function', () => {
   it('should fetch session and user profile', async () => {
     const result = (await load(mockLayoutEvent)) as any;
 
-    expect(mockSafeGetSession).toHaveBeenCalled();
+    expect(mockSupabase.auth.getClaims).toHaveBeenCalled();
     expect(mockGetProfile).toHaveBeenCalledWith({
-      session: mockSession,
       supabase: mockSupabase,
     });
 
-    expect(result.session).toEqual(mockSession);
+    expect(result.claims).toEqual({ sub: 'user-1' });
     expect(result.userProfile).toEqual(mockUserProfile);
   });
 
@@ -129,7 +138,10 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should set appropriate cache headers for anonymous users', async () => {
-    mockSafeGetSession.mockResolvedValue({ session: null });
+    mockSupabase.auth.getClaims.mockResolvedValue({
+      data: { claims: null },
+      error: null,
+    });
     const mockSetHeaders = vi.fn();
     const anonEvent = {
       ...mockLayoutEvent,
@@ -160,8 +172,7 @@ describe('+layout.server.ts load function', () => {
 
     const result = (await load(requestWithEtag)) as any;
 
-    // The simplified implementation doesn't include cache hit detection
-    expect(result.session).toEqual(mockSession);
+    expect(result.claims).toEqual({ sub: 'user-1' });
     expect(result.userProfile).toEqual(mockUserProfile);
   });
 
@@ -172,7 +183,10 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should work without session (anonymous user)', async () => {
-    mockSafeGetSession.mockResolvedValue({ session: null });
+    mockSupabase.auth.getClaims.mockResolvedValue({
+      data: { claims: null },
+      error: null,
+    });
     mockGetProfile.mockResolvedValue({
       profile: null,
       error: null,
@@ -180,9 +194,8 @@ describe('+layout.server.ts load function', () => {
 
     const result = (await load(mockLayoutEvent)) as any;
 
-    expect(result.session).toBeNull();
+    expect(result.claims).toBeNull();
     expect(result.userProfile).toBeNull();
-    // The simplified implementation doesn't include cacheUserId
     expect(result).toHaveProperty('contentFilter');
   });
 
@@ -202,8 +215,7 @@ describe('+layout.server.ts load function', () => {
   it('should generate cache key based on path and user', async () => {
     const result = (await load(mockLayoutEvent)) as any;
 
-    // The simplified implementation doesn't include etag, lastModified, or cacheUserId
-    expect(result.session).toEqual(mockSession);
+    expect(result.claims).toEqual({ sub: 'user-1' });
     expect(result.userProfile).toEqual(mockUserProfile);
     expect(result).toHaveProperty('contentFilter');
   });

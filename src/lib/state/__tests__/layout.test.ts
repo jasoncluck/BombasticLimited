@@ -179,7 +179,7 @@ describe('Navigation State with Layout Functionality', () => {
 
   describe('Configuration', () => {
     it('should have correct default search debounce configuration', () => {
-      expect(navigationState.config.searchDebounceMs).toBe(450);
+      expect(navigationState.config.searchDebounceMs).toBe(400);
     });
 
     it('should have navigation-specific configuration', () => {
