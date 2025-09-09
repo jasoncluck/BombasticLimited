@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 import { unauthenticatedTest } from './auth-fixtures';
 import { playlistTest, playlistWithDataTest } from './playlist-fixtures';
-import { videoTest } from './video-fixtures';
+import { VideoHelpers } from './helpers/video-helpers';
 
 /**
  * E2E tests for playlist operations and functionality

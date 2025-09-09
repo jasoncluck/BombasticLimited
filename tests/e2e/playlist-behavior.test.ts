@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { playlistTest } from './playlist-fixtures';
-import { videoTest } from './video-fixtures';
+import { VideoHelpers } from './helpers/video-helpers';
 
 /**
  * E2E tests for playlist watching behavior and timestamp integration
