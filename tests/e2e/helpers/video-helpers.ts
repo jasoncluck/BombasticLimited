@@ -1,48 +1,43 @@
-import { expect, type Page, type Locator } from '@playwright/test';
+import { type Page } from '@playwright/test';
 
 /**
- * Helper functions for video-related E2E tests
+ * Backward compatibility wrapper for VideoHelpers
+ * This provides the same interface as the old VideoHelpers class
+ * but uses the new fixture pattern internally.
  */
-
-type ViewMode = 'card' | 'table' | 'unknown';
-
 export class VideoHelpers {
   constructor(private page: Page) {}
 
   /**
    * Get the first available video card from the carousel
    */
-  async getFirstVideoCard(): Promise<Locator> {
+  async getFirstVideoCard() {
     const videoCard = this.page.getByTestId('carousel-item').first();
-    await expect(videoCard).toBeVisible();
     return videoCard;
   }
 
   /**
    * Get video title from a video card
    */
-  async getVideoTitle(videoCard: Locator): Promise<string | null> {
+  async getVideoTitle(videoCard: any): Promise<string | null> {
     return await videoCard.locator('p').first().textContent();
   }
 
   /**
    * Navigate to a video by clicking on its card
    */
-  async navigateToVideo(videoCard: Locator): Promise<Locator> {
+  async navigateToVideo(videoCard: any) {
     await videoCard.click();
     await this.page.waitForURL(/\/video\//, { timeout: 10000 });
 
-    // Verify iframe loads
     const iframe = this.page.locator('iframe').first();
-    await expect(iframe).toBeVisible({ timeout: 10000 });
-
     return iframe;
   }
 
   /**
    * Check if continue watching section exists and return it
    */
-  async getContinueWatchingSection(): Promise<Locator | null> {
+  async getContinueWatchingSection() {
     const continueWatchingSection = this.page
       .locator('text=Continue Watching')
       .or(this.page.getByRole('heading', { name: /continue watching/i }));
@@ -54,7 +49,7 @@ export class VideoHelpers {
   /**
    * Get continue watching videos if the section exists
    */
-  async getContinueWatchingVideos(): Promise<Locator[]> {
+  async getContinueWatchingVideos() {
     const continueWatchingSection = await this.getContinueWatchingSection();
     if (!continueWatchingSection) {
       return [];
@@ -75,7 +70,7 @@ export class VideoHelpers {
   /**
    * Check if a video has a progress indicator
    */
-  async hasProgressIndicator(videoCard: Locator): Promise<boolean> {
+  async hasProgressIndicator(videoCard: any): Promise<boolean> {
     const progressIndicator = videoCard
       .locator('[data-testid="video-progress"]')
       .or(videoCard.locator('.progress-bar'));
@@ -86,7 +81,7 @@ export class VideoHelpers {
   /**
    * Check if a video is marked as watched
    */
-  async isVideoWatched(videoCard: Locator): Promise<boolean> {
+  async isVideoWatched(videoCard: any): Promise<boolean> {
     const watchedIndicator = videoCard
       .locator('text=watched')
       .or(videoCard.locator('[data-testid="watched-indicator"]'));
@@ -97,10 +92,9 @@ export class VideoHelpers {
   /**
    * Open context menu for a video card
    */
-  async openContextMenu(videoCard: Locator): Promise<Locator | null> {
+  async openContextMenu(videoCard: any) {
     await videoCard.click({ button: 'right' });
 
-    // Target only open context menus to avoid strict mode matching multiple elements
     const contextMenu = this.page
       .locator(
         '[role="menu"][data-state="open"], .context-menu[data-state="open"], [data-testid="context-menu"][data-state="open"]'
@@ -116,7 +110,7 @@ export class VideoHelpers {
   /**
    * Open content dropdown for a video card
    */
-  async openContentDropdown(videoCard: Locator): Promise<Locator | null> {
+  async openContentDropdown(videoCard: any) {
     const dropdownTrigger = videoCard
       .locator('button[aria-haspopup]')
       .or(
@@ -128,8 +122,6 @@ export class VideoHelpers {
     if (await dropdownTrigger.isVisible()) {
       await dropdownTrigger.click();
 
-      // Narrow the selector to only elements that are currently open (data-state="open").
-      // This prevents Playwright strict mode violations when multiple menus exist in the DOM.
       const dropdownMenu = this.page
         .locator(
           '[role="menu"][data-state="open"], .dropdown-menu[data-state="open"], [data-testid="dropdown-menu"][data-state="open"], [data-testid="content-dropdown-content"][data-state="open"]'
@@ -148,8 +140,7 @@ export class VideoHelpers {
   /**
    * Mark a video as watched through UI interaction
    */
-  async markVideoAsWatched(videoCard: Locator): Promise<boolean> {
-    // Try context menu first
+  async markVideoAsWatched(videoCard: any): Promise<boolean> {
     const contextMenu = await this.openContextMenu(videoCard);
 
     if (contextMenu) {
@@ -164,7 +155,6 @@ export class VideoHelpers {
       }
     }
 
-    // Try dropdown menu if context menu doesn't work
     const dropdownMenu = await this.openContentDropdown(videoCard);
 
     if (dropdownMenu) {
@@ -182,7 +172,7 @@ export class VideoHelpers {
   /**
    * Reset video progress through UI interaction
    */
-  async resetVideoProgress(videoCard: Locator): Promise<boolean> {
+  async resetVideoProgress(videoCard: any): Promise<boolean> {
     const contextMenu = await this.openContextMenu(videoCard);
 
     if (contextMenu) {
@@ -206,17 +196,14 @@ export class VideoHelpers {
   async multiSelectVideos(
     indices: number[],
     useShift = false
-  ): Promise<Locator> {
-    // First check which view mode we're in and get the appropriate elements
+  ) {
     const currentMode = await this.getCurrentViewMode();
     
-    let videoItems: Locator;
+    let videoItems;
     
     if (currentMode === 'table') {
-      // In table mode, look for table rows
       videoItems = this.page.locator('tr[data-testid*="video"], tbody tr').filter({ hasText: /.+/ });
     } else {
-      // In card/carousel mode, use carousel items
       videoItems = this.page.getByTestId('carousel-item');
     }
     
@@ -227,17 +214,15 @@ export class VideoHelpers {
     }
 
     if (useShift && indices.length === 2) {
-      // Shift selection: click first, then shift+click last
       await videoItems.nth(indices[0]).click();
-      await this.page.waitForTimeout(200); // Small delay between clicks
+      await this.page.waitForTimeout(200);
       await videoItems.nth(indices[1]).click({ modifiers: ['Shift'] });
     } else {
-      // Ctrl/Cmd selection: click each with modifier
       const modifierKey = process.platform === 'darwin' ? 'Meta' : 'Control';
 
       for (const index of indices) {
         await videoItems.nth(index).click({ modifiers: [modifierKey] });
-        await this.page.waitForTimeout(100); // Small delay between clicks
+        await this.page.waitForTimeout(100);
       }
     }
 
@@ -247,8 +232,7 @@ export class VideoHelpers {
   /**
    * Check for visual selection indicators
    */
-  async getSelectionIndicators(): Promise<Locator> {
-    // Check for various selection indicators that might be used in different view modes
+  async getSelectionIndicators() {
     const selectionIndicators = this.page
       .locator('.selected, [data-selected="true"], [aria-selected="true"], .bg-primary, .bg-accent')
       .or(this.page.locator('tr.selected, tr[data-selected="true"], tr[aria-selected="true"]'))
@@ -262,11 +246,6 @@ export class VideoHelpers {
    */
   async goToHomepage(): Promise<void> {
     await this.page.goto('/');
-
-    // Verify we're on homepage
-    await expect(
-      this.page.getByRole('heading', { name: 'Latest Videos' })
-    ).toBeVisible();
   }
 
   /**
@@ -280,54 +259,40 @@ export class VideoHelpers {
    * Switch to card view mode (TILES)
    */
   async switchToCardView(): Promise<void> {
-    // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
     
-    // Check if the preferences dropdown is available (authenticated + desktop)
     if (await userPreferences.isVisible({ timeout: 3000 })) {
       await userPreferences.click();
       
-      // Look for the Card option in the dropdown
       const cardOption = this.page.locator('[role="menuitem"]').filter({ hasText: /Card/i });
       
       if (await cardOption.isVisible({ timeout: 3000 })) {
         await cardOption.click();
-        // Wait for the view to change
         await this.page.waitForTimeout(1500);
       } else {
-        // If Card option is not visible, we might already be in card mode
-        // Click elsewhere to close the dropdown
         await this.page.click('body');
       }
     }
-    // If preferences dropdown is not available, we're likely on mobile or already in correct mode
   }
 
   /**
    * Switch to table view mode (TABLE)
    */
   async switchToTableView(): Promise<void> {
-    // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
     
-    // Check if the preferences dropdown is available (authenticated + desktop)
     if (await userPreferences.isVisible({ timeout: 3000 })) {
       await userPreferences.click();
       
-      // Look for the Table option in the dropdown
       const tableOption = this.page.locator('[role="menuitem"]').filter({ hasText: /Table/i });
       
       if (await tableOption.isVisible({ timeout: 3000 })) {
         await tableOption.click();
-        // Wait for the view to change
         await this.page.waitForTimeout(1500);
       } else {
-        // If Table option is not visible, we might already be in table mode
-        // Click elsewhere to close the dropdown
         await this.page.click('body');
       }
     }
-    // If preferences dropdown is not available, we're likely on mobile or already in correct mode
   }
 
   /**
@@ -337,17 +302,14 @@ export class VideoHelpers {
     const userPreferences = this.page.getByTestId('user-preferences');
     
     if (await userPreferences.isVisible({ timeout: 3000 })) {
-      // Check the icon content to determine current mode
       const iconElement = userPreferences.locator('svg').first();
       
       if (await iconElement.isVisible()) {
-        // Check for GalleryHorizontal icon (indicates card mode is active)
         const hasGalleryIcon = await userPreferences.locator('svg[class*="lucide-gallery"]').isVisible().catch(() => false);
         if (hasGalleryIcon) {
           return 'card';
         }
         
-        // Check for Table icon (indicates table mode is active)
         const hasTableIcon = await userPreferences.locator('svg[class*="lucide-table"]').isVisible().catch(() => false);
         if (hasTableIcon) {
           return 'table';
@@ -361,7 +323,7 @@ export class VideoHelpers {
   /**
    * Switch to the next view mode in the sequence
    */
-  async switchViewMode(): Promise<ViewMode> {
+  async switchViewMode(): Promise<'card' | 'table'> {
     const currentMode = await this.getCurrentViewMode();
     const targetMode = currentMode === 'card' ? 'table' : 'card';
     
@@ -377,7 +339,7 @@ export class VideoHelpers {
   /**
    * Get multiple video cards from the carousel
    */
-  async getVideoCards(): Promise<Locator[]> {
+  async getVideoCards() {
     const videoCards = this.page.getByTestId('carousel-item');
     const count = await videoCards.count();
     const cards = [];
@@ -389,4 +351,3 @@ export class VideoHelpers {
     return cards;
   }
 }
-

@@ -23,7 +23,22 @@ export function createPlaylistHelpers(page: Page): PlaylistHelpers {
   // Track created playlists for this instance
   const createdPlaylistIds: string[] = [];
   
+  // Register cleanup function globally
+  const cleanupFn = async () => {
+    for (const playlistId of [...createdPlaylistIds]) {
+      try {
+        await helpers.deletePlaylist(playlistId);
+      } catch (error) {
+        console.warn(`Failed to cleanup playlist ${playlistId}:`, error);
+      }
+    }
+    createdPlaylistIds.length = 0;
+  };
+  
+  registerCleanupFunction(cleanupFn);
+
   const helpers: PlaylistHelpers = {
+    async createPlaylist(): Promise<string> {
     async createPlaylist(): Promise<string> {
       const createPlaylistButton = page.getByTestId('create-playlist-button');
       await createPlaylistButton.waitFor();
@@ -53,7 +68,7 @@ export function createPlaylistHelpers(page: Page): PlaylistHelpers {
         targetButton = page.locator(`[data-testid="playlist-button"][data-playlist-id="${playlistId}"]`);
       } else {
         targetButton = page.getByTestId('playlist-button').first();
-        playlistId = await targetButton.getAttribute('data-playlist-id') || undefined;
+        playlistId = await targetButton.getAttribute('data-playlist-id');
       }
 
       // Right-click to open context menu
@@ -193,7 +208,7 @@ export function createPlaylistHelpers(page: Page): PlaylistHelpers {
         throw new Error(`Video with ID "${videoId}" was unexpectedly found in playlist "${playlistId}"`);
       } catch (error) {
         // If verification throws an error, that means video is not in playlist (expected)
-        if ((error as Error).message.includes('was not found')) {
+        if (error.message.includes('was not found')) {
           return; // This is expected
         }
         throw error; // Re-throw other errors
@@ -212,13 +227,4 @@ export function createPlaylistHelpers(page: Page): PlaylistHelpers {
       createdPlaylistIds.length = 0; // Clear the array
     },
   };
-  
-  // Register cleanup function globally
-  const cleanupFn = async () => {
-    await helpers.cleanup();
-  };
-  
-  registerCleanupFunction(cleanupFn);
-
-  return helpers;
 }

@@ -1,6 +1,6 @@
 import { expect } from '@playwright/test';
 import { authenticatedTest, unauthenticatedTest } from './auth-fixtures';
-import { VideoHelpers } from './helpers/video-helpers';
+import { videoTest } from './video-fixtures';
 
 /**
  * E2E tests for video timestamp functionality
@@ -16,12 +16,9 @@ import { VideoHelpers } from './helpers/video-helpers';
  * The timestamp saving logic itself is tested in unit/integration tests.
  */
 
-authenticatedTest.describe('Video Timestamp and Continue Watching UI', () => {
-  let videoHelpers: VideoHelpers;
-
-  authenticatedTest.beforeEach(async ({ authenticatedPage }) => {
-    videoHelpers = new VideoHelpers(authenticatedPage);
-    await videoHelpers.goToHomepage();
+videoTest.describe('Video Timestamp and Continue Watching UI', () => {
+  videoTest.beforeEach(async ({ videoPage }) => {
+    await videoPage.goto('/');
   });
 
   authenticatedTest(
