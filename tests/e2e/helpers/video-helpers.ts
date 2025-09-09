@@ -257,5 +257,72 @@ export class VideoHelpers {
   async waitForOperation(timeoutMs = 2000): Promise<void> {
     await this.page.waitForTimeout(timeoutMs);
   }
+
+  /**
+   * Switch to card view mode (TILES)
+   */
+  async switchToCardView(): Promise<void> {
+    // Click on the user preferences dropdown (desktop only)
+    const userPreferences = this.page.getByTestId('user-preferences');
+    
+    if (await userPreferences.isVisible()) {
+      await userPreferences.click();
+      
+      // Look for the Card option in the dropdown
+      const cardOption = this.page.locator('[role="menuitem"]').filter({ hasText: 'Card' });
+      
+      if (await cardOption.isVisible({ timeout: 3000 })) {
+        await cardOption.click();
+        // Wait for the view to change
+        await this.page.waitForTimeout(1000);
+      }
+    }
+  }
+
+  /**
+   * Switch to table view mode (TABLE)
+   */
+  async switchToTableView(): Promise<void> {
+    // Click on the user preferences dropdown (desktop only)
+    const userPreferences = this.page.getByTestId('user-preferences');
+    
+    if (await userPreferences.isVisible()) {
+      await userPreferences.click();
+      
+      // Look for the Table option in the dropdown
+      const tableOption = this.page.locator('[role="menuitem"]').filter({ hasText: 'Table' });
+      
+      if (await tableOption.isVisible({ timeout: 3000 })) {
+        await tableOption.click();
+        // Wait for the view to change
+        await this.page.waitForTimeout(1000);
+      }
+    }
+  }
+
+  /**
+   * Get the current view mode by checking which icon is displayed
+   */
+  async getCurrentViewMode(): Promise<'card' | 'table' | 'unknown'> {
+    const userPreferences = this.page.getByTestId('user-preferences');
+    
+    if (await userPreferences.isVisible()) {
+      // Check if GalleryHorizontal icon is visible (card mode)
+      const cardIcon = userPreferences.locator('svg').first();
+      const iconContent = await cardIcon.innerHTML().catch(() => '');
+      
+      // Check for gallery/grid icon patterns (card mode)
+      if (iconContent.includes('gallery') || iconContent.includes('grid')) {
+        return 'card';
+      }
+      
+      // Check for table icon patterns
+      if (iconContent.includes('table')) {
+        return 'table';
+      }
+    }
+    
+    return 'unknown';
+  }
 }
 

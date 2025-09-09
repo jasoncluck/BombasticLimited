@@ -182,6 +182,12 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
     'should support Ctrl/Cmd multi-selection of video cards',
     async ({ authenticatedPage }) => {
       try {
+        // Ensure we're in card view mode for multi-selection to work properly
+        await videoHelpers.switchToCardView();
+        
+        // Wait for the view to settle
+        await videoHelpers.waitForOperation(1000);
+        
         await videoHelpers.multiSelectVideos([0, 1]);
 
         const selectionIndicators = await videoHelpers.getSelectionIndicators();
@@ -218,6 +224,12 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
     'should support Shift range selection of video cards',
     async ({ authenticatedPage }) => {
       try {
+        // Ensure we're in card view mode for multi-selection to work properly
+        await videoHelpers.switchToCardView();
+        
+        // Wait for the view to settle
+        await videoHelpers.waitForOperation(1000);
+        
         await videoHelpers.multiSelectVideos([0, 2], true);
 
         const selectionIndicators = await videoHelpers.getSelectionIndicators();
