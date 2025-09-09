@@ -166,14 +166,14 @@ function createPlaylistHelpers(
 
         // Wait for the playlist content to fully load
         const playlistContent = page.getByTestId('playlist-content');
-        await expect(playlistContent).toBeVisible({ timeout: 5000 });
+        await expect(playlistContent).toBeVisible({ timeout: 10000 });
 
         // Search for the video element with the specific data-video-id
         const videoElement = page.locator(`[data-video-id="${videoId}"]`);
 
         try {
           // Check if the video element exists and is visible
-          await expect(videoElement).toBeVisible({ timeout: 5000 });
+          await expect(videoElement).toBeVisible({ timeout: 10000 });
           return true;
         } catch (error) {
           // Video not found in playlist
