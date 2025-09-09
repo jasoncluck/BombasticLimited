@@ -313,3 +313,171 @@ Some tests may require specific test data or scenarios:
 - Videos with existing progress
 - Multiple videos in continue watching
 - Clean user state for certain scenarios
+
+---
+
+# Playlist E2E Tests
+
+## Overview
+
+The playlist functionality allows authenticated users to:
+- Create and manage personal playlists
+- Add and remove videos from playlists
+- Reorder videos within playlists via drag and drop
+- Reorder playlists in the sidebar
+- Set custom sort orders for playlist videos
+- Watch playlist videos with timestamp integration
+- Resume playlist videos from Continue Watching
+
+## Playlist Test Files
+
+### `playlist-operations.test.ts`
+Core playlist operations and UI interactions:
+- Basic playlist CRUD operations (create, delete, add/remove videos)
+- Drag and drop functionality (videos to playlists, playlist reordering)
+- Video reordering within playlists when sort is Custom
+- Playlist sort order management (Custom, Published At, Title)
+- Sort order persistence across navigation
+- Drag and drop disabling for non-Custom sort orders
+- Authentication requirements and restrictions
+
+### `playlist-behavior.test.ts`
+Playlist watching behavior and timestamp integration:
+- Timestamp creation when watching playlist videos
+- Continue watching integration with playlist context
+- Resume playlist functionality with correct sort order
+- Next videos display and ordering
+- Playlist video navigation flows
+- Query parameter handling for non-default sort orders
+
+### `sidebar-sources.test.ts`
+Sidebar source reordering functionality (separate from playlists):
+- Drag and drop reordering of sources in sidebar
+- Persistence of source order across page reloads and navigation
+- Visual feedback during drag operations
+- Authentication requirements for source reordering
+- Error handling and edge cases
+
+### `playlist/playlist-helpers.ts`
+Comprehensive helper functions for playlist test operations:
+- Basic playlist operations (create, delete, navigation)
+- Video management (add/remove, drag and drop)
+- Sort order operations and verification
+- Continue watching integration
+- Playlist page operations
+
+## Key Playlist Features Tested
+
+### Basic Operations
+- ✅ Create and delete playlists
+- ✅ Add videos to playlists via context menu
+- ✅ Remove videos from playlists
+- ✅ Authentication requirements
+
+### Drag & Drop Functionality
+- ✅ Drag videos from homepage onto playlists
+- ✅ Reorder videos within playlists (when sort = Custom)
+- ✅ Reorder playlists in sidebar
+- ✅ Reorder sources in sidebar (separate test file)
+- ✅ Visual feedback during drag operations
+
+### Sort Order Management
+- ✅ Change playlist sort order: Custom → Published At → Title
+- ✅ Ascending/descending options for Published At and Title
+- ✅ Disable drag & drop when sort order is not Custom
+- ✅ Persist sort order across navigation
+
+### Timestamp Integration
+- ✅ Create timestamps when watching playlist videos
+- ✅ Resume playlist from Continue Watching with correct sort order
+- ✅ Navigate to playlist page via Continue Watching playlist title
+- ✅ Display next videos in correct sort order
+- ✅ Include query parameters for non-default sort orders
+
+## Running Playlist Tests
+
+### Quick Start
+```bash
+# Run all playlist-related tests
+npm run test:e2e -- --grep "playlist"
+
+# Run specific test categories
+npm run test:e2e -- --grep "playlist operations"
+npm run test:e2e -- --grep "playlist behavior"
+npm run test:e2e -- --grep "sidebar source"
+```
+
+### Using the Playlist Test Runner Script
+```bash
+# Run all playlist tests
+./tests/e2e/run-playlist-tests.sh
+
+# Run with visible browser
+./tests/e2e/run-playlist-tests.sh --headed
+
+# Run specific test categories
+./tests/e2e/run-playlist-tests.sh --operations  # Basic operations
+./tests/e2e/run-playlist-tests.sh --behavior   # Watching & timestamps
+./tests/e2e/run-playlist-tests.sh --sidebar    # Source reordering
+
+# Run with debug mode
+./tests/e2e/run-playlist-tests.sh --debug --grep "drag and drop"
+
+# Run with Playwright UI
+./tests/e2e/run-playlist-tests.sh --ui
+
+# Show test report
+./tests/e2e/run-playlist-tests.sh --report
+```
+
+### Specific Test Files
+```bash
+# Playlist operations tests
+npx playwright test tests/e2e/playlist-operations.test.ts
+
+# Playlist behavior tests
+npx playwright test tests/e2e/playlist-behavior.test.ts
+
+# Sidebar source tests
+npx playwright test tests/e2e/sidebar-sources.test.ts
+
+# Single test
+npx playwright test --grep "should reorder videos within playlist"
+```
+
+## Playlist Test Architecture
+
+### Sort Order System
+The playlist sort system supports:
+- **Custom (playlistOrder)**: User-defined order with drag & drop enabled
+- **Published At (datePublished)**: Sort by video publication date
+- **Title**: Alphabetical sort by video title
+
+Both Published At and Title support ascending and descending order.
+
+### Query Parameter Handling
+- Default sort (Custom/ascending) does not include query parameters
+- Non-default sorts include query parameters in URLs
+- Sort order persists across navigation and page reloads
+
+### Authentication Context
+- Authenticated users: Full playlist functionality
+- Unauthenticated users: No playlist creation, limited viewing
+
+## Playlist Test Limitations
+
+### Drag and Drop Complexity
+- Focus on DOM event simulation rather than pixel-perfect mouse movements
+- Visual feedback verification through CSS class changes
+- State verification through DOM inspection
+
+### Playlist Content Requirements
+Some tests require:
+- Multiple videos available for playlist creation
+- Sufficient test data for drag and drop operations
+- Clean user state for certain scenarios
+
+### Cross-Platform Considerations
+- Drag and drop behavior may vary between browsers
+- Mobile vs desktop interaction differences
+- Keyboard modifier key support (Ctrl/Cmd, Shift)

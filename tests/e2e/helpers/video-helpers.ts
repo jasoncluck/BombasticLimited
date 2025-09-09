@@ -4,6 +4,8 @@ import { expect, type Page, type Locator } from '@playwright/test';
  * Helper functions for video-related E2E tests
  */
 
+type ViewMode = 'card' | 'table' | 'unknown';
+
 export class VideoHelpers {
   constructor(private page: Page) {}
 
@@ -354,6 +356,37 @@ export class VideoHelpers {
     }
     
     return 'unknown';
+  }
+
+  /**
+   * Switch to the next view mode in the sequence
+   */
+  async switchViewMode(): Promise<ViewMode> {
+    const currentMode = await this.getCurrentViewMode();
+    const targetMode = currentMode === 'card' ? 'table' : 'card';
+    
+    if (targetMode === 'card') {
+      await this.switchToCardView();
+    } else {
+      await this.switchToTableView();
+    }
+    
+    return targetMode;
+  }
+
+  /**
+   * Get multiple video cards from the carousel
+   */
+  async getVideoCards(): Promise<Locator[]> {
+    const videoCards = this.page.getByTestId('carousel-item');
+    const count = await videoCards.count();
+    const cards = [];
+    
+    for (let i = 0; i < count; i++) {
+      cards.push(videoCards.nth(i));
+    }
+    
+    return cards;
   }
 }
 
