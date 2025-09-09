@@ -358,7 +358,7 @@ function createPlaylistHelpers(
           .catch(() => false);
 
         throw new Error(
-          `Failed to open and select playlist "${playlistId}": ${error.message}\n` +
+          `Failed to open and select playlist "${playlistId}": ${(error as Error).message}\n` +
             `Debug info: Dropdown visible: ${dropdownVisible}, Submenu visible: ${submenuVisible}`
         );
       }
