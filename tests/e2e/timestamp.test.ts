@@ -21,9 +21,9 @@ videoTest.describe('Video Timestamp and Continue Watching UI', () => {
     await videoPage.goto('/');
   });
 
-  authenticatedTest(
+  videoTest(
     'should display continue watching section when available',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers }) => {
       const continueWatchingSection =
         await videoHelpers.getContinueWatchingSection();
 
@@ -45,9 +45,9 @@ videoTest.describe('Video Timestamp and Continue Watching UI', () => {
     }
   );
 
-  authenticatedTest(
+  videoTest(
     'should navigate to video page and show iframe player',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers, videoPage }) => {
       const videoCard = await videoHelpers.getFirstVideoCard();
       const videoTitle = await videoHelpers.getVideoTitle(videoCard);
 
@@ -55,7 +55,7 @@ videoTest.describe('Video Timestamp and Continue Watching UI', () => {
 
       // Verify video title is displayed on the page
       if (videoTitle) {
-        const titleElement = authenticatedPage
+        const titleElement = videoPage
           .locator('h1, h2, h3, p')
           .filter({ hasText: videoTitle });
         if (await titleElement.isVisible()) {
@@ -68,9 +68,9 @@ videoTest.describe('Video Timestamp and Continue Watching UI', () => {
     }
   );
 
-  authenticatedTest(
+  videoTest(
     'should allow navigation from continue watching to video',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers, videoPage }) => {
       const continueWatchingSection =
         await videoHelpers.getContinueWatchingSection();
 
@@ -84,24 +84,21 @@ videoTest.describe('Video Timestamp and Continue Watching UI', () => {
           await videoHelpers.navigateToVideo(continueVideos[0]);
 
           // Should be on video page with iframe
-          await expect(authenticatedPage).toHaveURL(/\/video\//);
+          await expect(videoPage).toHaveURL(/\/video\//);
         }
       }
     }
   );
 });
 
-authenticatedTest.describe('Video Context Menu and Dropdown Operations', () => {
-  let videoHelpers: VideoHelpers;
-
-  authenticatedTest.beforeEach(async ({ authenticatedPage }) => {
-    videoHelpers = new VideoHelpers(authenticatedPage);
-    await videoHelpers.goToHomepage();
+videoTest.describe('Video Context Menu and Dropdown Operations', () => {
+  videoTest.beforeEach(async ({ videoPage }) => {
+    await videoPage.goto('/');
   });
 
-  authenticatedTest(
+  videoTest(
     'should show context menu on right-click of video card',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers }) => {
       const videoCard = await videoHelpers.getFirstVideoCard();
       const contextMenu = await videoHelpers.openContextMenu(videoCard);
 
@@ -126,9 +123,9 @@ authenticatedTest.describe('Video Context Menu and Dropdown Operations', () => {
     }
   );
 
-  authenticatedTest(
+  videoTest(
     'should show content dropdown menu on video card',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers }) => {
       const videoCard = await videoHelpers.getFirstVideoCard();
       const dropdownMenu = await videoHelpers.openContentDropdown(videoCard);
 
@@ -144,9 +141,9 @@ authenticatedTest.describe('Video Context Menu and Dropdown Operations', () => {
     }
   );
 
-  authenticatedTest(
+  videoTest(
     'should handle video operations through UI interactions',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers }) => {
       const videoCard = await videoHelpers.getFirstVideoCard();
       const videoTitle = await videoHelpers.getVideoTitle(videoCard);
 
@@ -167,17 +164,14 @@ authenticatedTest.describe('Video Context Menu and Dropdown Operations', () => {
   );
 });
 
-authenticatedTest.describe('Multi-Selection Video Operations', () => {
-  let videoHelpers: VideoHelpers;
-
-  authenticatedTest.beforeEach(async ({ authenticatedPage }) => {
-    videoHelpers = new VideoHelpers(authenticatedPage);
-    await videoHelpers.goToHomepage();
+videoTest.describe('Multi-Selection Video Operations', () => {
+  videoTest.beforeEach(async ({ videoPage }) => {
+    await videoPage.goto('/');
   });
 
-  authenticatedTest(
+  videoTest(
     'should support Ctrl/Cmd multi-selection of video cards',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers, videoPage }) => {
       try {
         // Ensure we're in card view mode for multi-selection to work properly
         await videoHelpers.switchToCardView();
@@ -190,7 +184,7 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
         console.log(`Current view mode: ${currentMode}`);
         
         // Check how many videos are available
-        const videoItems = authenticatedPage.getByTestId('carousel-item');
+        const videoItems = videoPage.getByTestId('carousel-item');
         const itemCount = await videoItems.count();
         console.log(`Available video items: ${itemCount}`);
         
@@ -210,16 +204,16 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
         }
 
         // Try right-click on selected items
-        const videoItems2 = authenticatedPage.getByTestId('carousel-item');
+        const videoItems2 = videoPage.getByTestId('carousel-item');
         await videoItems2.nth(0).click({ button: 'right' });
 
         // Look for bulk operation options
-        const bulkOptions = authenticatedPage
+        const bulkOptions = videoPage
           .locator('text=videos')
           .or(
-            authenticatedPage
+            videoPage
               .locator('text=selected')
-              .and(authenticatedPage.locator('text=items'))
+              .and(videoPage.locator('text=items'))
           );
 
         if (await bulkOptions.first().isVisible({ timeout: 2000 })) {
@@ -232,9 +226,9 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
     }
   );
 
-  authenticatedTest(
+  videoTest(
     'should support Shift range selection of video cards',
-    async ({ authenticatedPage }) => {
+    async ({ videoHelpers, videoPage }) => {
       try {
         // Ensure we're in card view mode for multi-selection to work properly
         await videoHelpers.switchToCardView();
@@ -247,7 +241,7 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
         console.log(`Current view mode: ${currentMode}`);
         
         // Check how many videos are available
-        const videoItems = authenticatedPage.getByTestId('carousel-item');
+        const videoItems = videoPage.getByTestId('carousel-item');
         const itemCount = await videoItems.count();
         console.log(`Available video items: ${itemCount}`);
         
@@ -290,29 +284,41 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
 unauthenticatedTest.describe(
   'Unauthenticated User Timestamp Limitations',
   () => {
-    let videoHelpers: VideoHelpers;
-
     unauthenticatedTest.beforeEach(async ({ unauthenticatedPage }) => {
-      videoHelpers = new VideoHelpers(unauthenticatedPage);
       await unauthenticatedPage.goto('/');
     });
 
     unauthenticatedTest(
       'should not show continue watching section for unauthenticated users',
       async ({ unauthenticatedPage }) => {
-        const continueWatchingSection =
-          await videoHelpers.getContinueWatchingSection();
-        expect(continueWatchingSection).toBeNull();
+        const continueWatchingSection = unauthenticatedPage
+          .locator('text=Continue Watching')
+          .or(unauthenticatedPage.getByRole('heading', { name: /continue watching/i }));
+
+        const isVisible = await continueWatchingSection.isVisible();
+        expect(isVisible).toBeFalsy();
       }
     );
 
     unauthenticatedTest(
       'should not show context menu options for timestamp management',
       async ({ unauthenticatedPage }) => {
-        const videoCard = await videoHelpers.getFirstVideoCard();
-        const contextMenu = await videoHelpers.openContextMenu(videoCard);
+        const videoCard = unauthenticatedPage.getByTestId('carousel-item').first();
+        await expect(videoCard).toBeVisible();
+        
+        await videoCard.click({ button: 'right' });
 
-        if (contextMenu) {
+        const contextMenu = unauthenticatedPage
+          .locator(
+            '[role="menu"][data-state="open"], .context-menu[data-state="open"], [data-testid="context-menu"][data-state="open"]'
+          )
+          .first();
+
+        const isVisible = await contextMenu
+          .isVisible({ timeout: 3000 })
+          .catch(() => false);
+          
+        if (isVisible) {
           // Should not see timestamp-related options like "mark as watched" or "reset progress"
           const timestampOptions = contextMenu
             .locator('text=watched')
@@ -330,8 +336,11 @@ unauthenticatedTest.describe(
     unauthenticatedTest(
       'should still allow basic video navigation',
       async ({ unauthenticatedPage }) => {
-        const videoCard = await videoHelpers.getFirstVideoCard();
-        await videoHelpers.navigateToVideo(videoCard);
+        const videoCard = unauthenticatedPage.getByTestId('carousel-item').first();
+        await expect(videoCard).toBeVisible();
+        
+        await videoCard.click();
+        await unauthenticatedPage.waitForURL(/\/video\//, { timeout: 10000 });
 
         // Should be on video page
         await expect(unauthenticatedPage).toHaveURL(/\/video\//);
