@@ -29,7 +29,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
       // Get first video and add to playlist
       const firstVideo = playlistPage.getByTestId('carousel-item').first();
       const videoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
       
       // Navigate to playlist
       await playlistHelpers.navigateToPlaylistPage(playlistId);
@@ -71,13 +71,13 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
       // Add first video to playlist
       const firstVideo = playlistPage.getByTestId('carousel-item').first();
       const firstVideoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
       
       // Add second video to playlist
       const secondVideo = playlistPage.getByTestId('carousel-item').nth(1);
       const secondVideoId = await secondVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
       await secondVideo.click();
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, secondVideo);
       
       // Go back to homepage
       await playlistPage.goto('/');
@@ -136,7 +136,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         videoIds.push(videoId);
         
         await video.click();
-        await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+        await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, video);
         await playlistPage.goto('/'); // Go back to homepage between adds
       }
       
@@ -182,7 +182,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
       for (let i = 0; i < Math.min(3, videos.length); i++) {
         const video = videos[i];
         await video.click();
-        await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+        await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, video);
         await playlistPage.goto('/');
       }
       
@@ -228,7 +228,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
       
       const firstVideo = playlistPage.getByTestId('carousel-item').first();
       const videoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
       
       // Navigate to playlist and watch video
       await playlistHelpers.navigateToPlaylistPage(playlistId);

@@ -58,7 +58,7 @@ playlistTest.describe('Authenticated video page actions', () => {
         await playlistHelpers.extractVideoIdFromCurrentUrl();
 
       // Add video to playlist using the dropdown helper
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId); // No video element needed on individual video page
 
       // Verify the video was added to the playlist
       await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId);

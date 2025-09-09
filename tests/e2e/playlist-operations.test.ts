@@ -67,7 +67,7 @@ playlistTest.describe('Playlist Operations', () => {
       expect(videoId).toBeTruthy();
 
       // Add video to playlist
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
 
       // Verify video was added to playlist
       await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
@@ -83,7 +83,7 @@ playlistTest.describe('Playlist Operations', () => {
       // Get the first video and add it to playlist
       const firstVideo = playlistPage.getByTestId('carousel-item').first();
       const videoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId);
+      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
       
       // Verify video was added
       await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);

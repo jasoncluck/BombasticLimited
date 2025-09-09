@@ -1,4 +1,4 @@
-import { test as base, expect, type Page } from '@playwright/test';
+import { test as base, expect, type Page, type Locator } from '@playwright/test';
 import { authenticatedTest } from './auth-fixtures';
 
 export interface PlaylistData {
@@ -40,8 +40,8 @@ export interface PlaylistHelpers {
   navigateToPlaylistPage(playlistId: string): Promise<void>;
   extractVideoIdFromCurrentUrl(): Promise<string>;
   extractVideoIdFromUrl(url: string): string;
-  addVideoToPlaylistViaDropdown(playlistId: string): Promise<void>;
-  openAndSelectPlaylist(playlistId: string): Promise<void>;
+  addVideoToPlaylistViaDropdown(playlistId: string, videoElement?: Locator): Promise<void>;
+  openAndSelectPlaylist(playlistId: string, videoElement?: Locator): Promise<void>;
   waitForSuccessFeedback(): Promise<void>;
   cleanup(): Promise<void>;
 }
@@ -254,12 +254,15 @@ function createPlaylistHelpers(
       return this.extractVideoIdFromUrl(currentUrl);
     },
 
-    async openAndSelectPlaylist(playlistId: string): Promise<void> {
+    async openAndSelectPlaylist(playlistId: string, videoElement?: Locator): Promise<void> {
       try {
-        // Click the content dropdown trigger
-        const contentDropdownTrigger = page.getByTestId(
-          'content-dropdown-trigger'
-        );
+        // Click the content dropdown trigger - scoped to specific video if provided
+        let contentDropdownTrigger;
+        if (videoElement) {
+          contentDropdownTrigger = videoElement.getByTestId('content-dropdown-trigger');
+        } else {
+          contentDropdownTrigger = page.getByTestId('content-dropdown-trigger').first();
+        }
         await expect(contentDropdownTrigger).toBeVisible();
         await contentDropdownTrigger.click();
 
@@ -358,7 +361,7 @@ function createPlaylistHelpers(
           .catch(() => false);
 
         throw new Error(
-          `Failed to open and select playlist "${playlistId}": ${error.message}\n` +
+          `Failed to open and select playlist "${playlistId}": ${error instanceof Error ? error.message : String(error)}\n` +
             `Debug info: Dropdown visible: ${dropdownVisible}, Submenu visible: ${submenuVisible}`
         );
       }
@@ -395,8 +398,8 @@ function createPlaylistHelpers(
       }
     },
 
-    async addVideoToPlaylistViaDropdown(playlistId: string): Promise<void> {
-      await this.openAndSelectPlaylist(playlistId);
+    async addVideoToPlaylistViaDropdown(playlistId: string, videoElement?: Locator): Promise<void> {
+      await this.openAndSelectPlaylist(playlistId, videoElement);
     },
 
     async verifyPlaylistExists(playlistId: string): Promise<void> {
