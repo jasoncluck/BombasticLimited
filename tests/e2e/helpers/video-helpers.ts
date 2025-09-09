@@ -205,16 +205,29 @@ export class VideoHelpers {
     indices: number[],
     useShift = false
   ): Promise<Locator> {
-    const videoItems = this.page.getByTestId('carousel-item');
+    // First check which view mode we're in and get the appropriate elements
+    const currentMode = await this.getCurrentViewMode();
+    
+    let videoItems: Locator;
+    
+    if (currentMode === 'table') {
+      // In table mode, look for table rows
+      videoItems = this.page.locator('tr[data-testid*="video"], tbody tr').filter({ hasText: /.+/ });
+    } else {
+      // In card/carousel mode, use carousel items
+      videoItems = this.page.getByTestId('carousel-item');
+    }
+    
     const itemCount = await videoItems.count();
 
     if (indices.some((i) => i >= itemCount)) {
-      throw new Error('Video index out of range');
+      throw new Error(`Video index out of range. Requested: ${indices}, Available: ${itemCount}`);
     }
 
     if (useShift && indices.length === 2) {
       // Shift selection: click first, then shift+click last
       await videoItems.nth(indices[0]).click();
+      await this.page.waitForTimeout(200); // Small delay between clicks
       await videoItems.nth(indices[1]).click({ modifiers: ['Shift'] });
     } else {
       // Ctrl/Cmd selection: click each with modifier
@@ -222,6 +235,7 @@ export class VideoHelpers {
 
       for (const index of indices) {
         await videoItems.nth(index).click({ modifiers: [modifierKey] });
+        await this.page.waitForTimeout(100); // Small delay between clicks
       }
     }
 
@@ -232,9 +246,11 @@ export class VideoHelpers {
    * Check for visual selection indicators
    */
   async getSelectionIndicators(): Promise<Locator> {
+    // Check for various selection indicators that might be used in different view modes
     const selectionIndicators = this.page
-      .locator('.selected, [data-selected="true"], .bg-primary')
-      .or(this.page.locator('[aria-selected="true"]'));
+      .locator('.selected, [data-selected="true"], [aria-selected="true"], .bg-primary, .bg-accent')
+      .or(this.page.locator('tr.selected, tr[data-selected="true"], tr[aria-selected="true"]'))
+      .or(this.page.locator('[class*="selected"], [class*="highlight"]'));
 
     return selectionIndicators;
   }
@@ -265,18 +281,24 @@ export class VideoHelpers {
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
     
-    if (await userPreferences.isVisible()) {
+    // Check if the preferences dropdown is available (authenticated + desktop)
+    if (await userPreferences.isVisible({ timeout: 3000 })) {
       await userPreferences.click();
       
       // Look for the Card option in the dropdown
-      const cardOption = this.page.locator('[role="menuitem"]').filter({ hasText: 'Card' });
+      const cardOption = this.page.locator('[role="menuitem"]').filter({ hasText: /Card/i });
       
       if (await cardOption.isVisible({ timeout: 3000 })) {
         await cardOption.click();
         // Wait for the view to change
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(1500);
+      } else {
+        // If Card option is not visible, we might already be in card mode
+        // Click elsewhere to close the dropdown
+        await this.page.click('body');
       }
     }
+    // If preferences dropdown is not available, we're likely on mobile or already in correct mode
   }
 
   /**
@@ -286,18 +308,24 @@ export class VideoHelpers {
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
     
-    if (await userPreferences.isVisible()) {
+    // Check if the preferences dropdown is available (authenticated + desktop)
+    if (await userPreferences.isVisible({ timeout: 3000 })) {
       await userPreferences.click();
       
       // Look for the Table option in the dropdown
-      const tableOption = this.page.locator('[role="menuitem"]').filter({ hasText: 'Table' });
+      const tableOption = this.page.locator('[role="menuitem"]').filter({ hasText: /Table/i });
       
       if (await tableOption.isVisible({ timeout: 3000 })) {
         await tableOption.click();
         // Wait for the view to change
-        await this.page.waitForTimeout(1000);
+        await this.page.waitForTimeout(1500);
+      } else {
+        // If Table option is not visible, we might already be in table mode
+        // Click elsewhere to close the dropdown
+        await this.page.click('body');
       }
     }
+    // If preferences dropdown is not available, we're likely on mobile or already in correct mode
   }
 
   /**
@@ -306,19 +334,22 @@ export class VideoHelpers {
   async getCurrentViewMode(): Promise<'card' | 'table' | 'unknown'> {
     const userPreferences = this.page.getByTestId('user-preferences');
     
-    if (await userPreferences.isVisible()) {
-      // Check if GalleryHorizontal icon is visible (card mode)
-      const cardIcon = userPreferences.locator('svg').first();
-      const iconContent = await cardIcon.innerHTML().catch(() => '');
+    if (await userPreferences.isVisible({ timeout: 3000 })) {
+      // Check the icon content to determine current mode
+      const iconElement = userPreferences.locator('svg').first();
       
-      // Check for gallery/grid icon patterns (card mode)
-      if (iconContent.includes('gallery') || iconContent.includes('grid')) {
-        return 'card';
-      }
-      
-      // Check for table icon patterns
-      if (iconContent.includes('table')) {
-        return 'table';
+      if (await iconElement.isVisible()) {
+        // Check for GalleryHorizontal icon (indicates card mode is active)
+        const hasGalleryIcon = await userPreferences.locator('svg[class*="lucide-gallery"]').isVisible().catch(() => false);
+        if (hasGalleryIcon) {
+          return 'card';
+        }
+        
+        // Check for Table icon (indicates table mode is active)
+        const hasTableIcon = await userPreferences.locator('svg[class*="lucide-table"]').isVisible().catch(() => false);
+        if (hasTableIcon) {
+          return 'table';
+        }
       }
     }
     
