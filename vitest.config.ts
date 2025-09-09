@@ -15,12 +15,30 @@ export default defineConfig({
   resolve: {
     alias: {
       $lib: path.resolve(__dirname, 'src/lib'),
-      '$app/stores': path.resolve(__dirname, 'src/lib/tests/__mocks__/app-stores.js'),
-      '$app/navigation': path.resolve(__dirname, 'src/lib/tests/__mocks__/app-navigation.js'),
-      '$app/environment': path.resolve(__dirname, 'src/lib/tests/__mocks__/app-environment.js'),
-      '$app/state': path.resolve(__dirname, 'src/lib/tests/__mocks__/app-state.js'),
-      '$env/static/private': path.resolve(__dirname, 'src/lib/tests/__mocks__/env-static-private.js'),
-      '$env/static/public': path.resolve(__dirname, 'src/lib/tests/__mocks__/env-static-public.js'),
+      '$app/stores': path.resolve(
+        __dirname,
+        'src/lib/tests/__mocks__/app-stores.js'
+      ),
+      '$app/navigation': path.resolve(
+        __dirname,
+        'src/lib/tests/__mocks__/app-navigation.js'
+      ),
+      '$app/environment': path.resolve(
+        __dirname,
+        'src/lib/tests/__mocks__/app-environment.js'
+      ),
+      '$app/state': path.resolve(
+        __dirname,
+        'src/lib/tests/__mocks__/app-state.js'
+      ),
+      '$env/static/private': path.resolve(
+        __dirname,
+        'src/lib/tests/__mocks__/env-static-private.js'
+      ),
+      '$env/static/public': path.resolve(
+        __dirname,
+        'src/lib/tests/__mocks__/env-static-public.js'
+      ),
     },
   },
 });

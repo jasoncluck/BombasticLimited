@@ -19,7 +19,8 @@ describe('images module', () => {
 
   describe('detectOptimalImageFormat - Server Side', () => {
     it('should detect AVIF from Accept header', () => {
-      const acceptHeader = 'text/html,image/avif,image/webp,image/jpeg,*/*;q=0.8';
+      const acceptHeader =
+        'text/html,image/avif,image/webp,image/jpeg,*/*;q=0.8';
       const format = detectOptimalImageFormat(acceptHeader);
       expect(format).toBe('avif');
     });
@@ -95,7 +96,7 @@ describe('images module', () => {
     it('should return different priorities for different content types', () => {
       const playlistPriority = getFormatPriority('playlist');
       const videoPriority = getFormatPriority('video');
-      
+
       expect(playlistPriority).toBeDefined();
       expect(videoPriority).toBeDefined();
       // Both should be arrays of valid formats
@@ -118,9 +119,12 @@ describe('images module', () => {
     });
 
     it('should handle different content types', () => {
-      const playlistFormat = getBestImageFormat('playlist', 'image/avif,image/webp');
+      const playlistFormat = getBestImageFormat(
+        'playlist',
+        'image/avif,image/webp'
+      );
       const videoFormat = getBestImageFormat('video', 'image/avif,image/webp');
-      
+
       expect(['avif', 'webp', 'jpeg']).toContain(playlistFormat);
       expect(['avif', 'webp', 'jpeg']).toContain(videoFormat);
     });
@@ -179,7 +183,8 @@ describe('images module', () => {
     });
 
     it('should handle very long Accept headers', () => {
-      const longHeader = 'text/html,' + 'image/png,'.repeat(100) + 'image/avif,image/jpeg';
+      const longHeader =
+        'text/html,' + 'image/png,'.repeat(100) + 'image/avif,image/jpeg';
       const format = detectOptimalImageFormat(longHeader);
       expect(format).toBe('avif');
     });
@@ -193,19 +198,22 @@ describe('images module', () => {
     });
 
     it('should handle modern browser Accept headers', () => {
-      const modernHeader = 'text/html,image/avif,image/webp,image/apng,image/svg+xml,image/*;q=0.8,*/*;q=0.5';
+      const modernHeader =
+        'text/html,image/avif,image/webp,image/apng,image/svg+xml,image/*;q=0.8,*/*;q=0.5';
       const format = detectOptimalImageFormat(modernHeader);
       expect(format).toBe('avif');
     });
 
     it('should handle Chrome-style Accept headers', () => {
-      const chromeHeader = 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8';
+      const chromeHeader =
+        'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8';
       const format = detectOptimalImageFormat(chromeHeader);
       expect(format).toBe('avif');
     });
 
     it('should handle Safari-style Accept headers', () => {
-      const safariHeader = 'image/webp,image/png,image/svg+xml,image/*;q=0.8,video/*;q=0.8,*/*;q=0.5';
+      const safariHeader =
+        'image/webp,image/png,image/svg+xml,image/*;q=0.8,video/*;q=0.8,*/*;q=0.5';
       const format = detectOptimalImageFormat(safariHeader);
       expect(format).toBe('webp');
     });
@@ -214,7 +222,7 @@ describe('images module', () => {
   describe('type safety', () => {
     it('should return valid format types', () => {
       const validFormats = ['avif', 'webp', 'jpeg'] as const;
-      
+
       const testHeaders = [
         'image/avif,image/webp,image/jpeg',
         'image/webp,image/jpeg',
@@ -223,8 +231,8 @@ describe('images module', () => {
         null,
         undefined,
       ];
-      
-      testHeaders.forEach(header => {
+
+      testHeaders.forEach((header) => {
         const format = detectOptimalImageFormat(header);
         expect(validFormats).toContain(format);
       });
@@ -232,7 +240,7 @@ describe('images module', () => {
 
     it('should return valid extensions for all formats', () => {
       const formats = ['avif', 'webp', 'jpeg'] as const;
-      formats.forEach(format => {
+      formats.forEach((format) => {
         const extension = getFormatExtension(format);
         expect(typeof extension).toBe('string');
         expect(extension.length).toBeGreaterThan(0);
@@ -241,7 +249,7 @@ describe('images module', () => {
 
     it('should return valid MIME types for all formats', () => {
       const formats = ['avif', 'webp', 'jpeg'] as const;
-      formats.forEach(format => {
+      formats.forEach((format) => {
         const mimeType = getFormatMimeType(format);
         expect(typeof mimeType).toBe('string');
         expect(mimeType.startsWith('image/')).toBe(true);

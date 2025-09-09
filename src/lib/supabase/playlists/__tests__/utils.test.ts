@@ -67,7 +67,7 @@ describe('Playlist Utils', () => {
 
     it('should parse valid JSON string', () => {
       const jsonString = '{"x": 15, "y": 25, "width": 200, "height": 150}';
-      
+
       const result = parseImageProperties(jsonString);
       expect(result).toEqual({
         x: 15,
@@ -97,7 +97,7 @@ describe('Playlist Utils', () => {
         { x: 10, y: 20, width: 100, height: '100' }, // height is string
       ];
 
-      invalidObjects.forEach(obj => {
+      invalidObjects.forEach((obj) => {
         expect(parseImageProperties(obj)).toBeNull();
       });
     });
@@ -109,7 +109,7 @@ describe('Playlist Utils', () => {
         { x: 1.5, y: 2.5, width: 100.5, height: 80.5 }, // decimal values
       ];
 
-      edgeCases.forEach(obj => {
+      edgeCases.forEach((obj) => {
         const result = parseImageProperties(obj);
         expect(result).toEqual(obj);
       });
@@ -137,8 +137,9 @@ describe('Playlist Utils', () => {
     });
 
     it('should handle JSON string with extra properties', () => {
-      const jsonString = '{"x": 10, "y": 20, "width": 100, "height": 80, "extra": "data"}';
-      
+      const jsonString =
+        '{"x": 10, "y": 20, "width": 100, "height": 80, "extra": "data"}';
+
       const result = parseImageProperties(jsonString);
       expect(result).toEqual({
         x: 10,
@@ -229,9 +230,16 @@ describe('Playlist Utils', () => {
     });
 
     it('should return false for objects missing required properties', () => {
-      const requiredProps = ['id', 'created_at', 'created_by', 'name', 'short_id', 'type'];
-      
-      requiredProps.forEach(prop => {
+      const requiredProps = [
+        'id',
+        'created_at',
+        'created_by',
+        'name',
+        'short_id',
+        'type',
+      ];
+
+      requiredProps.forEach((prop) => {
         const incomplete = { ...validPlaylist };
         delete (incomplete as any)[prop];
         expect(isPlaylist(incomplete)).toBe(false);
@@ -249,7 +257,7 @@ describe('Playlist Utils', () => {
         { ...validPlaylist, description: 123 }, // should be string or null
       ];
 
-      wrongTypes.forEach(obj => {
+      wrongTypes.forEach((obj) => {
         expect(isPlaylist(obj)).toBe(false);
       });
     });
@@ -302,11 +310,17 @@ describe('Playlist Utils', () => {
 
     it('should return false for objects missing required properties', () => {
       const requiredProps = [
-        'id', 'sorted_by', 'sort_order', 'name', 'short_id', 
-        'created_at', 'created_by', 'type'
+        'id',
+        'sorted_by',
+        'sort_order',
+        'name',
+        'short_id',
+        'created_at',
+        'created_by',
+        'type',
       ];
-      
-      requiredProps.forEach(prop => {
+
+      requiredProps.forEach((prop) => {
         const incomplete = { ...validUserPlaylist };
         delete (incomplete as any)[prop];
         expect(isUserPlaylist(incomplete)).toBe(false);
@@ -326,7 +340,7 @@ describe('Playlist Utils', () => {
         { ...validUserPlaylist, type: 123 },
       ];
 
-      wrongTypes.forEach(obj => {
+      wrongTypes.forEach((obj) => {
         expect(isUserPlaylist(obj)).toBe(false);
       });
     });
@@ -350,7 +364,7 @@ describe('Playlist Utils', () => {
   describe('integration and type safety', () => {
     it('should provide proper type narrowing for isPlaylistVideo', () => {
       const video: Video = { id: 'test' } as Video;
-      
+
       if (isPlaylistVideo(video)) {
         // TypeScript should know video has video_position here
         expect(typeof video.video_position).toBe('number');
@@ -367,7 +381,7 @@ describe('Playlist Utils', () => {
         // Skip string and number since 'in' operator will fail
       ];
 
-      mixedObjects.forEach(obj => {
+      mixedObjects.forEach((obj) => {
         expect(() => isPlaylist(obj)).not.toThrow();
         expect(() => isUserPlaylist(obj)).not.toThrow();
         expect(() => isPlaylistVideo(obj as any)).not.toThrow();

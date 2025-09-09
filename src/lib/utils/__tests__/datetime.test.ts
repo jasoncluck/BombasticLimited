@@ -12,7 +12,7 @@ import {
 describe('datetime utilities', () => {
   // Mock Date to have consistent tests
   const mockDate = new Date('2024-01-15T10:30:00.000Z');
-  
+
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(mockDate);
@@ -133,12 +133,12 @@ describe('datetime utilities', () => {
   describe('getTimezoneInfo', () => {
     it('should return timezone information object', () => {
       const result = getTimezoneInfo();
-      
+
       expect(result).toHaveProperty('localTime');
       expect(result).toHaveProperty('utcTime');
       expect(result).toHaveProperty('timezoneOffset');
       expect(result).toHaveProperty('timezoneName');
-      
+
       expect(typeof result.localTime).toBe('string');
       expect(typeof result.utcTime).toBe('string');
       expect(typeof result.timezoneOffset).toBe('number');
@@ -154,7 +154,9 @@ describe('datetime utilities', () => {
     it('should return valid UTC time format', () => {
       const result = getTimezoneInfo();
       // UTC time should be in ISO format
-      expect(result.utcTime).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+      expect(result.utcTime).toMatch(
+        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
+      );
     });
   });
 
@@ -167,7 +169,7 @@ describe('datetime utilities', () => {
         '2024/01/15',
       ];
 
-      validFormats.forEach(format => {
+      validFormats.forEach((format) => {
         expect(() => formatDateTime(format)).not.toThrow();
         expect(() => formatDateTimeShort(format)).not.toThrow();
         expect(() => formatDateTimeReadable(format)).not.toThrow();
@@ -181,7 +183,7 @@ describe('datetime utilities', () => {
         '2000-02-29T12:00:00.000Z', // Leap year
       ];
 
-      boundaryDates.forEach(date => {
+      boundaryDates.forEach((date) => {
         expect(formatDateTime(date)).not.toBe('Invalid Date');
         expect(formatDateTimeShort(date)).not.toBe('Invalid');
         expect(formatDateTimeReadable(date)).not.toBe('Invalid Date');

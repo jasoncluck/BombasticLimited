@@ -61,7 +61,12 @@ describe('playlistSchema', () => {
       };
 
       const result = playlistSchema.parse(validData);
-      expect(result.image_properties).toEqual({ x: 5, y: 10, width: 150, height: 100 });
+      expect(result.image_properties).toEqual({
+        x: 5,
+        y: 10,
+        width: 150,
+        height: 100,
+      });
     });
 
     it('should default image_properties to null when not provided', () => {
@@ -196,7 +201,12 @@ describe('playlistSchema', () => {
       };
 
       const result = playlistSchema.parse(validData);
-      expect(result.image_properties).toEqual({ x: 0, y: 0, width: 100, height: 100 });
+      expect(result.image_properties).toEqual({
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 100,
+      });
     });
 
     it('should accept negative coordinates', () => {
@@ -211,7 +221,12 @@ describe('playlistSchema', () => {
       };
 
       const result = playlistSchema.parse(validData);
-      expect(result.image_properties).toEqual({ x: -10, y: -5, width: 50, height: 75 });
+      expect(result.image_properties).toEqual({
+        x: -10,
+        y: -5,
+        width: 50,
+        height: 75,
+      });
     });
 
     it('should reject image properties with missing fields', () => {

@@ -84,7 +84,9 @@ vi.mock('../playlists/transforms', () => ({
     watched_at: data.video_watched_at,
     position: data.video_position,
   })),
-  getFullImageUrl: vi.fn((url, supabase) => url ? `https://supabase.co/storage/v1/object/public/${url}` : null),
+  getFullImageUrl: vi.fn((url, supabase) =>
+    url ? `https://supabase.co/storage/v1/object/public/${url}` : null
+  ),
 }));
 
 describe('playlist queries module', () => {
@@ -99,10 +101,10 @@ describe('playlist queries module', () => {
       storage: {
         from: vi.fn().mockReturnValue({
           getPublicUrl: vi.fn().mockReturnValue({
-            data: { publicUrl: 'https://example.com/mock-url' }
-          })
-        })
-      }
+            data: { publicUrl: 'https://example.com/mock-url' },
+          }),
+        }),
+      },
     } as any;
   });
 
@@ -496,10 +498,13 @@ describe('playlist queries module', () => {
         preferredImageFormat: 'webp',
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_playlist_by_youtube_id', {
-        p_youtube_id: 'PLyoutube123',
-        p_preferred_image_format: 'webp',
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'get_playlist_by_youtube_id',
+        {
+          p_youtube_id: 'PLyoutube123',
+          p_preferred_image_format: 'webp',
+        }
+      );
       expect(result.playlist).toEqual(mockPlaylistData);
       expect(result.error).toBeNull();
     });
@@ -614,14 +619,17 @@ describe('playlist queries module', () => {
         preferredImageFormat: 'webp',
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_playlist_video_context', {
-        p_short_id: 'cp123',
-        p_video_id: 'current_video',
-        p_context_limit: 5,
-        p_preferred_image_format: 'webp',
-        p_sorted_by: 'datePublished',
-        p_sort_order: 'ascending',
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'get_playlist_video_context',
+        {
+          p_short_id: 'cp123',
+          p_video_id: 'current_video',
+          p_context_limit: 5,
+          p_preferred_image_format: 'webp',
+          p_sorted_by: 'datePublished',
+          p_sort_order: 'ascending',
+        }
+      );
 
       expect(result.error).toBeNull();
       expect(result.playlist).toMatchObject({

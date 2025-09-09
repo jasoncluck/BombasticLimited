@@ -36,7 +36,7 @@ describe('layout constants', () => {
     it('should work in CSS calculations', () => {
       const cssWidth = `${COLLAPSED_SIDEBAR_SIZE}rem`;
       expect(cssWidth).toBe('7rem');
-      
+
       const cssCalc = `calc(100% - ${COLLAPSED_SIDEBAR_SIZE}rem)`;
       expect(cssCalc).toBe('calc(100% - 7rem)');
     });
@@ -75,8 +75,13 @@ describe('layout constants', () => {
       expect(() => {
         mockElement.addEventListener('touchstart', mockListener, true);
         mockElement.addEventListener('touchstart', mockListener, false);
-        mockElement.addEventListener('touchstart', mockListener, { passive: true });
-        mockElement.addEventListener('touchstart', mockListener, { capture: false, once: true });
+        mockElement.addEventListener('touchstart', mockListener, {
+          passive: true,
+        });
+        mockElement.addEventListener('touchstart', mockListener, {
+          capture: false,
+          once: true,
+        });
         mockElement.addEventListener('touchstart', mockListener);
       }).not.toThrow();
     });
@@ -85,14 +90,16 @@ describe('layout constants', () => {
       // Test that event listeners can still be added and basic functionality works
       const mockElement = document.createElement('div');
       let called = false;
-      const mockListener = () => { called = true; };
+      const mockListener = () => {
+        called = true;
+      };
 
       mockElement.addEventListener('click', mockListener);
-      
+
       // Simulate click event
       const clickEvent = new Event('click');
       mockElement.dispatchEvent(clickEvent);
-      
+
       expect(called).toBe(true);
     });
 
@@ -122,7 +129,7 @@ describe('layout constants', () => {
 
       expect(() => {
         mockElement.addEventListener('touchstart', mockListener, {
-          signal: controller.signal
+          signal: controller.signal,
         });
       }).not.toThrow();
 
@@ -135,14 +142,16 @@ describe('layout constants', () => {
     it('should work with once option', () => {
       const mockElement = document.createElement('div');
       let callCount = 0;
-      const mockListener = () => { callCount++; };
+      const mockListener = () => {
+        callCount++;
+      };
 
       mockElement.addEventListener('click', mockListener, { once: true });
-      
+
       // Dispatch event twice
       mockElement.dispatchEvent(new Event('click'));
       mockElement.dispatchEvent(new Event('click'));
-      
+
       // Should only be called once due to { once: true }
       expect(callCount).toBe(1);
     });
@@ -152,10 +161,10 @@ describe('layout constants', () => {
     it('should work in responsive design calculations', () => {
       const breakpoint = 768; // md breakpoint
       const sidebarWidth = COLLAPSED_SIDEBAR_SIZE;
-      
+
       const isMobile = window.innerWidth < breakpoint;
       const effectiveWidth = isMobile ? 0 : sidebarWidth;
-      
+
       expect(typeof effectiveWidth).toBe('number');
       expect(effectiveWidth).toBeGreaterThanOrEqual(0);
     });
@@ -175,11 +184,11 @@ describe('layout constants', () => {
       // This tests the practical purpose of the addEventListener override
       const mockElement = document.createElement('div');
       const mockHandler = () => {};
-      
+
       // This should work without passive listener warnings
       mockElement.addEventListener('touchstart', mockHandler);
       mockElement.addEventListener('touchmove', mockHandler);
-      
+
       // Should complete without errors
       expect(true).toBe(true);
     });

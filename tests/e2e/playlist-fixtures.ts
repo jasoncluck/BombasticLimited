@@ -138,7 +138,7 @@ function createPlaylistHelpers(
 
       // Wait for the playlist page to load with proper URL pattern matching
       const playlistUrlPattern = new RegExp(
-        `.*\/playlist\/${playlistId}(?:\/.*)?$`
+        `.*/playlist/${playlistId}(?:/.*)?$`
       );
       await expect(page).toHaveURL(playlistUrlPattern, { timeout: 10000 });
 
@@ -160,7 +160,7 @@ function createPlaylistHelpers(
 
         // Double-check we're on the correct playlist page
         const playlistUrlPattern = new RegExp(
-          `.*\/playlist\/${playlistId}(?:\/.*)?$`
+          `.*/playlist/${playlistId}(?:/.*)?$`
         );
         await expect(page).toHaveURL(playlistUrlPattern, { timeout: 5000 });
 
@@ -358,7 +358,7 @@ function createPlaylistHelpers(
           .catch(() => false);
 
         throw new Error(
-          `Failed to open and select playlist "${playlistId}": ${error.message}\n` +
+          `Failed to open and select playlist "${playlistId}": ${(error as Error).message}\n` +
             `Debug info: Dropdown visible: ${dropdownVisible}, Submenu visible: ${submenuVisible}`
         );
       }

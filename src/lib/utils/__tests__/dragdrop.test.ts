@@ -32,9 +32,11 @@ import { createDragImage, updateElementClasses } from '../dragdrop';
 
 describe('Dragdrop Utilities', () => {
   const createMockDragEvent = (hasDataTransfer = true): DragEvent => {
-    const dataTransfer = hasDataTransfer ? {
-      setDragImage: vi.fn(),
-    } : null;
+    const dataTransfer = hasDataTransfer
+      ? {
+          setDragImage: vi.fn(),
+        }
+      : null;
 
     return {
       dataTransfer,
@@ -84,7 +86,11 @@ describe('Dragdrop Utilities', () => {
 
       createDragImage(event, text);
 
-      expect(event.dataTransfer?.setDragImage).toHaveBeenCalledWith(mockElement, 0, 0);
+      expect(event.dataTransfer?.setDragImage).toHaveBeenCalledWith(
+        mockElement,
+        0,
+        0
+      );
     });
 
     it('should remove element after timeout', () => {
@@ -144,12 +150,13 @@ describe('Dragdrop Utilities', () => {
   });
 
   describe('updateElementClasses', () => {
-    const createMockElement = (): HTMLElement => ({
-      classList: {
-        add: vi.fn(),
-        remove: vi.fn(),
-      },
-    } as any);
+    const createMockElement = (): HTMLElement =>
+      ({
+        classList: {
+          add: vi.fn(),
+          remove: vi.fn(),
+        },
+      }) as any;
 
     it('should add classes when provided', () => {
       const element = createMockElement();
@@ -157,7 +164,11 @@ describe('Dragdrop Utilities', () => {
 
       updateElementClasses(element, addClasses);
 
-      expect(element.classList.add).toHaveBeenCalledWith('class1', 'class2', 'class3');
+      expect(element.classList.add).toHaveBeenCalledWith(
+        'class1',
+        'class2',
+        'class3'
+      );
       expect(element.classList.remove).not.toHaveBeenCalled();
     });
 
@@ -167,7 +178,10 @@ describe('Dragdrop Utilities', () => {
 
       updateElementClasses(element, [], removeClasses);
 
-      expect(element.classList.remove).toHaveBeenCalledWith('old-class1', 'old-class2');
+      expect(element.classList.remove).toHaveBeenCalledWith(
+        'old-class1',
+        'old-class2'
+      );
       expect(element.classList.add).not.toHaveBeenCalled();
     });
 
@@ -178,8 +192,14 @@ describe('Dragdrop Utilities', () => {
 
       updateElementClasses(element, addClasses, removeClasses);
 
-      expect(element.classList.remove).toHaveBeenCalledWith('old-class1', 'old-class2');
-      expect(element.classList.add).toHaveBeenCalledWith('new-class1', 'new-class2');
+      expect(element.classList.remove).toHaveBeenCalledWith(
+        'old-class1',
+        'old-class2'
+      );
+      expect(element.classList.add).toHaveBeenCalledWith(
+        'new-class1',
+        'new-class2'
+      );
     });
 
     it('should handle empty arrays gracefully', () => {
@@ -208,9 +228,11 @@ describe('Dragdrop Utilities', () => {
       updateElementClasses(element, addClasses, removeClasses);
 
       // Check call order - remove should be called before add
-      const removeCall = (element.classList.remove as any).mock.invocationCallOrder[0];
-      const addCall = (element.classList.add as any).mock.invocationCallOrder[0];
-      
+      const removeCall = (element.classList.remove as any).mock
+        .invocationCallOrder[0];
+      const addCall = (element.classList.add as any).mock
+        .invocationCallOrder[0];
+
       expect(removeCall).toBeLessThan(addCall);
     });
 
@@ -235,7 +257,11 @@ describe('Dragdrop Utilities', () => {
 
     it('should handle classes with special characters', () => {
       const element = createMockElement();
-      const specialClasses = ['class-with-dashes', 'class_with_underscores', 'class123'];
+      const specialClasses = [
+        'class-with-dashes',
+        'class_with_underscores',
+        'class123',
+      ];
 
       updateElementClasses(element, specialClasses);
 
@@ -274,7 +300,10 @@ describe('Dragdrop Utilities', () => {
       // Simulate drag end
       updateElementClasses(element, ['idle'], ['dragging', 'drag-over']);
 
-      expect(element.classList.remove).toHaveBeenCalledWith('dragging', 'drag-over');
+      expect(element.classList.remove).toHaveBeenCalledWith(
+        'dragging',
+        'drag-over'
+      );
       expect(element.classList.add).toHaveBeenCalledWith('idle');
     });
   });
@@ -299,7 +328,9 @@ describe('Dragdrop Utilities', () => {
         },
       } as any;
 
-      expect(() => updateElementClasses(element, ['test'])).toThrow('ClassList error');
+      expect(() => updateElementClasses(element, ['test'])).toThrow(
+        'ClassList error'
+      );
     });
   });
 });

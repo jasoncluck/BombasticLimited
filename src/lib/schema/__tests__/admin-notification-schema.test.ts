@@ -1,5 +1,8 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { adminNotificationSchema, type AdminNotificationSchema } from '../admin-notification-schema';
+import {
+  adminNotificationSchema,
+  type AdminNotificationSchema,
+} from '../admin-notification-schema';
 
 describe('adminNotificationSchema', () => {
   // Mock the current time for consistent testing
@@ -120,7 +123,9 @@ describe('adminNotificationSchema', () => {
         message: 'This should fail',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('Please select a valid notification type');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'Please select a valid notification type'
+      );
     });
 
     it('should reject missing type', () => {
@@ -151,7 +156,9 @@ describe('adminNotificationSchema', () => {
         message: 'Valid message',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('Title is required');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'Title is required'
+      );
     });
 
     it('should accept whitespace-only title (not trimmed)', () => {
@@ -206,7 +213,9 @@ describe('adminNotificationSchema', () => {
         message: '',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('Message is required');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'Message is required'
+      );
     });
 
     it('should accept whitespace-only message (not trimmed)', () => {
@@ -253,7 +262,8 @@ describe('adminNotificationSchema', () => {
     });
 
     it('should accept message with special characters and formatting', () => {
-      const specialMessage = 'Alert! 🚨 System will be down from 2-4 PM.\n\nPlease save your work.';
+      const specialMessage =
+        'Alert! 🚨 System will be down from 2-4 PM.\n\nPlease save your work.';
       const validData = {
         type: 'system' as const,
         title: 'Maintenance Alert',
@@ -303,7 +313,9 @@ describe('adminNotificationSchema', () => {
         endDatetime: '2024-01-17T12:00:00Z',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('Invalid date format provided');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'Invalid date format provided'
+      );
     });
 
     it('should reject invalid end date format', () => {
@@ -315,7 +327,9 @@ describe('adminNotificationSchema', () => {
         endDatetime: 'invalid-date',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('Invalid date format provided');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'Invalid date format provided'
+      );
     });
 
     it('should reject end date before start date', () => {
@@ -327,7 +341,9 @@ describe('adminNotificationSchema', () => {
         endDatetime: '2024-01-16T12:00:00Z', // before start
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('End date must be after start date');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'End date must be after start date'
+      );
     });
 
     it('should reject start date in the past', () => {
@@ -338,7 +354,9 @@ describe('adminNotificationSchema', () => {
         startDatetime: '2024-01-14T12:00:00Z', // before mock current time
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('Start date cannot be in the past');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'Start date cannot be in the past'
+      );
     });
 
     it('should accept start date exactly at current time', () => {
@@ -482,7 +500,9 @@ describe('adminNotificationSchema', () => {
         endDatetime: '2024-01-16T12:00:00Z', // exactly same time
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow('End date must be after start date');
+      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
+        'End date must be after start date'
+      );
     });
   });
 

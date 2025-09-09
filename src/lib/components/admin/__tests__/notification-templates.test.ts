@@ -13,7 +13,9 @@ describe('notification templates module', () => {
       expect(welcome).toBeDefined();
       expect(welcome.type).toBe('system');
       expect(welcome.title).toBe('Welcome Message');
-      expect(welcome.message).toContain('Thanks for being part of our community');
+      expect(welcome.message).toContain(
+        'Thanks for being part of our community'
+      );
       expect(welcome.message).toContain('playlists');
     });
 
@@ -76,7 +78,12 @@ describe('notification templates module', () => {
     });
 
     it('should have specific template keys', () => {
-      const expectedKeys = ['welcome', 'feature', 'maintenance', 'announcement'];
+      const expectedKeys = [
+        'welcome',
+        'feature',
+        'maintenance',
+        'announcement',
+      ];
 
       expectedKeys.forEach((key) => {
         expect(notificationTemplates[key]).toBeDefined();
@@ -121,7 +128,7 @@ describe('notification templates module', () => {
       templates.forEach((template) => {
         // Messages should not start or end with whitespace
         expect(template.message).toBe(template.message.trim());
-        
+
         // Messages should not be empty after trimming
         expect(template.message.trim().length).toBeGreaterThan(0);
       });
@@ -140,7 +147,8 @@ describe('notification templates module', () => {
         });
       }
 
-      const maintenanceLinks = maintenance.message.match(/<a[^>]*>([^<]+)<\/a>/g);
+      const maintenanceLinks =
+        maintenance.message.match(/<a[^>]*>([^<]+)<\/a>/g);
       if (maintenanceLinks) {
         maintenanceLinks.forEach((link) => {
           const linkText = link.replace(/<[^>]*>/g, '');
@@ -157,7 +165,9 @@ describe('notification templates module', () => {
     });
 
     it('should have system type defined', () => {
-      const systemType = notificationTypes.find((type) => type.value === 'system');
+      const systemType = notificationTypes.find(
+        (type) => type.value === 'system'
+      );
 
       expect(systemType).toBeDefined();
       expect(systemType!.value).toBe('system');
@@ -191,7 +201,7 @@ describe('notification templates module', () => {
       notificationTypes.forEach((type) => {
         // Labels should be capitalized
         expect(type.label[0]).toBe(type.label[0].toUpperCase());
-        
+
         // Labels should not have leading/trailing whitespace
         expect(type.label).toBe(type.label.trim());
       });
@@ -203,9 +213,7 @@ describe('notification templates module', () => {
       const templateTypes = new Set(
         Object.values(notificationTemplates).map((template) => template.type)
       );
-      const definedTypes = new Set(
-        notificationTypes.map((type) => type.value)
-      );
+      const definedTypes = new Set(notificationTypes.map((type) => type.value));
 
       templateTypes.forEach((templateType) => {
         expect(definedTypes).toContain(templateType);

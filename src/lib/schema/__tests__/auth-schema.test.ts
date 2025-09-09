@@ -26,7 +26,7 @@ describe('Auth Schema Validation', () => {
         'simple@test.io',
       ];
 
-      validEmails.forEach(email => {
+      validEmails.forEach((email) => {
         const result = emailSchema.safeParse({ email });
         expect(result.success).toBe(true);
         if (result.success) {
@@ -46,7 +46,7 @@ describe('Auth Schema Validation', () => {
         'test@domain',
       ];
 
-      invalidEmails.forEach(email => {
+      invalidEmails.forEach((email) => {
         const result = emailSchema.safeParse({ email });
         expect(result.success).toBe(false);
       });
@@ -54,10 +54,13 @@ describe('Auth Schema Validation', () => {
 
     it('should reject emails longer than 50 characters', () => {
       const longEmail = 'verylongemailaddress@verylongdomainname.com'; // 46 chars
-      const tooLongEmail = 'verylongemailaddressthatistoolongtobevalid@domain.com'; // > 50 chars
-      
+      const tooLongEmail =
+        'verylongemailaddressthatistoolongtobevalid@domain.com'; // > 50 chars
+
       expect(emailSchema.safeParse({ email: longEmail }).success).toBe(true);
-      expect(emailSchema.safeParse({ email: tooLongEmail }).success).toBe(false);
+      expect(emailSchema.safeParse({ email: tooLongEmail }).success).toBe(
+        false
+      );
     });
 
     it('should handle edge cases', () => {
@@ -77,7 +80,7 @@ describe('Auth Schema Validation', () => {
         'a'.repeat(32), // maximum length
       ];
 
-      validUsernames.forEach(username => {
+      validUsernames.forEach((username) => {
         const result = usernameSchema.safeParse({ username });
         expect(result.success).toBe(true);
         if (result.success) {
@@ -88,8 +91,8 @@ describe('Auth Schema Validation', () => {
 
     it('should reject usernames that are too short', () => {
       const shortUsernames = ['', 'a'];
-      
-      shortUsernames.forEach(username => {
+
+      shortUsernames.forEach((username) => {
         const result = usernameSchema.safeParse({ username });
         expect(result.success).toBe(false);
       });
@@ -103,7 +106,9 @@ describe('Auth Schema Validation', () => {
 
     it('should handle edge cases', () => {
       expect(usernameSchema.safeParse({ username: null }).success).toBe(false);
-      expect(usernameSchema.safeParse({ username: undefined }).success).toBe(false);
+      expect(usernameSchema.safeParse({ username: undefined }).success).toBe(
+        false
+      );
       expect(usernameSchema.safeParse({}).success).toBe(false);
     });
   });
@@ -117,7 +122,7 @@ describe('Auth Schema Validation', () => {
         'complex@Password123!',
       ];
 
-      validPasswords.forEach(password => {
+      validPasswords.forEach((password) => {
         const result = passwordSchema.safeParse({ password });
         expect(result.success).toBe(true);
         if (result.success) {
@@ -128,8 +133,8 @@ describe('Auth Schema Validation', () => {
 
     it('should reject passwords that are too short', () => {
       const shortPasswords = ['', 'a', 'short', 'a'.repeat(7)];
-      
-      shortPasswords.forEach(password => {
+
+      shortPasswords.forEach((password) => {
         const result = passwordSchema.safeParse({ password });
         expect(result.success).toBe(false);
       });
@@ -143,7 +148,9 @@ describe('Auth Schema Validation', () => {
 
     it('should handle edge cases', () => {
       expect(passwordSchema.safeParse({ password: null }).success).toBe(false);
-      expect(passwordSchema.safeParse({ password: undefined }).success).toBe(false);
+      expect(passwordSchema.safeParse({ password: undefined }).success).toBe(
+        false
+      );
       expect(passwordSchema.safeParse({}).success).toBe(false);
     });
   });
@@ -172,12 +179,16 @@ describe('Auth Schema Validation', () => {
       const result = passwordConfirmationSchema.safeParse(mismatchedPasswords);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
-          issue.message === "Passwords don't match"
-        )).toBe(true);
-        expect(result.error.issues.some(issue => 
-          issue.path.includes('confirmPassword')
-        )).toBe(true);
+        expect(
+          result.error.issues.some(
+            (issue) => issue.message === "Passwords don't match"
+          )
+        ).toBe(true);
+        expect(
+          result.error.issues.some((issue) =>
+            issue.path.includes('confirmPassword')
+          )
+        ).toBe(true);
       }
     });
 
@@ -198,7 +209,7 @@ describe('Auth Schema Validation', () => {
         { password: '', confirmPassword: 'password123' },
       ];
 
-      edgeCases.forEach(testCase => {
+      edgeCases.forEach((testCase) => {
         const result = passwordConfirmationSchema.safeParse(testCase);
         expect(result.success).toBe(false);
       });
@@ -241,8 +252,12 @@ describe('Auth Schema Validation', () => {
     });
 
     it('should require both email and password', () => {
-      expect(loginSchema.safeParse({ email: 'test@example.com' }).success).toBe(false);
-      expect(loginSchema.safeParse({ password: 'password123' }).success).toBe(false);
+      expect(loginSchema.safeParse({ email: 'test@example.com' }).success).toBe(
+        false
+      );
+      expect(loginSchema.safeParse({ password: 'password123' }).success).toBe(
+        false
+      );
       expect(loginSchema.safeParse({}).success).toBe(false);
     });
   });
@@ -277,9 +292,11 @@ describe('Auth Schema Validation', () => {
       const result = signupSchema.safeParse(invalidSignup);
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.issues.some(issue => 
-          issue.message === "Passwords don't match"
-        )).toBe(true);
+        expect(
+          result.error.issues.some(
+            (issue) => issue.message === "Passwords don't match"
+          )
+        ).toBe(true);
       }
     });
 
@@ -305,7 +322,7 @@ describe('Auth Schema Validation', () => {
         },
       ];
 
-      invalidSignups.forEach(signup => {
+      invalidSignups.forEach((signup) => {
         const result = signupSchema.safeParse(signup);
         expect(result.success).toBe(false);
       });
@@ -313,13 +330,29 @@ describe('Auth Schema Validation', () => {
 
     it('should require all fields', () => {
       const incompleteSignups = [
-        { email: 'test@example.com', username: 'test', password: 'password123' },
-        { username: 'test', password: 'password123', confirmPassword: 'password123' },
-        { email: 'test@example.com', password: 'password123', confirmPassword: 'password123' },
-        { email: 'test@example.com', username: 'test', confirmPassword: 'password123' },
+        {
+          email: 'test@example.com',
+          username: 'test',
+          password: 'password123',
+        },
+        {
+          username: 'test',
+          password: 'password123',
+          confirmPassword: 'password123',
+        },
+        {
+          email: 'test@example.com',
+          password: 'password123',
+          confirmPassword: 'password123',
+        },
+        {
+          email: 'test@example.com',
+          username: 'test',
+          confirmPassword: 'password123',
+        },
       ];
 
-      incompleteSignups.forEach(signup => {
+      incompleteSignups.forEach((signup) => {
         const result = signupSchema.safeParse(signup);
         expect(result.success).toBe(false);
       });
@@ -346,7 +379,7 @@ describe('Auth Schema Validation', () => {
       const testEmail = 'test@example.com';
       const emailResult = emailSchema.safeParse({ email: testEmail });
       const forgotResult = forgotPasswordSchema.safeParse({ email: testEmail });
-      
+
       expect(emailResult.success).toBe(forgotResult.success);
     });
   });
@@ -392,7 +425,7 @@ describe('Auth Schema Validation', () => {
         'user-test', // hyphen
       ];
 
-      unicodeUsernames.forEach(username => {
+      unicodeUsernames.forEach((username) => {
         const result = usernameSchema.safeParse({ username });
         expect(result.success).toBe(true);
       });
@@ -406,7 +439,7 @@ describe('Auth Schema Validation', () => {
         'пароль123', // Cyrillic characters
       ];
 
-      specialPasswords.forEach(password => {
+      specialPasswords.forEach((password) => {
         const result = passwordSchema.safeParse({ password });
         expect(result.success).toBe(true);
       });
@@ -414,23 +447,35 @@ describe('Auth Schema Validation', () => {
 
     it('should handle whitespace in inputs', () => {
       // Passwords with spaces should be valid
-      expect(passwordSchema.safeParse({ password: 'password with spaces' }).success).toBe(true);
-      
+      expect(
+        passwordSchema.safeParse({ password: 'password with spaces' }).success
+      ).toBe(true);
+
       // Usernames with spaces should be valid (though not typical)
-      expect(usernameSchema.safeParse({ username: 'user name' }).success).toBe(true);
-      
+      expect(usernameSchema.safeParse({ username: 'user name' }).success).toBe(
+        true
+      );
+
       // Emails with spaces should be invalid
-      expect(emailSchema.safeParse({ email: 'test @example.com' }).success).toBe(false);
+      expect(
+        emailSchema.safeParse({ email: 'test @example.com' }).success
+      ).toBe(false);
     });
 
     it('should handle boundary values correctly', () => {
       // Test exact boundary lengths
       expect(usernameSchema.safeParse({ username: 'ab' }).success).toBe(true); // min length
-      expect(usernameSchema.safeParse({ username: 'a'.repeat(32) }).success).toBe(true); // max length
-      
-      expect(passwordSchema.safeParse({ password: 'a'.repeat(8) }).success).toBe(true); // min length
-      expect(passwordSchema.safeParse({ password: 'a'.repeat(256) }).success).toBe(true); // max length
-      
+      expect(
+        usernameSchema.safeParse({ username: 'a'.repeat(32) }).success
+      ).toBe(true); // max length
+
+      expect(
+        passwordSchema.safeParse({ password: 'a'.repeat(8) }).success
+      ).toBe(true); // min length
+      expect(
+        passwordSchema.safeParse({ password: 'a'.repeat(256) }).success
+      ).toBe(true); // max length
+
       expect(emailSchema.safeParse({ email: 'a@b.co' }).success).toBe(true); // short email
     });
   });

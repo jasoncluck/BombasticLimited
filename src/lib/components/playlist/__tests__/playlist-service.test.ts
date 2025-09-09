@@ -31,7 +31,9 @@ vi.mock('$lib/supabase/playlists', () => ({
   deleteVideosFromPlaylist: vi.fn().mockResolvedValue({ error: null }),
   updatePlaylistThumbnail: vi.fn().mockResolvedValue({ error: null }),
   updatePlaylistPosition: vi.fn().mockResolvedValue({ error: null }),
-  updatePlaylistSort: vi.fn().mockResolvedValue({ updatedPlaylist: null, error: null }),
+  updatePlaylistSort: vi
+    .fn()
+    .mockResolvedValue({ updatedPlaylist: null, error: null }),
   updatePlaylistVideoPosition: vi.fn().mockResolvedValue({ error: null }),
   followPlaylist: vi.fn().mockResolvedValue({ error: null }),
   unfollowPlaylist: vi.fn().mockResolvedValue({ error: null }),
@@ -113,7 +115,9 @@ describe('playlist service module', () => {
           session: null,
           supabase: mockSupabase,
         })
-      ).rejects.toThrow('Attempted to create a playlist without a valid session.');
+      ).rejects.toThrow(
+        'Attempted to create a playlist without a valid session.'
+      );
 
       expect(goto).toHaveBeenCalledWith('/login');
     });
@@ -539,9 +543,9 @@ describe('playlist service module', () => {
       await handleFollowPlaylist({
         playlist: mockPlaylist as any,
         sidebarState: mockSidebarState,
-        contentFilter: { 
+        contentFilter: {
           type: 'playlist' as const,
-          sort: { key: 'title' as const, order: 'ascending' as const }
+          sort: { key: 'title' as const, order: 'ascending' as const },
         },
         supabase: mockSupabase,
         session: mockSession,
@@ -567,7 +571,9 @@ describe('playlist service module', () => {
     });
 
     it('should return early when content filter is missing', async () => {
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       await handleFollowPlaylist({
         playlist: {} as any,

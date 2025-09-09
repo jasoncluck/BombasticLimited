@@ -11,7 +11,7 @@ describe('playlist cache module', () => {
   beforeEach(() => {
     // Clear cache before each test
     playlistCache.clear();
-    
+
     // Mock Date.now to have consistent timing
     mockNow = 1000000;
     dateNowSpy = vi.spyOn(Date, 'now').mockReturnValue(mockNow);
@@ -46,7 +46,7 @@ describe('playlist cache module', () => {
       // Set data twice with same parameters
       playlistCache.set(source, playlists, data);
       const firstResult = playlistCache.get(source, playlists);
-      
+
       playlistCache.set(source, playlists, data);
       const secondResult = playlistCache.get(source, playlists);
 
@@ -233,11 +233,11 @@ describe('playlist cache module', () => {
 
       // Set two cache entries
       playlistCache.set(source, playlists1, data1);
-      
+
       // Advance time by 1 minute
       mockNow += 60 * 1000;
       dateNowSpy.mockReturnValue(mockNow);
-      
+
       // Set second entry (this one should not expire)
       playlistCache.set(source, playlists2, data2);
 
@@ -279,9 +279,7 @@ describe('playlist cache module', () => {
   describe('edge cases', () => {
     it('should handle playlists with special characters in IDs', () => {
       const source = 'youtube';
-      const playlists = [
-        { youtubeId: 'PL-123_456', name: 'Special Playlist' },
-      ];
+      const playlists = [{ youtubeId: 'PL-123_456', name: 'Special Playlist' }];
       const data = createMockCachedData();
 
       playlistCache.set(source, playlists, data);

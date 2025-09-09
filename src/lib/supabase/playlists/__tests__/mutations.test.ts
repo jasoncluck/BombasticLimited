@@ -151,10 +151,13 @@ describe('playlist mutations module', () => {
         supabase: mockSupabase,
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('update_playlist_position', {
-        p_playlist_id: 1,
-        p_new_position: 5,
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'update_playlist_position',
+        {
+          p_playlist_id: 1,
+          p_new_position: 5,
+        }
+      );
       expect(result.error).toBeNull();
     });
 
@@ -254,11 +257,14 @@ describe('playlist mutations module', () => {
         supabase: mockSupabase,
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('update_playlist_videos_positions', {
-        p_playlist_id: 1,
-        p_video_ids: ['video1', 'video2'],
-        p_new_position: 3,
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'update_playlist_videos_positions',
+        {
+          p_playlist_id: 1,
+          p_video_ids: ['video1', 'video2'],
+          p_new_position: 3,
+        }
+      );
       expect(result.error).toBeNull();
     });
 
@@ -307,7 +313,10 @@ describe('playlist mutations module', () => {
     });
 
     it('should handle delete videos errors', async () => {
-      const mockError = { message: 'Videos not found in playlist', code: '404' };
+      const mockError = {
+        message: 'Videos not found in playlist',
+        code: '404',
+      };
 
       (mockSupabase.rpc as any).mockReturnValue({
         select: vi.fn().mockResolvedValue({
@@ -445,11 +454,14 @@ describe('playlist mutations module', () => {
         supabase: mockSupabase,
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('update_playlist_thumbnail', {
-        p_playlist_id: 1,
-        p_thumbnail_url: 'path/to/new/thumbnail.webp',
-        p_image_properties: { x: 10, y: 20, width: 200, height: 150 },
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'update_playlist_thumbnail',
+        {
+          p_playlist_id: 1,
+          p_thumbnail_url: 'path/to/new/thumbnail.webp',
+          p_image_properties: { x: 10, y: 20, width: 200, height: 150 },
+        }
+      );
       expect(result.error).toBeNull();
     });
 

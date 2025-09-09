@@ -24,23 +24,31 @@ describe('images constants', () => {
   describe('ImageProcessingStatus type', () => {
     it('should be properly exported and usable in TypeScript', () => {
       // This test verifies the type can be used without compilation errors
-      const testStatus: ImageProcessingStatus = 'pending' as ImageProcessingStatus;
-      
+      const testStatus: ImageProcessingStatus =
+        'pending' as ImageProcessingStatus;
+
       // Test that the type can be assigned
       expect(typeof testStatus).toBe('string');
-      
+
       // Test that we can use it in a function signature
       const processStatus = (status: ImageProcessingStatus): string => {
         return `Processing status: ${status}`;
       };
-      
-      expect(processStatus('pending' as ImageProcessingStatus)).toContain('pending');
+
+      expect(processStatus('pending' as ImageProcessingStatus)).toContain(
+        'pending'
+      );
     });
 
     it('should work with type assertions', () => {
-      const statuses = ['pending', 'processing', 'completed', 'failed'] as const;
-      
-      statuses.forEach(status => {
+      const statuses = [
+        'pending',
+        'processing',
+        'completed',
+        'failed',
+      ] as const;
+
+      statuses.forEach((status) => {
         const typedStatus = status as ImageProcessingStatus;
         expect(typeof typedStatus).toBe('string');
       });
@@ -62,8 +70,12 @@ describe('images constants', () => {
         }
       };
 
-      expect(handleStatus('pending' as ImageProcessingStatus)).toBe('Waiting to process');
-      expect(handleStatus('completed' as ImageProcessingStatus)).toBe('Process completed');
+      expect(handleStatus('pending' as ImageProcessingStatus)).toBe(
+        'Waiting to process'
+      );
+      expect(handleStatus('completed' as ImageProcessingStatus)).toBe(
+        'Process completed'
+      );
     });
   });
 
@@ -77,7 +89,7 @@ describe('images constants', () => {
       // Test that importing multiple times gives same values
       const bucket1 = IMAGES_BUCKET;
       const bucket2 = IMAGES_BUCKET;
-      
+
       expect(bucket1).toBe(bucket2);
       expect(bucket1).toEqual(bucket2);
     });
@@ -87,8 +99,10 @@ describe('images constants', () => {
     it('should work in URL construction', () => {
       const baseUrl = 'https://example.supabase.co/storage/v1/object/public';
       const fullUrl = `${baseUrl}/${IMAGES_BUCKET}/image.jpg`;
-      
-      expect(fullUrl).toBe('https://example.supabase.co/storage/v1/object/public/content-images/image.jpg');
+
+      expect(fullUrl).toBe(
+        'https://example.supabase.co/storage/v1/object/public/content-images/image.jpg'
+      );
     });
 
     it('should work in storage operations context', () => {
@@ -97,7 +111,7 @@ describe('images constants', () => {
         path: 'uploads/',
         maxSize: 1024 * 1024, // 1MB
       };
-      
+
       expect(storageConfig.bucket).toBe('content-images');
       expect(storageConfig.path).toBe('uploads/');
     });
@@ -108,7 +122,7 @@ describe('images constants', () => {
         operation: 'upload',
         file: 'test.jpg',
       };
-      
+
       expect(apiPayload.bucket).toBe('content-images');
       expect(JSON.stringify(apiPayload)).toContain('content-images');
     });

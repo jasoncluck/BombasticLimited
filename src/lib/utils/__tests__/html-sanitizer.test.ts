@@ -37,14 +37,14 @@ describe('HTML Sanitizer', () => {
     it('should be importable and callable', async () => {
       // Dynamic import to ensure mocks are set up first
       const { sanitizeNotificationHtml } = await import('../html-sanitizer');
-      
+
       expect(() => sanitizeNotificationHtml('')).not.toThrow();
       expect(() => sanitizeNotificationHtml('plain text')).not.toThrow();
     });
 
     it('should handle empty input', async () => {
       const { sanitizeNotificationHtml } = await import('../html-sanitizer');
-      
+
       expect(sanitizeNotificationHtml('')).toBe('');
       expect(sanitizeNotificationHtml(null as any)).toBe('');
       expect(sanitizeNotificationHtml(undefined as any)).toBe('');
@@ -52,7 +52,7 @@ describe('HTML Sanitizer', () => {
 
     it('should not throw on various inputs', async () => {
       const { sanitizeNotificationHtml } = await import('../html-sanitizer');
-      
+
       const testInputs = [
         '<b>bold text</b>',
         '<script>alert("xss")</script>',
@@ -62,7 +62,7 @@ describe('HTML Sanitizer', () => {
         '<img src="image.jpg" alt="image">',
       ];
 
-      testInputs.forEach(input => {
+      testInputs.forEach((input) => {
         expect(() => sanitizeNotificationHtml(input)).not.toThrow();
       });
     });
@@ -70,11 +70,13 @@ describe('HTML Sanitizer', () => {
 
   describe('createSafeHtml', () => {
     it('should be an alias for sanitizeNotificationHtml', async () => {
-      const { createSafeHtml, sanitizeNotificationHtml } = await import('../html-sanitizer');
-      
+      const { createSafeHtml, sanitizeNotificationHtml } = await import(
+        '../html-sanitizer'
+      );
+
       // Should not throw
       expect(() => createSafeHtml('<b>test</b>')).not.toThrow();
-      
+
       // Should return a string
       const result = createSafeHtml('test');
       expect(typeof result).toBe('string');
@@ -84,7 +86,7 @@ describe('HTML Sanitizer', () => {
   describe('constants and exports', () => {
     it('should properly export functions', async () => {
       const module = await import('../html-sanitizer');
-      
+
       expect(typeof module.sanitizeNotificationHtml).toBe('function');
       expect(typeof module.createSafeHtml).toBe('function');
     });
