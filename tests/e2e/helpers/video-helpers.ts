@@ -117,12 +117,16 @@ export class VideoHelpers {
    * Open content dropdown for a video card
    */
   async openContentDropdown(videoCard: Locator): Promise<Locator | null> {
+    // Hover over the video card first to make the dropdown trigger visible
+    await videoCard.hover();
+    
     const dropdownTrigger = videoCard
       .locator('button[aria-haspopup]')
       .or(
         videoCard.locator('button').filter({ hasText: /⋮|⋯|•••|\.\.\.|menu/i })
       )
       .or(videoCard.locator('[data-testid="content-dropdown"]'))
+      .or(videoCard.locator('[data-testid="content-dropdown-trigger"]'))
       .or(videoCard.locator('button').last());
 
     if (await dropdownTrigger.isVisible()) {

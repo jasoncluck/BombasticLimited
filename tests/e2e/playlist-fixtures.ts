@@ -273,15 +273,25 @@ function createPlaylistHelpers(
       try {
         // Click the content dropdown trigger - scoped to specific video if provided
         let contentDropdownTrigger;
+        let targetVideoElement;
+        
         if (videoElement) {
           contentDropdownTrigger = videoElement.getByTestId(
             'content-dropdown-trigger'
           );
+          targetVideoElement = videoElement;
         } else {
-          contentDropdownTrigger = page
-            .getByTestId('content-dropdown-trigger')
-            .first();
+          const firstVideoElement = page.getByTestId('carousel-item').first();
+          contentDropdownTrigger = firstVideoElement.getByTestId(
+            'content-dropdown-trigger'
+          );
+          targetVideoElement = firstVideoElement;
         }
+        
+        // Hover over the video element to make the dropdown trigger visible
+        await targetVideoElement.hover();
+        
+        // Wait for the dropdown trigger to become visible and clickable
         await expect(contentDropdownTrigger).toBeVisible();
         await contentDropdownTrigger.click();
 
