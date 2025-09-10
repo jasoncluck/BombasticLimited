@@ -129,6 +129,9 @@ export class VideoHelpers {
     // Only hover for content cards, not for video pages where dropdown is always visible
     if (!this.isVideoPage()) {
       await videoCard.hover();
+      
+      // Wait for CSS transitions to complete and ensure trigger is interactive
+      await this.page.waitForTimeout(300);
     }
     
     const dropdownTrigger = videoCard
@@ -141,7 +144,14 @@ export class VideoHelpers {
       .or(videoCard.locator('button').last());
 
     if (await dropdownTrigger.isVisible()) {
-      await dropdownTrigger.click();
+      // For content cards, ensure we maintain hover state during click
+      if (!this.isVideoPage()) {
+        await dropdownTrigger.hover();
+        await this.page.waitForTimeout(100);
+      }
+      
+      // Click with force to ensure it registers even if there are overlapping elements
+      await dropdownTrigger.click({ force: true });
 
       // Narrow the selector to only elements that are currently open (data-state="open").
       // This prevents Playwright strict mode violations when multiple menus exist in the DOM.

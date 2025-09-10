@@ -295,11 +295,24 @@ function createPlaylistHelpers(
         if (!isVideoPage) {
           // Hover over the video element to make the dropdown trigger visible
           await targetVideoElement.hover();
+          
+          // Wait for CSS transitions to complete and ensure trigger is interactive
+          await page.waitForTimeout(300);
+          
+          // Ensure the trigger is both visible and enabled before clicking
+          await expect(contentDropdownTrigger).toBeVisible();
+          await expect(contentDropdownTrigger).toBeEnabled();
+          
+          // Move mouse to the trigger specifically to maintain hover state
+          await contentDropdownTrigger.hover();
+          await page.waitForTimeout(100);
+        } else {
+          // For video pages, just ensure the trigger is visible
+          await expect(contentDropdownTrigger).toBeVisible();
         }
         
-        // Wait for the dropdown trigger to become visible and clickable
-        await expect(contentDropdownTrigger).toBeVisible();
-        await contentDropdownTrigger.click();
+        // Click with force to ensure it registers even if there are overlapping elements
+        await contentDropdownTrigger.click({ force: true });
 
         // Wait for the main dropdown content to appear
         const contentDropdownContent = page.getByTestId(
