@@ -33,7 +33,7 @@
   const contentState = setContentState(pageState);
   const mediaQueryState = setMediaQueryState();
   const sidebarState = $derived(setSidebarState(preferredImageFormat));
-  const navigationState = $derived(setNavigationState(session));
+  const navigationState = setNavigationState();
 
   setSourceState(pageState);
 
@@ -61,6 +61,14 @@
   $effect(() => {
     // Initialize playlist state
     setPlaylistState(pageState, contentState, sidebarState);
+  });
+
+  // Update the navigation state session when needed
+  $effect(() => {
+    navigationState.updateContext({
+      session: data.session,
+      supabase: data.supabase,
+    });
   });
 
   $effect(() => {
