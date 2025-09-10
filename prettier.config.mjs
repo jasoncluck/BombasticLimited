@@ -19,6 +19,7 @@ const config = {
         parser: 'svelte',
       },
     },
+    { files: '*.svx', options: { parser: 'markdown' } },
     {
       files: '*.sql',
       excludeFiles: ['supabase/seed.sql'],

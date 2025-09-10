@@ -15,7 +15,7 @@
   import { setPageState } from '$lib/state/page.svelte';
   import { setSourceState } from '$lib/state/source.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
-  import { invalidate } from '$app/navigation';
+  import { afterNavigate, invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
   import '../../app.css';
   import {
@@ -92,6 +92,17 @@
       );
     },
   };
+
+  // Add a small delay before invalidating to allow timestamps to be saved
+  afterNavigate(async ({ from }) => {
+    // Invalidate video cache when leaving video pages, but with a delay
+    // to allow any pending timestamp saves to complete
+    if (from?.url.pathname.includes('/video')) {
+      // Small delay to allow timestamp saves to complete. This just slightly delays the rendering of continue watching
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      invalidate('supabase:db:videos');
+    }
+  });
 
   async function refreshSidebar(): Promise<void> {
     await sidebarState.refreshData();
