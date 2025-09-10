@@ -7,13 +7,13 @@ vi.mock('$lib/components/video/video-service', () => ({
   videoDurationToSeconds: vi.fn((duration: string) => {
     // Mock implementation for common duration formats
     const mockDurations: Record<string, number> = {
-      'PT5M': 300,        // 5 minutes
-      'PT10M30S': 630,    // 10 minutes 30 seconds
-      'PT1H': 3600,       // 1 hour
-      'PT1H30M': 5400,    // 1 hour 30 minutes
-      'PT2H45M15S': 9915, // 2 hours 45 minutes 15 seconds
-      'PT15S': 15,        // 15 seconds
-      'PT0S': 0,          // 0 seconds
+      PT5M: 300, // 5 minutes
+      PT10M30S: 630, // 10 minutes 30 seconds
+      PT1H: 3600, // 1 hour
+      PT1H30M: 5400, // 1 hour 30 minutes
+      PT2H45M15S: 9915, // 2 hours 45 minutes 15 seconds
+      PT15S: 15, // 15 seconds
+      PT0S: 0, // 0 seconds
     };
     return mockDurations[duration] || 0;
   }),
@@ -28,19 +28,19 @@ describe('playlist duration module', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    
+
     // Reset console.error mock
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     // Create mock chain
     mockIn = vi.fn().mockResolvedValue({ data: [], error: null });
     mockEq = vi.fn().mockReturnValue({ mockChainMethod: mockIn });
-    mockSelect = vi.fn().mockReturnValue({ 
+    mockSelect = vi.fn().mockReturnValue({
       eq: mockEq,
       in: mockIn,
     });
     mockFrom = vi.fn().mockReturnValue({ select: mockSelect });
-    
+
     mockSupabase = {
       from: mockFrom,
     } as any;
@@ -61,9 +61,9 @@ describe('playlist duration module', () => {
       // Mock videos query
       mockIn.mockResolvedValueOnce({
         data: [
-          { duration: 'PT5M' },        // 5 minutes
-          { duration: 'PT10M30S' },    // 10 minutes 30 seconds
-          { duration: 'PT1H' },        // 1 hour
+          { duration: 'PT5M' }, // 5 minutes
+          { duration: 'PT10M30S' }, // 10 minutes 30 seconds
+          { duration: 'PT1H' }, // 1 hour
         ],
         error: null,
       });
@@ -76,7 +76,7 @@ describe('playlist duration module', () => {
       expect(mockSupabase.from).toHaveBeenCalledWith('playlist_videos');
       expect(mockSelect).toHaveBeenCalledWith('video_id');
       expect(mockEq).toHaveBeenCalledWith('playlist_id', 123);
-      
+
       expect(mockSupabase.from).toHaveBeenCalledWith('videos');
       expect(mockSelect).toHaveBeenCalledWith('duration');
       expect(mockIn).toHaveBeenCalledWith('id', ['video1', 'video2', 'video3']);
@@ -114,7 +114,7 @@ describe('playlist duration module', () => {
     it('should return zero duration when playlist videos query fails', async () => {
       const consoleSpy = vi.spyOn(console, 'error');
       const mockError = { message: 'Database error', code: 'DB_ERROR' };
-      
+
       mockEq.mockResolvedValueOnce({
         data: null,
         error: mockError,
@@ -139,7 +139,7 @@ describe('playlist duration module', () => {
 
     it('should return zero duration when videos query fails', async () => {
       const consoleSpy = vi.spyOn(console, 'error');
-      
+
       // Successful playlist_videos query
       mockEq.mockResolvedValueOnce({
         data: [{ video_id: 'video1' }],
@@ -182,9 +182,9 @@ describe('playlist duration module', () => {
 
       mockIn.mockResolvedValueOnce({
         data: [
-          { duration: 'PT5M' },        // 5 minutes
-          { duration: null },          // null duration
-          { duration: 'PT10M30S' },    // 10 minutes 30 seconds
+          { duration: 'PT5M' }, // 5 minutes
+          { duration: null }, // null duration
+          { duration: 'PT10M30S' }, // 10 minutes 30 seconds
         ],
         error: null,
       });
@@ -230,8 +230,8 @@ describe('playlist duration module', () => {
       const playlistVideos = Array.from({ length: 100 }, (_, i) => ({
         video_id: `video${i + 1}`,
       }));
-      
-      const videoIds = playlistVideos.map(pv => pv.video_id);
+
+      const videoIds = playlistVideos.map((pv) => pv.video_id);
 
       mockEq.mockResolvedValueOnce({
         data: playlistVideos,
@@ -265,17 +265,14 @@ describe('playlist duration module', () => {
 
     it('should handle zero-duration videos', async () => {
       mockEq.mockResolvedValueOnce({
-        data: [
-          { video_id: 'video1' },
-          { video_id: 'video2' },
-        ],
+        data: [{ video_id: 'video1' }, { video_id: 'video2' }],
         error: null,
       });
 
       mockIn.mockResolvedValueOnce({
         data: [
-          { duration: 'PT0S' },     // 0 seconds
-          { duration: 'PT15S' },    // 15 seconds
+          { duration: 'PT0S' }, // 0 seconds
+          { duration: 'PT15S' }, // 15 seconds
         ],
         error: null,
       });
@@ -294,17 +291,14 @@ describe('playlist duration module', () => {
 
     it('should handle exact hour boundaries', async () => {
       mockEq.mockResolvedValueOnce({
-        data: [
-          { video_id: 'video1' },
-          { video_id: 'video2' },
-        ],
+        data: [{ video_id: 'video1' }, { video_id: 'video2' }],
         error: null,
       });
 
       mockIn.mockResolvedValueOnce({
         data: [
-          { duration: 'PT1H' },       // 1 hour
-          { duration: 'PT1H' },       // 1 hour
+          { duration: 'PT1H' }, // 1 hour
+          { duration: 'PT1H' }, // 1 hour
         ],
         error: null,
       });
@@ -357,7 +351,7 @@ describe('playlist duration module', () => {
       // Only return 2 videos (video2 is missing from videos table)
       mockIn.mockResolvedValueOnce({
         data: [
-          { duration: 'PT5M' },     // video1
+          { duration: 'PT5M' }, // video1
           { duration: 'PT10M30S' }, // video3
         ],
         error: null,
@@ -421,7 +415,9 @@ describe('playlist duration module', () => {
   describe('duration calculation edge cases', () => {
     it('should handle extremely long durations', async () => {
       // Mock a very long duration using the mock
-      const { videoDurationToSeconds } = await import('$lib/components/video/video-service');
+      const { videoDurationToSeconds } = await import(
+        '$lib/components/video/video-service'
+      );
       (videoDurationToSeconds as any).mockReturnValueOnce(86400); // 24 hours
 
       mockEq.mockResolvedValueOnce({
@@ -459,10 +455,10 @@ describe('playlist duration module', () => {
 
       mockIn.mockResolvedValueOnce({
         data: [
-          { duration: 'PT15S' },       // 15 seconds
-          { duration: 'PT5M' },        // 5 minutes
-          { duration: 'PT1H30M' },     // 1 hour 30 minutes
-          { duration: 'PT2H45M15S' },  // 2 hours 45 minutes 15 seconds
+          { duration: 'PT15S' }, // 15 seconds
+          { duration: 'PT5M' }, // 5 minutes
+          { duration: 'PT1H30M' }, // 1 hour 30 minutes
+          { duration: 'PT2H45M15S' }, // 2 hours 45 minutes 15 seconds
         ],
         error: null,
       });
@@ -484,9 +480,11 @@ describe('playlist duration module', () => {
   describe('performance and reliability', () => {
     it.skip('should handle database connection timeout gracefully', async () => {
       // Skip this test as it causes issues with error handling in test environment
-      const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
       const timeoutError = { message: 'Connection timeout', code: 'TIMEOUT' };
-      
+
       mockEq.mockRejectedValueOnce(timeoutError);
 
       const result = await getPlaylistTotalDuration({
@@ -504,7 +502,7 @@ describe('playlist duration module', () => {
         'Error fetching playlist videos:',
         timeoutError
       );
-      
+
       consoleSpy.mockRestore();
     });
 

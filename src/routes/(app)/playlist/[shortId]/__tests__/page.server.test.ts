@@ -330,9 +330,9 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
       const unauthenticatedEvent = {
         ...mockActionEvent,
-        locals: { 
-          ...mockActionEvent.locals, 
-          supabase: unauthenticatedSupabase 
+        locals: {
+          ...mockActionEvent.locals,
+          supabase: unauthenticatedSupabase,
         },
       };
 

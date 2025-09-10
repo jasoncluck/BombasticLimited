@@ -97,7 +97,11 @@ describe('video service module', () => {
       });
 
       const result = await handleAddVideoTimestamp({
-        videoTimestamp: { videoId: 'video1', timestampStartSeconds: 60, watchedAt: new Date() },
+        videoTimestamp: {
+          videoId: 'video1',
+          timestampStartSeconds: 60,
+          watchedAt: new Date(),
+        },
         session: mockSession,
         supabase: mockSupabase,
       });
@@ -110,8 +114,16 @@ describe('video service module', () => {
   describe('handleAddVideoTimestamps', () => {
     it('should add multiple video timestamps successfully', async () => {
       const mockVideoTimestamps = [
-        { videoId: 'video1', timestampStartSeconds: 60, watchedAt: new Date('2023-01-01T10:00:00Z') },
-        { videoId: 'video2', timestampStartSeconds: 120, watchedAt: new Date('2023-01-01T10:02:00Z') },
+        {
+          videoId: 'video1',
+          timestampStartSeconds: 60,
+          watchedAt: new Date('2023-01-01T10:00:00Z'),
+        },
+        {
+          videoId: 'video2',
+          timestampStartSeconds: 120,
+          watchedAt: new Date('2023-01-01T10:02:00Z'),
+        },
       ];
 
       const mockUpdatedVideos = [
@@ -121,7 +133,7 @@ describe('video service module', () => {
 
       const { saveVideoTimestamps } = await import('$lib/supabase/timestamps');
       const { invalidate } = await import('$app/navigation');
-      
+
       (saveVideoTimestamps as any).mockResolvedValue({
         videos: mockUpdatedVideos,
         error: null,
@@ -154,7 +166,13 @@ describe('video service module', () => {
       });
 
       const result = await handleAddVideoTimestamps({
-        videoTimestamps: [{ videoId: 'video1', timestampStartSeconds: 60, watchedAt: new Date() }],
+        videoTimestamps: [
+          {
+            videoId: 'video1',
+            timestampStartSeconds: 60,
+            watchedAt: new Date(),
+          },
+        ],
         session: mockSession,
         supabase: mockSupabase,
       });
@@ -168,8 +186,8 @@ describe('video service module', () => {
   describe('handleDeleteVideosTimestamp', () => {
     it('should delete video timestamps successfully', async () => {
       const mockVideos = [
-        { 
-          id: 'video1', 
+        {
+          id: 'video1',
           title: 'Video 1',
           source: 'giantbomb' as const,
           description: 'Test video 1',
@@ -179,8 +197,8 @@ describe('video service module', () => {
           duration: '00:10:00',
           views: 100,
         },
-        { 
-          id: 'video2', 
+        {
+          id: 'video2',
           title: 'Video 2',
           source: 'nextlander' as const,
           description: 'Test video 2',
@@ -197,7 +215,9 @@ describe('video service module', () => {
         { id: 'video2', title: 'Video 2', video_start_seconds: null },
       ];
 
-      const { deleteVideoTimestamps } = await import('$lib/supabase/timestamps');
+      const { deleteVideoTimestamps } = await import(
+        '$lib/supabase/timestamps'
+      );
       const { invalidate } = await import('$app/navigation');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
@@ -224,7 +244,9 @@ describe('video service module', () => {
     });
 
     it('should show different toast message for non-continue videos', async () => {
-      const { deleteVideoTimestamps } = await import('$lib/supabase/timestamps');
+      const { deleteVideoTimestamps } = await import(
+        '$lib/supabase/timestamps'
+      );
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (deleteVideoTimestamps as any).mockResolvedValue({
@@ -233,17 +255,19 @@ describe('video service module', () => {
       });
 
       await handleDeleteVideosTimestamp({
-        videos: [{
-          id: 'video1',
-          title: 'Video 1',
-          source: 'giantbomb' as const,
-          description: 'Test video',
-          thumbnail_url: 'https://example.com/thumb.jpg',
-          image_url: null,
-          published_at: '2023-01-01T00:00:00.000Z',
-          duration: '00:10:00',
-          views: 100,
-        }],
+        videos: [
+          {
+            id: 'video1',
+            title: 'Video 1',
+            source: 'giantbomb' as const,
+            description: 'Test video',
+            thumbnail_url: 'https://example.com/thumb.jpg',
+            image_url: null,
+            published_at: '2023-01-01T00:00:00.000Z',
+            duration: '00:10:00',
+            views: 100,
+          },
+        ],
         isContinueVideos: false,
         supabase: mockSupabase,
         session: mockSession,
@@ -256,17 +280,19 @@ describe('video service module', () => {
       const { goto } = await import('$app/navigation');
 
       const result = await handleDeleteVideosTimestamp({
-        videos: [{
-          id: 'video1',
-          title: 'Video 1',
-          source: 'giantbomb' as const,
-          description: 'Test video',
-          thumbnail_url: 'https://example.com/thumb.jpg',
-          image_url: null,
-          published_at: '2023-01-01T00:00:00.000Z',
-          duration: '00:10:00',
-          views: 100,
-        }],
+        videos: [
+          {
+            id: 'video1',
+            title: 'Video 1',
+            source: 'giantbomb' as const,
+            description: 'Test video',
+            thumbnail_url: 'https://example.com/thumb.jpg',
+            image_url: null,
+            published_at: '2023-01-01T00:00:00.000Z',
+            duration: '00:10:00',
+            views: 100,
+          },
+        ],
         supabase: mockSupabase,
         session: null,
       });
@@ -277,7 +303,9 @@ describe('video service module', () => {
 
     it('should handle deletion errors', async () => {
       const mockError = { message: 'Permission denied', code: '403' };
-      const { deleteVideoTimestamps } = await import('$lib/supabase/timestamps');
+      const { deleteVideoTimestamps } = await import(
+        '$lib/supabase/timestamps'
+      );
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (deleteVideoTimestamps as any).mockResolvedValue({
@@ -286,22 +314,26 @@ describe('video service module', () => {
       });
 
       const result = await handleDeleteVideosTimestamp({
-        videos: [{
-          id: 'video1',
-          title: 'Video 1',
-          source: 'giantbomb' as const,
-          description: 'Test video',
-          thumbnail_url: 'https://example.com/thumb.jpg',
-          image_url: null,
-          published_at: '2023-01-01T00:00:00.000Z',
-          duration: '00:10:00',
-          views: 100,
-        }],
+        videos: [
+          {
+            id: 'video1',
+            title: 'Video 1',
+            source: 'giantbomb' as const,
+            description: 'Test video',
+            thumbnail_url: 'https://example.com/thumb.jpg',
+            image_url: null,
+            published_at: '2023-01-01T00:00:00.000Z',
+            duration: '00:10:00',
+            views: 100,
+          },
+        ],
         supabase: mockSupabase,
         session: mockSession,
       });
 
-      expect(showToast).toHaveBeenCalledWith('Unable to remove video from watchlist.');
+      expect(showToast).toHaveBeenCalledWith(
+        'Unable to remove video from watchlist.'
+      );
       expect(result.error).toEqual(mockError);
     });
   });
@@ -431,7 +463,9 @@ describe('video service module', () => {
 
   describe('createVideoWatchTimeTracker', () => {
     it('should create VideoWatchTimeTracker instance', async () => {
-      const { VideoWatchTimeTracker } = await import('$lib/supabase/video-history');
+      const { VideoWatchTimeTracker } = await import(
+        '$lib/supabase/video-history'
+      );
       const mockConstructor = vi.fn();
       (VideoWatchTimeTracker as any).mockImplementation(mockConstructor);
 
@@ -451,7 +485,9 @@ describe('video service module', () => {
 
   describe('startSimpleVideoHistory', () => {
     it('should start video history session successfully', async () => {
-      const { startVideoHistorySession } = await import('$lib/supabase/video-history');
+      const { startVideoHistorySession } = await import(
+        '$lib/supabase/video-history'
+      );
       const mockHistory = { id: 'session123', video_id: 'video1' };
 
       (startVideoHistorySession as any).mockResolvedValue({
@@ -493,9 +529,11 @@ describe('video service module', () => {
     });
 
     it('should handle video history start errors', async () => {
-      const { startVideoHistorySession } = await import('$lib/supabase/video-history');
+      const { startVideoHistorySession } = await import(
+        '$lib/supabase/video-history'
+      );
       const { showNotification } = await import('$lib/supabase/notifications');
-      
+
       const mockError = { message: 'Database error', code: '500' };
       (startVideoHistorySession as any).mockResolvedValue({
         history: null,
@@ -519,7 +557,9 @@ describe('video service module', () => {
 
   describe('endSimpleVideoHistory', () => {
     it('should end video history session successfully', async () => {
-      const { updateVideoHistoryEndTime } = await import('$lib/supabase/video-history');
+      const { updateVideoHistoryEndTime } = await import(
+        '$lib/supabase/video-history'
+      );
       const mockHistory = { id: 'session123', seconds_watched: 300 };
 
       (updateVideoHistoryEndTime as any).mockResolvedValue({
@@ -561,9 +601,11 @@ describe('video service module', () => {
     });
 
     it('should handle video history end errors', async () => {
-      const { updateVideoHistoryEndTime } = await import('$lib/supabase/video-history');
+      const { updateVideoHistoryEndTime } = await import(
+        '$lib/supabase/video-history'
+      );
       const { showNotification } = await import('$lib/supabase/notifications');
-      
+
       const mockError = { message: 'Update failed', code: '400' };
       (updateVideoHistoryEndTime as any).mockResolvedValue({
         history: null,
@@ -588,7 +630,8 @@ describe('video service module', () => {
 
   describe('recordCompleteVideoHistory', () => {
     it('should record complete video history session', async () => {
-      const { startVideoHistorySession, updateVideoHistoryEndTime } = await import('$lib/supabase/video-history');
+      const { startVideoHistorySession, updateVideoHistoryEndTime } =
+        await import('$lib/supabase/video-history');
 
       (startVideoHistorySession as any).mockResolvedValue({
         history: { id: 'session123' },
@@ -616,7 +659,9 @@ describe('video service module', () => {
     });
 
     it('should use current time when no start time provided', async () => {
-      const { startVideoHistorySession } = await import('$lib/supabase/video-history');
+      const { startVideoHistorySession } = await import(
+        '$lib/supabase/video-history'
+      );
 
       (startVideoHistorySession as any).mockResolvedValue({
         history: { id: 'session123' },
@@ -633,13 +678,19 @@ describe('video service module', () => {
 
       expect(result.success).toBe(true);
       expect(result.sessionStartTime).toBeDefined();
-      expect(result.sessionStartTime!.getTime()).toBeGreaterThanOrEqual(beforeCall.getTime());
-      expect(result.sessionStartTime!.getTime()).toBeLessThanOrEqual(afterCall.getTime());
+      expect(result.sessionStartTime!.getTime()).toBeGreaterThanOrEqual(
+        beforeCall.getTime()
+      );
+      expect(result.sessionStartTime!.getTime()).toBeLessThanOrEqual(
+        afterCall.getTime()
+      );
     });
 
     it('should handle start session failure', async () => {
-      const { startVideoHistorySession } = await import('$lib/supabase/video-history');
-      
+      const { startVideoHistorySession } = await import(
+        '$lib/supabase/video-history'
+      );
+
       const mockError = { message: 'Start failed', code: '500' };
       (startVideoHistorySession as any).mockResolvedValue({
         history: null,
@@ -659,46 +710,60 @@ describe('video service module', () => {
 
   describe('getVideoSecondsOffset', () => {
     it('should calculate percentage offset correctly', () => {
-      expect(getVideoSecondsOffset({
-        duration: 'PT10M', // 600 seconds
-        timestampSeconds: 150, // 2.5 minutes
-      })).toBe(25); // 25%
+      expect(
+        getVideoSecondsOffset({
+          duration: 'PT10M', // 600 seconds
+          timestampSeconds: 150, // 2.5 minutes
+        })
+      ).toBe(25); // 25%
 
-      expect(getVideoSecondsOffset({
-        duration: 'PT1H', // 3600 seconds
-        timestampSeconds: 1800, // 30 minutes
-      })).toBe(50); // 50%
+      expect(
+        getVideoSecondsOffset({
+          duration: 'PT1H', // 3600 seconds
+          timestampSeconds: 1800, // 30 minutes
+        })
+      ).toBe(50); // 50%
 
-      expect(getVideoSecondsOffset({
-        duration: 'PT5M', // 300 seconds
-        timestampSeconds: 300, // 5 minutes
-      })).toBe(100); // 100%
+      expect(
+        getVideoSecondsOffset({
+          duration: 'PT5M', // 300 seconds
+          timestampSeconds: 300, // 5 minutes
+        })
+      ).toBe(100); // 100%
     });
 
     it('should handle zero timestamp', () => {
-      expect(getVideoSecondsOffset({
-        duration: 'PT10M',
-        timestampSeconds: 0,
-      })).toBe(0);
+      expect(
+        getVideoSecondsOffset({
+          duration: 'PT10M',
+          timestampSeconds: 0,
+        })
+      ).toBe(0);
     });
 
     it('should handle missing timestamp or duration', () => {
-      expect(getVideoSecondsOffset({
-        duration: 'PT10M',
-        timestampSeconds: null as any,
-      })).toBe(0);
+      expect(
+        getVideoSecondsOffset({
+          duration: 'PT10M',
+          timestampSeconds: null as any,
+        })
+      ).toBe(0);
 
-      expect(getVideoSecondsOffset({
-        duration: null as any,
-        timestampSeconds: 150,
-      })).toBe(0);
+      expect(
+        getVideoSecondsOffset({
+          duration: null as any,
+          timestampSeconds: 150,
+        })
+      ).toBe(0);
     });
 
     it('should floor the result', () => {
-      expect(getVideoSecondsOffset({
-        duration: 'PT3M', // 180 seconds
-        timestampSeconds: 100, // 55.55...%
-      })).toBe(55); // Floored to 55
+      expect(
+        getVideoSecondsOffset({
+          duration: 'PT3M', // 180 seconds
+          timestampSeconds: 100, // 55.55...%
+        })
+      ).toBe(55); // Floored to 55
     });
   });
 });

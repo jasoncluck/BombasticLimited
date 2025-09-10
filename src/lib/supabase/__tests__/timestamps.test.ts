@@ -198,7 +198,10 @@ describe('timestamps utilities', () => {
   describe('saveVideoTimestamp', () => {
     it('should save timestamp successfully with session', async () => {
       const mockVideos = [{ id: 'video-1', timestamp: 300 }];
-      mockSupabase.mockSelect.mockReturnValue({ data: mockVideos, error: null });
+      mockSupabase.mockSelect.mockReturnValue({
+        data: mockVideos,
+        error: null,
+      });
 
       const videoTimestamp: TimestampWithVideoId = {
         videoId: 'video-123',
@@ -247,7 +250,10 @@ describe('timestamps utilities', () => {
 
     it('should handle undefined optional fields', async () => {
       const mockVideos = [{ id: 'video-1' }];
-      mockSupabase.mockSelect.mockReturnValue({ data: mockVideos, error: null });
+      mockSupabase.mockSelect.mockReturnValue({
+        data: mockVideos,
+        error: null,
+      });
 
       const videoTimestamp: TimestampWithVideoId = {
         videoId: 'video-123',
@@ -277,7 +283,9 @@ describe('timestamps utilities', () => {
       const mockError = { message: 'Database error', code: 'DB_ERROR' };
       mockSupabase.mockSelect.mockReturnValue({ data: null, error: mockError });
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       const videoTimestamp: TimestampWithVideoId = {
         videoId: 'video-123',
@@ -291,7 +299,10 @@ describe('timestamps utilities', () => {
         session: mockSession,
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error saving video timestamps.', mockError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error saving video timestamps.',
+        mockError
+      );
       expect(result.error).toEqual(mockError);
 
       consoleErrorSpy.mockRestore();
@@ -301,7 +312,10 @@ describe('timestamps utilities', () => {
   describe('saveVideoTimestamps', () => {
     it('should save multiple timestamps successfully', async () => {
       const mockVideos = [{ id: 'video-1' }, { id: 'video-2' }];
-      mockSupabase.mockSelect.mockReturnValue({ data: mockVideos, error: null });
+      mockSupabase.mockSelect.mockReturnValue({
+        data: mockVideos,
+        error: null,
+      });
 
       const videoTimestamps: TimestampWithVideoId[] = [
         {
@@ -365,7 +379,10 @@ describe('timestamps utilities', () => {
 
     it('should handle undefined timestamp values', async () => {
       const mockVideos = [{ id: 'video-1' }];
-      mockSupabase.mockSelect.mockReturnValue({ data: mockVideos, error: null });
+      mockSupabase.mockSelect.mockReturnValue({
+        data: mockVideos,
+        error: null,
+      });
 
       const videoTimestamps: TimestampWithVideoId[] = [
         {
@@ -398,7 +415,10 @@ describe('timestamps utilities', () => {
   describe('deleteVideoTimestamps', () => {
     it('should delete timestamps successfully', async () => {
       const mockVideos = [{ id: 'video-1' }];
-      mockSupabase.mockSelect.mockReturnValue({ data: mockVideos, error: null });
+      mockSupabase.mockSelect.mockReturnValue({
+        data: mockVideos,
+        error: null,
+      });
 
       const result = await deleteVideoTimestamps({
         videoIds: ['video-1', 'video-2'],
@@ -455,7 +475,9 @@ describe('timestamps utilities', () => {
       const mockError = { message: 'Delete failed', code: 'DELETE_ERROR' };
       mockSupabase.mockSelect.mockReturnValue({ data: null, error: mockError });
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       const result = await deleteVideoTimestamps({
         videoIds: ['video-1'],
@@ -463,7 +485,10 @@ describe('timestamps utilities', () => {
         session: mockSession,
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error deleting video timestamps.', mockError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error deleting video timestamps.',
+        mockError
+      );
       expect(result.error).toEqual(mockError);
 
       consoleErrorSpy.mockRestore();
@@ -478,7 +503,10 @@ describe('timestamps utilities', () => {
         video_start_seconds: 300,
         watched_at: '2023-01-01T12:00:00Z',
       };
-      mockSupabase.mockSingle.mockReturnValue({ data: mockTimestamp, error: null });
+      mockSupabase.mockSingle.mockReturnValue({
+        data: mockTimestamp,
+        error: null,
+      });
 
       const result = await getLatestTimestamp({
         videoId: 'video-123',
@@ -533,7 +561,9 @@ describe('timestamps utilities', () => {
       const mockError = { message: 'Query failed', code: 'QUERY_ERROR' };
       mockSupabase.mockSingle.mockReturnValue({ data: null, error: mockError });
 
-      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const consoleErrorSpy = vi
+        .spyOn(console, 'error')
+        .mockImplementation(() => {});
 
       const result = await getLatestTimestamp({
         videoId: 'video-123',
@@ -541,7 +571,10 @@ describe('timestamps utilities', () => {
         session: mockSession,
       });
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith('Error getting latest timestamp:', mockError);
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        'Error getting latest timestamp:',
+        mockError
+      );
       expect(result.error).toEqual(mockError);
 
       consoleErrorSpy.mockRestore();

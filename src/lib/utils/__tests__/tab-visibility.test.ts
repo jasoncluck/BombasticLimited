@@ -32,25 +32,29 @@ describe('Tab Visibility Utility', () => {
     // Reset mocks and listeners
     vi.clearAllMocks();
     mockDocument.hidden = false;
-    
+
     visibilityChangeListeners = [];
     focusListeners = [];
     blurListeners = [];
 
     // Track event listeners
-    mockDocument.addEventListener.mockImplementation((event: string, callback: () => void) => {
-      if (event === 'visibilitychange') {
-        visibilityChangeListeners.push(callback);
+    mockDocument.addEventListener.mockImplementation(
+      (event: string, callback: () => void) => {
+        if (event === 'visibilitychange') {
+          visibilityChangeListeners.push(callback);
+        }
       }
-    });
+    );
 
-    mockWindow.addEventListener.mockImplementation((event: string, callback: () => void) => {
-      if (event === 'focus') {
-        focusListeners.push(callback);
-      } else if (event === 'blur') {
-        blurListeners.push(callback);
+    mockWindow.addEventListener.mockImplementation(
+      (event: string, callback: () => void) => {
+        if (event === 'focus') {
+          focusListeners.push(callback);
+        } else if (event === 'blur') {
+          blurListeners.push(callback);
+        }
       }
-    });
+    );
   });
 
   afterEach(() => {
@@ -86,7 +90,7 @@ describe('Tab Visibility Utility', () => {
       const timer = createVisibilityAwareInterval(callback, 1000);
 
       timer.start();
-      
+
       // Immediately hide the tab before any timer fires
       mockDocument.hidden = true;
       visibilityChangeListeners.forEach((listener) => listener());

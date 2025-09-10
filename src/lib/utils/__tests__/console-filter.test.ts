@@ -174,7 +174,7 @@ describe('Console Filter', () => {
         'Message with . dots',
       ];
 
-      specialMessages.forEach(message => {
+      specialMessages.forEach((message) => {
         expect(() => console.log(message)).not.toThrow();
       });
 

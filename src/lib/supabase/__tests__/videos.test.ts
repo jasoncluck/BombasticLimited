@@ -691,4 +691,3 @@ describe('videos module', () => {
     });
   });
 });
-

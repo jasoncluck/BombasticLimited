@@ -178,7 +178,9 @@ describe('notifications module', () => {
 
       const result = await getUnreadCount({ supabase: mockSupabase });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('get_unread_notification_count');
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'get_unread_notification_count'
+      );
       expect(result.data).toBe(5);
       expect(result.error).toBeNull();
     });
@@ -287,9 +289,12 @@ describe('notifications module', () => {
         notificationIds: [1, 2, 3],
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('mark_notifications_as_read', {
-        notification_ids: [1, 2, 3],
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'mark_notifications_as_read',
+        {
+          notification_ids: [1, 2, 3],
+        }
+      );
       expect(result.error).toBeNull();
     });
 
@@ -316,9 +321,12 @@ describe('notifications module', () => {
         supabase: mockSupabase,
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('mark_notifications_as_read', {
-        notification_ids: undefined,
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'mark_notifications_as_read',
+        {
+          notification_ids: undefined,
+        }
+      );
       expect(result.error).toBeNull();
     });
   });
@@ -423,9 +431,12 @@ describe('notifications module', () => {
         notificationIds: [1, 2, 3],
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('remove_user_notification', {
-        notification_ids: [1, 2, 3],
-      });
+      expect(mockSupabase.rpc).toHaveBeenCalledWith(
+        'remove_user_notification',
+        {
+          notification_ids: [1, 2, 3],
+        }
+      );
       expect(result.data).toBe(3);
       expect(result.error).toBeNull();
     });
@@ -524,7 +535,9 @@ describe('notifications module', () => {
     });
 
     it('should format relative time for very old notifications', () => {
-      const veryOldTime = new Date(Date.now() - 1000 * 60 * 60 * 24 * 10).toISOString(); // 10 days ago
+      const veryOldTime = new Date(
+        Date.now() - 1000 * 60 * 60 * 24 * 10
+      ).toISOString(); // 10 days ago
       const mockData = [
         {
           notification_id: 1,
@@ -555,7 +568,9 @@ describe('notifications module', () => {
         filters: {},
       }).then((result) => {
         // Should be formatted as a date string for very old notifications
-        expect(result.notifications[0].formatted_time).toMatch(/\d{1,2}\/\d{1,2}\/\d{4}/);
+        expect(result.notifications[0].formatted_time).toMatch(
+          /\d{1,2}\/\d{1,2}\/\d{4}/
+        );
         expect(result.notifications[0].is_new).toBe(false);
       });
     });

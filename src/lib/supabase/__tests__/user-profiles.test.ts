@@ -1,8 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  checkIfUsernameIsUnique,
-  getUserProfile
-} from '../user-profiles';
+import { checkIfUsernameIsUnique, getUserProfile } from '../user-profiles';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '../database.types';
 
@@ -11,17 +8,17 @@ const createMockSupabaseClient = () => {
   const mockRpc = vi.fn();
   const mockFrom = vi.fn();
   const mockAuthGetClaims = vi.fn();
-  
+
   return {
     rpc: mockRpc,
     from: mockFrom,
     auth: {
-      getClaims: mockAuthGetClaims
+      getClaims: mockAuthGetClaims,
     },
     mockRpc,
     mockFrom,
-    mockAuthGetClaims
-  } as unknown as SupabaseClient<Database> & { 
+    mockAuthGetClaims,
+  } as unknown as SupabaseClient<Database> & {
     mockRpc: typeof mockRpc;
     mockFrom: typeof mockFrom;
     mockAuthGetClaims: typeof mockAuthGetClaims;
@@ -42,11 +39,11 @@ describe('user-profiles', () => {
 
       const result = await checkIfUsernameIsUnique({
         username: 'uniqueuser',
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('is_unique_username', {
-        p_username: 'uniqueuser'
+        p_username: 'uniqueuser',
       });
       expect(result).toBe(true);
     });
@@ -56,7 +53,7 @@ describe('user-profiles', () => {
 
       const result = await checkIfUsernameIsUnique({
         username: 'existinguser',
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(result).toBe(false);
@@ -67,21 +64,21 @@ describe('user-profiles', () => {
 
       const result = await checkIfUsernameIsUnique({
         username: 'testuser',
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(result).toBe(false);
     });
 
     it('should handle database errors gracefully', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ 
-        data: null, 
-        error: { message: 'Database error', code: '500' }
+      mockSupabase.mockRpc.mockResolvedValue({
+        data: null,
+        error: { message: 'Database error', code: '500' },
       });
 
       const result = await checkIfUsernameIsUnique({
         username: 'testuser',
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(result).toBe(false);
@@ -99,12 +96,12 @@ describe('user-profiles', () => {
         content_display: 'TABLE',
         providers: ['email'],
         sources: ['giantbomb'],
-        username_history: []
+        username_history: [],
       };
 
       mockSupabase.mockAuthGetClaims.mockResolvedValue({
         data: { claims: { sub: 'user123' } },
-        error: null
+        error: null,
       });
 
       const mockChain = {
@@ -112,14 +109,14 @@ describe('user-profiles', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: mockProfile,
-          error: null
-        })
+          error: null,
+        }),
       };
 
       mockSupabase.mockFrom.mockReturnValue(mockChain);
 
       const result = await getUserProfile({
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(mockSupabase.auth.getClaims).toHaveBeenCalled();
@@ -132,11 +129,11 @@ describe('user-profiles', () => {
     it('should handle missing auth claims', async () => {
       mockSupabase.mockAuthGetClaims.mockResolvedValue({
         data: { claims: null },
-        error: null
+        error: null,
       });
 
       const result = await getUserProfile({
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(result.profile).toBeNull();
@@ -147,11 +144,11 @@ describe('user-profiles', () => {
       const authError = { message: 'Auth failed', code: '401' };
       mockSupabase.mockAuthGetClaims.mockResolvedValue({
         data: null,
-        error: authError
+        error: authError,
       });
 
       const result = await getUserProfile({
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(result.profile).toBeNull();
@@ -161,7 +158,7 @@ describe('user-profiles', () => {
     it('should handle profile fetch errors', async () => {
       mockSupabase.mockAuthGetClaims.mockResolvedValue({
         data: { claims: { sub: 'user123' } },
-        error: null
+        error: null,
       });
 
       const dbError = { message: 'Profile not found', code: '404' };
@@ -170,14 +167,14 @@ describe('user-profiles', () => {
         eq: vi.fn().mockReturnThis(),
         single: vi.fn().mockResolvedValue({
           data: null,
-          error: dbError
-        })
+          error: dbError,
+        }),
       };
 
       mockSupabase.mockFrom.mockReturnValue(mockChain);
 
       const result = await getUserProfile({
-        supabase: mockSupabase
+        supabase: mockSupabase,
       });
 
       expect(result.profile).toBeNull();

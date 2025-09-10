@@ -22,7 +22,8 @@ describe('bugReportSchema', () => {
       const validData = {
         title: 'Complex Bug Report',
         description: 'This is a detailed description of the bug',
-        steps_to_reproduce: 'Step 1: Do this\nStep 2: Do that\nStep 3: Bug appears',
+        steps_to_reproduce:
+          'Step 1: Do this\nStep 2: Do that\nStep 3: Bug appears',
         images: [
           'https://example.com/image1.jpg',
           'https://example.com/image2.png',

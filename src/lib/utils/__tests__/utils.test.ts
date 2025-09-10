@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { cn } from '../utils';
-import type { 
-  WithoutChild, 
-  WithoutChildren, 
-  WithoutChildrenOrChild, 
-  WithElementRef 
+import type {
+  WithoutChild,
+  WithoutChildren,
+  WithoutChildrenOrChild,
+  WithElementRef,
 } from '../utils';
 
 describe('utils', () => {
@@ -38,9 +38,9 @@ describe('utils', () => {
 
     it('should handle objects with conditional classes', () => {
       const result = cn({
-        'active': true,
-        'inactive': false,
-        'base': true,
+        active: true,
+        inactive: false,
+        base: true,
       });
       expect(result).toContain('active');
       expect(result).toContain('base');
@@ -104,7 +104,7 @@ describe('utils', () => {
         }
 
         type WithoutChildType = WithoutChild<TestType>;
-        
+
         // This is a compile-time test - if it compiles, the type works
         const test: WithoutChildType = {
           id: 'test',
@@ -123,7 +123,7 @@ describe('utils', () => {
         }
 
         type WithoutChildType = WithoutChild<TestType>;
-        
+
         const test: WithoutChildType = {
           id: 'test',
           other: 123,
@@ -143,7 +143,7 @@ describe('utils', () => {
         }
 
         type WithoutChildrenType = WithoutChildren<TestType>;
-        
+
         const test: WithoutChildrenType = {
           id: 'test',
           other: 123,
@@ -165,7 +165,7 @@ describe('utils', () => {
         }
 
         type CleanType = WithoutChildrenOrChild<TestType>;
-        
+
         const test: CleanType = {
           id: 'test',
           other: 123,
@@ -185,7 +185,7 @@ describe('utils', () => {
         }
 
         type WithRefType = WithElementRef<TestType>;
-        
+
         const test: WithRefType = {
           id: 'test',
           other: 123,
@@ -203,7 +203,7 @@ describe('utils', () => {
         }
 
         type WithDivRefType = WithElementRef<TestType, HTMLDivElement>;
-        
+
         // This is primarily a compile-time test
         const test: WithDivRefType = {
           id: 'test',
@@ -219,7 +219,7 @@ describe('utils', () => {
         }
 
         type WithRefType = WithElementRef<TestType>;
-        
+
         const test: WithRefType = {
           id: 'test',
           // ref is optional, so can be omitted
@@ -236,7 +236,7 @@ describe('utils', () => {
       const isActive = true;
       const isDisabled = false;
       const size = 'large';
-      
+
       const buttonClasses = cn(
         'button-base',
         'px-4 py-2',

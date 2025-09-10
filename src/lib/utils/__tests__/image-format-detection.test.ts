@@ -44,7 +44,7 @@ describe('Image Format Detection', () => {
         'text/html,application/xhtml+xml,image/avif,image/webp,*/*',
       ];
 
-      acceptHeaders.forEach(header => {
+      acceptHeaders.forEach((header) => {
         expect(detectOptimalFormat(header)).toBe('avif');
       });
     });
@@ -57,7 +57,7 @@ describe('Image Format Detection', () => {
         'image/png,image/webp,image/jpeg,*/*',
       ];
 
-      acceptHeaders.forEach(header => {
+      acceptHeaders.forEach((header) => {
         expect(detectOptimalFormat(header)).toBe('webp');
       });
     });
@@ -88,7 +88,7 @@ describe('Image Format Detection', () => {
         'text/html,application/xhtml+xml,*/*',
       ];
 
-      genericAcceptHeaders.forEach(header => {
+      genericAcceptHeaders.forEach((header) => {
         expect(detectOptimalFormat(header)).toBe('webp');
       });
     });
@@ -101,7 +101,7 @@ describe('Image Format Detection', () => {
         'application/xml',
       ];
 
-      nonImageHeaders.forEach(header => {
+      nonImageHeaders.forEach((header) => {
         expect(detectOptimalFormat(header)).toBe('jpeg');
       });
     });
@@ -111,7 +111,8 @@ describe('Image Format Detection', () => {
     });
 
     it('should handle complex Accept headers with multiple formats', () => {
-      const complexHeader = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
+      const complexHeader =
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8';
       expect(detectOptimalFormat(complexHeader)).toBe('avif');
     });
   });
@@ -126,7 +127,7 @@ describe('Image Format Detection', () => {
       });
 
       const support = await detectBrowserImageSupport();
-      
+
       expect(support).toHaveProperty('avif');
       expect(support).toHaveProperty('webp');
       expect(typeof support.avif).toBe('boolean');
@@ -177,7 +178,7 @@ describe('Image Format Detection', () => {
       });
 
       await detectBrowserImageSupport();
-      
+
       expect(mockDocument.createElement).toHaveBeenCalledWith('canvas');
       expect(mockCanvas.width).toBe(1);
       expect(mockCanvas.height).toBe(1);
@@ -254,8 +255,8 @@ describe('Image Format Detection', () => {
     it('should accept valid format values', () => {
       const validFormats: ImageFormat[] = ['avif', 'webp', 'jpeg'];
       expect(validFormats).toHaveLength(3);
-      
-      validFormats.forEach(format => {
+
+      validFormats.forEach((format) => {
         expect(imageFormats).toContain(format);
       });
     });
@@ -271,7 +272,7 @@ describe('Image Format Detection', () => {
         'image/',
       ];
 
-      malformedHeaders.forEach(header => {
+      malformedHeaders.forEach((header) => {
         expect(() => detectOptimalFormat(header)).not.toThrow();
         const result = detectOptimalFormat(header);
         expect(imageFormats).toContain(result);
@@ -291,11 +292,9 @@ describe('Image Format Detection', () => {
         '  image/avif,image/webp  ',
       ];
 
-      spacedHeaders.forEach(header => {
+      spacedHeaders.forEach((header) => {
         expect(detectOptimalFormat(header)).toBe('avif');
       });
     });
-
-
   });
 });

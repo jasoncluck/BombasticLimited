@@ -1,21 +1,17 @@
 import { describe, it, expect } from 'vitest';
-import type { 
-  Box, 
-  WritableBoxedValues, 
-  ReadableBoxedValues 
-} from '../box';
+import type { Box, WritableBoxedValues, ReadableBoxedValues } from '../box';
 
 describe('box types', () => {
   describe('Box type', () => {
     it('should be a union of ReadableBox and WritableBox', () => {
       // This test verifies the type definitions work correctly at compile time
       // The Box type should accept both ReadableBox and WritableBox types
-      
+
       // Type compatibility tests - these should compile without errors
       type StringBox = Box<string>;
       type NumberBox = Box<number>;
       type BooleanBox = Box<boolean>;
-      
+
       // Test type inference
       expect(true).toBe(true); // Basic assertion to make test valid
     });
@@ -27,7 +23,7 @@ describe('box types', () => {
       type BooleanBox = Box<boolean>;
       type ObjectBox = Box<{ name: string }>;
       type ArrayBox = Box<string[]>;
-      
+
       // These type definitions should compile without errors
       expect(true).toBe(true);
     });
@@ -36,7 +32,7 @@ describe('box types', () => {
       type UnionBox = Box<string | number>;
       type NullableBox = Box<string | null>;
       type OptionalBox = Box<string | undefined>;
-      
+
       expect(true).toBe(true);
     });
   });
@@ -51,7 +47,7 @@ describe('box types', () => {
 
       // This should compile correctly - testing type structure
       type UserBoxes = WritableBoxedValues<UserData>;
-      
+
       // Verify the structure exists at type level
       const typeTest: UserBoxes = {} as any;
       expect(typeTest).toBeDefined();
@@ -64,7 +60,7 @@ describe('box types', () => {
       }
 
       type SimpleBoxes = WritableBoxedValues<SimpleObject>;
-      
+
       // Type should have the same keys as the original
       const typeTest: SimpleBoxes = {} as any;
       expect(typeTest).toBeDefined();
@@ -77,7 +73,7 @@ describe('box types', () => {
       }
 
       type NestedBoxes = WritableBoxedValues<NestedData>;
-      
+
       const typeTest: NestedBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -89,7 +85,7 @@ describe('box types', () => {
       }
 
       type OptionalBoxes = WritableBoxedValues<OptionalData>;
-      
+
       const typeTest: OptionalBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -104,7 +100,7 @@ describe('box types', () => {
       }
 
       type ConfigBoxes = ReadableBoxedValues<ConfigData>;
-      
+
       const typeTest: ConfigBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -116,7 +112,7 @@ describe('box types', () => {
       }
 
       type ArrayBoxes = ReadableBoxedValues<ArrayData>;
-      
+
       const typeTest: ArrayBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -129,7 +125,7 @@ describe('box types', () => {
       }
 
       type ComplexBoxes = ReadableBoxedValues<ComplexData>;
-      
+
       const typeTest: ComplexBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -141,7 +137,7 @@ describe('box types', () => {
       }
 
       type FunctionBoxes = ReadableBoxedValues<FunctionData>;
-      
+
       const typeTest: FunctionBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -156,7 +152,7 @@ describe('box types', () => {
 
       const writableTest: WritableEmpty = {} as any;
       const readableTest: ReadableEmpty = {} as any;
-      
+
       expect(writableTest).toBeDefined();
       expect(readableTest).toBeDefined();
     });
@@ -168,7 +164,7 @@ describe('box types', () => {
       }
 
       type ConstrainedBoxes = ReadableBoxedValues<ConstrainedData>;
-      
+
       const typeTest: ConstrainedBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -184,7 +180,7 @@ describe('box types', () => {
 
       const stringTest: StringBoxes = {} as any;
       const numberTest: NumberBoxes = {} as any;
-      
+
       expect(stringTest).toBeDefined();
       expect(numberTest).toBeDefined();
     });
@@ -200,7 +196,7 @@ describe('box types', () => {
 
       const readableTest: ReadableConfig = {} as any;
       const writableTest: WritableMutable = {} as any;
-      
+
       expect(readableTest).toBeDefined();
       expect(writableTest).toBeDefined();
     });
@@ -216,7 +212,7 @@ describe('box types', () => {
       }
 
       type FormState = WritableBoxedValues<FormData>;
-      
+
       const typeTest: FormState = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -230,7 +226,7 @@ describe('box types', () => {
       }
 
       type ConfigBoxes = ReadableBoxedValues<AppConfig>;
-      
+
       const typeTest: ConfigBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });
@@ -243,7 +239,7 @@ describe('box types', () => {
       }
 
       type StateBoxes = WritableBoxedValues<ComponentState>;
-      
+
       const typeTest: StateBoxes = {} as any;
       expect(typeTest).toBeDefined();
     });

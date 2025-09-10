@@ -185,7 +185,7 @@ export class NavigationStateClass implements NavigationState {
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
-  // User context (passed from parent components)
+  // User context - now properly reactive
   session = $state<Session | null>(null);
   userProfile = $state<UserProfile | null>(null);
   supabase = $state<SupabaseClient<Database> | null>(null);
@@ -193,9 +193,8 @@ export class NavigationStateClass implements NavigationState {
   // Account drawer state (shared with user menu)
   openAccountDrawer = $state(false);
 
-  constructor(session: Session | null) {
+  constructor() {
     this.initializeNavigationItems();
-    this.session = session;
   }
 
   /**
@@ -520,10 +519,26 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = value;
   };
 
+  // Clear all search-related state
   clearSearchQuery = (): void => {
     this.searchQuery = '';
     this.currentSearchTimestamp = 0;
     this.pendingValueUpdate = null;
+
+    // Cancel any pending searches
+    if (this.currentDebouncedSearch?.isPending) {
+      this.currentDebouncedSearch.clear();
+    }
+    if (this.searchAbortController) {
+      this.searchAbortController.abort();
+      this.searchAbortController = null;
+    }
+
+    // Clear any preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
+    }
   };
 
   async searchRedirect(
@@ -870,11 +885,8 @@ const DEFAULT_KEY = '$_navigation_state';
 /**
  * Set navigation state in context
  */
-export function setNavigationState(
-  session: Session | null,
-  key = DEFAULT_KEY
-): NavigationStateClass {
-  const navigationState = new NavigationStateClass(session);
+export function setNavigationState(key = DEFAULT_KEY): NavigationStateClass {
+  const navigationState = new NavigationStateClass();
   return setContext(key, navigationState);
 }
 

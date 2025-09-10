@@ -12,7 +12,6 @@ const config = {
   semi: true,
   singleQuote: true,
   trailingComma: 'es5',
-  embeddedSqlTags: ['sql'],
   overrides: [
     {
       files: '*.svelte',

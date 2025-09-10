@@ -1,17 +1,22 @@
 import { describe, it, expect } from 'vitest';
-import { 
-  SOURCES, 
-  SOURCE_INFO, 
-  isSourceArray, 
+import {
+  SOURCES,
+  SOURCE_INFO,
+  isSourceArray,
   isSource,
   type Source,
-  type Sources
+  type Sources,
 } from '../source';
 
 describe('Source Constants and Utilities', () => {
   describe('SOURCES constant', () => {
     it('should contain expected source values', () => {
-      expect(SOURCES).toEqual(['giantbomb', 'jeffgerstmann', 'nextlander', 'remap']);
+      expect(SOURCES).toEqual([
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ]);
     });
 
     it('should be readonly array', () => {
@@ -20,7 +25,7 @@ describe('Source Constants and Utilities', () => {
     });
 
     it('should contain only string values', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         expect(typeof source).toBe('string');
       });
     });
@@ -28,15 +33,15 @@ describe('Source Constants and Utilities', () => {
 
   describe('SOURCE_INFO constant', () => {
     it('should have entries for all sources', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         expect(SOURCE_INFO).toHaveProperty(source);
       });
     });
 
     it('should have consistent structure for all sources', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         const info = SOURCE_INFO[source];
-        
+
         // Required properties
         expect(info).toHaveProperty('displayName');
         expect(info).toHaveProperty('urlParam');
@@ -73,7 +78,9 @@ describe('Source Constants and Utilities', () => {
       it('should have highlighted playlists', () => {
         expect(giantbomb.highlightedPlaylists).toHaveLength(2);
         expect(giantbomb.highlightedPlaylists[0].name).toBe('Blight Club');
-        expect(giantbomb.highlightedPlaylists[1].name).toBe('Voicemail Dump Truck');
+        expect(giantbomb.highlightedPlaylists[1].name).toBe(
+          'Voicemail Dump Truck'
+        );
       });
 
       it('should have website URL domain', () => {
@@ -89,14 +96,22 @@ describe('Source Constants and Utilities', () => {
         expect(jeffgerstmann.urlParam).toBe('jeffgerstmann');
         expect(jeffgerstmann.twitchId).toBe('504350');
         expect(jeffgerstmann.youtubeId).toBe('UCR9R2ARN74dCebn1kv06UhA');
-        expect(jeffgerstmann.youtubeUrl).toBe('https://www.youtube.com/@JeffGerstmannShow');
-        expect(jeffgerstmann.supportUrl).toBe('https://www.patreon.com/cw/jeffgerstmann');
+        expect(jeffgerstmann.youtubeUrl).toBe(
+          'https://www.youtube.com/@JeffGerstmannShow'
+        );
+        expect(jeffgerstmann.supportUrl).toBe(
+          'https://www.patreon.com/cw/jeffgerstmann'
+        );
       });
 
       it('should have highlighted playlists', () => {
         expect(jeffgerstmann.highlightedPlaylists).toHaveLength(2);
-        expect(jeffgerstmann.highlightedPlaylists[0].name).toBe('Quick Looks at New Video Games');
-        expect(jeffgerstmann.highlightedPlaylists[1].name).toBe('Ranking the NES!');
+        expect(jeffgerstmann.highlightedPlaylists[0].name).toBe(
+          'Quick Looks at New Video Games'
+        );
+        expect(jeffgerstmann.highlightedPlaylists[1].name).toBe(
+          'Ranking the NES!'
+        );
       });
 
       it('should not have website URL domain', () => {
@@ -112,14 +127,20 @@ describe('Source Constants and Utilities', () => {
         expect(nextlander.urlParam).toBe('nextlander');
         expect(nextlander.twitchId).toBe('689331234');
         expect(nextlander.youtubeId).toBe('UCO0gHyqLNeIrCAjwlO2BmiA');
-        expect(nextlander.youtubeUrl).toBe('https://www.youtube.com/@Nextlander');
-        expect(nextlander.supportUrl).toBe('https://www.patreon.com/nextlander/');
+        expect(nextlander.youtubeUrl).toBe(
+          'https://www.youtube.com/@Nextlander'
+        );
+        expect(nextlander.supportUrl).toBe(
+          'https://www.patreon.com/nextlander/'
+        );
       });
 
       it('should have highlighted playlists', () => {
         expect(nextlander.highlightedPlaylists).toHaveLength(2);
         expect(nextlander.highlightedPlaylists[0].name).toBe('NXL Highlights');
-        expect(nextlander.highlightedPlaylists[1].name).toBe("Talkin' Over Things");
+        expect(nextlander.highlightedPlaylists[1].name).toBe(
+          "Talkin' Over Things"
+        );
       });
 
       it('should not have website URL domain', () => {
@@ -155,23 +176,23 @@ describe('Source Constants and Utilities', () => {
     });
 
     it('should have valid YouTube URLs', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         const info = SOURCE_INFO[source];
         expect(info.youtubeUrl).toMatch(/^https:\/\/www\.youtube\.com\//);
       });
     });
 
     it('should have valid support URLs', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         const info = SOURCE_INFO[source];
         expect(info.supportUrl).toMatch(/^https:\/\//);
       });
     });
 
     it('should have valid highlighted playlists', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         const info = SOURCE_INFO[source];
-        info.highlightedPlaylists.forEach(playlist => {
+        info.highlightedPlaylists.forEach((playlist) => {
           expect(playlist).toHaveProperty('name');
           expect(playlist).toHaveProperty('youtubeId');
           expect(typeof playlist.name).toBe('string');
@@ -215,7 +236,7 @@ describe('Source Constants and Utilities', () => {
 
   describe('isSource function', () => {
     it('should return true for valid sources', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         expect(isSource(source)).toBe(true);
       });
     });
@@ -229,23 +250,15 @@ describe('Source Constants and Utilities', () => {
         'GIANTBOMB', // case sensitive
       ];
 
-      invalidSources.forEach(source => {
+      invalidSources.forEach((source) => {
         expect(isSource(source)).toBe(false);
       });
     });
 
     it('should return false for non-string values', () => {
-      const nonStrings = [
-        null,
-        undefined,
-        123,
-        {},
-        [],
-        true,
-        false,
-      ];
+      const nonStrings = [null, undefined, 123, {}, [], true, false];
 
-      nonStrings.forEach(value => {
+      nonStrings.forEach((value) => {
         expect(isSource(value)).toBe(false);
       });
     });
@@ -260,10 +273,15 @@ describe('Source Constants and Utilities', () => {
   describe('TypeScript types', () => {
     it('should have Source type matching SOURCES values', () => {
       // This is primarily a compile-time test
-      const validSources: Source[] = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
+      const validSources: Source[] = [
+        'giantbomb',
+        'jeffgerstmann',
+        'nextlander',
+        'remap',
+      ];
       expect(validSources).toHaveLength(4);
-      
-      validSources.forEach(source => {
+
+      validSources.forEach((source) => {
         expect(SOURCES).toContain(source);
       });
     });
@@ -272,8 +290,8 @@ describe('Source Constants and Utilities', () => {
       // Compile-time test to ensure Types match SOURCE_INFO keys
       const sourceKeys = Object.keys(SOURCE_INFO) as Sources[];
       expect(sourceKeys).toHaveLength(4);
-      
-      sourceKeys.forEach(key => {
+
+      sourceKeys.forEach((key) => {
         expect(SOURCES).toContain(key);
       });
     });
@@ -281,39 +299,41 @@ describe('Source Constants and Utilities', () => {
 
   describe('data consistency', () => {
     it('should have unique YouTube IDs', () => {
-      const youtubeIds = SOURCES.map(source => SOURCE_INFO[source].youtubeId);
+      const youtubeIds = SOURCES.map((source) => SOURCE_INFO[source].youtubeId);
       const uniqueYoutubeIds = new Set(youtubeIds);
       expect(uniqueYoutubeIds.size).toBe(youtubeIds.length);
     });
 
     it('should have unique Twitch IDs', () => {
-      const twitchIds = SOURCES.map(source => SOURCE_INFO[source].twitchId);
+      const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
       const uniqueTwitchIds = new Set(twitchIds);
       // Note: giantbomb and jeffgerstmann share the same Twitch ID
       expect(uniqueTwitchIds.size).toBeLessThanOrEqual(twitchIds.length);
     });
 
     it('should have unique URL params', () => {
-      const urlParams = SOURCES.map(source => SOURCE_INFO[source].urlParam);
+      const urlParams = SOURCES.map((source) => SOURCE_INFO[source].urlParam);
       const uniqueUrlParams = new Set(urlParams);
       expect(uniqueUrlParams.size).toBe(urlParams.length);
     });
 
     it('should have URL params matching source keys', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         expect(SOURCE_INFO[source].urlParam).toBe(source);
       });
     });
 
     it('should have non-empty display names', () => {
-      SOURCES.forEach(source => {
+      SOURCES.forEach((source) => {
         expect(SOURCE_INFO[source].displayName.length).toBeGreaterThan(0);
       });
     });
 
     it('should have at least one highlighted playlist per source', () => {
-      SOURCES.forEach(source => {
-        expect(SOURCE_INFO[source].highlightedPlaylists.length).toBeGreaterThan(0);
+      SOURCES.forEach((source) => {
+        expect(SOURCE_INFO[source].highlightedPlaylists.length).toBeGreaterThan(
+          0
+        );
       });
     });
   });

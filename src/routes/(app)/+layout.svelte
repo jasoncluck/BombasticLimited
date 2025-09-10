@@ -32,8 +32,9 @@
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQueryState = setMediaQueryState();
-  const sidebarState = $derived(setSidebarState(preferredImageFormat));
-  const navigationState = $derived(setNavigationState(session));
+  const sidebarState = setSidebarState();
+  const navigationState = setNavigationState();
+  setPlaylistState(pageState, contentState, sidebarState);
 
   setSourceState(pageState);
 
@@ -58,14 +59,15 @@
     )
   );
 
+  // Update the navigation state session when needed
   $effect(() => {
-    // Initialize playlist state
-    setPlaylistState(pageState, contentState, sidebarState);
-  });
-
-  $effect(() => {
-    // Setup navigation hooks
-    navigation.setupNavigationHooks();
+    navigationState.updateContext({
+      session: data.session,
+      supabase: data.supabase,
+    });
+    sidebarState.updateContext({
+      preferredImageFormat,
+    });
   });
 
   // Simplified navigation state
@@ -341,6 +343,8 @@
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     // This now also starts the SSE connection automatically
     const sidebarCleanup = sidebarState.initializeNonBlocking();
+
+    navigation.setupNavigationHooks();
 
     // Initialize layout effects - simplified
     let layoutCleanup: (() => void) | undefined;
