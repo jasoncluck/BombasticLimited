@@ -132,10 +132,9 @@ function createPlaylistHelpers(page: Page, createdPlaylistIds: string[]) {
           // Video not found in playlist
           return false;
         }
-      } catch (error) {
+      } catch {
         console.warn(
-          `Error checking video ${videoId} in playlist ${playlistId}:`,
-          error
+          `Error checking video ${videoId} in playlist ${playlistId}`
         );
         return false;
       } finally {
