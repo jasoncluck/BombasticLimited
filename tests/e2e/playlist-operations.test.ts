@@ -117,8 +117,14 @@ playlistTest.describe('Playlist Operations', () => {
         await expect(removeOption).toBeVisible();
         await removeOption.click();
 
-        // Verify video was removed
+        // Wait for the video element to disappear from the DOM
         if (videoId) {
+          await expect(playlistVideo).not.toBeVisible({ timeout: 10000 });
+          
+          // Additional wait to ensure the removal is fully processed
+          await playlistPage.waitForTimeout(1000);
+          
+          // Verify video was removed
           await playlistHelpers.verifyVideoNotInPlaylist(playlistId, videoId);
         }
       }
