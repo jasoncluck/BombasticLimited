@@ -403,4 +403,104 @@ export class VideoHelpers {
     
     return cards;
   }
+
+  /**
+   * Interact with YouTube player to generate timestamp (15+ seconds minimum)
+   * This method clicks on the YouTube iframe to start playback and either waits
+   * or scrubs the timeline to ensure a timestamp is saved
+   */
+  async watchVideoToGenerateTimestamp(options: { 
+    method?: 'wait' | 'scrub',
+    waitSeconds?: number,
+    scrubToSeconds?: number 
+  } = {}): Promise<void> {
+    const { method = 'scrub', waitSeconds = 16, scrubToSeconds = 20 } = options;
+    
+    // Wait for the iframe to be visible
+    const iframe = this.page.locator('iframe').first();
+    await expect(iframe).toBeVisible({ timeout: 10000 });
+    
+    // Click on the iframe to start video playback
+    await iframe.click({ position: { x: 100, y: 100 } });
+    
+    // Wait a moment for the click to register
+    await this.page.waitForTimeout(2000);
+    
+    if (method === 'scrub') {
+      // Scrub to a specific timestamp by clicking on the progress bar
+      await this.scrubYouTubePlayer(scrubToSeconds);
+    } else {
+      // Wait for the specified number of seconds to accumulate watch time
+      console.log(`Waiting ${waitSeconds} seconds for video to generate timestamp...`);
+      await this.page.waitForTimeout(waitSeconds * 1000);
+    }
+    
+    // Give a small buffer for timestamp processing
+    await this.page.waitForTimeout(1000);
+  }
+  
+  /**
+   * Scrub YouTube player to a specific timestamp by clicking on the progress bar
+   */
+  private async scrubYouTubePlayer(targetSeconds: number): Promise<void> {
+    try {
+      // Switch to iframe context to interact with YouTube player
+      const iframe = this.page.locator('iframe').first();
+      const frame = await iframe.contentFrame();
+      
+      if (!frame) {
+        console.warn('Could not access YouTube iframe content, falling back to wait method');
+        await this.page.waitForTimeout(16000); // Fall back to waiting 16 seconds
+        return;
+      }
+      
+      // Wait for YouTube player UI to load
+      await this.page.waitForTimeout(3000);
+      
+      // Look for the progress bar (YouTube uses various selectors)
+      const progressBar = frame.locator('.ytp-progress-bar, .html5-progress-bar, [role="slider"]').first();
+      
+      if (await progressBar.isVisible({ timeout: 5000 })) {
+        // Get the width of the progress bar
+        const progressBarBox = await progressBar.boundingBox();
+        
+        if (progressBarBox) {
+          // Calculate click position based on target time (assuming this is roughly proportional)
+          // This is a heuristic - clicking at ~20% of the progress bar should get us past 15 seconds
+          const clickX = progressBarBox.x + (progressBarBox.width * 0.2);
+          const clickY = progressBarBox.y + (progressBarBox.height / 2);
+          
+          // Click on the progress bar to scrub to that position
+          await progressBar.click({ 
+            position: { x: clickX - progressBarBox.x, y: clickY - progressBarBox.y } 
+          });
+          
+          console.log(`Scrubbed YouTube player to approximate ${targetSeconds}s timestamp`);
+        } else {
+          console.warn('Could not get progress bar dimensions, falling back to wait method');
+          await this.page.waitForTimeout(16000);
+        }
+      } else {
+        console.warn('Could not find YouTube progress bar, falling back to wait method');
+        await this.page.waitForTimeout(16000);
+      }
+    } catch (error) {
+      console.warn('YouTube player scrubbing failed, falling back to wait method:', error);
+      await this.page.waitForTimeout(16000); // Fall back to waiting 16 seconds
+    }
+  }
+  
+  /**
+   * Start video playback by clicking the YouTube player
+   */
+  async startVideoPlayback(): Promise<void> {
+    const iframe = this.page.locator('iframe').first();
+    await expect(iframe).toBeVisible({ timeout: 10000 });
+    
+    // Click in the center of the iframe to start playback
+    await iframe.click({ position: { x: 200, y: 150 } });
+    
+    // Wait for playback to start
+    await this.page.waitForTimeout(2000);
+  }
 }

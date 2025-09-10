@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { playlistTest } from './playlist-fixtures';
+import { VideoHelpers } from './helpers/video-helpers';
 
 /**
  * E2E tests for playlist watching behavior and timestamp integration
@@ -53,8 +54,12 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         const currentUrl = playlistPage.url();
         expect(currentUrl).toMatch(/\/playlist\/[^\/]+\/video\/[^\/]+/);
 
-        // Wait a bit to simulate watching
-        await playlistPage.waitForTimeout(3000);
+        // Actually watch the video to generate a timestamp (15+ seconds required)
+        const videoHelpers = new VideoHelpers(playlistPage);
+        await videoHelpers.watchVideoToGenerateTimestamp({ 
+          method: 'scrub', 
+          scrubToSeconds: 20 
+        });
 
         // Go back to homepage to check continue watching
         await playlistPage.goto('/');
@@ -66,10 +71,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
             playlistPage.getByRole('heading', { name: /continue watching/i })
           );
 
-        await continueWatchingSection.waitFor();
-
-        // Continue watching may take some time to appear
-        await expect(continueWatchingSection).toBeVisible();
+        await expect(continueWatchingSection).toBeVisible({ timeout: 10000 });
       }
     );
 
@@ -111,11 +113,17 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
           .first();
         await playlistFirstVideo.click();
 
-        // Wait for video to load and simulate watching
+        // Wait for video to load and actually watch it to generate timestamp
         await expect(playlistPage).toHaveURL(/\/playlist\/.*\/video\//, {
           timeout: 10000,
         });
-        await playlistPage.waitForTimeout(3000);
+        
+        // Actually watch the video to generate a timestamp
+        const videoHelpers = new VideoHelpers(playlistPage);
+        await videoHelpers.watchVideoToGenerateTimestamp({ 
+          method: 'scrub', 
+          scrubToSeconds: 25 
+        });
 
         // Go back to homepage and check continue watching
         await playlistPage.goto('/');
@@ -305,7 +313,13 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         await expect(playlistPage).toHaveURL(/\/playlist\/.*\/video\//, {
           timeout: 10000,
         });
-        await playlistPage.waitForTimeout(3000);
+        
+        // Actually watch the video to generate a timestamp
+        const videoHelpers = new VideoHelpers(playlistPage);
+        await videoHelpers.watchVideoToGenerateTimestamp({ 
+          method: 'scrub', 
+          scrubToSeconds: 30 
+        });
 
         // Go to homepage and check continue watching
         await playlistPage.goto('/');
