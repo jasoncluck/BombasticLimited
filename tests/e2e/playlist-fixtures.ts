@@ -288,8 +288,14 @@ function createPlaylistHelpers(
           targetVideoElement = firstVideoElement;
         }
         
-        // Hover over the video element to make the dropdown trigger visible
-        await targetVideoElement.hover();
+        // Only hover for content cards, not for video pages where dropdown is always visible
+        const currentUrl = page.url();
+        const isVideoPage = /\/video\/[^/]+(?:\/.*)?$/.test(currentUrl);
+        
+        if (!isVideoPage) {
+          // Hover over the video element to make the dropdown trigger visible
+          await targetVideoElement.hover();
+        }
         
         // Wait for the dropdown trigger to become visible and clickable
         await expect(contentDropdownTrigger).toBeVisible();

@@ -114,11 +114,22 @@ export class VideoHelpers {
   }
 
   /**
+   * Check if we're currently on a video page (where dropdowns are always visible)
+   */
+  private isVideoPage(): boolean {
+    const currentUrl = this.page.url();
+    // Video page patterns: /video/[id] or /playlist/[shortId]/video/[videoId]
+    return /\/video\/[^/]+(?:\/.*)?$/.test(currentUrl);
+  }
+
+  /**
    * Open content dropdown for a video card
    */
   async openContentDropdown(videoCard: Locator): Promise<Locator | null> {
-    // Hover over the video card first to make the dropdown trigger visible
-    await videoCard.hover();
+    // Only hover for content cards, not for video pages where dropdown is always visible
+    if (!this.isVideoPage()) {
+      await videoCard.hover();
+    }
     
     const dropdownTrigger = videoCard
       .locator('button[aria-haspopup]')
