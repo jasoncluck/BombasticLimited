@@ -170,6 +170,7 @@ function createPlaylistHelpers(
 
         // Search for the video element with the specific data-video-id
         const videoElement = page.locator(`[data-video-id="${videoId}"]`);
+                await videoElement.waitFor()
 
         try {
           // Check if the video element exists and is visible
