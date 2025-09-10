@@ -118,7 +118,9 @@ playlistTest.describe('Playlist Operations', () => {
         await removeOption.click();
 
         // Verify video was removed
-        await playlistHelpers.verifyVideoNotInPlaylist(playlistId, videoId!);
+        if (videoId) {
+          await playlistHelpers.verifyVideoNotInPlaylist(playlistId, videoId);
+        }
       }
     );
   });

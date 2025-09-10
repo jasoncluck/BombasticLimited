@@ -1,4 +1,9 @@
-import { test as base, expect, type Page, type Locator } from '@playwright/test';
+import {
+  test as base,
+  expect,
+  type Page,
+  type Locator,
+} from '@playwright/test';
 import { authenticatedTest } from './auth-fixtures';
 
 export interface PlaylistData {
@@ -40,8 +45,14 @@ export interface PlaylistHelpers {
   navigateToPlaylistPage(playlistId: string): Promise<void>;
   extractVideoIdFromCurrentUrl(): Promise<string>;
   extractVideoIdFromUrl(url: string): string;
-  addVideoToPlaylistViaDropdown(playlistId: string, videoElement?: Locator): Promise<void>;
-  openAndSelectPlaylist(playlistId: string, videoElement?: Locator): Promise<void>;
+  addVideoToPlaylistViaDropdown(
+    playlistId: string,
+    videoElement?: Locator
+  ): Promise<void>;
+  openAndSelectPlaylist(
+    playlistId: string,
+    videoElement?: Locator
+  ): Promise<void>;
   waitForSuccessFeedback(): Promise<void>;
   cleanup(): Promise<void>;
 }
@@ -138,7 +149,7 @@ function createPlaylistHelpers(
 
       // Wait for the playlist page to load with proper URL pattern matching
       const playlistUrlPattern = new RegExp(
-        `.*\/playlist\/${playlistId}(?:\/.*)?$`
+        `.*/playlist/${playlistId}(?:/.*)?$`
       );
       await expect(page).toHaveURL(playlistUrlPattern, { timeout: 10000 });
 
@@ -160,7 +171,7 @@ function createPlaylistHelpers(
 
         // Double-check we're on the correct playlist page
         const playlistUrlPattern = new RegExp(
-          `.*\/playlist\/${playlistId}(?:\/.*)?$`
+          `.*/playlist/${playlistId}(?:/.*)?$`
         );
         await expect(page).toHaveURL(playlistUrlPattern, { timeout: 5000 });
 
@@ -170,7 +181,7 @@ function createPlaylistHelpers(
 
         // Search for the video element with the specific data-video-id
         const videoElement = page.locator(`[data-video-id="${videoId}"]`);
-                await videoElement.waitFor()
+        await videoElement.waitFor();
 
         try {
           // Check if the video element exists and is visible
@@ -255,14 +266,21 @@ function createPlaylistHelpers(
       return this.extractVideoIdFromUrl(currentUrl);
     },
 
-    async openAndSelectPlaylist(playlistId: string, videoElement?: Locator): Promise<void> {
+    async openAndSelectPlaylist(
+      playlistId: string,
+      videoElement?: Locator
+    ): Promise<void> {
       try {
         // Click the content dropdown trigger - scoped to specific video if provided
         let contentDropdownTrigger;
         if (videoElement) {
-          contentDropdownTrigger = videoElement.getByTestId('content-dropdown-trigger');
+          contentDropdownTrigger = videoElement.getByTestId(
+            'content-dropdown-trigger'
+          );
         } else {
-          contentDropdownTrigger = page.getByTestId('content-dropdown-trigger').first();
+          contentDropdownTrigger = page
+            .getByTestId('content-dropdown-trigger')
+            .first();
         }
         await expect(contentDropdownTrigger).toBeVisible();
         await contentDropdownTrigger.click();
@@ -399,7 +417,10 @@ function createPlaylistHelpers(
       }
     },
 
-    async addVideoToPlaylistViaDropdown(playlistId: string, videoElement?: Locator): Promise<void> {
+    async addVideoToPlaylistViaDropdown(
+      playlistId: string,
+      videoElement?: Locator
+    ): Promise<void> {
       await this.openAndSelectPlaylist(playlistId, videoElement);
     },
 
