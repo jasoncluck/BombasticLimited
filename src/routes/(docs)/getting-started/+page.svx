@@ -56,6 +56,22 @@ Account settings can be found by clicking on your avatar in the upper right corn
 
 If you delete your account, all data associated with the account, including playlists created by the account, will be deleted.
 
+
+### Card and Table views
+
+Bombastic supports two distinct views that can be switched between at any time by clicking the Card or Table icon in the upper right of the navigation bar to toggle between the two. The Table view is only avaiable to users with accounts or users with smaller screens since. The Card view is the default and provides a larger video thumbail making it easier to browse videos. It does not support selecting multiple videos and if adding videos to a playlist they must be selected 1 by 1. 
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/card-view.png" width="750px" alt="Screenshot of using the Card view" />
+</div>
+
+Table view addresses this and supports selecting multiple videos, or rows, and thus requires a double click to start playing a video. There is also a Play button column on the left of each row which can be clicked once to view the video. Selecting multiple videos can be done by holding down the Ctrl to select non-adjadcent rows and Shift to select all inclusive rows which is the normal behavior in most applications. Multiple rows can be dragged and dropped along and right-clicked just like a single video.Tthere is also a dropdown in the heading section that can also be used for multi-selection actions.
+
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/table-view.png" width="750px" alt="Screenshot of using the Table view with multiple items selected using Shift and Ctrl" />
+</div>
+
 ### Search Functionality
 Searching for videos or playlists can be done using the input in the top navigation bar. Searches will return results from both video and playlist titles and descriptions. Search result links can be copied and sent to others.  
 
