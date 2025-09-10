@@ -30,6 +30,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         const videoId = await firstVideo
           .locator('[data-testid="content-item"]')
           .getAttribute('data-video-id');
+
         await playlistHelpers.addVideoToPlaylistViaDropdown(
           playlistId,
           firstVideo
@@ -56,9 +57,9 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
 
         // Actually watch the video to generate a timestamp (15+ seconds required)
         const videoHelpers = new VideoHelpers(playlistPage);
-        await videoHelpers.watchVideoToGenerateTimestamp({ 
-          method: 'scrub', 
-          scrubToSeconds: 20 
+        await videoHelpers.watchVideoToGenerateTimestamp({
+          method: 'scrub',
+          scrubToSeconds: 20,
         });
 
         // Go back to homepage to check continue watching
@@ -93,10 +94,9 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
 
         // Add second video to playlist
         const secondVideo = playlistPage.getByTestId('carousel-item').nth(1);
-        const secondVideoId = await secondVideo
+        await secondVideo
           .locator('[data-testid="content-item"]')
           .getAttribute('data-video-id');
-        await secondVideo.click();
         await playlistHelpers.addVideoToPlaylistViaDropdown(
           playlistId,
           secondVideo
@@ -117,12 +117,12 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         await expect(playlistPage).toHaveURL(/\/playlist\/.*\/video\//, {
           timeout: 10000,
         });
-        
+
         // Actually watch the video to generate a timestamp
         const videoHelpers = new VideoHelpers(playlistPage);
-        await videoHelpers.watchVideoToGenerateTimestamp({ 
-          method: 'scrub', 
-          scrubToSeconds: 25 
+        await videoHelpers.watchVideoToGenerateTimestamp({
+          method: 'scrub',
+          scrubToSeconds: 25,
         });
 
         // Go back to homepage and check continue watching
@@ -179,7 +179,6 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
             .getAttribute('data-video-id');
           videoIds.push(videoId);
 
-          await video.click();
           await playlistHelpers.addVideoToPlaylistViaDropdown(
             playlistId,
             video
@@ -238,7 +237,6 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         const videos = await playlistPage.getByTestId('carousel-item').all();
         for (let i = 0; i < Math.min(3, videos.length); i++) {
           const video = videos[i];
-          await video.click();
           await playlistHelpers.addVideoToPlaylistViaDropdown(
             playlistId,
             video
@@ -313,12 +311,12 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         await expect(playlistPage).toHaveURL(/\/playlist\/.*\/video\//, {
           timeout: 10000,
         });
-        
+
         // Actually watch the video to generate a timestamp
         const videoHelpers = new VideoHelpers(playlistPage);
-        await videoHelpers.watchVideoToGenerateTimestamp({ 
-          method: 'scrub', 
-          scrubToSeconds: 30 
+        await videoHelpers.watchVideoToGenerateTimestamp({
+          method: 'scrub',
+          scrubToSeconds: 30,
         });
 
         // Go to homepage and check continue watching
@@ -353,4 +351,3 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
     );
   });
 });
-

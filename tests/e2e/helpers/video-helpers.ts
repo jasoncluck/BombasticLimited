@@ -130,7 +130,7 @@ export class VideoHelpers {
     if (!this.isVideoPage()) {
       await videoCard.hover();
     }
-    
+
     const dropdownTrigger = videoCard
       .locator('button[aria-haspopup]')
       .or(
@@ -224,21 +224,25 @@ export class VideoHelpers {
   ): Promise<Locator> {
     // First check which view mode we're in and get the appropriate elements
     const currentMode = await this.getCurrentViewMode();
-    
+
     let videoItems: Locator;
-    
+
     if (currentMode === 'table') {
       // In table mode, look for table rows
-      videoItems = this.page.locator('tr[data-testid*="video"], tbody tr').filter({ hasText: /.+/ });
+      videoItems = this.page
+        .locator('tr[data-testid*="video"], tbody tr')
+        .filter({ hasText: /.+/ });
     } else {
       // In card/carousel mode, use carousel items
       videoItems = this.page.getByTestId('carousel-item');
     }
-    
+
     const itemCount = await videoItems.count();
 
     if (indices.some((i) => i >= itemCount)) {
-      throw new Error(`Video index out of range. Requested: ${indices}, Available: ${itemCount}`);
+      throw new Error(
+        `Video index out of range. Requested: ${indices}, Available: ${itemCount}`
+      );
     }
 
     if (useShift && indices.length === 2) {
@@ -265,8 +269,14 @@ export class VideoHelpers {
   async getSelectionIndicators(): Promise<Locator> {
     // Check for various selection indicators that might be used in different view modes
     const selectionIndicators = this.page
-      .locator('.selected, [data-selected="true"], [aria-selected="true"], .bg-primary, .bg-accent')
-      .or(this.page.locator('tr.selected, tr[data-selected="true"], tr[aria-selected="true"]'))
+      .locator(
+        '.selected, [data-selected="true"], [aria-selected="true"], .bg-primary, .bg-accent'
+      )
+      .or(
+        this.page.locator(
+          'tr.selected, tr[data-selected="true"], tr[aria-selected="true"]'
+        )
+      )
       .or(this.page.locator('[class*="selected"], [class*="highlight"]'));
 
     return selectionIndicators;
@@ -297,14 +307,16 @@ export class VideoHelpers {
   async switchToCardView(): Promise<void> {
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
-    
+
     // Check if the preferences dropdown is available (authenticated + desktop)
     if (await userPreferences.isVisible({ timeout: 3000 })) {
       await userPreferences.click();
-      
+
       // Look for the Card option in the dropdown
-      const cardOption = this.page.locator('[role="menuitem"]').filter({ hasText: /Card/i });
-      
+      const cardOption = this.page
+        .locator('[role="menuitem"]')
+        .filter({ hasText: /Card/i });
+
       if (await cardOption.isVisible({ timeout: 3000 })) {
         await cardOption.click();
         // Wait for the view to change
@@ -324,14 +336,16 @@ export class VideoHelpers {
   async switchToTableView(): Promise<void> {
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
-    
+
     // Check if the preferences dropdown is available (authenticated + desktop)
     if (await userPreferences.isVisible({ timeout: 3000 })) {
       await userPreferences.click();
-      
+
       // Look for the Table option in the dropdown
-      const tableOption = this.page.locator('[role="menuitem"]').filter({ hasText: /Table/i });
-      
+      const tableOption = this.page
+        .locator('[role="menuitem"]')
+        .filter({ hasText: /Table/i });
+
       if (await tableOption.isVisible({ timeout: 3000 })) {
         await tableOption.click();
         // Wait for the view to change
@@ -350,26 +364,32 @@ export class VideoHelpers {
    */
   async getCurrentViewMode(): Promise<ViewMode> {
     const userPreferences = this.page.getByTestId('user-preferences');
-    
+
     if (await userPreferences.isVisible({ timeout: 3000 })) {
       // Check the icon content to determine current mode
       const iconElement = userPreferences.locator('svg').first();
-      
+
       if (await iconElement.isVisible()) {
         // Check for GalleryHorizontal icon (indicates card mode is active)
-        const hasGalleryIcon = await userPreferences.locator('svg[class*="lucide-gallery"]').isVisible().catch(() => false);
+        const hasGalleryIcon = await userPreferences
+          .locator('svg[class*="lucide-gallery"]')
+          .isVisible()
+          .catch(() => false);
         if (hasGalleryIcon) {
           return 'card';
         }
-        
+
         // Check for Table icon (indicates table mode is active)
-        const hasTableIcon = await userPreferences.locator('svg[class*="lucide-table"]').isVisible().catch(() => false);
+        const hasTableIcon = await userPreferences
+          .locator('svg[class*="lucide-table"]')
+          .isVisible()
+          .catch(() => false);
         if (hasTableIcon) {
           return 'table';
         }
       }
     }
-    
+
     return 'unknown';
   }
 
@@ -379,13 +399,13 @@ export class VideoHelpers {
   async switchViewMode(): Promise<ViewMode> {
     const currentMode = await this.getCurrentViewMode();
     const targetMode = currentMode === 'card' ? 'table' : 'card';
-    
+
     if (targetMode === 'card') {
       await this.switchToCardView();
     } else {
       await this.switchToTableView();
     }
-    
+
     return targetMode;
   }
 
@@ -396,11 +416,11 @@ export class VideoHelpers {
     const videoCards = this.page.getByTestId('carousel-item');
     const count = await videoCards.count();
     const cards = [];
-    
+
     for (let i = 0; i < count; i++) {
       cards.push(videoCards.nth(i));
     }
-    
+
     return cards;
   }
 
@@ -409,36 +429,40 @@ export class VideoHelpers {
    * This method clicks on the YouTube iframe to start playback and either waits
    * or scrubs the timeline to ensure a timestamp is saved
    */
-  async watchVideoToGenerateTimestamp(options: { 
-    method?: 'wait' | 'scrub',
-    waitSeconds?: number,
-    scrubToSeconds?: number 
-  } = {}): Promise<void> {
+  async watchVideoToGenerateTimestamp(
+    options: {
+      method?: 'wait' | 'scrub';
+      waitSeconds?: number;
+      scrubToSeconds?: number;
+    } = {}
+  ): Promise<void> {
     const { method = 'scrub', waitSeconds = 16, scrubToSeconds = 20 } = options;
-    
+
     // Wait for the iframe to be visible
     const iframe = this.page.locator('iframe').first();
-    await expect(iframe).toBeVisible({ timeout: 10000 });
-    
+    await iframe.waitFor({ state: 'visible' });
+
     // Click on the iframe to start video playback
     await iframe.click({ position: { x: 100, y: 100 } });
-    
+
     // Wait a moment for the click to register
     await this.page.waitForTimeout(2000);
-    
+
     if (method === 'scrub') {
       // Scrub to a specific timestamp by clicking on the progress bar
       await this.scrubYouTubePlayer(scrubToSeconds);
     } else {
       // Wait for the specified number of seconds to accumulate watch time
-      console.log(`Waiting ${waitSeconds} seconds for video to generate timestamp...`);
+      console.log(
+        `Waiting ${waitSeconds} seconds for video to generate timestamp...`
+      );
       await this.page.waitForTimeout(waitSeconds * 1000);
     }
-    
+
     // Give a small buffer for timestamp processing
     await this.page.waitForTimeout(1000);
   }
-  
+
   /**
    * Scrub YouTube player to a specific timestamp by clicking on the progress bar
    */
@@ -447,59 +471,180 @@ export class VideoHelpers {
       // Switch to iframe context to interact with YouTube player
       const iframe = this.page.locator('iframe').first();
       const frame = await iframe.contentFrame();
-      
+
       if (!frame) {
-        console.warn('Could not access YouTube iframe content, falling back to wait method');
+        console.warn(
+          'Could not access YouTube iframe content, falling back to wait method'
+        );
         await this.page.waitForTimeout(16000); // Fall back to waiting 16 seconds
         return;
       }
-      
+
       // Wait for YouTube player UI to load
       await this.page.waitForTimeout(3000);
-      
+
+      // First, try to play the video if it's not already playing
+      try {
+        // Look for the play button (YouTube uses various selectors)
+        const playButton = frame
+          .locator(
+            '.ytp-play-button, .ytp-large-play-button, [aria-label*="Play"], [title*="Play"], .html5-video-player .ytp-play-button'
+          )
+          .first();
+
+        // Check if video is paused by looking for play button or paused state
+        const isPaused =
+          (await frame
+            .locator(
+              '.html5-video-player.paused-mode, .ytp-play-button[aria-label*="Play"]'
+            )
+            .count()) > 0;
+
+        if (isPaused && (await playButton.isVisible({ timeout: 2000 }))) {
+          console.log('Video is paused, clicking play button');
+          await playButton.click();
+
+          // Wait a moment for the video to start playing
+          await this.page.waitForTimeout(1000);
+        } else {
+          console.log(
+            'Video appears to be already playing or play button not found'
+          );
+        }
+      } catch (playError) {
+        console.warn('Could not interact with play button:', playError);
+        // Continue with scrubbing attempt even if play failed
+      }
+
+      // Wait a bit more to ensure video is playing and UI is ready
+      await this.page.waitForTimeout(2000);
+
       // Look for the progress bar (YouTube uses various selectors)
-      const progressBar = frame.locator('.ytp-progress-bar, .html5-progress-bar, [role="slider"]').first();
-      
+      const progressBar = frame
+        .locator(
+          '.ytp-progress-bar, .html5-progress-bar, [role="slider"], .ytp-progress-bar-container'
+        )
+        .first();
+
       if (await progressBar.isVisible({ timeout: 5000 })) {
+        // Try to get video duration to calculate more accurate scrub position
+        let videoDuration = 0;
+        try {
+          // Try to get duration from YouTube player API or DOM
+          const durationElement = frame.locator(
+            '.ytp-time-duration, .html5-video-duration'
+          );
+          if (await durationElement.isVisible({ timeout: 2000 })) {
+            const durationText = await durationElement.textContent();
+            if (durationText) {
+              // Parse duration (format: "MM:SS" or "HH:MM:SS")
+              const timeParts = durationText.trim().split(':').map(Number);
+              if (timeParts.length === 2) {
+                videoDuration = timeParts[0] * 60 + timeParts[1]; // MM:SS
+              } else if (timeParts.length === 3) {
+                videoDuration =
+                  timeParts[0] * 3600 + timeParts[1] * 60 + timeParts[2]; // HH:MM:SS
+              }
+            }
+          }
+        } catch (durationError) {
+          console.warn('Could not determine video duration:', durationError);
+        }
+
         // Get the width of the progress bar
         const progressBarBox = await progressBar.boundingBox();
-        
+
         if (progressBarBox) {
-          // Calculate click position based on target time (assuming this is roughly proportional)
-          // This is a heuristic - clicking at ~20% of the progress bar should get us past 15 seconds
-          const clickX = progressBarBox.x + (progressBarBox.width * 0.2);
-          const clickY = progressBarBox.y + (progressBarBox.height / 2);
-          
+          let scrubPosition = 0.2; // Default to 20% if we can't calculate
+
+          // Calculate more accurate position if we have duration
+          if (videoDuration > 0) {
+            scrubPosition = Math.min(targetSeconds / videoDuration, 0.95); // Cap at 95% to avoid end of video
+            console.log(
+              `Calculated scrub position: ${scrubPosition * 100}% (${targetSeconds}s of ${videoDuration}s)`
+            );
+          } else {
+            console.log(
+              `Using default scrub position: ${scrubPosition * 100}%`
+            );
+          }
+
+          // Calculate click position
+          const clickX =
+            progressBarBox.x + progressBarBox.width * scrubPosition;
+          const clickY = progressBarBox.y + progressBarBox.height / 2;
+
           // Click on the progress bar to scrub to that position
-          await progressBar.click({ 
-            position: { x: clickX - progressBarBox.x, y: clickY - progressBarBox.y } 
+          await progressBar.click({
+            position: {
+              x: clickX - progressBarBox.x,
+              y: clickY - progressBarBox.y,
+            },
           });
-          
-          console.log(`Scrubbed YouTube player to approximate ${targetSeconds}s timestamp`);
+
+          console.log(
+            `Scrubbed YouTube player to approximate ${targetSeconds}s timestamp`
+          );
+
+          // Wait for the scrub to take effect
+          await this.page.waitForTimeout(1000);
+
+          // Verify the video is still playing after scrub
+          try {
+            const isStillPaused =
+              (await frame
+                .locator(
+                  '.html5-video-player.paused-mode, .ytp-play-button[aria-label*="Play"]'
+                )
+                .count()) > 0;
+            if (isStillPaused) {
+              console.log(
+                'Video paused after scrub, attempting to resume playback'
+              );
+              const playButtonAfterScrub = frame
+                .locator('.ytp-play-button')
+                .first();
+              if (await playButtonAfterScrub.isVisible({ timeout: 1000 })) {
+                await playButtonAfterScrub.click();
+              }
+            }
+          } catch (resumeError) {
+            console.warn(
+              'Could not verify/resume playback after scrub:',
+              resumeError
+            );
+          }
         } else {
-          console.warn('Could not get progress bar dimensions, falling back to wait method');
+          console.warn(
+            'Could not get progress bar dimensions, falling back to wait method'
+          );
           await this.page.waitForTimeout(16000);
         }
       } else {
-        console.warn('Could not find YouTube progress bar, falling back to wait method');
+        console.warn(
+          'Could not find YouTube progress bar, falling back to wait method'
+        );
         await this.page.waitForTimeout(16000);
       }
     } catch (error) {
-      console.warn('YouTube player scrubbing failed, falling back to wait method:', error);
+      console.warn(
+        'YouTube player scrubbing failed, falling back to wait method:',
+        error
+      );
       await this.page.waitForTimeout(16000); // Fall back to waiting 16 seconds
     }
   }
-  
+
   /**
    * Start video playback by clicking the YouTube player
    */
   async startVideoPlayback(): Promise<void> {
     const iframe = this.page.locator('iframe').first();
     await expect(iframe).toBeVisible({ timeout: 10000 });
-    
+
     // Click in the center of the iframe to start playback
     await iframe.click({ position: { x: 200, y: 150 } });
-    
+
     // Wait for playback to start
     await this.page.waitForTimeout(2000);
   }

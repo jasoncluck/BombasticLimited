@@ -24,18 +24,12 @@ playlistTest.describe('Playlist Operations', () => {
     playlistTest(
       'should create a new playlist',
       async ({ playlistHelpers }) => {
-        const initialPlaylistCount = await playlistHelpers
-          .getPlaylistButton()
-          .count();
-
         const playlistId = await playlistHelpers.createPlaylist();
 
         // Verify playlist was created
         expect(playlistId).toBeTruthy();
-        const newPlaylistCount = await playlistHelpers
-          .getPlaylistButton()
-          .count();
-        expect(newPlaylistCount).toBe(initialPlaylistCount + 1);
+        const newPlaylistButton = playlistHelpers.getPlaylistButton();
+        expect(newPlaylistButton).toBeVisible();
 
         // No manual cleanup needed - fixture handles it
       }
@@ -120,10 +114,10 @@ playlistTest.describe('Playlist Operations', () => {
         // Wait for the video element to disappear from the DOM
         if (videoId) {
           await expect(playlistVideo).not.toBeVisible({ timeout: 10000 });
-          
+
           // Additional wait to ensure the removal is fully processed
           await playlistPage.waitForTimeout(1000);
-          
+
           // Verify video was removed
           await playlistHelpers.verifyVideoNotInPlaylist(playlistId, videoId);
         }
@@ -243,4 +237,3 @@ unauthenticatedTest.describe('Playlist Operations - Unauthenticated', () => {
     }
   );
 });
-

@@ -1,66 +1,7 @@
-import {
-  test as base,
-  expect,
-  type Page,
-  type Locator,
-} from '@playwright/test';
+import { expect, type Page, type Locator } from '@playwright/test';
 import { authenticatedTest } from './auth-fixtures';
 
-export interface PlaylistData {
-  id: string;
-  name: string;
-  videoCount: number;
-  createdAt: Date;
-}
-
-export interface VideoData {
-  id: string;
-  title: string;
-  duration: number;
-  url: string;
-}
-
-export interface PlaylistTestContext {
-  playlistId: string;
-  playlistName: string;
-  videos: VideoData[];
-}
-
-export interface PlaylistFixtures {
-  playlistPage: Page;
-  playlistHelpers: PlaylistHelpers;
-  createdPlaylistIds: string[];
-}
-
-export interface PlaylistHelpers {
-  createPlaylist(name?: string): Promise<string>;
-  deletePlaylist(playlistId: string): Promise<void>;
-  getPlaylistButton(playlistId?: string): ReturnType<Page['locator']>;
-  openPlaylistContextMenu(playlistId?: string): Promise<void>;
-  verifyPlaylistExists(playlistId: string): Promise<void>;
-  verifyPlaylistDoesNotExist(playlistId: string): Promise<void>;
-  checkVideoInPlaylist(playlistId: string, videoId: string): Promise<boolean>;
-  verifyVideoInPlaylist(playlistId: string, videoId: string): Promise<void>;
-  verifyVideoNotInPlaylist(playlistId: string, videoId: string): Promise<void>;
-  navigateToPlaylistPage(playlistId: string): Promise<void>;
-  extractVideoIdFromCurrentUrl(): Promise<string>;
-  extractVideoIdFromUrl(url: string): string;
-  addVideoToPlaylistViaDropdown(
-    playlistId: string,
-    videoElement?: Locator
-  ): Promise<void>;
-  openAndSelectPlaylist(
-    playlistId: string,
-    videoElement?: Locator
-  ): Promise<void>;
-  waitForSuccessFeedback(): Promise<void>;
-  cleanup(): Promise<void>;
-}
-
-function createPlaylistHelpers(
-  page: Page,
-  createdPlaylistIds: string[]
-): PlaylistHelpers {
+function createPlaylistHelpers(page: Page, createdPlaylistIds: string[]) {
   return {
     async createPlaylist(name?: string): Promise<string> {
       const createPlaylistButton = page.getByTestId('create-playlist-button');
@@ -144,7 +85,7 @@ function createPlaylistHelpers(
 
     async navigateToPlaylistPage(playlistId: string): Promise<void> {
       const playlistButton = this.getPlaylistButton(playlistId);
-      await expect(playlistButton).toBeVisible();
+      await playlistButton.waitFor({ state: 'visible' });
       await playlistButton.click();
 
       // Wait for the playlist page to load with proper URL pattern matching
@@ -187,7 +128,7 @@ function createPlaylistHelpers(
           // Check if the video element exists and is visible
           await expect(videoElement).toBeVisible({ timeout: 10000 });
           return true;
-        } catch (error) {
+        } catch {
           // Video not found in playlist
           return false;
         }
@@ -274,12 +215,18 @@ function createPlaylistHelpers(
         // Click the content dropdown trigger - scoped to specific video if provided
         let contentDropdownTrigger;
         let targetVideoElement;
-        
+
+        // Only hover for content cards, not for video pages where dropdown is always visible
+        const currentUrl = page.url();
+        const isVideoPage = /\/video\/[^/]+(?:\/.*)?$/.test(currentUrl);
+
         if (videoElement) {
           contentDropdownTrigger = videoElement.getByTestId(
             'content-dropdown-trigger'
           );
           targetVideoElement = videoElement;
+        } else if (isVideoPage) {
+          contentDropdownTrigger = page.getByTestId('content-dropdown-trigger');
         } else {
           const firstVideoElement = page.getByTestId('carousel-item').first();
           contentDropdownTrigger = firstVideoElement.getByTestId(
@@ -287,16 +234,12 @@ function createPlaylistHelpers(
           );
           targetVideoElement = firstVideoElement;
         }
-        
-        // Only hover for content cards, not for video pages where dropdown is always visible
-        const currentUrl = page.url();
-        const isVideoPage = /\/video\/[^/]+(?:\/.*)?$/.test(currentUrl);
-        
-        if (!isVideoPage) {
+
+        if (!isVideoPage && targetVideoElement) {
           // Hover over the video element to make the dropdown trigger visible
           await targetVideoElement.hover();
         }
-        
+
         // Wait for the dropdown trigger to become visible and clickable
         await expect(contentDropdownTrigger).toBeVisible();
         await contentDropdownTrigger.click();
@@ -465,7 +408,11 @@ function createPlaylistHelpers(
 }
 
 // Playlist test that extends authenticated test
-export const playlistTest = authenticatedTest.extend<PlaylistFixtures>({
+export const playlistTest = authenticatedTest.extend<{
+  playlistPage: Page;
+  playlistHelpers: ReturnType<typeof createPlaylistHelpers>;
+  createdPlaylistIds: string[];
+}>({
   createdPlaylistIds: async ({}, use) => {
     const playlistIds: string[] = [];
     await use(playlistIds);

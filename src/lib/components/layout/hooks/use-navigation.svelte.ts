@@ -31,16 +31,9 @@ export function useNavigation(pageState: PageState) {
         }
       }
 
-      await tick();
-
       // Clear search query when navigating away from search
       if (to && !to.url.pathname.startsWith('/search/')) {
         navigationState.clearSearchQuery();
-      }
-
-      // Invalidate video cache when leaving video pages
-      if (from?.url.pathname.includes('/video')) {
-        invalidate('supabase:db:videos');
       }
     });
   }
