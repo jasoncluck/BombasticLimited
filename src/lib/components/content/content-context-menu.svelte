@@ -231,7 +231,9 @@
             }}
           >
             <CircleMinus class="dropdown-icon" />
-            Remove from playlist
+            Remove {operationVideos.length === 1
+              ? ''
+              : `${operationVideos.length} videos`} from playlist
           </ContextMenu.Item>
         {/if}
 

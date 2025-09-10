@@ -111,7 +111,9 @@ playlistTest.describe('Playlist Operations', () => {
 
         // Right-click and remove
         await playlistVideo.click({ button: 'right' });
-        const removeOption = playlistPage.getByText('Remove from playlist');
+        const removeOption = playlistPage.getByText(
+          'Remove vidoe from playlist'
+        );
         await expect(removeOption).toBeVisible();
         await removeOption.click();
 

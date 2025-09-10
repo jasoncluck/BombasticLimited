@@ -401,7 +401,9 @@
             <div class="flex items-center gap-2">
               <CircleMinus class="dropdown-icon" />
 
-              Remove from playlist
+              Remove {frozenOperationVideos.length === 1
+                ? 'video'
+                : `${frozenOperationVideos.length} videos`} from playlist
             </div>
           </DropdownMenu.Item>
         {/if}
