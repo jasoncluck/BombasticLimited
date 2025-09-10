@@ -21,22 +21,25 @@ playlistTest.describe('Playlist Operations', () => {
   });
 
   playlistTest.describe('Basic Playlist Operations', () => {
-    playlistTest('should create a new playlist', async ({ playlistHelpers }) => {
-      const initialPlaylistCount = await playlistHelpers
-        .getPlaylistButton()
-        .count();
+    playlistTest(
+      'should create a new playlist',
+      async ({ playlistHelpers }) => {
+        const initialPlaylistCount = await playlistHelpers
+          .getPlaylistButton()
+          .count();
 
-      const playlistId = await playlistHelpers.createPlaylist();
+        const playlistId = await playlistHelpers.createPlaylist();
 
-      // Verify playlist was created
-      expect(playlistId).toBeTruthy();
-      const newPlaylistCount = await playlistHelpers
-        .getPlaylistButton()
-        .count();
-      expect(newPlaylistCount).toBe(initialPlaylistCount + 1);
+        // Verify playlist was created
+        expect(playlistId).toBeTruthy();
+        const newPlaylistCount = await playlistHelpers
+          .getPlaylistButton()
+          .count();
+        expect(newPlaylistCount).toBe(initialPlaylistCount + 1);
 
-      // No manual cleanup needed - fixture handles it
-    });
+        // No manual cleanup needed - fixture handles it
+      }
+    );
 
     playlistTest('should delete a playlist', async ({ playlistHelpers }) => {
       // Create a playlist first
@@ -51,150 +54,183 @@ playlistTest.describe('Playlist Operations', () => {
       expect(finalCount).toBe(initialCount - 1);
     });
 
-    playlistTest('should add a video to playlist via context menu', async ({ 
-      playlistHelpers, 
-      playlistPage 
-    }) => {
-      // Create a playlist first
-      const playlistId = await playlistHelpers.createPlaylist();
+    playlistTest(
+      'should add a video to playlist via context menu',
+      async ({ playlistHelpers, playlistPage }) => {
+        // Create a playlist first
+        const playlistId = await playlistHelpers.createPlaylist();
 
-      // Get the first video from the homepage
-      const firstVideo = playlistPage.getByTestId('carousel-item').first();
-      await expect(firstVideo).toBeVisible();
+        // Get the first video from the homepage
+        const firstVideo = playlistPage.getByTestId('carousel-item').first();
+        await expect(firstVideo).toBeVisible();
 
-      // Get video ID for verification
-      const videoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      expect(videoId).toBeTruthy();
+        // Get video ID for verification
+        const videoId = await firstVideo
+          .locator('[data-testid="content-item"]')
+          .getAttribute('data-video-id');
+        expect(videoId).toBeTruthy();
 
-      // Add video to playlist
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
+        // Add video to playlist
+        await playlistHelpers.addVideoToPlaylistViaDropdown(
+          playlistId,
+          firstVideo
+        );
 
-      // Verify video was added to playlist
-      await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
-    });
+        // Verify video was added to playlist
+        await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
+      }
+    );
 
-    playlistTest('should remove a video from playlist', async ({ 
-      playlistHelpers, 
-      playlistPage 
-    }) => {
-      // Create a playlist first
-      const playlistId = await playlistHelpers.createPlaylist();
-      
-      // Get the first video and add it to playlist
-      const firstVideo = playlistPage.getByTestId('carousel-item').first();
-      const videoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      await playlistHelpers.addVideoToPlaylistViaDropdown(playlistId, firstVideo);
-      
-      // Verify video was added
-      await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
-      
-      // Navigate to playlist page
-      await playlistHelpers.navigateToPlaylistPage(playlistId);
-      
-      // Remove the video from playlist
-      const playlistVideo = playlistPage.locator(`[data-video-id="${videoId}"]`).first();
-      await expect(playlistVideo).toBeVisible();
-      
-      // Right-click and remove
-      await playlistVideo.click({ button: 'right' });
-      const removeOption = playlistPage.getByText('Remove from Playlist');
-      await expect(removeOption).toBeVisible();
-      await removeOption.click();
-      
-      // Verify video was removed
-      await playlistHelpers.verifyVideoNotInPlaylist(playlistId, videoId!);
-    });
+    playlistTest(
+      'should remove a video from playlist',
+      async ({ playlistHelpers, playlistPage }) => {
+        // Create a playlist first
+        const playlistId = await playlistHelpers.createPlaylist();
+
+        // Get the first video and add it to playlist
+        const firstVideo = playlistPage.getByTestId('carousel-item').first();
+        const videoId = await firstVideo
+          .locator('[data-testid="content-item"]')
+          .getAttribute('data-video-id');
+        await playlistHelpers.addVideoToPlaylistViaDropdown(
+          playlistId,
+          firstVideo
+        );
+
+        // Verify video was added
+        await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
+
+        // Navigate to playlist page
+        await playlistHelpers.navigateToPlaylistPage(playlistId);
+
+        // Remove the video from playlist
+        const playlistVideo = playlistPage
+          .locator(`[data-video-id="${videoId}"]`)
+          .first();
+        await expect(playlistVideo).toBeVisible();
+
+        // Right-click and remove
+        await playlistVideo.click({ button: 'right' });
+        const removeOption = playlistPage.getByText('Remove from playlist');
+        await expect(removeOption).toBeVisible();
+        await removeOption.click();
+
+        // Verify video was removed
+        await playlistHelpers.verifyVideoNotInPlaylist(playlistId, videoId!);
+      }
+    );
   });
 
   playlistTest.describe('Video to Playlist Drag and Drop', () => {
-    playlistTest('should drag video from homepage to playlist', async ({ 
-      playlistHelpers, 
-      playlistPage 
-    }) => {
-      // Create a playlist first
-      const playlistId = await playlistHelpers.createPlaylist();
-      
-      // Get the first video from homepage
-      const firstVideo = playlistPage.getByTestId('carousel-item').first();
-      const videoId = await firstVideo.locator('[data-testid="content-item"]').getAttribute('data-video-id');
-      
-      // Get the playlist button for drag target
-      const playlistButton = playlistHelpers.getPlaylistButton(playlistId);
-      
-      // Perform drag and drop
-      await firstVideo.dragTo(playlistButton);
-      
-      // Wait for operation to complete
-      await playlistPage.waitForTimeout(1000);
-      
-      // Verify video was added to playlist
-      await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
-    });
+    playlistTest(
+      'should drag video from homepage to playlist',
+      async ({ playlistHelpers, playlistPage }) => {
+        // Create a playlist first
+        const playlistId = await playlistHelpers.createPlaylist();
+
+        // Get the first video from homepage
+        const firstVideo = playlistPage.getByTestId('carousel-item').first();
+        const videoId = await firstVideo
+          .locator('[data-testid="content-item"]')
+          .getAttribute('data-video-id');
+
+        // Get the playlist button for drag target
+        const playlistButton = playlistHelpers.getPlaylistButton(playlistId);
+
+        // Perform drag and drop
+        await firstVideo.dragTo(playlistButton);
+
+        // Wait for operation to complete
+        await playlistPage.waitForTimeout(1000);
+
+        // Verify video was added to playlist
+        await playlistHelpers.verifyVideoInPlaylist(playlistId, videoId!);
+      }
+    );
   });
 
   playlistTest.describe('Playlist Drag and Drop Reordering', () => {
-    playlistTest('should reorder playlists in sidebar', async ({ playlistHelpers }) => {
-      // Create two playlists
-      const playlistId1 = await playlistHelpers.createPlaylist();
-      const playlistId2 = await playlistHelpers.createPlaylist();
-      
-      // Get initial order
-      const initialFirst = playlistHelpers.getPlaylistButton(playlistId1);
-      const initialSecond = playlistHelpers.getPlaylistButton(playlistId2);
-      
-      // Verify initial order
-      await expect(initialFirst).toBeVisible();
-      await expect(initialSecond).toBeVisible();
-      
-      // Perform drag and drop to reorder
-      await initialFirst.dragTo(initialSecond);
-      
-      // Wait for reorder operation
-      await playlistHelpers.getPlaylistButton().first().waitFor();
-      
-      // The playlists should still be visible (order verification would need more complex logic)
-      await expect(playlistHelpers.getPlaylistButton(playlistId1)).toBeVisible();
-      await expect(playlistHelpers.getPlaylistButton(playlistId2)).toBeVisible();
-    });
+    playlistTest(
+      'should reorder playlists in sidebar',
+      async ({ playlistHelpers }) => {
+        // Create two playlists
+        const playlistId1 = await playlistHelpers.createPlaylist();
+        const playlistId2 = await playlistHelpers.createPlaylist();
+
+        // Get initial order
+        const initialFirst = playlistHelpers.getPlaylistButton(playlistId1);
+        const initialSecond = playlistHelpers.getPlaylistButton(playlistId2);
+
+        // Verify initial order
+        await expect(initialFirst).toBeVisible();
+        await expect(initialSecond).toBeVisible();
+
+        // Perform drag and drop to reorder
+        await initialFirst.dragTo(initialSecond);
+
+        // Wait for reorder operation
+        await playlistHelpers.getPlaylistButton().first().waitFor();
+
+        // The playlists should still be visible (order verification would need more complex logic)
+        await expect(
+          playlistHelpers.getPlaylistButton(playlistId1)
+        ).toBeVisible();
+        await expect(
+          playlistHelpers.getPlaylistButton(playlistId2)
+        ).toBeVisible();
+      }
+    );
   });
 });
 
 // Test for unauthenticated users
 unauthenticatedTest.describe('Playlist Operations - Unauthenticated', () => {
-  unauthenticatedTest('should not show playlist creation options', async ({ 
-    unauthenticatedPage 
-  }) => {
-    await unauthenticatedPage.goto('/');
-    
-    // Verify create playlist button is not visible
-    const createPlaylistButton = unauthenticatedPage.getByTestId('create-playlist-button');
-    await expect(createPlaylistButton).not.toBeVisible();
-    
-    // Verify no playlist buttons are visible
-    const playlistButtons = unauthenticatedPage.getByTestId('playlist-button');
-    await expect(playlistButtons).toHaveCount(0);
-  });
-  
-  unauthenticatedTest('should not show add to playlist options in context menus', async ({ 
-    unauthenticatedPage 
-  }) => {
-    await unauthenticatedPage.goto('/');
-    
-    // Get first video
-    const firstVideo = unauthenticatedPage.getByTestId('carousel-item').first();
-    await expect(firstVideo).toBeVisible();
-    
-    // Try to open context menu
-    await firstVideo.click({ button: 'right' });
-    
-    // Check if context menu appears (might not for unauthenticated users)
-    const contextMenu = unauthenticatedPage.locator('[role="menu"][data-state="open"]');
-    const isContextMenuVisible = await contextMenu.isVisible().catch(() => false);
-    
-    if (isContextMenuVisible) {
-      // If context menu appears, verify no playlist options
-      const addToPlaylistOption = contextMenu.getByText(/playlist/i);
-      await expect(addToPlaylistOption).not.toBeVisible();
+  unauthenticatedTest(
+    'should not show playlist creation options',
+    async ({ unauthenticatedPage }) => {
+      await unauthenticatedPage.goto('/');
+
+      // Verify create playlist button is not visible
+      const createPlaylistButton = unauthenticatedPage.getByTestId(
+        'create-playlist-button'
+      );
+      await expect(createPlaylistButton).not.toBeVisible();
+
+      // Verify no playlist buttons are visible
+      const playlistButtons =
+        unauthenticatedPage.getByTestId('playlist-button');
+      await expect(playlistButtons).toHaveCount(0);
     }
-  });
+  );
+
+  unauthenticatedTest(
+    'should not show add to playlist options in context menus',
+    async ({ unauthenticatedPage }) => {
+      await unauthenticatedPage.goto('/');
+
+      // Get first video
+      const firstVideo = unauthenticatedPage
+        .getByTestId('carousel-item')
+        .first();
+      await expect(firstVideo).toBeVisible();
+
+      // Try to open context menu
+      await firstVideo.click({ button: 'right' });
+
+      // Check if context menu appears (might not for unauthenticated users)
+      const contextMenu = unauthenticatedPage.locator(
+        '[role="menu"][data-state="open"]'
+      );
+      const isContextMenuVisible = await contextMenu
+        .isVisible()
+        .catch(() => false);
+
+      if (isContextMenuVisible) {
+        // If context menu appears, verify no playlist options
+        const addToPlaylistOption = contextMenu.getByText(/playlist/i);
+        await expect(addToPlaylistOption).not.toBeVisible();
+      }
+    }
+  );
 });
+
