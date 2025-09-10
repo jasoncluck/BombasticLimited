@@ -72,6 +72,11 @@ export interface SidebarState {
   // Configuration
   config: SidebarConfig;
 
+  // Context update method
+  updateContext: (updates: {
+    preferredImageFormat?: ImageFormat | null;
+  }) => void;
+
   // Sidebar methods (from layout)
   setSidebarCollapsed: (collapsed: boolean) => void;
   toggleSidebar: () => void;
@@ -179,7 +184,7 @@ export class SidebarStateClass implements SidebarState {
   collapsed = $state(false);
   openAccountDrawer = $state(false);
 
-  // Preferred image format from layout
+  // Preferred image format - now properly reactive
   preferredImageFormat = $state<ImageFormat | null>(null);
 
   // Derived values for easier access
@@ -207,12 +212,20 @@ export class SidebarStateClass implements SidebarState {
     searchDebounceMs: 250,
   });
 
-  constructor(preferredImageFormat: ImageFormat) {
-    this.preferredImageFormat = preferredImageFormat;
+  constructor() {
     // Initialize sidebar state from cookie on construction
     this.loadStateFromCookie();
     // Also initialize sidebar collapsed state from localStorage (from layout pattern)
     this.loadSidebarStateFromLocalStorage();
+  }
+
+  /**
+   * Update context (called by parent components)
+   */
+  updateContext(updates: { preferredImageFormat?: ImageFormat | null }): void {
+    if (updates.preferredImageFormat !== undefined) {
+      this.preferredImageFormat = updates.preferredImageFormat;
+    }
   }
 
   /**
@@ -710,14 +723,17 @@ export class SidebarStateClass implements SidebarState {
 
 const DEFAULT_KEY = '$_sidebar_state';
 
-export function setSidebarState(
-  preferredImageFormat: ImageFormat,
-  key = DEFAULT_KEY
-): SidebarStateClass {
-  const sidebarState = new SidebarStateClass(preferredImageFormat);
+/**
+ * Set sidebar state in context
+ */
+export function setSidebarState(key = DEFAULT_KEY): SidebarStateClass {
+  const sidebarState = new SidebarStateClass();
   return setContext(key, sidebarState);
 }
 
+/**
+ * Get sidebar state from context
+ */
 export function getSidebarState(key = DEFAULT_KEY): SidebarState {
   return getContext<SidebarState>(key);
 }
