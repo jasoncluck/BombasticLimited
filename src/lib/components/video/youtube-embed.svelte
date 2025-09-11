@@ -19,6 +19,7 @@
     handleAddVideoTimestamp,
     createVideoWatchTimeTracker,
   } from './video-service';
+  import { getContentState } from '$lib/state/content.svelte';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -40,8 +41,45 @@
     playlist?: Playlist | null;
   } = $props();
 
+  // YouTube Player types
+  interface YouTubePlayer {
+    seekTo: (seconds: number) => void;
+    getCurrentTime: () => number;
+    getPlayerState: () => number;
+  }
+
+  interface YouTubePlayerEvent {
+    target: YouTubePlayer;
+  }
+
+  interface YouTubeStateChangeEvent {
+    data: number;
+    target: YouTubePlayer;
+  }
+
+  interface YouTubeAPI {
+    Player: new (
+      elementId: string,
+      config: {
+        videoId: string;
+        playerVars: Record<string, number | boolean>;
+        events: {
+          onReady: (event: YouTubePlayerEvent) => void;
+          onStateChange: (event: YouTubeStateChangeEvent) => void;
+        };
+      }
+    ) => YouTubePlayer;
+  }
+
+  interface WindowWithYouTube extends Window {
+    YT?: YouTubeAPI;
+  }
+
+  // Get content state for tracking pending operations
+  const contentState = getContentState();
+
   let startSeconds = $state(0);
-  let player = $state<any>();
+  let player = $state<YouTubePlayer | null>(null);
   let hasInitialSeekOccurred = $state(false);
 
   // Video history tracking
@@ -52,15 +90,8 @@
   // Track if the video is actually playing (not just the YouTube player state)
   let isActuallyPlaying = $state(false);
 
-  // Add a promise to track pending timestamp saves
-  let pendingTimestampSave = $state<Promise<void> | null>(null);
-
-  // Create a global store for pending video operations
-  if (typeof window !== 'undefined') {
-    if (!window.pendingVideoOperations) {
-      window.pendingVideoOperations = new Set<Promise<void>>();
-    }
-  }
+  // Track whether we've already saved timestamp during navigation to prevent duplicates
+  let hasNavigationSaveOccurred = $state(false);
 
   // Initialize watch time tracker when component mounts
   onMount(() => {
@@ -216,14 +247,22 @@
     }
   }
 
-  function saveCurrentTime({ useBeacon = false } = {}): Promise<void> | void {
+  function saveCurrentTime({
+    useBeacon = false,
+    isNavigationSave = false,
+  } = {}): Promise<void> | void {
     if (player && player.getCurrentTime) {
       try {
-        const currentTimeSeconds = player.getCurrentTime() as number;
+        const currentTimeSeconds = player.getCurrentTime();
         if (
           !startSeconds ||
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
+          // Mark that we've performed a navigation save to prevent duplicates
+          if (isNavigationSave) {
+            hasNavigationSaveOccurred = true;
+          }
+
           if (useBeacon) {
             saveTimestampBeacon(
               currentTimeSeconds,
@@ -233,27 +272,16 @@
             );
             return;
           } else {
-            // Return the promise for async saves
+            // Return the promise for async saves and track it in content state
             const savePromise = saveTimestampForVideo(
               currentTimeSeconds,
               durationSeconds,
               playlist
             );
 
-            // Track this promise globally
-            if (
-              typeof window !== 'undefined' &&
-              window.pendingVideoOperations
-            ) {
-              window.pendingVideoOperations.add(savePromise);
-              savePromise.finally(() => {
-                if (window.pendingVideoOperations) {
-                  window.pendingVideoOperations.delete(savePromise);
-                }
-              });
-            }
+            // Track this promise in the content state
+            contentState.addPendingVideoOperation(savePromise);
 
-            pendingTimestampSave = savePromise;
             return savePromise;
           }
         }
@@ -265,7 +293,11 @@
   }
 
   function handleBeforeUnload(): void {
-    saveCurrentTime({ useBeacon: true });
+    // Only save if we haven't already saved during navigation
+    if (!hasNavigationSaveOccurred) {
+      saveCurrentTime({ useBeacon: true });
+    }
+
     // End watch time tracking session before page unload
     if (watchTimeTracker) {
       watchTimeTracker.endSession().catch(console.error);
@@ -276,7 +308,10 @@
   function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden') {
       // Save current timestamp position but DON'T end the tracking session
-      saveCurrentTime({ useBeacon: true });
+      // Only save if we haven't already saved during navigation
+      if (!hasNavigationSaveOccurred) {
+        saveCurrentTime({ useBeacon: true });
+      }
 
       // Pause the video tracking if it's currently playing
       if (isActuallyPlaying && watchTimeTracker) {
@@ -300,16 +335,13 @@
   }
 
   // YouTube Player Setup
-  function onPlayerReady(event: {
-    target: { seekTo: (startSeconds: number) => void };
-  }): void {
+  function onPlayerReady(): void {
     // Don't seek automatically on ready - wait for user to press play
-    // event.target is now available as player
   }
 
   // Handle YouTube player state changes for video history tracking
-  function onPlayerStateChange(event: { data: number; target: any }): void {
-    if (!watchTimeTracker) {
+  function onPlayerStateChange(event: YouTubeStateChangeEvent): void {
+    if (!watchTimeTracker || !event.target) {
       return;
     }
 
@@ -337,6 +369,7 @@
         // Don't change isActuallyPlaying state during buffering
         break;
       default:
+        break;
     }
   }
 
@@ -394,8 +427,9 @@
 
   onMount(() => {
     if (typeof window !== 'undefined') {
-      const windowRef: any = window;
-      if (typeof windowRef.YT !== 'undefined') {
+      const windowRef = window as WindowWithYouTube;
+
+      if (windowRef.YT) {
         player = new windowRef.YT.Player('player', {
           videoId: video.id,
           playerVars: {
@@ -417,7 +451,8 @@
 
   beforeNavigate(async () => {
     // Wait for the timestamp save to complete before navigating
-    const savePromise = saveCurrentTime();
+    // Mark this as a navigation save to prevent duplicates
+    const savePromise = saveCurrentTime({ isNavigationSave: true });
     if (savePromise) {
       try {
         await savePromise;
@@ -438,18 +473,8 @@
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
 
-      // Wait for any pending timestamp save
-      if (pendingTimestampSave) {
-        try {
-          await pendingTimestampSave;
-        } catch (error) {
-          console.error(
-            'Error waiting for timestamp save in onDestroy:',
-            error
-          );
-        }
-      } else {
-        // If no pending save, try to save current time
+      // Only save current time if we haven't already saved during navigation
+      if (!hasNavigationSaveOccurred) {
         const savePromise = saveCurrentTime();
         if (savePromise) {
           try {

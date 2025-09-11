@@ -67,7 +67,6 @@ declare global {
   // Global window extensions
   interface Window {
     Twitch?: TwitchEmbedAPI;
-    pendingVideoOperations: Set<Promise<void>>;
   }
 }
 

@@ -93,25 +93,17 @@
     },
   };
 
-  // Helper function to wait for pending video operations
-  async function waitForPendingVideoOperations(): Promise<void> {
-    if (typeof window !== 'undefined' && window.pendingVideoOperations) {
-      const pendingOperations = Array.from(window.pendingVideoOperations);
-      if (pendingOperations.length > 0) {
-        try {
-          await Promise.allSettled(pendingOperations);
-        } catch (error) {
-          console.error('Error waiting for pending video operations:', error);
-        }
-      }
-    }
-  }
-
   // Add a delay and wait for pending operations before invalidating
   afterNavigate(async ({ from }) => {
     // Invalidate video cache when leaving video pages, but wait for operations to complete
     if (from?.url.pathname.includes('/video')) {
-      await waitForPendingVideoOperations();
+      // Wait for any pending video operations (like timestamp saves)
+      await contentState.waitForPendingVideoOperations();
+
+      // Additional small delay to ensure all async operations are complete
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Now it's safe to invalidate the cache
       invalidate('supabase:db:videos');
     }
   });

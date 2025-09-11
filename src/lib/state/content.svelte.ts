@@ -113,8 +113,35 @@ export class ContentState {
   // Track context menu state to prevent race conditions
   private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
 
+  // Track pending video operations (like timestamp saves)
+  pendingVideoOperations = $state<Set<Promise<void>>>(new Set());
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
+  }
+
+  // Helper methods for tracking pending video operations
+  addPendingVideoOperation(operation: Promise<void>): void {
+    this.pendingVideoOperations.add(operation);
+    operation.finally(() => {
+      this.pendingVideoOperations.delete(operation);
+    });
+  }
+
+  async waitForPendingVideoOperations(): Promise<void> {
+    if (this.pendingVideoOperations.size > 0) {
+      console.log(`Waiting for ${this.pendingVideoOperations.size} pending video operations...`);
+      try {
+        await Promise.allSettled(Array.from(this.pendingVideoOperations));
+        console.log('All pending video operations completed');
+      } catch (error) {
+        console.error('Error waiting for pending video operations:', error);
+      }
+    }
+  }
+
+  hasPendingVideoOperations(): boolean {
+    return this.pendingVideoOperations.size > 0;
   }
 
   // Helper methods for section-specific context menu tracking
@@ -185,6 +212,9 @@ export class ContentState {
     // Reset menu states
     this.isMenuOpen = false;
     this.isMouseOverMenu = false;
+
+    // Clear pending video operations
+    this.pendingVideoOperations.clear();
 
     // Clear any global CSS classes that might persist
     if (typeof document !== 'undefined' && document.body) {
