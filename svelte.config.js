@@ -17,13 +17,12 @@ const config = {
   kit: {
     adapter: adapter({
       csp: {
-        mode: 'hash',
+        mode: 'nonce', // Changed from 'hash' - try this first, then 'auto' if needed
         directives: {
           'default-src': ['self'],
           'script-src': [
             'self',
-            // YouTube & Google Ad domains (essential only)
-            'https://www.youtube.com',
+            // AdSense & Google Ad domains (complete list)
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
             'https://www.googlesyndication.com',
@@ -32,9 +31,14 @@ const config = {
             'https://www.gstatic.com',
             'https://pagead2.googlesyndication.com',
             'https://securepubads.g.doubleclick.net',
+            'https://partner.googleadservices.com', // Added
+            'https://googletagservices.com', // Added
+            'https://fundingchoicesmessages.google.com', // Added
+            // YouTube domains
+            'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
-            // Twitch core domains (specific CloudFront domains)
+            // Twitch core domains
             'https://gql.twitch.tv',
             'https://embed.twitch.tv',
             'https://player.twitch.tv',
@@ -43,7 +47,7 @@ const config = {
             'https://passport.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
-            'https://d2v02itv0y9u9t.cloudfront.net', // Specific Twitch CloudFront
+            'https://d2v02itv0y9u9t.cloudfront.net',
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
@@ -53,17 +57,20 @@ const config = {
           ],
           'frame-src': [
             'self',
-            // YouTube & Google Ad domains
-            'https://www.youtube.com',
+            // AdSense & Google Ad domains
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
             'https://www.googlesyndication.com',
             'https://tpc.googlesyndication.com',
             'https://securepubads.g.doubleclick.net',
+            'https://pubads.g.doubleclick.net',
+            'https://googletagservices.com', // Added
+            'https://fundingchoicesmessages.google.com', // Added
+            // YouTube domains
+            'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
-            'https://pubads.g.doubleclick.net',
-            // Twitch core domains
+            // Twitch domains
             'https://embed.twitch.tv',
             'https://player.twitch.tv',
             'https://www.twitch.tv',
@@ -79,12 +86,12 @@ const config = {
             'https://www.googlesyndication.com',
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
+            'https://googletagservices.com', // Added
           ],
           'frame-ancestors': ['self'],
           'connect-src': [
             'self',
-            // YouTube & Google Ad domains
-            'https://www.youtube.com',
+            // AdSense & Google Ad domains
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
             'https://www.googlesyndication.com',
@@ -94,10 +101,15 @@ const config = {
             'https://cm.g.doubleclick.net',
             'https://securepubads.g.doubleclick.net',
             'https://pagead2.googlesyndication.com',
+            'https://pubads.g.doubleclick.net',
+            'https://partner.googleadservices.com', // Added
+            'https://googletagservices.com', // Added
+            'https://fundingchoicesmessages.google.com', // Added
+            // YouTube domains
+            'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
-            'https://pubads.g.doubleclick.net',
-            // Twitch core domains
+            // Twitch domains
             'https://api.twitch.tv',
             'https://gql.twitch.tv',
             'https://usher.ttvnw.net',
@@ -118,9 +130,7 @@ const config = {
             'self',
             'data:',
             'blob:',
-            // YouTube & Google Ad domains
-            'https://i.ytimg.com',
-            'https://s.ytimg.com',
+            // AdSense & Google Ad domains
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
             'https://www.googlesyndication.com',
@@ -130,10 +140,14 @@ const config = {
             'https://securepubads.g.doubleclick.net',
             'https://pagead2.googlesyndication.com',
             'https://www.gstatic.com',
+            'https://pubads.g.doubleclick.net',
+            'https://partner.googleadservices.com', // Added
+            // YouTube domains
+            'https://i.ytimg.com',
+            'https://s.ytimg.com',
             'https://yt3.ggpht.com',
             'https://www.youtube-nocookie.com',
-            'https://pubads.g.doubleclick.net',
-            // Twitch core domains
+            // Twitch domains
             'https://static-cdn.jtvnw.net',
             'https://clips-media-assets2.twitch.tv',
             'https://vod-secure.twitch.tv',
@@ -148,10 +162,10 @@ const config = {
             // YouTube & Google domains
             'https://www.youtube.com',
             'https://googlevideo.com',
-            'https://*.googlevideo.com', // This wildcard is necessary for YouTube video delivery
+            'https://*.googlevideo.com',
             'https://googleads.g.doubleclick.net',
             'https://www.youtube-nocookie.com',
-            // Twitch core domains
+            // Twitch domains
             'https://vod-secure.twitch.tv',
             'https://vod-metro.twitch.tv',
             'https://clips-media-assets2.twitch.tv',
@@ -159,13 +173,14 @@ const config = {
           'style-src': [
             'self',
             'unsafe-inline',
-            // YouTube & Google domains
+            // Google domains
             'https://www.youtube.com',
             'https://fonts.googleapis.com',
             'https://googleads.g.doubleclick.net',
             'https://www.googlesyndication.com',
             'https://www.gstatic.com',
             'https://www.youtube-nocookie.com',
+            'https://googletagservices.com', // Added
             // Twitch domains
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
@@ -180,8 +195,8 @@ const config = {
           ],
           'worker-src': ['self', 'blob:'],
           'object-src': ['none'],
-          'base-uri': ['self'], // Prevents base tag hijacking
-          'form-action': ['self'], // Restricts form submissions
+          'base-uri': ['self'],
+          'form-action': ['self'],
         },
       },
     }),

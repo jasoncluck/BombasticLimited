@@ -76,22 +76,26 @@ playlists created by the account, will be deleted.
 
 ### Browsing Videos - Card and Table Views
 
-Bombastic supports two views: Card and Table. The views can be switched
-by clicking the Card or Table icon in the upper right of the navigation bar.
+Bombastic supports two views: Card and Table. The views can be switched by
+clicking the Card or Table icon in the upper right of the navigation bar.
 
-Card is the default view. It makes it easier to browse videos by providing larger video thumbnails and an action menu dropdown on each card. Card view does not support
-selecting multiple videos; if you're adding videos to a playlist they must be
-added to the playlist one at at time.
+Card is the default view. It makes it easier to browse videos by providing
+larger video thumbnails and an action menu dropdown on each card. Card view does
+not support selecting multiple videos; if you're adding videos to a playlist
+they must be added to the playlist one at at time.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/card-view.png" width="750px" alt="Screenshot of using the Card view" />
 </div>
 
-Table view is only available to users with accounts or on smaller screens. Table view supports selecting multiple videos or rows; due to this, videos need to be double-clicked in order to play.
-Alternatively, there is a Play button column on the left of each row which can be clicked once to view the
-video. Selecting multiple videos can be done by holding down Ctrl/Cmd to select
-non-adjacent rows and Shift to select all inclusive rows. Multiple rows can be dragged and dropped. Once videos are selected,
-the actions menu can be displayed by right-clicking, or by accessing the dropdown in the heading section.
+Table view is only available to users with accounts or on smaller screens. Table
+view supports selecting multiple videos or rows; due to this, videos need to be
+double-clicked in order to play. Alternatively, there is a Play button column on
+the left of each row which can be clicked once to view the video. Selecting
+multiple videos can be done by holding down Ctrl/Cmd to select non-adjacent rows
+and Shift to select all inclusive rows. Multiple rows can be dragged and
+dropped. Once videos are selected, the actions menu can be displayed by
+right-clicking, or by accessing the dropdown in the heading section.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/table-view.png" width="750px" alt="Screenshot of using the Table view with multiple items selected using Shift and Ctrl" />
@@ -155,7 +159,8 @@ action will remove the playlist from your left hand navigation.
 
 #### Add a video to a playlist
 
-Select the desired video(s), right-click, select "Add video(s) to playlist", then select the desired playlist.
+Select the desired video(s), right-click, select "Add video(s) to playlist",
+then select the desired playlist.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/playlist-add.png" width="750px" alt="Screenshot of adding videos of the game Haze to a playlist named BOOSH" />
@@ -163,7 +168,8 @@ Select the desired video(s), right-click, select "Add video(s) to playlist", the
 
 #### Remove a video from a playlist
 
-Select the desired video(s), right-click, select "Remove video(s) from playlist".
+Select the desired video(s), right-click, select "Remove video(s) from
+playlist".
 
 #### Update playlist thumbnail
 
