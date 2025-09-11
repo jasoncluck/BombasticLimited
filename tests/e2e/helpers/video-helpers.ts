@@ -477,7 +477,9 @@ export class VideoHelpers {
    * Scrub YouTube player to a specific timestamp by clicking on the progress bar
    */
   private async scrubYouTubePlayer(targetSeconds: number): Promise<void> {
-    console.log(`🎯 Starting YouTube scrub operation to ${targetSeconds} seconds`);
+    console.log(
+      `🎯 Starting YouTube scrub operation to ${targetSeconds} seconds`
+    );
     try {
       // Switch to iframe context to interact with YouTube player
       const iframe = this.page.locator('iframe').first();
@@ -644,25 +646,26 @@ export class VideoHelpers {
               if (currentTimeText) {
                 const actualPosition = this.parseYouTubeTime(currentTimeText);
                 const tolerance = 5; // Allow 5 second tolerance
-                const positionDifference = Math.abs(actualPosition - targetSeconds);
-                
+                const positionDifference = Math.abs(
+                  actualPosition - targetSeconds
+                );
+
                 console.log(
                   `Scrub verification: target=${targetSeconds}s, actual=${actualPosition}s, difference=${positionDifference}s`
                 );
-                
+
                 if (positionDifference <= tolerance) {
                   scrubSuccessful = true;
                   console.log('✓ Scrub position verification successful');
                 } else {
-                  console.warn(`✗ Scrub position verification failed: expected ~${targetSeconds}s, got ${actualPosition}s`);
+                  console.warn(
+                    `✗ Scrub position verification failed: expected ~${targetSeconds}s, got ${actualPosition}s`
+                  );
                 }
               }
             }
           } catch (timeCheckError) {
-            console.warn(
-              'Could not verify scrub position:',
-              timeCheckError
-            );
+            console.warn('Could not verify scrub position:', timeCheckError);
           }
 
           // Final verification that video is playing with enhanced stability
@@ -692,14 +695,17 @@ export class VideoHelpers {
             // This helps prevent intermittent issues where playback state changes
             console.log('Ensuring stable playback at new position...');
             await this.page.waitForTimeout(2000);
-            
+
             // Final status log
             if (scrubSuccessful) {
-              console.log('✓ Scrub operation completed successfully with position verification');
+              console.log(
+                '✓ Scrub operation completed successfully with position verification'
+              );
             } else {
-              console.log('⚠ Scrub operation completed but position verification failed');
+              console.log(
+                '⚠ Scrub operation completed but position verification failed'
+              );
             }
-            
           } catch (finalVerifyError) {
             console.warn(
               'Could not perform final playback verification:',
