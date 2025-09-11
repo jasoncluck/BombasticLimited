@@ -93,13 +93,27 @@
     },
   };
 
-  // Add a small delay before invalidating to allow timestamps to be saved
+  // Helper function to wait for pending video operations
+  async function waitForPendingVideoOperations(): Promise<void> {
+    if (typeof window !== 'undefined' && window.__pendingVideoOperations) {
+      const pendingOperations = Array.from(window.__pendingVideoOperations);
+      if (pendingOperations.length > 0) {
+        console.log(`Waiting for ${pendingOperations.length} pending video operations...`);
+        try {
+          await Promise.allSettled(pendingOperations);
+          console.log('All pending video operations completed');
+        } catch (error) {
+          console.error('Error waiting for pending video operations:', error);
+        }
+      }
+    }
+  }
+
+  // Add a delay and wait for pending operations before invalidating
   afterNavigate(async ({ from }) => {
-    // Invalidate video cache when leaving video pages, but with a delay
-    // to allow any pending timestamp saves to complete
+    // Invalidate video cache when leaving video pages, but wait for operations to complete
     if (from?.url.pathname.includes('/video')) {
-      // Small delay to allow timestamp saves to complete. This just slightly delays the rendering of continue watching
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await waitForPendingVideoOperations();
       invalidate('supabase:db:videos');
     }
   });
@@ -392,6 +406,13 @@
       }
       // SSE connection is now automatically cleaned up by sidebarCleanup
     };
+  }
+
+  // Add global declaration for TypeScript
+  declare global {
+    interface Window {
+      __pendingVideoOperations?: Set<Promise<void>>;
+    }
   }
 </script>
 

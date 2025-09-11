@@ -59,7 +59,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         const videoHelpers = new VideoHelpers(playlistPage);
         await videoHelpers.watchVideoToGenerateTimestamp({
           method: 'scrub',
-          scrubToSeconds: 20,
+          scrubToSeconds: 80,
         });
 
         // Go back to homepage to check continue watching
@@ -183,7 +183,6 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
             playlistId,
             video
           );
-          await playlistPage.goto('/'); // Go back to homepage between adds
         }
 
         // Navigate to playlist and start watching first video

@@ -52,6 +52,16 @@
   // Track if the video is actually playing (not just the YouTube player state)
   let isActuallyPlaying = $state(false);
 
+  // Add a promise to track pending timestamp saves
+  let pendingTimestampSave = $state<Promise<void> | null>(null);
+
+  // Create a global store for pending video operations
+  if (typeof window !== 'undefined') {
+    if (!window.__pendingVideoOperations) {
+      window.__pendingVideoOperations = new Set<Promise<void>>();
+    }
+  }
+
   // Initialize watch time tracker when component mounts
   onMount(() => {
     const userId = session?.user?.id;
@@ -116,7 +126,7 @@
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist | null
-  ) {
+  ): Promise<void> {
     if (
       !videoDurationSeconds ||
       currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
@@ -171,7 +181,7 @@
     videoDurationSeconds: number,
     playlist?: Playlist | null,
     contentFilter?: CombinedContentFilter
-  ) {
+  ): void {
     if (
       !videoDurationSeconds ||
       currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
@@ -206,7 +216,7 @@
     }
   }
 
-  function saveCurrentTime({ useBeacon = false } = {}) {
+  function saveCurrentTime({ useBeacon = false } = {}): Promise<void> | void {
     if (player && player.getCurrentTime) {
       try {
         const currentTimeSeconds = player.getCurrentTime() as number;
@@ -221,21 +231,40 @@
               playlist,
               contentFilter
             );
+            return;
           } else {
-            saveTimestampForVideo(
+            // Return the promise for async saves
+            const savePromise = saveTimestampForVideo(
               currentTimeSeconds,
               durationSeconds,
               playlist
             );
+
+            // Track this promise globally
+            if (
+              typeof window !== 'undefined' &&
+              window.__pendingVideoOperations
+            ) {
+              window.__pendingVideoOperations.add(savePromise);
+              savePromise.finally(() => {
+                if (window.__pendingVideoOperations) {
+                  window.__pendingVideoOperations.delete(savePromise);
+                }
+              });
+            }
+
+            pendingTimestampSave = savePromise;
+            return savePromise;
           }
         }
       } catch (error) {
         console.error('Error while trying to save current video time.', error);
       }
     }
+    return Promise.resolve();
   }
 
-  function handleBeforeUnload() {
+  function handleBeforeUnload(): void {
     saveCurrentTime({ useBeacon: true });
     // End watch time tracking session before page unload
     if (watchTimeTracker) {
@@ -244,7 +273,7 @@
     }
   }
 
-  function handleVisibilityChange() {
+  function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden') {
       // Save current timestamp position but DON'T end the tracking session
       saveCurrentTime({ useBeacon: true });
@@ -273,13 +302,13 @@
   // YouTube Player Setup
   function onPlayerReady(event: {
     target: { seekTo: (startSeconds: number) => void };
-  }) {
+  }): void {
     // Don't seek automatically on ready - wait for user to press play
     // event.target is now available as player
   }
 
   // Handle YouTube player state changes for video history tracking
-  function onPlayerStateChange(event: { data: number; target: any }) {
+  function onPlayerStateChange(event: { data: number; target: any }): void {
     if (!watchTimeTracker) {
       return;
     }
@@ -313,7 +342,7 @@
 
   // Handle seeking events
   let lastKnownTime = 0;
-  function handleSeekingEvents() {
+  function handleSeekingEvents(): void {
     if (!player || !watchTimeTracker) return;
 
     const currentTime = player.getCurrentTime() || 0;
@@ -386,8 +415,16 @@
     }
   });
 
-  beforeNavigate(() => {
-    saveCurrentTime(); // async is ok for in-app navigation
+  beforeNavigate(async () => {
+    // Wait for the timestamp save to complete before navigating
+    const savePromise = saveCurrentTime();
+    if (savePromise) {
+      try {
+        await savePromise;
+      } catch (error) {
+        console.error('Error saving timestamp before navigation:', error);
+      }
+    }
 
     // End watch time tracking session before navigation
     if (watchTimeTracker) {
@@ -396,11 +433,32 @@
     }
   });
 
-  onDestroy(() => {
+  onDestroy(async () => {
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      saveCurrentTime();
+
+      // Wait for any pending timestamp save
+      if (pendingTimestampSave) {
+        try {
+          await pendingTimestampSave;
+        } catch (error) {
+          console.error(
+            'Error waiting for timestamp save in onDestroy:',
+            error
+          );
+        }
+      } else {
+        // If no pending save, try to save current time
+        const savePromise = saveCurrentTime();
+        if (savePromise) {
+          try {
+            await savePromise;
+          } catch (error) {
+            console.error('Error saving timestamp in onDestroy:', error);
+          }
+        }
+      }
     }
 
     // Ensure watch time tracker is properly ended
@@ -409,6 +467,13 @@
       watchTimeTracker = null;
     }
   });
+
+  // Add global declaration for TypeScript
+  declare global {
+    interface Window {
+      __pendingVideoOperations?: Set<Promise<void>>;
+    }
+  }
 </script>
 
 <AspectRatio ratio={16 / 9}>

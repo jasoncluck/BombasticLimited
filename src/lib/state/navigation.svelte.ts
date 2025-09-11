@@ -91,6 +91,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
+  syncSearchQueryFromUrl: (pathname: string, params?: URLSearchParams) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -282,6 +283,22 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
+  /**
+   * Extract search query from URL and update state
+   */
+  private extractSearchFromUrl(pathname: string): string {
+    const searchMatch = pathname.match(/^\/search\/(.+)$/);
+    if (searchMatch && searchMatch[1]) {
+      try {
+        return decodeURIComponent(searchMatch[1]);
+      } catch (error) {
+        console.error('Error decoding search query from URL:', error);
+        return '';
+      }
+    }
+    return '';
+  }
+
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
@@ -298,6 +315,15 @@ export class NavigationStateClass implements NavigationState {
           this.startRefreshInterval();
         } else {
           this.stopRefreshInterval();
+        }
+      });
+
+      // Sync search query from URL when page changes
+      $effect(() => {
+        if (page) {
+          const currentPath = page.url?.pathname || '';
+          this.syncSearchQueryFromUrl(currentPath);
+          this.updateActiveRoute(currentPath);
         }
       });
 
@@ -409,6 +435,26 @@ export class NavigationStateClass implements NavigationState {
    */
   updateActiveRoute(pathname: string): void {
     this.activeRoute = pathname;
+  }
+
+  /**
+   * Synchronize search query from URL
+   */
+  syncSearchQueryFromUrl(pathname: string, params?: URLSearchParams): void {
+    const searchQueryFromUrl = this.extractSearchFromUrl(pathname);
+
+    // Only update if the search query is different to avoid unnecessary rerenders
+    if (searchQueryFromUrl !== this.searchQuery) {
+      this.searchQuery = searchQueryFromUrl;
+
+      // Update the search input value if it exists and is different
+      if (
+        this.searchInputRef &&
+        this.searchInputRef.value !== searchQueryFromUrl
+      ) {
+        this.searchInputRef.value = searchQueryFromUrl;
+      }
+    }
   }
 
   /**
@@ -538,6 +584,11 @@ export class NavigationStateClass implements NavigationState {
     if (this.preloadTimeout) {
       window.clearTimeout(this.preloadTimeout);
       this.preloadTimeout = null;
+    }
+
+    // Clear search input if it exists
+    if (this.searchInputRef) {
+      this.searchInputRef.value = '';
     }
   };
 
