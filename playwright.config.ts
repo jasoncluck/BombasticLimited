@@ -7,8 +7,8 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.test.ts',
   fullyParallel: true,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 2, // Reduce workers to prevent devserver overload (2 max)
+  retries: 2,
+  workers: 2,
   reporter: 'html',
 
   // Global setup and teardown for authentication

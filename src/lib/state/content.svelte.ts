@@ -1,6 +1,6 @@
 import type { Video } from '$lib/supabase/videos';
 import type { Playlist } from '$lib/supabase/playlists';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import { getContext, setContext } from 'svelte';
 import { createDragImage } from '$lib/utils/dragdrop';
@@ -114,14 +114,18 @@ export class ContentState {
   private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
 
   // Track pending video operations (like timestamp saves)
-  pendingVideoOperations = $state<Set<Promise<void>>>(new Set());
+  pendingVideoOperations = $state<
+    Set<Promise<{ error?: PostgrestError | null }>>
+  >(new Set());
 
   constructor(pageState: PageState) {
     this.pageState = pageState;
   }
 
   // Helper methods for tracking pending video operations
-  addPendingVideoOperation(operation: Promise<void>): void {
+  addPendingVideoOperation(
+    operation: Promise<{ error?: PostgrestError | null }>
+  ): void {
     this.pendingVideoOperations.add(operation);
     operation.finally(() => {
       this.pendingVideoOperations.delete(operation);

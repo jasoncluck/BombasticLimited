@@ -27,7 +27,7 @@ playlistTest.describe('Playlist Operations', () => {
 
         // Verify playlist was created
         expect(playlistId).toBeTruthy();
-        const newPlaylistButton = playlistHelpers.getPlaylistButton();
+        const newPlaylistButton = playlistHelpers.getPlaylistButton().first();
         expect(newPlaylistButton).toBeVisible();
 
         // No manual cleanup needed - fixture handles it

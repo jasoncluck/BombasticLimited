@@ -292,8 +292,8 @@
         {#if operationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
           <ContextMenu.Item
             class="p-2"
-            onclick={async () => {
-              const { updatedVideos } = await handleAddVideoTimestamps({
+            onclick={() => {
+              handleAddVideoTimestamps({
                 videoTimestamps: operationVideos.map((v) => ({
                   videoId: v.id,
                   watchedAt: new Date(),
@@ -302,18 +302,6 @@
                 supabase,
               });
 
-              // Update the section's state based on what we were operating on
-              if (selectedVideos.length > 0) {
-                contentState.selectedVideosBySection[sectionId] = updatedVideos;
-              } else if (hoveredVideo) {
-                const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id
-                );
-                if (updatedHoveredVideo) {
-                  contentState.hoveredVideosBySection[sectionId] =
-                    updatedHoveredVideo;
-                }
-              }
               // Handle selection based on preference
               if (!preserveSelectionAfterAction) {
                 handleSelectionAfterAction();

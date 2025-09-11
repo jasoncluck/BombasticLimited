@@ -99,7 +99,6 @@
   let open = $state(false);
   let subMenuOpen = $state(false);
   let showDeleteDialog = $state(false);
-  let isFocused = $state(false);
 
   // Capture the operation videos when dropdown opens and keep them fixed
   let frozenOperationVideos = $state<Video[]>([]);
@@ -264,12 +263,6 @@
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
             e.stopPropagation();
-          }}
-          onfocus={() => {
-            isFocused = true;
-          }}
-          onblur={() => {
-            isFocused = false;
           }}
           class="ghost-button-minimal outline-primary {open
             ? 'scale-105'
@@ -479,7 +472,7 @@
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
-            const { updatedVideos, error } = await handleAddVideoTimestamps({
+            const { error } = await handleAddVideoTimestamps({
               videoTimestamps: frozenOperationVideos.map((v) => ({
                 videoId: v.id,
                 watchedAt: new Date(),
@@ -489,27 +482,6 @@
             });
 
             if (!error) {
-              // Update the videos array with the updated videos
-              const updatedVideoIds = new Set(updatedVideos.map((v) => v.id));
-              videos = videos.map((v) =>
-                updatedVideoIds.has(v.id)
-                  ? updatedVideos.find((uv) => uv.id === v.id)!
-                  : v
-              );
-
-              // Update the section's state based on what we were operating on
-              if (selectedVideos.length > 0) {
-                contentState.selectedVideosBySection[sectionId] = updatedVideos;
-              } else if (hoveredVideo) {
-                const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id
-                );
-                if (updatedHoveredVideo) {
-                  contentState.hoveredVideosBySection[sectionId] =
-                    updatedHoveredVideo;
-                }
-              }
-
               handleSelectionAfterAction();
             }
           }}

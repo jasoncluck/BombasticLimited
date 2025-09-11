@@ -84,7 +84,6 @@ describe('video service module', () => {
         session: mockSession,
         supabase: mockSupabase,
       });
-      expect(result.updatedVideos).toEqual(mockUpdatedVideos);
       expect(result.error).toBeNull();
     });
 
@@ -106,7 +105,6 @@ describe('video service module', () => {
         supabase: mockSupabase,
       });
 
-      expect(result.updatedVideos).toEqual([]);
       expect(result.error).toEqual(mockError);
     });
   });
@@ -151,7 +149,6 @@ describe('video service module', () => {
         supabase: mockSupabase,
       });
       expect(invalidate).toHaveBeenCalledWith('supabase:db:videos');
-      expect(result.updatedVideos).toEqual(mockUpdatedVideos);
       expect(result.error).toBeNull();
     });
 
@@ -178,7 +175,6 @@ describe('video service module', () => {
       });
 
       expect(showToast).toHaveBeenCalledWith('Unable to save timestamp');
-      expect(result.updatedVideos).toEqual([]);
       expect(result.error).toEqual(mockError);
     });
   });

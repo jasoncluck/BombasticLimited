@@ -153,11 +153,11 @@
   }
 
   // Helper function to save timestamp for a specific video with its duration (async for in-app use)
-  async function saveTimestampForVideo(
+  function saveTimestampForVideo(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist | null
-  ): Promise<void> {
+  ) {
     if (
       !videoDurationSeconds ||
       currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
@@ -167,7 +167,7 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      await handleAddVideoTimestamp({
+      return handleAddVideoTimestamp({
         videoTimestamp: {
           videoId: video.id,
           playlistId: playlist?.id,
@@ -185,7 +185,7 @@
         supabase,
       });
     } else {
-      await handleAddVideoTimestamp({
+      return handleAddVideoTimestamp({
         videoTimestamp: {
           videoId: video.id,
           playlistId: playlist?.id,
@@ -250,7 +250,7 @@
   function saveCurrentTime({
     useBeacon = false,
     isNavigationSave = false,
-  } = {}): Promise<void> | void {
+  } = {}) {
     if (player && player.getCurrentTime) {
       try {
         const currentTimeSeconds = player.getCurrentTime();
@@ -280,7 +280,9 @@
             );
 
             // Track this promise in the content state
-            contentState.addPendingVideoOperation(savePromise);
+            if (savePromise) {
+              contentState.addPendingVideoOperation(savePromise);
+            }
 
             return savePromise;
           }

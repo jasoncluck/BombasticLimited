@@ -436,7 +436,7 @@ export class VideoHelpers {
       scrubToSeconds?: number;
     } = {}
   ): Promise<void> {
-    const { method = 'scrub', waitSeconds = 16, scrubToSeconds = 20 } = options;
+    const { method = 'scrub', waitSeconds = 4, scrubToSeconds = 20 } = options;
 
     // Wait for the iframe to be visible
     const iframe = this.page.locator('iframe').first();
@@ -458,9 +458,6 @@ export class VideoHelpers {
       );
       await this.page.waitForTimeout(waitSeconds * 1000);
     }
-
-    // Give a small buffer for timestamp processing
-    await this.page.waitForTimeout(1000);
   }
 
   /**
@@ -470,7 +467,7 @@ export class VideoHelpers {
     try {
       // Switch to iframe context to interact with YouTube player
       const iframe = this.page.locator('iframe').first();
-      const frame = await iframe.contentFrame();
+      const frame = iframe.contentFrame();
 
       if (!frame) {
         console.warn(
@@ -586,8 +583,8 @@ export class VideoHelpers {
             `Scrubbed YouTube player to approximate ${targetSeconds}s timestamp`
           );
 
-          // Wait for the scrub to take effect
-          await this.page.waitForTimeout(1000);
+          // Wait longer for the scrub to take effect and stabilize
+          await this.page.waitForTimeout(2000);
 
           // Verify the video is still playing after scrub
           try {
@@ -612,6 +609,60 @@ export class VideoHelpers {
             console.warn(
               'Could not verify/resume playback after scrub:',
               resumeError
+            );
+          }
+
+          // Additional wait to ensure the video state is fully registered
+          // This gives the video time to buffer and stabilize at the new position
+          console.log('Waiting for video state to stabilize after scrub...');
+          await this.page.waitForTimeout(3000);
+
+          // Optional: Verify the scrub was successful by checking current time
+          try {
+            const currentTimeElement = frame.locator(
+              '.ytp-time-current, .html5-video-current-time'
+            );
+            if (await currentTimeElement.isVisible({ timeout: 2000 })) {
+              const currentTimeText = await currentTimeElement.textContent();
+              if (currentTimeText) {
+                console.log(
+                  `Current video time after scrub: ${currentTimeText.trim()}`
+                );
+              }
+            }
+          } catch (timeCheckError) {
+            console.warn(
+              'Could not verify current time after scrub:',
+              timeCheckError
+            );
+          }
+
+          // Final verification that video is playing
+          try {
+            const finalPauseCheck =
+              (await frame
+                .locator(
+                  '.html5-video-player.paused-mode, .ytp-play-button[aria-label*="Play"]'
+                )
+                .count()) > 0;
+
+            if (finalPauseCheck) {
+              console.log('Final attempt to ensure video is playing...');
+              const finalPlayButton = frame.locator('.ytp-play-button').first();
+              if (await finalPlayButton.isVisible({ timeout: 1000 })) {
+                await finalPlayButton.click();
+                // Short wait after final play attempt
+                await this.page.waitForTimeout(1000);
+              }
+            } else {
+              console.log(
+                'Video appears to be playing successfully after scrub'
+              );
+            }
+          } catch (finalVerifyError) {
+            console.warn(
+              'Could not perform final playback verification:',
+              finalVerifyError
             );
           }
         } else {
