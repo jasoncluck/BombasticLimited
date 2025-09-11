@@ -427,7 +427,7 @@
 
   onMount(() => {
     if (typeof window !== 'undefined') {
-      const windowRef = window as WindowWithYouTube;
+      const windowRef = window as unknown as WindowWithYouTube;
 
       if (windowRef.YT) {
         player = new windowRef.YT.Player('player', {

@@ -130,7 +130,9 @@ export class ContentState {
 
   async waitForPendingVideoOperations(): Promise<void> {
     if (this.pendingVideoOperations.size > 0) {
-      console.log(`Waiting for ${this.pendingVideoOperations.size} pending video operations...`);
+      console.log(
+        `Waiting for ${this.pendingVideoOperations.size} pending video operations...`
+      );
       try {
         await Promise.allSettled(Array.from(this.pendingVideoOperations));
         console.log('All pending video operations completed');

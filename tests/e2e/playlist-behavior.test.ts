@@ -62,8 +62,6 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
           scrubToSeconds: 80,
         });
 
-        await playlistPage.waitForTimeout(2000);
-
         // Go back to homepage to check continue watching
         await playlistPage.goto('/');
 
