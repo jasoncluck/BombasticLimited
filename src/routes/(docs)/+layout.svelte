@@ -10,8 +10,14 @@
   let { children }: Props = $props();
 </script>
 
-<ScrollArea type="scroll" class="h-full grow" data-scroll-area="sidebar">
-  <div class="bg-background-lighter text-foreground min-h-screen">
+<ScrollArea
+  type="scroll"
+  class="h-full grow print:!h-auto print:!overflow-visible"
+  data-scroll-area="sidebar"
+>
+  <div
+    class="bg-background-lighter text-foreground min-h-screen print:!min-h-0"
+  >
     <main class="prose prose-invert container mx-auto max-w-3xl! p-8">
       {@render children()}
     </main>
@@ -370,10 +376,39 @@
     }
   }
 
-  /* Print styles */
+  /* Enhanced print styles */
   @media print {
+    /* Override ScrollArea constraints for printing */
+    :global([data-scroll-area='sidebar']) {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    :global([data-slot='scroll-area']) {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    :global([data-slot='scroll-area-viewport']) {
+      height: auto !important;
+      max-height: none !important;
+      overflow: visible !important;
+    }
+
+    /* Remove height constraints from layout elements */
+    :global(.h-full) {
+      height: auto !important;
+    }
+
+    :global(.min-h-screen) {
+      min-height: 0 !important;
+    }
+
     :global(.prose) {
       color: black;
+      max-width: none !important;
     }
 
     :global(.prose h1, .prose h2, .prose h3, .prose h4) {
@@ -395,6 +430,15 @@
       background-color: transparent;
       border: none;
       padding: 0;
+    }
+
+    /* Ensure all content is visible */
+    :global(body) {
+      overflow: visible !important;
+    }
+
+    :global(html) {
+      overflow: visible !important;
     }
   }
 </style>

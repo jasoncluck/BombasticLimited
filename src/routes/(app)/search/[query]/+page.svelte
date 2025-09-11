@@ -33,9 +33,13 @@
   const mediaQueryState = getMediaQueryState();
   const navigationState = getNavigationState();
 
-  // Sync navigation state with the URL search parameter
+  // Sync navigation state with the URL search parameter only if navigation is not currently searching
   onMount(() => {
-    if (searchString && navigationState.searchQuery !== searchString) {
+    if (
+      searchString &&
+      navigationState.searchQuery !== searchString &&
+      !navigationState.isSearching
+    ) {
       navigationState.setSearchQuery(searchString);
     }
   });
@@ -80,7 +84,10 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-      navigationState.setSearchQuery(restored.searchString);
+      // Only restore search query if we're not currently searching
+      if (!navigationState.isSearching) {
+        navigationState.setSearchQuery(restored.searchString);
+      }
       contentState.selectedVideosBySection = restored.selectedVideos;
       previousSearchString = restored.searchString;
     },

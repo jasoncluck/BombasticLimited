@@ -91,7 +91,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
-  syncSearchQueryFromUrl: (pathname: string, params?: URLSearchParams) => void;
+  syncSearchQueryFromUrl: (pathname: string) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -145,8 +145,8 @@ export class NavigationStateClass implements NavigationState {
   private lastRefreshTime: number = 0;
   private preloadTimeout: number | null = null;
   private currentSearchTimestamp: number = 0;
-  private searchInputRef: HTMLInputElement | null = null;
   private pendingValueUpdate: string | null = null;
+  private lastNavigationTimestamp: number = 0;
 
   // Core data state
   data = $state<NavigationData>({
@@ -254,40 +254,10 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Store reference to the search input element for direct DOM manipulation if needed
-   */
-  private setSearchInputRef(element: HTMLInputElement): void {
-    this.searchInputRef = element;
-  }
-
-  /**
-   * Preserve the current input value before navigation and restore if needed
-   */
-  private preserveInputValue(): void {
-    if (this.searchInputRef) {
-      this.pendingValueUpdate = this.searchInputRef.value;
-    }
-  }
-
-  /**
-   * Restore input value if it was changed unexpectedly
-   */
-  private restoreInputValueIfNeeded(): void {
-    if (this.pendingValueUpdate !== null && this.searchInputRef) {
-      // Only restore if the current DOM value doesn't match what we expect
-      if (this.searchInputRef.value !== this.pendingValueUpdate) {
-        this.searchInputRef.value = this.pendingValueUpdate;
-        this.searchQuery = this.pendingValueUpdate;
-      }
-      this.pendingValueUpdate = null;
-    }
-  }
-
-  /**
    * Extract search query from URL and update state
    */
   private extractSearchFromUrl(pathname: string): string {
-    const searchMatch = pathname.match(/^\/search\/(.+)$/);
+    const searchMatch = pathname.match(/^\/search\/(.+?)(?:\/.*)?$/);
     if (searchMatch && searchMatch[1]) {
       try {
         return decodeURIComponent(searchMatch[1]);
@@ -298,6 +268,19 @@ export class NavigationStateClass implements NavigationState {
     }
     return '';
   }
+
+  /**
+   * Sync search query from URL - now exposed as public method
+   */
+  syncSearchQueryFromUrl = (pathname: string): void => {
+    const urlSearchQuery = this.extractSearchFromUrl(pathname);
+
+    // Only update if the URL search query is different from current state
+    // and if we're not currently in the middle of a search operation
+    if (urlSearchQuery !== this.searchQuery && !this.isSearching) {
+      this.searchQuery = urlSearchQuery;
+    }
+  };
 
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
@@ -324,36 +307,6 @@ export class NavigationStateClass implements NavigationState {
           const currentPath = page.url?.pathname || '';
           this.syncSearchQueryFromUrl(currentPath);
           this.updateActiveRoute(currentPath);
-        }
-      });
-
-      // Set up DOM event listeners to track search input
-      $effect(() => {
-        const searchInput = document.querySelector(
-          '[data-testid="search-input"]'
-        ) as HTMLInputElement;
-        if (searchInput) {
-          this.setSearchInputRef(searchInput);
-
-          // Add focus/blur listeners to better track user interaction
-          const handleFocus = () => {
-            this.preserveInputValue();
-          };
-
-          const handleBlur = () => {
-            // Small delay to allow any pending operations to complete
-            setTimeout(() => {
-              this.restoreInputValueIfNeeded();
-            }, 50);
-          };
-
-          searchInput.addEventListener('focus', handleFocus);
-          searchInput.addEventListener('blur', handleBlur);
-
-          return () => {
-            searchInput.removeEventListener('focus', handleFocus);
-            searchInput.removeEventListener('blur', handleBlur);
-          };
         }
       });
     }
@@ -435,26 +388,6 @@ export class NavigationStateClass implements NavigationState {
    */
   updateActiveRoute(pathname: string): void {
     this.activeRoute = pathname;
-  }
-
-  /**
-   * Synchronize search query from URL
-   */
-  syncSearchQueryFromUrl(pathname: string, params?: URLSearchParams): void {
-    const searchQueryFromUrl = this.extractSearchFromUrl(pathname);
-
-    // Only update if the search query is different to avoid unnecessary rerenders
-    if (searchQueryFromUrl !== this.searchQuery) {
-      this.searchQuery = searchQueryFromUrl;
-
-      // Update the search input value if it exists and is different
-      if (
-        this.searchInputRef &&
-        this.searchInputRef.value !== searchQueryFromUrl
-      ) {
-        this.searchInputRef.value = searchQueryFromUrl;
-      }
-    }
   }
 
   /**
@@ -585,11 +518,6 @@ export class NavigationStateClass implements NavigationState {
       window.clearTimeout(this.preloadTimeout);
       this.preloadTimeout = null;
     }
-
-    // Clear search input if it exists
-    if (this.searchInputRef) {
-      this.searchInputRef.value = '';
-    }
   };
 
   async searchRedirect(
@@ -599,6 +527,8 @@ export class NavigationStateClass implements NavigationState {
   ): Promise<Event> {
     const input = e.target as HTMLInputElement;
     const searchValue = input.value.trim();
+    const navigationTimestamp = Date.now();
+    this.lastNavigationTimestamp = navigationTimestamp;
 
     // If an expected value was passed and current value doesn't match, abort
     if (expectedValue !== undefined && searchValue !== expectedValue) {
@@ -619,18 +549,6 @@ export class NavigationStateClass implements NavigationState {
       return e;
     }
 
-    // Additional check: if the input is focused and has different content, abort
-    if (
-      this.searchInputRef &&
-      document.activeElement === this.searchInputRef &&
-      this.searchInputRef.value.trim() !== searchValue
-    ) {
-      return e;
-    }
-
-    // Preserve the current value before navigation
-    this.preserveInputValue();
-
     // Cancel any pending search request
     if (this.searchAbortController) {
       this.searchAbortController.abort();
@@ -641,9 +559,29 @@ export class NavigationStateClass implements NavigationState {
 
     try {
       if (searchValue === '') {
-        // Only navigate to "/" if completely empty and no newer search is pending
+        // Before navigating to home, check if user has started typing something new
+        // Add a small delay to check if the search state has changed
+        await new Promise((resolve) => setTimeout(resolve, 10));
+
+        // If navigation timestamp is outdated or user has started typing, abort
+        if (
+          navigationTimestamp < this.lastNavigationTimestamp ||
+          this.searchQuery.trim() !== ''
+        ) {
+          return e;
+        }
+
+        // Only navigate to "/" if we're still in the empty state
         await goto(`/`, { keepFocus: true, replaceState: false });
       } else if (searchValue.length >= 2) {
+        // Check again before navigation for non-empty searches
+        if (
+          navigationTimestamp < this.lastNavigationTimestamp ||
+          this.searchQuery.trim() !== searchValue
+        ) {
+          return e;
+        }
+
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
@@ -661,13 +599,11 @@ export class NavigationStateClass implements NavigationState {
         console.error('Search navigation error:', error);
       }
     } finally {
-      this.isSearching = false;
-      this.searchAbortController = null;
-
-      // Restore input value if it was unexpectedly changed
-      setTimeout(() => {
-        this.restoreInputValueIfNeeded();
-      }, 10);
+      // Only clear isSearching if this is still the most recent navigation
+      if (navigationTimestamp >= this.lastNavigationTimestamp) {
+        this.isSearching = false;
+        this.searchAbortController = null;
+      }
     }
 
     return e;
@@ -681,9 +617,6 @@ export class NavigationStateClass implements NavigationState {
     // Update the searchQuery state to match the input
     this.searchQuery = input.value;
     this.currentSearchTimestamp = searchTimestamp;
-
-    // Preserve the current input value
-    this.preserveInputValue();
 
     // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
@@ -722,15 +655,9 @@ export class NavigationStateClass implements NavigationState {
 
     // Always use debounced search for all cases (including empty)
     this.currentDebouncedSearch = debounce(() => {
-      // Only execute if the search value and timestamp haven't changed since this debounce was created
-      // Also check if the input is still focused with the same value
-      const currentInputValue = this.searchInputRef?.value?.trim() || '';
-
       if (
         this.searchQuery.trim() === capturedSearchValue &&
-        this.currentSearchTimestamp === capturedTimestamp &&
-        (document.activeElement !== this.searchInputRef ||
-          currentInputValue === capturedSearchValue)
+        this.currentSearchTimestamp === capturedTimestamp
       ) {
         this.searchRedirect(e, capturedSearchValue, capturedTimestamp);
       }
@@ -926,8 +853,8 @@ export class NavigationStateClass implements NavigationState {
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
     this.currentSearchTimestamp = 0;
-    this.searchInputRef = null;
     this.pendingValueUpdate = null;
+    this.lastNavigationTimestamp = 0;
   }
 }
 
