@@ -74,7 +74,7 @@
   };
 </script>
 
-<div class="relative">
+<div class="relative" data-testid="search-results">
   <ContentHeader
     title="Search Results"
     {videos}

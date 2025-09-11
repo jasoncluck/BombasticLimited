@@ -66,16 +66,20 @@ unauthTest.describe('Navigation Component - Search Input Tests', () => {
       await unauthenticatedPage.goto('/search/test/giantbomb');
 
       // Wait for page to load
-      await expect(
-        unauthenticatedPage.getByTestId('search-results')
-      ).toBeVisible();
+      await unauthenticatedPage
+        .getByTestId('search-results')
+        .waitFor({ state: 'visible' });
 
       // Search input should be auto-populated with the search query
       const searchInput = unauthenticatedPage.getByTestId('search-input');
       await expect(searchInput).toHaveValue('test');
 
       // Should show Giant Bomb specific results
-      await expect(unauthenticatedPage.getByText('Giant Bomb')).toBeVisible();
+
+      const sourceLink = unauthenticatedPage
+        .getByRole('heading', { name: 'Giant Bomb' })
+        .first();
+      await sourceLink.waitFor({ state: 'visible' });
     }
   );
 
@@ -130,9 +134,9 @@ unauthTest.describe('Navigation Component - Search Input Tests', () => {
       await unauthenticatedPage.goto('/search/test');
 
       // Wait for search results to load
-      await expect(
-        unauthenticatedPage.getByTestId('search-results')
-      ).toBeVisible();
+      await unauthenticatedPage
+        .getByTestId('search-results')
+        .waitFor({ state: 'visible' });
 
       // Verify search input is populated
       const searchInput = unauthenticatedPage.getByTestId('search-input');
@@ -140,7 +144,7 @@ unauthTest.describe('Navigation Component - Search Input Tests', () => {
 
       // Navigate to source-specific search (if available)
       const sourceLink = unauthenticatedPage
-        .getByRole('link', { name: 'Giant Bomb' })
+        .getByRole('heading', { name: 'Giant Bomb' })
         .first();
       if (await sourceLink.isVisible()) {
         await sourceLink.click();

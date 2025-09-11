@@ -438,7 +438,6 @@
             playsinline: 1,
             fs: 1,
             rel: 0,
-            modestbranding: true,
           },
           events: {
             onReady: onPlayerReady,
