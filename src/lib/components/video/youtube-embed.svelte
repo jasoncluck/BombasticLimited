@@ -57,8 +57,8 @@
 
   // Create a global store for pending video operations
   if (typeof window !== 'undefined') {
-    if (!window.__pendingVideoOperations) {
-      window.__pendingVideoOperations = new Set<Promise<void>>();
+    if (!window.pendingVideoOperations) {
+      window.pendingVideoOperations = new Set<Promise<void>>();
     }
   }
 
@@ -243,12 +243,12 @@
             // Track this promise globally
             if (
               typeof window !== 'undefined' &&
-              window.__pendingVideoOperations
+              window.pendingVideoOperations
             ) {
-              window.__pendingVideoOperations.add(savePromise);
+              window.pendingVideoOperations.add(savePromise);
               savePromise.finally(() => {
-                if (window.__pendingVideoOperations) {
-                  window.__pendingVideoOperations.delete(savePromise);
+                if (window.pendingVideoOperations) {
+                  window.pendingVideoOperations.delete(savePromise);
                 }
               });
             }
@@ -467,13 +467,6 @@
       watchTimeTracker = null;
     }
   });
-
-  // Add global declaration for TypeScript
-  declare global {
-    interface Window {
-      __pendingVideoOperations?: Set<Promise<void>>;
-    }
-  }
 </script>
 
 <AspectRatio ratio={16 / 9}>

@@ -172,7 +172,7 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
     'should support Ctrl/Cmd multi-selection of video cards',
     async ({ authenticatedPage }) => {
       const videoHelpers = new VideoHelpers(authenticatedPage);
-      
+
       // Switch to card view to ensure multi-selection works properly
       console.log('Switching to card view for multi-selection test...');
       await videoHelpers.switchToCardView();
@@ -205,7 +205,7 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
     'should support Shift range selection of video cards',
     async ({ authenticatedPage }) => {
       const videoHelpers = new VideoHelpers(authenticatedPage);
-      
+
       // Switch to card view to ensure multi-selection works properly
       console.log('Switching to card view for range selection test...');
       await videoHelpers.switchToCardView();
@@ -216,7 +216,9 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
       console.log(`Found ${videoCards.length} video cards`);
 
       if (videoCards.length < 2) {
-        console.log('Range selection test skipped: Not enough videos available');
+        console.log(
+          'Range selection test skipped: Not enough videos available'
+        );
         return;
       }
 
@@ -227,7 +229,9 @@ authenticatedTest.describe('Multi-Selection Video Operations', () => {
         const selectionIndicators = await videoHelpers.getSelectionIndicators();
         const selectionCount = await selectionIndicators.count();
 
-        console.log(`Found ${selectionCount} selection indicators after range selection`);
+        console.log(
+          `Found ${selectionCount} selection indicators after range selection`
+        );
 
         // For range selection, we expect at least 2 items to be selected
         if (selectionCount >= 2) {
@@ -263,10 +267,7 @@ unauthenticatedTest.describe('Video Operations (Unauthenticated)', () => {
         const videoTitle = await videoHelpers.getVideoTitle(videoCard);
         expect(videoTitle).toBeTruthy();
       } catch (error) {
-        console.log(
-          'Video card test failed for unauthenticated user:',
-          error
-        );
+        console.log('Video card test failed for unauthenticated user:', error);
         // This might be expected behavior
       }
     }

@@ -95,13 +95,11 @@
 
   // Helper function to wait for pending video operations
   async function waitForPendingVideoOperations(): Promise<void> {
-    if (typeof window !== 'undefined' && window.__pendingVideoOperations) {
-      const pendingOperations = Array.from(window.__pendingVideoOperations);
+    if (typeof window !== 'undefined' && window.pendingVideoOperations) {
+      const pendingOperations = Array.from(window.pendingVideoOperations);
       if (pendingOperations.length > 0) {
-        console.log(`Waiting for ${pendingOperations.length} pending video operations...`);
         try {
           await Promise.allSettled(pendingOperations);
-          console.log('All pending video operations completed');
         } catch (error) {
           console.error('Error waiting for pending video operations:', error);
         }
@@ -406,13 +404,6 @@
       }
       // SSE connection is now automatically cleaned up by sidebarCleanup
     };
-  }
-
-  // Add global declaration for TypeScript
-  declare global {
-    interface Window {
-      __pendingVideoOperations?: Set<Promise<void>>;
-    }
   }
 </script>
 

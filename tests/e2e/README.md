@@ -216,6 +216,7 @@ Manual cleanup can be triggered by running the global teardown script if needed.
 ## Overview
 
 The timestamp functionality allows authenticated users to:
+
 - Save their progress when watching videos
 - Resume videos from where they left off via the "Continue Watching" section
 - Mark videos as watched or reset their progress
@@ -224,16 +225,20 @@ The timestamp functionality allows authenticated users to:
 ## Additional Test Files for Timestamp Functionality
 
 ### `timestamp.test.ts`
+
 Main E2E tests focusing on UI interactions and functionality:
+
 - Continue watching section visibility and interaction
 - Video navigation and iframe loading
-- Right-click context menu operations 
+- Right-click context menu operations
 - Content dropdown menu operations
 - Multi-selection with Ctrl/Cmd and Shift
 - Unauthenticated user limitations
 
-### `timestamp-behavior.test.ts` 
+### `timestamp-behavior.test.ts`
+
 Specific tests for timestamp behavior scenarios:
+
 - Continue watching entry creation and verification
 - Watched video behavior (not appearing in continue watching)
 - Quick navigation scenarios (< 15 seconds)
@@ -242,7 +247,9 @@ Specific tests for timestamp behavior scenarios:
 - Multiple video management
 
 ### `helpers/video-helpers.ts`
+
 Helper class with reusable functions for video-related test operations:
+
 - Video card interaction utilities
 - Continue watching section management
 - Context menu and dropdown operations
@@ -253,13 +260,17 @@ Helper class with reusable functions for video-related test operations:
 
 Based on the application code, the timestamp system follows these rules:
 
-- **15-second rule**: Videos must be watched for more than 15 seconds before a timestamp is saved
-- **95% completion rule**: Videos watched to 95% or more are marked as "watched" (not saved as progress)
-- **25% progress rule**: Videos watched between 15 seconds and 95% save progress timestamps
+- **15-second rule**: Videos must be watched for more than 15 seconds before a
+  timestamp is saved
+- **95% completion rule**: Videos watched to 95% or more are marked as "watched"
+  (not saved as progress)
+- **25% progress rule**: Videos watched between 15 seconds and 95% save progress
+  timestamps
 
 ## Running Timestamp Tests
 
 ### Quick Start
+
 ```bash
 # Run all timestamp-related tests
 npm run test:e2e -- --grep "timestamp|continue watching"
@@ -272,6 +283,7 @@ npm run test:e2e:debug -- --grep "timestamp"
 ```
 
 ### Using the Test Runner Script
+
 ```bash
 # Basic run
 ./tests/e2e/run-timestamp-tests.sh
@@ -287,11 +299,12 @@ npm run test:e2e:debug -- --grep "timestamp"
 ```
 
 ### Specific Test Files
+
 ```bash
 # Main timestamp tests
 npx playwright test tests/e2e/timestamp.test.ts
 
-# Behavior-specific tests  
+# Behavior-specific tests
 npx playwright test tests/e2e/timestamp-behavior.test.ts
 
 # Single test
@@ -301,7 +314,9 @@ npx playwright test --grep "should display continue watching section"
 ## Timestamp Test Limitations
 
 ### YouTube Player Interaction
+
 Direct manipulation of the YouTube player iframe is complex in E2E tests due to:
+
 - Cross-origin iframe restrictions
 - Complex YouTube API message passing
 - Timing dependencies
@@ -309,7 +324,9 @@ Direct manipulation of the YouTube player iframe is complex in E2E tests due to:
 The tests focus on UI state verification rather than direct player control.
 
 ### Test Data Requirements
+
 Some tests may require specific test data or scenarios:
+
 - Videos with existing progress
 - Multiple videos in continue watching
 - Clean user state for certain scenarios
@@ -321,6 +338,7 @@ Some tests may require specific test data or scenarios:
 ## Overview
 
 The playlist functionality allows authenticated users to:
+
 - Create and manage personal playlists
 - Add and remove videos from playlists
 - Reorder videos within playlists via drag and drop
@@ -332,7 +350,9 @@ The playlist functionality allows authenticated users to:
 ## Playlist Test Files
 
 ### `playlist-operations.test.ts`
+
 Core playlist operations and UI interactions:
+
 - Basic playlist CRUD operations (create, delete, add/remove videos)
 - Drag and drop functionality (videos to playlists, playlist reordering)
 - Video reordering within playlists when sort is Custom
@@ -342,7 +362,9 @@ Core playlist operations and UI interactions:
 - Authentication requirements and restrictions
 
 ### `playlist-behavior.test.ts`
+
 Playlist watching behavior and timestamp integration:
+
 - Timestamp creation when watching playlist videos
 - Continue watching integration with playlist context
 - Resume playlist functionality with correct sort order
@@ -351,7 +373,9 @@ Playlist watching behavior and timestamp integration:
 - Query parameter handling for non-default sort orders
 
 ### `sidebar-sources.test.ts`
+
 Sidebar source reordering functionality (separate from playlists):
+
 - Drag and drop reordering of sources in sidebar
 - Persistence of source order across page reloads and navigation
 - Visual feedback during drag operations
@@ -359,7 +383,9 @@ Sidebar source reordering functionality (separate from playlists):
 - Error handling and edge cases
 
 ### `playlist/playlist-helpers.ts`
+
 Comprehensive helper functions for playlist test operations:
+
 - Basic playlist operations (create, delete, navigation)
 - Video management (add/remove, drag and drop)
 - Sort order operations and verification
@@ -369,12 +395,14 @@ Comprehensive helper functions for playlist test operations:
 ## Key Playlist Features Tested
 
 ### Basic Operations
+
 - ✅ Create and delete playlists
 - ✅ Add videos to playlists via context menu
 - ✅ Remove videos from playlists
 - ✅ Authentication requirements
 
 ### Drag & Drop Functionality
+
 - ✅ Drag videos from homepage onto playlists
 - ✅ Reorder videos within playlists (when sort = Custom)
 - ✅ Reorder playlists in sidebar
@@ -382,12 +410,14 @@ Comprehensive helper functions for playlist test operations:
 - ✅ Visual feedback during drag operations
 
 ### Sort Order Management
+
 - ✅ Change playlist sort order: Custom → Published At → Title
 - ✅ Ascending/descending options for Published At and Title
 - ✅ Disable drag & drop when sort order is not Custom
 - ✅ Persist sort order across navigation
 
 ### Timestamp Integration
+
 - ✅ Create timestamps when watching playlist videos
 - ✅ Resume playlist from Continue Watching with correct sort order
 - ✅ Navigate to playlist page via Continue Watching playlist title
@@ -397,6 +427,7 @@ Comprehensive helper functions for playlist test operations:
 ## Running Playlist Tests
 
 ### Quick Start
+
 ```bash
 # Run all playlist-related tests
 npm run test:e2e -- --grep "playlist"
@@ -408,6 +439,7 @@ npm run test:e2e -- --grep "sidebar source"
 ```
 
 ### Using the Playlist Test Runner Script
+
 ```bash
 # Run all playlist tests
 ./tests/e2e/run-playlist-tests.sh
@@ -431,6 +463,7 @@ npm run test:e2e -- --grep "sidebar source"
 ```
 
 ### Specific Test Files
+
 ```bash
 # Playlist operations tests
 npx playwright test tests/e2e/playlist-operations.test.ts
@@ -448,7 +481,9 @@ npx playwright test --grep "should reorder videos within playlist"
 ## Playlist Test Architecture
 
 ### Sort Order System
+
 The playlist sort system supports:
+
 - **Custom (playlistOrder)**: User-defined order with drag & drop enabled
 - **Published At (datePublished)**: Sort by video publication date
 - **Title**: Alphabetical sort by video title
@@ -456,28 +491,34 @@ The playlist sort system supports:
 Both Published At and Title support ascending and descending order.
 
 ### Query Parameter Handling
+
 - Default sort (Custom/ascending) does not include query parameters
 - Non-default sorts include query parameters in URLs
 - Sort order persists across navigation and page reloads
 
 ### Authentication Context
+
 - Authenticated users: Full playlist functionality
 - Unauthenticated users: No playlist creation, limited viewing
 
 ## Playlist Test Limitations
 
 ### Drag and Drop Complexity
+
 - Focus on DOM event simulation rather than pixel-perfect mouse movements
 - Visual feedback verification through CSS class changes
 - State verification through DOM inspection
 
 ### Playlist Content Requirements
+
 Some tests require:
+
 - Multiple videos available for playlist creation
 - Sufficient test data for drag and drop operations
 - Clean user state for certain scenarios
 
 ### Cross-Platform Considerations
+
 - Drag and drop behavior may vary between browsers
 - Mobile vs desktop interaction differences
 - Keyboard modifier key support (Ctrl/Cmd, Shift)

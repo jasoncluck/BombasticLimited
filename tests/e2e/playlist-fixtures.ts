@@ -87,8 +87,8 @@ function createPlaylistHelpers(page: Page, createdPlaylistIds: string[]) {
       const playlistButton = this.getPlaylistButton(playlistId);
       await playlistButton.waitFor({ state: 'visible' });
 
-      // Add timeout to let sidebar state update
-      await page.waitForTimeout(2000);
+      // Add timeout to let sidebar state update 
+      await page.waitForTimeout(4000);
       await playlistButton.click();
 
       // Wait for the playlist page to load with proper URL pattern matching
