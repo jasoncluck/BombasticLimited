@@ -461,9 +461,23 @@ export class VideoHelpers {
   }
 
   /**
+   * Parse YouTube time format (MM:SS or HH:MM:SS) to seconds
+   */
+  private parseYouTubeTime(timeString: string): number {
+    const parts = timeString.trim().split(':').map(Number);
+    if (parts.length === 2) {
+      return parts[0] * 60 + parts[1]; // MM:SS
+    } else if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2]; // HH:MM:SS
+    }
+    return 0;
+  }
+
+  /**
    * Scrub YouTube player to a specific timestamp by clicking on the progress bar
    */
   private async scrubYouTubePlayer(targetSeconds: number): Promise<void> {
+    console.log(`🎯 Starting YouTube scrub operation to ${targetSeconds} seconds`);
     try {
       // Switch to iframe context to interact with YouTube player
       const iframe = this.page.locator('iframe').first();
@@ -584,7 +598,9 @@ export class VideoHelpers {
           );
 
           // Wait longer for the scrub to take effect and stabilize
-          await this.page.waitForTimeout(2000);
+          // Increased from 2 seconds to 3 seconds for better reliability
+          console.log('Waiting 3 seconds for scrub to take effect...');
+          await this.page.waitForTimeout(3000);
 
           // Verify the video is still playing after scrub
           try {
@@ -617,7 +633,8 @@ export class VideoHelpers {
           console.log('Waiting for video state to stabilize after scrub...');
           await this.page.waitForTimeout(3000);
 
-          // Optional: Verify the scrub was successful by checking current time
+          // Verify the scrub was successful by checking current time position
+          let scrubSuccessful = false;
           try {
             const currentTimeElement = frame.locator(
               '.ytp-time-current, .html5-video-current-time'
@@ -625,19 +642,30 @@ export class VideoHelpers {
             if (await currentTimeElement.isVisible({ timeout: 2000 })) {
               const currentTimeText = await currentTimeElement.textContent();
               if (currentTimeText) {
+                const actualPosition = this.parseYouTubeTime(currentTimeText);
+                const tolerance = 5; // Allow 5 second tolerance
+                const positionDifference = Math.abs(actualPosition - targetSeconds);
+                
                 console.log(
-                  `Current video time after scrub: ${currentTimeText.trim()}`
+                  `Scrub verification: target=${targetSeconds}s, actual=${actualPosition}s, difference=${positionDifference}s`
                 );
+                
+                if (positionDifference <= tolerance) {
+                  scrubSuccessful = true;
+                  console.log('✓ Scrub position verification successful');
+                } else {
+                  console.warn(`✗ Scrub position verification failed: expected ~${targetSeconds}s, got ${actualPosition}s`);
+                }
               }
             }
           } catch (timeCheckError) {
             console.warn(
-              'Could not verify current time after scrub:',
+              'Could not verify scrub position:',
               timeCheckError
             );
           }
 
-          // Final verification that video is playing
+          // Final verification that video is playing with enhanced stability
           try {
             const finalPauseCheck =
               (await frame
@@ -651,7 +679,7 @@ export class VideoHelpers {
               const finalPlayButton = frame.locator('.ytp-play-button').first();
               if (await finalPlayButton.isVisible({ timeout: 1000 })) {
                 await finalPlayButton.click();
-                // Short wait after final play attempt
+                // Wait after final play attempt for stability
                 await this.page.waitForTimeout(1000);
               }
             } else {
@@ -659,6 +687,19 @@ export class VideoHelpers {
                 'Video appears to be playing successfully after scrub'
               );
             }
+
+            // Additional wait to ensure stable playback at new position
+            // This helps prevent intermittent issues where playback state changes
+            console.log('Ensuring stable playback at new position...');
+            await this.page.waitForTimeout(2000);
+            
+            // Final status log
+            if (scrubSuccessful) {
+              console.log('✓ Scrub operation completed successfully with position verification');
+            } else {
+              console.log('⚠ Scrub operation completed but position verification failed');
+            }
+            
           } catch (finalVerifyError) {
             console.warn(
               'Could not perform final playback verification:',
@@ -669,19 +710,22 @@ export class VideoHelpers {
           console.warn(
             'Could not get progress bar dimensions, falling back to wait method'
           );
+          console.log('Fallback: waiting 16 seconds for video progression...');
           await this.page.waitForTimeout(16000);
         }
       } else {
         console.warn(
           'Could not find YouTube progress bar, falling back to wait method'
         );
+        console.log('Fallback: waiting 16 seconds for video progression...');
         await this.page.waitForTimeout(16000);
       }
     } catch (error) {
-      console.warn(
-        'YouTube player scrubbing failed, falling back to wait method:',
+      console.error(
+        '❌ YouTube player scrubbing failed, falling back to wait method:',
         error
       );
+      console.log('Fallback: waiting 16 seconds for video progression...');
       await this.page.waitForTimeout(16000); // Fall back to waiting 16 seconds
     }
   }
