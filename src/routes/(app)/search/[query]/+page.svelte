@@ -14,6 +14,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
+  import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -33,7 +34,7 @@
   const navigationState = getNavigationState();
 
   // Sync navigation state with the URL search parameter
-  $effect(() => {
+  onMount(() => {
     if (searchString && navigationState.searchQuery !== searchString) {
       navigationState.setSearchQuery(searchString);
     }
