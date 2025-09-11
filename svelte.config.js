@@ -22,6 +22,8 @@ const config = {
           'default-src': ['self'],
           'script-src': [
             'self',
+            'unsafe-eval', // Required for AdSense
+            'unsafe-inline', // Sometimes needed for AdSense
             // YouTube & Google Ad domains (essential only)
             'https://www.youtube.com',
             'https://www.google.com',
@@ -34,6 +36,8 @@ const config = {
             'https://securepubads.g.doubleclick.net',
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
+            'https://partner.googleadservices.com', // Additional AdSense domain
+            'https://googletagservices.com', // Additional Google domain
             // Twitch core domains (specific CloudFront domains)
             'https://gql.twitch.tv',
             'https://embed.twitch.tv',
@@ -63,6 +67,7 @@ const config = {
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
+            'https://partner.googleadservices.com', // Additional AdSense domain
             // Twitch core domains
             'https://embed.twitch.tv',
             'https://player.twitch.tv',
@@ -79,6 +84,7 @@ const config = {
             'https://www.googlesyndication.com',
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
+            'https://partner.googleadservices.com',
           ],
           'frame-ancestors': ['self'],
           'connect-src': [
@@ -97,6 +103,9 @@ const config = {
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
+            'https://partner.googleadservices.com',
+            'https://googletagservices.com',
+            'https://adnxs.com', // Additional ad network
             // Twitch core domains
             'https://api.twitch.tv',
             'https://gql.twitch.tv',
@@ -133,6 +142,8 @@ const config = {
             'https://yt3.ggpht.com',
             'https://www.youtube-nocookie.com',
             'https://pubads.g.doubleclick.net',
+            'https://partner.googleadservices.com',
+            'https://*.googleusercontent.com', // For Google hosted images
             // Twitch core domains
             'https://static-cdn.jtvnw.net',
             'https://clips-media-assets2.twitch.tv',
