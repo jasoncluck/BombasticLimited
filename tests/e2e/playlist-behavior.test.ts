@@ -53,7 +53,7 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
 
         // Verify we're in playlist context by checking URL contains both playlist and video
         const currentUrl = playlistPage.url();
-        expect(currentUrl).toMatch(/\/playlist\/[^\/]+\/video\/[^\/]+/);
+        expect(currentUrl).toMatch(/\/playlist\/[^/]+\/video\/[^/]+/);
 
         // Actually watch the video to generate a timestamp (15+ seconds required)
         const videoHelpers = new VideoHelpers(playlistPage);
@@ -61,6 +61,8 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
           method: 'scrub',
           scrubToSeconds: 80,
         });
+
+        await playlistPage.waitForTimeout(2000);
 
         // Go back to homepage to check continue watching
         await playlistPage.goto('/');
