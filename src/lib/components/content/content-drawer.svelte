@@ -433,8 +433,8 @@
           <Button
             class="drawer-button justify-start"
             variant="ghost"
-            onclick={async () => {
-              const { updatedVideos } = await handleAddVideoTimestamps({
+            onclick={() => {
+              handleAddVideoTimestamps({
                 videoTimestamps: operationVideos.map((v) => ({
                   videoId: v.id,
                   watchedAt: new Date(),
@@ -443,18 +443,6 @@
                 supabase,
               });
 
-              // Update the section's state based on what we were operating on
-              if (selectedVideos.length > 0) {
-                contentState.selectedVideosBySection[sectionId] = updatedVideos;
-              } else if (hoveredVideo) {
-                const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id
-                );
-                if (updatedHoveredVideo) {
-                  contentState.hoveredVideosBySection[sectionId] =
-                    updatedHoveredVideo;
-                }
-              }
               contentState.openDrawerSection = null;
             }}
           >

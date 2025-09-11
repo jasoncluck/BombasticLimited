@@ -78,7 +78,7 @@ export const NOTIFICATION_TEMPLATES = {
     actionUrl: '/support/maintenance',
   },
   newFeature: {
-    type: 'content' as NotificationType,
+    type: 'system' as NotificationType,
     title: 'New Feature Available',
     message: 'Check out our latest feature update with enhanced functionality!',
     metadata: { source: 'feature_announcement' },

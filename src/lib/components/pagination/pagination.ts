@@ -29,7 +29,10 @@ export function getPaginationQueryParams({
   try {
     const pageNumQueryString = searchParams.get(PAGINATION_QUERY_KEY);
     if (pageNumQueryString) {
-      pageNum = parseInt(pageNumQueryString);
+      const parsed = parseInt(pageNumQueryString);
+      if (!isNaN(parsed)) {
+        pageNum = parsed;
+      }
     }
   } catch {
     return 1;

@@ -97,7 +97,6 @@ describe('+page.server.ts load function', () => {
         },
         preferredImageFormat: 'webp',
         supabase: mockSupabase,
-        session: mockSession,
       });
     });
 
@@ -113,7 +112,6 @@ describe('+page.server.ts load function', () => {
       },
       preferredImageFormat: 'webp',
       supabase: mockSupabase,
-      session: mockSession,
     });
 
     // Verify result structure
@@ -181,7 +179,6 @@ describe('+page.server.ts load function', () => {
       },
       preferredImageFormat: 'webp',
       supabase: mockSupabase,
-      session: null,
     });
 
     expect(result.sourceVideos).toEqual({

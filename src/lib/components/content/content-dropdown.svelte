@@ -99,7 +99,6 @@
   let open = $state(false);
   let subMenuOpen = $state(false);
   let showDeleteDialog = $state(false);
-  let isFocused = $state(false);
 
   // Capture the operation videos when dropdown opens and keep them fixed
   let frozenOperationVideos = $state<Video[]>([]);
@@ -196,11 +195,7 @@
   const shouldShowButton = $derived.by(() => {
     return (
       hasAvailableActions &&
-      (variant !== 'list-items' ||
-        isHovering ||
-        open ||
-        subMenuOpen ||
-        isFocused)
+      (variant !== 'list-items' || isHovering || open || subMenuOpen)
     );
   });
 
@@ -258,7 +253,7 @@
       }
     }}
   >
-    <DropdownMenu.Trigger>
+    <DropdownMenu.Trigger data-testid="content-dropdown-trigger">
       {#snippet child({ props })}
         <Button
           {...props}
@@ -268,12 +263,6 @@
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
             e.stopPropagation();
-          }}
-          onfocus={() => {
-            isFocused = true;
-          }}
-          onblur={() => {
-            isFocused = false;
           }}
           class="ghost-button-minimal outline-primary {open
             ? 'scale-105'
@@ -289,7 +278,11 @@
       {/snippet}
     </DropdownMenu.Trigger>
 
-    <DropdownMenu.Content align="end" class="stable-dropdown outline-none">
+    <DropdownMenu.Content
+      align="end"
+      class="stable-dropdown outline-none"
+      data-testid="content-dropdown-content"
+    >
       {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
         <DropdownMenu.Item
           class="p-2"
@@ -337,6 +330,7 @@
               <DropdownMenu.SubContent
                 side="right"
                 align="start"
+                data-testid="add-playlist-content"
                 class="stable-submenu z-50 overflow-hidden"
                 sideOffset={-4}
                 alignOffset={0}
@@ -351,6 +345,7 @@
                     {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
                       <DropdownMenu.Item
                         class="p-2"
+                        data-playlist-id={addPlaylist.id}
                         onclick={async () => {
                           const { error } = await handleAddVideosToPlaylist({
                             videos: frozenOperationVideos,
@@ -477,7 +472,7 @@
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
-            const { updatedVideos, error } = await handleAddVideoTimestamps({
+            const { error } = await handleAddVideoTimestamps({
               videoTimestamps: frozenOperationVideos.map((v) => ({
                 videoId: v.id,
                 watchedAt: new Date(),
@@ -487,27 +482,6 @@
             });
 
             if (!error) {
-              // Update the videos array with the updated videos
-              const updatedVideoIds = new Set(updatedVideos.map((v) => v.id));
-              videos = videos.map((v) =>
-                updatedVideoIds.has(v.id)
-                  ? updatedVideos.find((uv) => uv.id === v.id)!
-                  : v
-              );
-
-              // Update the section's state based on what we were operating on
-              if (selectedVideos.length > 0) {
-                contentState.selectedVideosBySection[sectionId] = updatedVideos;
-              } else if (hoveredVideo) {
-                const updatedHoveredVideo = updatedVideos.find(
-                  (v) => v.id === hoveredVideo?.id
-                );
-                if (updatedHoveredVideo) {
-                  contentState.hoveredVideosBySection[sectionId] =
-                    updatedHoveredVideo;
-                }
-              }
-
               handleSelectionAfterAction();
             }
           }}

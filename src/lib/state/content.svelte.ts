@@ -1,6 +1,6 @@
 import type { Video } from '$lib/supabase/videos';
 import type { Playlist } from '$lib/supabase/playlists';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import { getContext, setContext } from 'svelte';
 import { createDragImage } from '$lib/utils/dragdrop';
@@ -113,8 +113,41 @@ export class ContentState {
   // Track context menu state to prevent race conditions
   private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
 
+  // Track pending video operations (like timestamp saves)
+  pendingVideoOperations = $state<
+    Set<Promise<{ error?: PostgrestError | null }>>
+  >(new Set());
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
+  }
+
+  // Helper methods for tracking pending video operations
+  addPendingVideoOperation(
+    operation: Promise<{ error?: PostgrestError | null }>
+  ): void {
+    this.pendingVideoOperations.add(operation);
+    operation.finally(() => {
+      this.pendingVideoOperations.delete(operation);
+    });
+  }
+
+  async waitForPendingVideoOperations(): Promise<void> {
+    if (this.pendingVideoOperations.size > 0) {
+      console.log(
+        `Waiting for ${this.pendingVideoOperations.size} pending video operations...`
+      );
+      try {
+        await Promise.allSettled(Array.from(this.pendingVideoOperations));
+        console.log('All pending video operations completed');
+      } catch (error) {
+        console.error('Error waiting for pending video operations:', error);
+      }
+    }
+  }
+
+  hasPendingVideoOperations(): boolean {
+    return this.pendingVideoOperations.size > 0;
   }
 
   // Helper methods for section-specific context menu tracking
@@ -185,6 +218,9 @@ export class ContentState {
     // Reset menu states
     this.isMenuOpen = false;
     this.isMouseOverMenu = false;
+
+    // Clear pending video operations
+    this.pendingVideoOperations.clear();
 
     // Clear any global CSS classes that might persist
     if (typeof document !== 'undefined' && document.body) {
@@ -445,7 +481,14 @@ export class ContentState {
 
       // If a dropdown is open just close that and don't redirect
       if (this.isDropdownMenuOpen) {
-        this.closeAllDropdowns();
+        // Close the context menu by clearing the open section
+        this.openContextMenuSection = null;
+
+        // Clear selections from ALL sections, not just the current one
+        this.clearAllSections();
+
+        // Set the clicked video as the new hovered video for the current section
+        this.hoveredVideosBySection[sectionId] = video;
         return;
       }
       // Single-click behavior - no selection, just navigate immediately
@@ -847,7 +890,6 @@ export class ContentState {
         // - Dropdown menu is open
         // - Clicking on dropdown elements
         if (
-          this.isDropdownMenuOpen ||
           this.dragContentType ||
           event.shiftKey ||
           event.ctrlKey ||

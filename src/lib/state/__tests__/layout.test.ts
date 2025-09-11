@@ -131,7 +131,6 @@ vi.mock('$app/environment', () => ({
 
 // Now import the module under test
 import { NavigationStateClass } from '../navigation.svelte.js';
-import { createMockSession } from '$lib/tests/test-utils.js';
 
 describe('Navigation State with Layout Functionality', () => {
   let navigationState: NavigationStateClass;
@@ -139,8 +138,7 @@ describe('Navigation State with Layout Functionality', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     localStorageMock.getItem.mockReturnValue('false'); // Return valid JSON for sidebar state
-    const mockSession = createMockSession();
-    navigationState = new NavigationStateClass(mockSession);
+    navigationState = new NavigationStateClass();
   });
 
   afterEach(() => {
@@ -179,7 +177,7 @@ describe('Navigation State with Layout Functionality', () => {
 
   describe('Configuration', () => {
     it('should have correct default search debounce configuration', () => {
-      expect(navigationState.config.searchDebounceMs).toBe(450);
+      expect(navigationState.config.searchDebounceMs).toBe(400);
     });
 
     it('should have navigation-specific configuration', () => {

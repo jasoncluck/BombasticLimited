@@ -19,6 +19,7 @@
     handleAddVideoTimestamp,
     createVideoWatchTimeTracker,
   } from './video-service';
+  import { getContentState } from '$lib/state/content.svelte';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -40,8 +41,45 @@
     playlist?: Playlist | null;
   } = $props();
 
+  // YouTube Player types
+  interface YouTubePlayer {
+    seekTo: (seconds: number) => void;
+    getCurrentTime: () => number;
+    getPlayerState: () => number;
+  }
+
+  interface YouTubePlayerEvent {
+    target: YouTubePlayer;
+  }
+
+  interface YouTubeStateChangeEvent {
+    data: number;
+    target: YouTubePlayer;
+  }
+
+  interface YouTubeAPI {
+    Player: new (
+      elementId: string,
+      config: {
+        videoId: string;
+        playerVars: Record<string, number | boolean>;
+        events: {
+          onReady: (event: YouTubePlayerEvent) => void;
+          onStateChange: (event: YouTubeStateChangeEvent) => void;
+        };
+      }
+    ) => YouTubePlayer;
+  }
+
+  interface WindowWithYouTube extends Window {
+    YT?: YouTubeAPI;
+  }
+
+  // Get content state for tracking pending operations
+  const contentState = getContentState();
+
   let startSeconds = $state(0);
-  let player = $state<any>();
+  let player = $state<YouTubePlayer | null>(null);
   let hasInitialSeekOccurred = $state(false);
 
   // Video history tracking
@@ -51,6 +89,9 @@
 
   // Track if the video is actually playing (not just the YouTube player state)
   let isActuallyPlaying = $state(false);
+
+  // Track whether we've already saved timestamp during navigation to prevent duplicates
+  let hasNavigationSaveOccurred = $state(false);
 
   // Initialize watch time tracker when component mounts
   onMount(() => {
@@ -112,7 +153,7 @@
   }
 
   // Helper function to save timestamp for a specific video with its duration (async for in-app use)
-  async function saveTimestampForVideo(
+  function saveTimestampForVideo(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist | null
@@ -126,7 +167,7 @@
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
     if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      await handleAddVideoTimestamp({
+      return handleAddVideoTimestamp({
         videoTimestamp: {
           videoId: video.id,
           playlistId: playlist?.id,
@@ -144,7 +185,7 @@
         supabase,
       });
     } else {
-      await handleAddVideoTimestamp({
+      return handleAddVideoTimestamp({
         videoTimestamp: {
           videoId: video.id,
           playlistId: playlist?.id,
@@ -171,7 +212,7 @@
     videoDurationSeconds: number,
     playlist?: Playlist | null,
     contentFilter?: CombinedContentFilter
-  ) {
+  ): void {
     if (
       !videoDurationSeconds ||
       currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
@@ -206,14 +247,22 @@
     }
   }
 
-  function saveCurrentTime({ useBeacon = false } = {}) {
+  function saveCurrentTime({
+    useBeacon = false,
+    isNavigationSave = false,
+  } = {}) {
     if (player && player.getCurrentTime) {
       try {
-        const currentTimeSeconds = player.getCurrentTime() as number;
+        const currentTimeSeconds = player.getCurrentTime();
         if (
           !startSeconds ||
           Math.abs(currentTimeSeconds - startSeconds) > VIDEO_SAVE_SECONDS_DELTA
         ) {
+          // Mark that we've performed a navigation save to prevent duplicates
+          if (isNavigationSave) {
+            hasNavigationSaveOccurred = true;
+          }
+
           if (useBeacon) {
             saveTimestampBeacon(
               currentTimeSeconds,
@@ -221,22 +270,36 @@
               playlist,
               contentFilter
             );
+            return;
           } else {
-            saveTimestampForVideo(
+            // Return the promise for async saves and track it in content state
+            const savePromise = saveTimestampForVideo(
               currentTimeSeconds,
               durationSeconds,
               playlist
             );
+
+            // Track this promise in the content state
+            if (savePromise) {
+              contentState.addPendingVideoOperation(savePromise);
+            }
+
+            return savePromise;
           }
         }
       } catch (error) {
         console.error('Error while trying to save current video time.', error);
       }
     }
+    return Promise.resolve();
   }
 
-  function handleBeforeUnload() {
-    saveCurrentTime({ useBeacon: true });
+  function handleBeforeUnload(): void {
+    // Only save if we haven't already saved during navigation
+    if (!hasNavigationSaveOccurred) {
+      saveCurrentTime({ useBeacon: true });
+    }
+
     // End watch time tracking session before page unload
     if (watchTimeTracker) {
       watchTimeTracker.endSession().catch(console.error);
@@ -244,10 +307,13 @@
     }
   }
 
-  function handleVisibilityChange() {
+  function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden') {
       // Save current timestamp position but DON'T end the tracking session
-      saveCurrentTime({ useBeacon: true });
+      // Only save if we haven't already saved during navigation
+      if (!hasNavigationSaveOccurred) {
+        saveCurrentTime({ useBeacon: true });
+      }
 
       // Pause the video tracking if it's currently playing
       if (isActuallyPlaying && watchTimeTracker) {
@@ -271,16 +337,13 @@
   }
 
   // YouTube Player Setup
-  function onPlayerReady(event: {
-    target: { seekTo: (startSeconds: number) => void };
-  }) {
+  function onPlayerReady(): void {
     // Don't seek automatically on ready - wait for user to press play
-    // event.target is now available as player
   }
 
   // Handle YouTube player state changes for video history tracking
-  function onPlayerStateChange(event: { data: number; target: any }) {
-    if (!watchTimeTracker) {
+  function onPlayerStateChange(event: YouTubeStateChangeEvent): void {
+    if (!watchTimeTracker || !event.target) {
       return;
     }
 
@@ -308,12 +371,13 @@
         // Don't change isActuallyPlaying state during buffering
         break;
       default:
+        break;
     }
   }
 
   // Handle seeking events
   let lastKnownTime = 0;
-  function handleSeekingEvents() {
+  function handleSeekingEvents(): void {
     if (!player || !watchTimeTracker) return;
 
     const currentTime = player.getCurrentTime() || 0;
@@ -365,8 +429,9 @@
 
   onMount(() => {
     if (typeof window !== 'undefined') {
-      const windowRef: any = window;
-      if (typeof windowRef.YT !== 'undefined') {
+      const windowRef = window as unknown as WindowWithYouTube;
+
+      if (windowRef.YT) {
         player = new windowRef.YT.Player('player', {
           videoId: video.id,
           playerVars: {
@@ -386,8 +451,17 @@
     }
   });
 
-  beforeNavigate(() => {
-    saveCurrentTime(); // async is ok for in-app navigation
+  beforeNavigate(async () => {
+    // Wait for the timestamp save to complete before navigating
+    // Mark this as a navigation save to prevent duplicates
+    const savePromise = saveCurrentTime({ isNavigationSave: true });
+    if (savePromise) {
+      try {
+        await savePromise;
+      } catch (error) {
+        console.error('Error saving timestamp before navigation:', error);
+      }
+    }
 
     // End watch time tracking session before navigation
     if (watchTimeTracker) {
@@ -396,11 +470,22 @@
     }
   });
 
-  onDestroy(() => {
+  onDestroy(async () => {
     if (typeof window !== 'undefined') {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      saveCurrentTime();
+
+      // Only save current time if we haven't already saved during navigation
+      if (!hasNavigationSaveOccurred) {
+        const savePromise = saveCurrentTime();
+        if (savePromise) {
+          try {
+            await savePromise;
+          } catch (error) {
+            console.error('Error saving timestamp in onDestroy:', error);
+          }
+        }
+      }
     }
 
     // Ensure watch time tracker is properly ended

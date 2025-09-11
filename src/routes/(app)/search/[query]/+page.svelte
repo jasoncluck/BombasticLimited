@@ -32,9 +32,16 @@
   const mediaQueryState = getMediaQueryState();
   const navigationState = getNavigationState();
 
+  // Sync navigation state with the URL search parameter
+  $effect(() => {
+    if (searchString && navigationState.searchQuery !== searchString) {
+      navigationState.setSearchQuery(searchString);
+    }
+  });
+
   const sources = $derived(userProfile?.sources ?? SOURCES);
 
-  let sectionIds = sourceWithContinueStateKeys;
+  let sectionIds: readonly SourceWithStateKeys[] = sourceWithContinueStateKeys;
 
   const initialCarouselState: SourceWithCarouselState =
     {} as SourceWithCarouselState;
@@ -44,7 +51,7 @@
   }
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
-  let previousSearchString = navigationState.searchQuery;
+  let previousSearchString = $state<string>('');
 
   // Reset carousel state when searchString changes
   $effect(() => {
@@ -62,11 +69,11 @@
   }> = {
     capture: () => ({
       carouselsState,
-      searchString,
+      searchString: searchString || '',
       selectedVideos: Object.fromEntries(
         sectionIds.map((sid: SourceWithStateKeys) => [
           sid,
-          contentState.selectedVideosBySection[sid],
+          contentState.selectedVideosBySection[sid] || [],
         ])
       ) as Record<SourceWithStateKeys, Video[]>,
     }),
@@ -107,7 +114,7 @@
     {/if}
 
     {#each sources as source (source)}
-      {#if sourceVideos[source].length > 0}
+      {#if sourceVideos[source] && sourceVideos[source].length > 0}
         <div class="bg-background-lighter flex flex-col">
           <a
             href={`/search/${searchString}/${source}`}

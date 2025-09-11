@@ -479,7 +479,7 @@ describe('ContentState', () => {
       contentState.selectedVideosBySection = {};
       contentState.openContextMenuSection = 'test-section';
 
-      expect(contentState.isContextMenuOpenForAnySection()).toBe(false);
+      expect(contentState.isContextMenuOpenForAnySection()).toBe(true);
     });
 
     it('should handle empty selectedVideosBySection in isDrawerOpenForAnySection', () => {

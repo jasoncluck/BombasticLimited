@@ -7,8 +7,8 @@ export default defineConfig({
   testDir: './tests/e2e',
   testMatch: '**/*.test.ts',
   fullyParallel: true,
-  retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : 2, // Reduce workers to prevent devserver overload (2 max)
+  retries: 2,
+  workers: 2,
   reporter: 'html',
 
   // Global setup and teardown for authentication
@@ -22,8 +22,13 @@ export default defineConfig({
   },
 
   use: {
-    headless: false,
+    headless: true,
     baseURL: 'http://localhost:5173',
+
+    // Global screenshot and video settings
+    screenshot: 'only-on-failure', // Capture screenshots on failures
+    video: 'retain-on-failure', // Keep videos only when tests fail
+    trace: 'retain-on-failure', // Keep traces only when tests fail
 
     // Adjusted timeouts for sequential execution and server load
     navigationTimeout: 30000, // Increase navigation timeout for slower server
@@ -48,6 +53,10 @@ export default defineConfig({
       name: 'chromium',
       use: {
         ...devices['Desktop Chrome'],
+        // Inherit global screenshot/video settings, or override if needed
+        screenshot: 'only-on-failure',
+        video: 'retain-on-failure',
+        trace: 'retain-on-failure',
       },
       dependencies: ['setup'],
     },
@@ -60,6 +69,10 @@ export default defineConfig({
       workers: 1, // Single worker for integration tests
       use: {
         ...devices['Desktop Chrome'],
+        // Screenshots and videos for integration tests
+        screenshot: 'only-on-failure',
+        video: 'retain-on-failure',
+        trace: 'retain-on-failure',
         // Longer timeouts for integration tests
         navigationTimeout: 45000,
         actionTimeout: 20000,
@@ -73,22 +86,42 @@ export default defineConfig({
       ? [
           {
             name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
+            use: {
+              ...devices['Desktop Firefox'],
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
+              trace: 'retain-on-failure',
+            },
             dependencies: ['setup'],
           },
           {
             name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
+            use: {
+              ...devices['Desktop Safari'],
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
+              trace: 'retain-on-failure',
+            },
             dependencies: ['setup'],
           },
           {
             name: 'Mobile Chrome',
-            use: { ...devices['Pixel 5'] },
+            use: {
+              ...devices['Pixel 5'],
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
+              trace: 'retain-on-failure',
+            },
             dependencies: ['setup'],
           },
           {
             name: 'Mobile Safari',
-            use: { ...devices['iPhone 12'] },
+            use: {
+              ...devices['iPhone 12'],
+              screenshot: 'only-on-failure',
+              video: 'retain-on-failure',
+              trace: 'retain-on-failure',
+            },
             dependencies: ['setup'],
           },
         ]

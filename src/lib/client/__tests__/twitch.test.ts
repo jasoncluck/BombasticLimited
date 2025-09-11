@@ -17,11 +17,14 @@ vi.mock('@twurple/api', () => ({
       getStreamByUserId: vi.fn().mockResolvedValue(null),
     },
   })),
+  extractUserId: vi.fn().mockReturnValue('123456'),
 }));
 
 describe('Twitch API Client', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset NODE_ENV for each test
+    vi.stubEnv('NODE_ENV', 'test');
   });
 
   describe('cache management', () => {

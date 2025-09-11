@@ -91,19 +91,29 @@ const mockCheckIfUsernameIsUnique = vi.mocked(checkIfUsernameIsUnique);
 const mockGetUserDiscordIdentity = vi.mocked(getUserDiscordIdentity);
 
 describe('account/+page.server.ts', () => {
+  const mockSession = createMockSession();
+  const mockUserProfile = createMockUserProfile();
+  const mockCookies = {
+    delete: vi.fn(),
+  } as any;
+
   const mockSupabase = {
     auth: {
+      getClaims: vi.fn().mockResolvedValue({
+        data: {
+          claims: {
+            sub: mockSession.user.id,
+            email: mockSession.user.email,
+            role: 'authenticated',
+          },
+        },
+        error: null,
+      }),
       updateUser: vi.fn(),
       resetPasswordForEmail: vi.fn(),
       signOut: vi.fn(),
     },
     rpc: vi.fn(),
-  } as any;
-
-  const mockSession = createMockSession();
-  const mockUserProfile = createMockUserProfile();
-  const mockCookies = {
-    delete: vi.fn(),
   } as any;
 
   beforeEach(() => {
@@ -158,6 +168,12 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should redirect when no session', async () => {
+      // Mock getClaims to return no claims/error for this test
+      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'No session' },
+      });
+
       const noSessionLoadEvent = {
         ...mockLoadEvent,
         locals: {
@@ -516,6 +532,18 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should throw error when session has no email', async () => {
+      // Mock getClaims to return claims without email
+      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+        data: {
+          claims: {
+            sub: mockSession.user.id,
+            // email is missing
+            role: 'authenticated',
+          },
+        },
+        error: null,
+      });
+
       const sessionWithoutEmail = {
         ...mockSession,
         user: { ...mockSession.user, email: null },
@@ -534,6 +562,12 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should throw error when no session', async () => {
+      // Mock getClaims to return error for no session
+      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'No session' },
+      });
+
       const actionEventWithoutSession = {
         ...mockActionEvent,
         locals: { ...mockActionEvent.locals, session: null },
@@ -594,6 +628,12 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should redirect when no session', async () => {
+      // Mock getClaims to return error for no session
+      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+        data: null,
+        error: { message: 'No session' },
+      });
+
       const actionEventWithoutSession = {
         ...mockActionEvent,
         locals: { ...mockActionEvent.locals, session: null },

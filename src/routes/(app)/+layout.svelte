@@ -15,7 +15,7 @@
   import { setPageState } from '$lib/state/page.svelte';
   import { setSourceState } from '$lib/state/source.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
-  import { invalidate } from '$app/navigation';
+  import { afterNavigate, invalidate } from '$app/navigation';
   import type { Session } from '@supabase/supabase-js';
   import '../../app.css';
   import {
@@ -32,8 +32,9 @@
   const pageState = setPageState();
   const contentState = setContentState(pageState);
   const mediaQueryState = setMediaQueryState();
-  const sidebarState = $derived(setSidebarState(preferredImageFormat));
-  const navigationState = $derived(setNavigationState(session));
+  const sidebarState = setSidebarState();
+  const navigationState = setNavigationState();
+  setPlaylistState(pageState, contentState, sidebarState);
 
   setSourceState(pageState);
 
@@ -58,14 +59,15 @@
     )
   );
 
+  // Update the navigation state session when needed
   $effect(() => {
-    // Initialize playlist state
-    setPlaylistState(pageState, contentState, sidebarState);
-  });
-
-  $effect(() => {
-    // Setup navigation hooks
-    navigation.setupNavigationHooks();
+    navigationState.updateContext({
+      session: data.session,
+      supabase: data.supabase,
+    });
+    sidebarState.updateContext({
+      preferredImageFormat,
+    });
   });
 
   // Simplified navigation state
@@ -90,6 +92,17 @@
       );
     },
   };
+
+  // Add a delay and wait for pending operations before invalidating
+  afterNavigate(({ from }) => {
+    // Invalidate video cache when leaving video pages, but wait for operations to complete
+    if (from?.url.pathname.includes('/video')) {
+      // Wait for any pending video operations (like timestamp saves)
+      contentState.waitForPendingVideoOperations().then(() => {
+        invalidate('supabase:db:videos');
+      });
+    }
+  });
 
   async function refreshSidebar(): Promise<void> {
     await sidebarState.refreshData();
@@ -121,9 +134,6 @@
 
       if (cleanupPerformed && !retryAfterAuthCleanup) {
         // Retry once after successful auth cleanup
-        console.log(
-          `🔄 Retrying data refresh after auth cleanup for: ${reason}`
-        );
         try {
           await performDataRefresh(
             `${reason} (retry after auth cleanup)`,
@@ -176,9 +186,6 @@
         // Invalidate auth to ensure fresh state
         await invalidate('supabase:auth');
 
-        console.log(
-          `Auth state cleaned up successfully after 403 error in ${context}`
-        );
         return true; // Indicate successful cleanup
       } catch (cleanupError) {
         console.error(
@@ -330,6 +337,8 @@
     // Initialize sidebar non-blocking (fast UI, loads data in background)
     // This now also starts the SSE connection automatically
     const sidebarCleanup = sidebarState.initializeNonBlocking();
+
+    navigation.setupNavigationHooks();
 
     // Initialize layout effects - simplified
     let layoutCleanup: (() => void) | undefined;

@@ -14,9 +14,7 @@ export class TestDataManager {
 
   constructor() {
     const supabaseUrl = process.env.SUPABASE_URL || 'http://127.0.0.1:54321';
-    const serviceRoleKey =
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.PUBLIC_SUPABASE_SERVICE_ROLE_KEY;
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     if (!serviceRoleKey) {
       throw new Error(

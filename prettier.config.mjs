@@ -12,7 +12,6 @@ const config = {
   semi: true,
   singleQuote: true,
   trailingComma: 'es5',
-  embeddedSqlTags: ['sql'],
   overrides: [
     {
       files: '*.svelte',
@@ -20,6 +19,7 @@ const config = {
         parser: 'svelte',
       },
     },
+    { files: '*.svx', options: { parser: 'markdown' } },
     {
       files: '*.sql',
       excludeFiles: ['supabase/seed.sql'],

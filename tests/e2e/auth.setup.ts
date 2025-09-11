@@ -15,7 +15,8 @@ export default async function globalSetup(config: FullConfig) {
 
   // Check if we already have valid auth files - skip setup if they exist and are recent
   const testDataManager = new TestDataManager();
-  const maxWorkers = Math.min(config.workers || 2, 2); // Reduced worker count to prevent server overload
+  // const maxWorkers = Math.min(config.workers || 2, 2); // Reduced worker count to prevent server overload
+  const maxWorkers = 2;
 
   console.log(
     `Checking for existing auth files for up to ${maxWorkers} workers (reduced from potential ${config.workers || 'default'} for server stability)`

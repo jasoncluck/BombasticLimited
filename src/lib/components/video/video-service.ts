@@ -29,15 +29,15 @@ export async function handleAddVideoTimestamp({
   videoTimestamp: TimestampWithVideoId;
   session: Session | null;
   supabase: SupabaseClient;
-}): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
+}): Promise<{ error?: PostgrestError }> {
   // Save and get back updated video data
-  const { videos: updatedVideos, error } = await saveVideoTimestamp({
+  const { error } = await saveVideoTimestamp({
     videoTimestamp,
     session,
     supabase,
   });
 
-  return { updatedVideos: updatedVideos ?? [], error };
+  return { error };
 }
 
 export async function handleAddVideoTimestamps({
@@ -48,9 +48,9 @@ export async function handleAddVideoTimestamps({
   videoTimestamps: TimestampWithVideoId[];
   session: Session | null;
   supabase: SupabaseClient;
-}): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
+}): Promise<{ error?: PostgrestError }> {
   // Save and get back updated video data
-  const { videos: updatedVideos, error } = await saveVideoTimestamps({
+  const { error } = await saveVideoTimestamps({
     videoTimestamps,
     session,
     supabase,
@@ -60,7 +60,7 @@ export async function handleAddVideoTimestamps({
   if (error) {
     showToast('Unable to save timestamp');
   }
-  return { updatedVideos: updatedVideos ?? [], error };
+  return { error };
 }
 
 export async function handleDeleteVideosTimestamp({

@@ -79,6 +79,8 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
+  let imageLoaded = $state(false);
+  let imageError = $state(false);
 
   const isVideoInPlaylist = $derived(
     isContinueVideos &&
@@ -188,6 +190,17 @@
       // Silently fail if preloading doesn't work
       console.debug('Preload failed:', error);
     }
+  }
+
+  // Image event handlers
+  function handleImageLoad() {
+    imageLoaded = true;
+    imageError = false;
+  }
+
+  function handleImageError() {
+    imageLoaded = false;
+    imageError = true;
   }
 
   // Mouse event handlers
@@ -366,7 +379,8 @@
   <div
     bind:this={cardElement}
     class="{getCardClasses()} flex flex-col"
-    data-testid="video-card"
+    data-testid="content-item"
+    data-video-id={video.id}
     role="button"
     tabindex="0"
     draggable={!!dragDrop}
@@ -391,15 +405,30 @@
     <div
       class="mx-1 mt-1 flex flex-1 cursor-pointer flex-col overflow-hidden text-left"
     >
+      <!-- Image container with fallback and consistent dropdown positioning -->
       <div class="relative flex-shrink-0">
-        <!-- Use the optimized image_url directly from the database -->
-        <LazyImage
-          src={video.image_url ?? video.thumbnail_url}
-          alt={video.title}
-          class="aspect-[16/9] h-auto w-full"
-          {index}
-        />
-        <div class="absolute top-0.5 right-0.5">
+        {#if video.image_url ?? video.thumbnail_url}
+          <!-- Use the optimized image_url directly from the database -->
+          <LazyImage
+            src={video.image_url ?? video.thumbnail_url}
+            alt={video.title}
+            class="aspect-[16/9] h-auto w-full"
+            {index}
+            onload={handleImageLoad}
+            onerror={handleImageError}
+          />
+        {:else}
+          <!-- Fallback placeholder when no image is available -->
+          <div
+            class="bg-muted flex aspect-[16/9] h-auto w-full items-center justify-center"
+            aria-label="No thumbnail available"
+          >
+            <div class="text-muted-foreground text-sm">No Image</div>
+          </div>
+        {/if}
+
+        <!-- Dropdown positioned absolutely, always renders regardless of image state -->
+        <div class="absolute top-0.5 right-0.5 z-10">
           <ContentDropdown
             videos={[video]}
             variant="list-items"
@@ -408,6 +437,8 @@
             {session}
           />
         </div>
+
+        <!-- Progress and watched indicators -->
         {#if isVideoWithTimestamp(video) && !video.watched_at && video.video_start_seconds && video.duration}
           <Progress
             class="absolute -bottom-1 left-0 h-[2%]"

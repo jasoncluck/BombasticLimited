@@ -333,6 +333,7 @@
           <Button
             variant="secondary"
             title="Create Playlist"
+            data-testid="create-playlist-button"
             class="my-1 cursor-pointer rounded-full"
             size="icon"
             onclick={() =>
@@ -370,6 +371,8 @@
               <Button
                 variant="ghost"
                 draggable={true}
+                data-testid="playlist-button"
+                data-playlist-id={playlist.short_id}
                 class="{playlistState.getButtonClasses({
                   index: i,
                   isSelected: isPlaylistSelected(playlist),

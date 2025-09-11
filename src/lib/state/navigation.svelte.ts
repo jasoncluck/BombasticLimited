@@ -91,6 +91,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
+  syncSearchQueryFromUrl: (pathname: string, params?: URLSearchParams) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -185,7 +186,7 @@ export class NavigationStateClass implements NavigationState {
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
-  // User context (passed from parent components)
+  // User context - now properly reactive
   session = $state<Session | null>(null);
   userProfile = $state<UserProfile | null>(null);
   supabase = $state<SupabaseClient<Database> | null>(null);
@@ -193,9 +194,8 @@ export class NavigationStateClass implements NavigationState {
   // Account drawer state (shared with user menu)
   openAccountDrawer = $state(false);
 
-  constructor(session: Session | null) {
+  constructor() {
     this.initializeNavigationItems();
-    this.session = session;
   }
 
   /**
@@ -283,6 +283,22 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
+  /**
+   * Extract search query from URL and update state
+   */
+  private extractSearchFromUrl(pathname: string): string {
+    const searchMatch = pathname.match(/^\/search\/(.+)$/);
+    if (searchMatch && searchMatch[1]) {
+      try {
+        return decodeURIComponent(searchMatch[1]);
+      } catch (error) {
+        console.error('Error decoding search query from URL:', error);
+        return '';
+      }
+    }
+    return '';
+  }
+
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
@@ -299,6 +315,15 @@ export class NavigationStateClass implements NavigationState {
           this.startRefreshInterval();
         } else {
           this.stopRefreshInterval();
+        }
+      });
+
+      // Sync search query from URL when page changes
+      $effect(() => {
+        if (page) {
+          const currentPath = page.url?.pathname || '';
+          this.syncSearchQueryFromUrl(currentPath);
+          this.updateActiveRoute(currentPath);
         }
       });
 
@@ -413,6 +438,26 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
+   * Synchronize search query from URL
+   */
+  syncSearchQueryFromUrl(pathname: string, params?: URLSearchParams): void {
+    const searchQueryFromUrl = this.extractSearchFromUrl(pathname);
+
+    // Only update if the search query is different to avoid unnecessary rerenders
+    if (searchQueryFromUrl !== this.searchQuery) {
+      this.searchQuery = searchQueryFromUrl;
+
+      // Update the search input value if it exists and is different
+      if (
+        this.searchInputRef &&
+        this.searchInputRef.value !== searchQueryFromUrl
+      ) {
+        this.searchInputRef.value = searchQueryFromUrl;
+      }
+    }
+  }
+
+  /**
    * Get navigation item by ID
    */
   getNavigationItem(id: string): NavigationItem | null {
@@ -520,10 +565,31 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = value;
   };
 
+  // Clear all search-related state
   clearSearchQuery = (): void => {
     this.searchQuery = '';
     this.currentSearchTimestamp = 0;
     this.pendingValueUpdate = null;
+
+    // Cancel any pending searches
+    if (this.currentDebouncedSearch?.isPending) {
+      this.currentDebouncedSearch.clear();
+    }
+    if (this.searchAbortController) {
+      this.searchAbortController.abort();
+      this.searchAbortController = null;
+    }
+
+    // Clear any preload timeout
+    if (this.preloadTimeout) {
+      window.clearTimeout(this.preloadTimeout);
+      this.preloadTimeout = null;
+    }
+
+    // Clear search input if it exists
+    if (this.searchInputRef) {
+      this.searchInputRef.value = '';
+    }
   };
 
   async searchRedirect(
@@ -870,11 +936,8 @@ const DEFAULT_KEY = '$_navigation_state';
 /**
  * Set navigation state in context
  */
-export function setNavigationState(
-  session: Session | null,
-  key = DEFAULT_KEY
-): NavigationStateClass {
-  const navigationState = new NavigationStateClass(session);
+export function setNavigationState(key = DEFAULT_KEY): NavigationStateClass {
+  const navigationState = new NavigationStateClass();
   return setContext(key, navigationState);
 }
 

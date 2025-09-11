@@ -32,6 +32,8 @@ export function handlePlaylistNavigation({
   });
 
   // First check if there's an active content filter for playlist videos
+  // Default sort for playlist should also not set query params as they aren't needed
+  console.log(contentFilter);
   if (contentFilter && isPlaylistVideosFilter(contentFilter)) {
     searchParams.set(contentFilter.sort.key, contentFilter.sort.order);
   }
