@@ -11,10 +11,8 @@
 
 # Bombastic - Getting Started
 
-Bombastic Limited is a no-frills video consolidation service with a focus on
-content produced by past and present members of Giant Bomb. Modern video
-platforms have made it difficult to follow specific creators and browse older
-content. Bombastic's goal is to provide a more curated experience and a
+## About Bombastic
+Bombastic's goal is to provide a curated experience and a
 consolidated platform for the expanded Giant Bomb community.
 
 Bombastic retrieves data from YouTube for the video game media creators that
@@ -30,6 +28,7 @@ previously left off.
 
 - [Features](#features)
   - [Account Management](#account-management)
+  - [Browsing Videos - Card and Table Views](#browsing-videos---card-and-table-views)
   - [Search Functionality](#search-functionality)
   - [Playlist Management](#playlist-management)
     - [Create a playlist](#create-a-playlist)
@@ -50,15 +49,13 @@ previously left off.
 
 ## Features
 
-All features of Bombastic are available for free. An account is required to use
-all features except for searching.
+Bombastic is available for free. An account is required to use all features except for search.
 
 ### Account Management
 
 Creating a Bombastic account grants you access to all features. An account can
 be created through Bombastic, or you can log in with an existing Discord
-account. If you create a Bombastic account with email, you can still link that
-to a Discord account later; linking Discord will update your user avatar on
+account. If you create a Bombastic account via email, you can link a Discord account later. Linking a Discord account will update your user avatar on
 Bombastic to match your Discord avatar.
 
 Account settings can be found by clicking on your avatar in the upper right
@@ -76,26 +73,18 @@ playlists created by the account, will be deleted.
 
 ### Browsing Videos - Card and Table Views
 
-Bombastic supports two views: Card and Table. The views can be switched by
-clicking the Card or Table icon in the upper right of the navigation bar.
+Bombastic supports two views: Card and Table. The views can be switched
+by clicking the Card or Table icon in the upper right of the navigation bar.
 
-Card is the default view. It makes it easier to browse videos by providing
-larger video thumbnails and an action menu dropdown on each card. Card view does
-not support selecting multiple videos; if you're adding videos to a playlist
-they must be added to the playlist one at at time.
+Card is the default view. It makes it easier to browse videos by providing larger video thumbnails and an action menu dropdown on each card. Card view does not support
+selecting multiple videos; if you're adding videos to a playlist, they must be
+added to the playlist one at at time.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/card-view.png" width="750px" alt="Screenshot of using the Card view" />
 </div>
 
-Table view is only available to users with accounts or on smaller screens. Table
-view supports selecting multiple videos or rows; due to this, videos need to be
-double-clicked in order to play. Alternatively, there is a Play button column on
-the left of each row which can be clicked once to view the video. Selecting
-multiple videos can be done by holding down Ctrl/Cmd to select non-adjacent rows
-and Shift to select all inclusive rows. Multiple rows can be dragged and
-dropped. Once videos are selected, the actions menu can be displayed by
-right-clicking, or by accessing the dropdown in the heading section.
+Table view is only available to users with accounts or on smaller screens. Table view supports selecting multiple videos or rows; due to this, videos need to be double-clicked in order to play. Alternatively, there is a Play button column on the left of each row which can be clicked once to view the video. Selecting multiple videos can be done by holding down Ctrl/Cmd to select non-adjacent rows and Shift to select all inclusive rows. Multiple rows can be dragged and dropped. Once videos are selected, the actions menu can be displayed by right-clicking, or by accessing the dropdown in the heading section.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/table-view.png" width="750px" alt="Screenshot of using the Table view with multiple items selected using Shift and Ctrl" />
@@ -104,8 +93,8 @@ right-clicking, or by accessing the dropdown in the heading section.
 ### Search Functionality
 
 Searching for videos or playlists can be done using the input in the top
-navigation bar. Searches will return results from both video and playlist titles
-and descriptions. Search result links can be copied and sent to others.
+navigation bar. Searches will return results from the titles
+and descriptions of videos and playlists. Search result links can be copied and sent to others.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/search.png" width="750px" alt="Screenshot of searching for 'armored core' on Bombastic" />
@@ -114,7 +103,7 @@ and descriptions. Search result links can be copied and sent to others.
 ### Playlist Management
 
 Playlists can be public or private. Public playlists are searchable by all users
-where as private playlists are only visible to you. Only owners of playlists are
+where as private playlists are solely visible to you. Only owners of playlists are
 able to add or remove videos from it; if you follow a public playlist, you can
 still set the sort order of the videos to your preference.
 
@@ -139,7 +128,7 @@ the dot menu.
 
 If a public playlist is deleted, users that are following the playlist will
 receive a notification that the playlist has been deleted. During this time,
-users can make their own copies of the playlist before it's deleted.
+users can make their own copies of the playlist before it is permanently deleted.
 
 #### Follow a public playlist
 
@@ -159,8 +148,7 @@ action will remove the playlist from your left hand navigation.
 
 #### Add a video to a playlist
 
-Select the desired video(s), right-click, select "Add video(s) to playlist",
-then select the desired playlist.
+Select the desired video(s), right-click, select "Add video(s) to playlist", then select the desired playlist.
 
 <div class="flex justify-center">
   <img src="/docs/getting-started/playlist-add.png" width="750px" alt="Screenshot of adding videos of the game Haze to a playlist named BOOSH" />
@@ -168,8 +156,7 @@ then select the desired playlist.
 
 #### Remove a video from a playlist
 
-Select the desired video(s), right-click, select "Remove video(s) from
-playlist".
+Select the desired video(s), right-click, select "Remove video(s) from playlist".
 
 #### Update playlist thumbnail
 
