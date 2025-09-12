@@ -275,6 +275,7 @@ export class NavigationStateClass implements NavigationState {
    */
   syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
+    const now = Date.now();
 
     // Only update if:
     // 1. Force is true (initial page load/restore), OR
@@ -282,8 +283,15 @@ export class NavigationStateClass implements NavigationState {
     //    - URL search query is different from current state
     //    - We're not currently searching (no pending navigation)
     //    - Enough time has passed since the last user input (1000ms grace period)
+    const timeSinceLastInput = now - this.lastUserInputTimestamp;
+    const shouldUpdate = force || 
+      (urlSearchQuery !== this.searchQuery && 
+       !this.isSearching && 
+       timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
 
-    this.searchQuery = urlSearchQuery;
+    if (shouldUpdate) {
+      this.searchQuery = urlSearchQuery;
+    }
   };
 
   // Initialize effects (should be called when component is mounted)
