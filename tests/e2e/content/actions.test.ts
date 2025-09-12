@@ -342,9 +342,9 @@ authTest.describe('Table mode content actions', () => {
       const videoHelpers = new VideoHelpers(page);
       await videoHelpers.switchToTableView();
 
-      // Wait for table content to load
-      const table = page.getByTestId('content-table-defaultSection');
-      await table.waitFor();
+      // Wait for table content to load and be visible
+      const table = page.getByTestId('content-table-defaultSection').first();
+      await table.waitFor({ state: 'visible' });
 
       const tableRow = table.locator('tr').first();
       await tableRow.waitFor();
@@ -378,9 +378,9 @@ authTest.describe('Table mode content actions', () => {
       const videoHelpers = new VideoHelpers(page);
       await videoHelpers.switchToTableView();
 
-      // Wait for table content to load
-      const table = page.getByTestId('content-table-defaultSection');
-      await table.waitFor();
+      // Wait for table content to load and be visible
+      const table = page.getByTestId('content-table-defaultSection').first();
+      await table.waitFor({ state: 'visible' });
 
       const firstRow = table.locator('tr').first();
       const secondRow = table.locator('tr').nth(1);
@@ -425,9 +425,9 @@ authTest.describe('Table mode content actions', () => {
       const videoHelpers = new VideoHelpers(page);
       await videoHelpers.switchToTableView();
 
-      // Wait for table content to load
-      const table = page.getByTestId('content-table-defaultSection');
-      await table.waitFor();
+      // Wait for table content to load and be visible
+      const table = page.getByTestId('content-table-defaultSection').first();
+      await table.waitFor({ state: 'visible' });
 
       const firstRow = table.locator('tr').first();
       const secondRow = table.locator('tr').nth(1);
@@ -472,9 +472,9 @@ authTest.describe('Table mode content actions', () => {
       const videoHelpers = new VideoHelpers(page);
       await videoHelpers.switchToTableView();
 
-      // Wait for table content to load
-      const table = page.getByTestId('content-table-defaultSection');
-      await table.waitFor();
+      // Wait for table content to load and be visible
+      const table = page.getByTestId('content-table-defaultSection').first();
+      await table.waitFor({ state: 'visible' });
 
       const firstRow = table.locator('tr').first();
       const secondRow = table.locator('tr').nth(1);
@@ -539,9 +539,9 @@ authTest.describe('Table mode content actions', () => {
       const videoHelpers = new VideoHelpers(page);
       await videoHelpers.switchToTableView();
 
-      // Wait for table content to load
-      const table = page.getByTestId('content-table-defaultSection');
-      await table.waitFor();
+      // Wait for table content to load and be visible
+      const table = page.getByTestId('content-table-defaultSection').first();
+      await table.waitFor({ state: 'visible' });
 
       const firstRow = table.locator('tr').first();
       const secondRow = table.locator('tr').nth(1);

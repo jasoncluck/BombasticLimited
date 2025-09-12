@@ -320,7 +320,14 @@ export class VideoHelpers {
       if (await cardOption.isVisible({ timeout: 3000 })) {
         await cardOption.click();
         // Wait for the view to change
-        await this.page.waitForTimeout(1500);
+        await this.page.waitForTimeout(2000);
+        
+        // Wait for card content to be visible
+        const contentItem = this.page.getByTestId('content-item').first();
+        await contentItem.waitFor({ state: 'visible', timeout: 10000 });
+        
+        // Wait a bit more to ensure content is fully loaded
+        await this.page.waitForTimeout(500);
       } else {
         // If Card option is not visible, we might already be in card mode
         // Click elsewhere to close the dropdown
@@ -348,8 +355,15 @@ export class VideoHelpers {
 
       if (await tableOption.isVisible({ timeout: 3000 })) {
         await tableOption.click();
-        // Wait for the view to change
-        await this.page.waitForTimeout(1500);
+        // Wait longer for the view to change and table to be rendered
+        await this.page.waitForTimeout(2000);
+        
+        // Wait specifically for the table to be visible
+        const table = this.page.getByTestId('content-table-defaultSection').first();
+        await table.waitFor({ state: 'visible', timeout: 10000 });
+        
+        // Wait a bit more to ensure table content is fully loaded
+        await this.page.waitForTimeout(500);
       } else {
         // If Table option is not visible, we might already be in table mode
         // Click elsewhere to close the dropdown
