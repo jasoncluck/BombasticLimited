@@ -452,10 +452,6 @@ export class VideoHelpers {
       // Scrub to a specific timestamp by clicking on the progress bar
       await this.scrubYouTubePlayer(scrubToSeconds);
     } else {
-      // Wait for the specified number of seconds to accumulate watch time
-      console.log(
-        `Waiting ${waitSeconds} seconds for video to generate timestamp...`
-      );
       await this.page.waitForTimeout(waitSeconds * 1000);
     }
   }
@@ -477,9 +473,6 @@ export class VideoHelpers {
    * Scrub YouTube player to a specific timestamp by clicking on the progress bar
    */
   private async scrubYouTubePlayer(targetSeconds: number): Promise<void> {
-    console.log(
-      `🎯 Starting YouTube scrub operation to ${targetSeconds} seconds`
-    );
     try {
       // Switch to iframe context to interact with YouTube player
       const iframe = this.page.locator('iframe').first();
@@ -514,15 +507,10 @@ export class VideoHelpers {
             .count()) > 0;
 
         if (isPaused && (await playButton.isVisible({ timeout: 2000 }))) {
-          console.log('Video is paused, clicking play button');
           await playButton.click();
 
           // Wait a moment for the video to start playing
           await this.page.waitForTimeout(1000);
-        } else {
-          console.log(
-            'Video appears to be already playing or play button not found'
-          );
         }
       } catch (playError) {
         console.warn('Could not interact with play button:', playError);
@@ -573,13 +561,6 @@ export class VideoHelpers {
           // Calculate more accurate position if we have duration
           if (videoDuration > 0) {
             scrubPosition = Math.min(targetSeconds / videoDuration, 0.95); // Cap at 95% to avoid end of video
-            console.log(
-              `Calculated scrub position: ${scrubPosition * 100}% (${targetSeconds}s of ${videoDuration}s)`
-            );
-          } else {
-            console.log(
-              `Using default scrub position: ${scrubPosition * 100}%`
-            );
           }
 
           // Calculate click position
@@ -595,13 +576,8 @@ export class VideoHelpers {
             },
           });
 
-          console.log(
-            `Scrubbed YouTube player to approximate ${targetSeconds}s timestamp`
-          );
-
           // Wait longer for the scrub to take effect and stabilize
           // Increased from 2 seconds to 3 seconds for better reliability
-          console.log('Waiting 3 seconds for scrub to take effect...');
           await this.page.waitForTimeout(3000);
 
           // Verify the video is still playing after scrub
@@ -613,9 +589,6 @@ export class VideoHelpers {
                 )
                 .count()) > 0;
             if (isStillPaused) {
-              console.log(
-                'Video paused after scrub, attempting to resume playback'
-              );
               const playButtonAfterScrub = frame
                 .locator('.ytp-play-button')
                 .first();
@@ -632,7 +605,6 @@ export class VideoHelpers {
 
           // Additional wait to ensure the video state is fully registered
           // This gives the video time to buffer and stabilize at the new position
-          console.log('Waiting for video state to stabilize after scrub...');
           await this.page.waitForTimeout(3000);
 
           // Verify the scrub was successful by checking current time position
@@ -650,13 +622,8 @@ export class VideoHelpers {
                   actualPosition - targetSeconds
                 );
 
-                console.log(
-                  `Scrub verification: target=${targetSeconds}s, actual=${actualPosition}s, difference=${positionDifference}s`
-                );
-
                 if (positionDifference <= tolerance) {
                   scrubSuccessful = true;
-                  console.log('✓ Scrub position verification successful');
                 } else {
                   console.warn(
                     `✗ Scrub position verification failed: expected ~${targetSeconds}s, got ${actualPosition}s`
@@ -678,34 +645,16 @@ export class VideoHelpers {
                 .count()) > 0;
 
             if (finalPauseCheck) {
-              console.log('Final attempt to ensure video is playing...');
               const finalPlayButton = frame.locator('.ytp-play-button').first();
               if (await finalPlayButton.isVisible({ timeout: 1000 })) {
                 await finalPlayButton.click();
                 // Wait after final play attempt for stability
                 await this.page.waitForTimeout(1000);
               }
-            } else {
-              console.log(
-                'Video appears to be playing successfully after scrub'
-              );
             }
-
             // Additional wait to ensure stable playback at new position
             // This helps prevent intermittent issues where playback state changes
-            console.log('Ensuring stable playback at new position...');
             await this.page.waitForTimeout(2000);
-
-            // Final status log
-            if (scrubSuccessful) {
-              console.log(
-                '✓ Scrub operation completed successfully with position verification'
-              );
-            } else {
-              console.log(
-                '⚠ Scrub operation completed but position verification failed'
-              );
-            }
           } catch (finalVerifyError) {
             console.warn(
               'Could not perform final playback verification:',
