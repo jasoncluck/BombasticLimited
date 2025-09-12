@@ -284,10 +284,11 @@ export class NavigationStateClass implements NavigationState {
     //    - We're not currently searching (no pending navigation)
     //    - Enough time has passed since the last user input (1000ms grace period)
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
-    const shouldUpdate = force || 
-      (urlSearchQuery !== this.searchQuery && 
-       !this.isSearching && 
-       timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
+    const shouldUpdate =
+      force ||
+      (urlSearchQuery !== this.searchQuery &&
+        !this.isSearching &&
+        timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
 
     if (shouldUpdate) {
       this.searchQuery = urlSearchQuery;
