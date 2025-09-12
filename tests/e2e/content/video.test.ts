@@ -1,6 +1,5 @@
 import { unauthenticatedTest as unauthTest, expect } from '../auth-fixtures';
 import { playlistTest } from '../playlist-fixtures';
-import { extractVideoIdFromUrl } from './video';
 
 unauthTest.describe('Unauthenticated video page actions', () => {
   unauthTest(

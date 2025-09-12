@@ -34,7 +34,7 @@
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
 
-  // Effect to control scroll blocking when dropdown is open
+  // Effect to control scroll blocking when dropdowno or context menu is open
   $effect(() => {
     const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
     const contentViewport = pageState.viewportRefs.contentViewportRef;
