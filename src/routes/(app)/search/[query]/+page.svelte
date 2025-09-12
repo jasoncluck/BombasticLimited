@@ -14,7 +14,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -33,14 +33,30 @@
   const mediaQueryState = getMediaQueryState();
   const navigationState = getNavigationState();
 
-  // Sync navigation state with the URL search parameter only if navigation is not currently searching
-  onMount(() => {
+  // Sync navigation state with the URL search parameter only when safe
+  onMount(async () => {
+    // Wait for any pending operations to complete
+    await tick();
+
+    // Only sync if searchString exists, navigation query is different,
+    // and we're not in the middle of a search operation
     if (
       searchString &&
       navigationState.searchQuery !== searchString &&
-      !navigationState.isSearching
+      !navigationState.isSearching &&
+      navigationState.activeSearchOperation === null
     ) {
-      navigationState.setSearchQuery(searchString);
+      // Add a small delay to ensure any ongoing operations complete
+      setTimeout(() => {
+        // Double check conditions are still valid before setting
+        if (
+          navigationState.searchQuery !== searchString &&
+          !navigationState.isSearching &&
+          navigationState.activeSearchOperation === null
+        ) {
+          navigationState.setSearchQuery(searchString);
+        }
+      }, 100);
     }
   });
 
@@ -84,10 +100,24 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-      // Only restore search query if we're not currently searching
-      if (!navigationState.isSearching) {
-        navigationState.setSearchQuery(restored.searchString);
+
+      // Only restore search query if we're not currently searching and there's no active operation
+      if (
+        !navigationState.isSearching &&
+        navigationState.activeSearchOperation === null &&
+        restored.searchString !== navigationState.searchQuery
+      ) {
+        // Add a delay to avoid conflicts with any ongoing operations
+        setTimeout(() => {
+          if (
+            !navigationState.isSearching &&
+            navigationState.activeSearchOperation === null
+          ) {
+            navigationState.setSearchQuery(restored.searchString);
+          }
+        }, 50);
       }
+
       contentState.selectedVideosBySection = restored.selectedVideos;
       previousSearchString = restored.searchString;
     },

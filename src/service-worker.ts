@@ -1372,12 +1372,8 @@ const performPeriodicMaintenance = async (): Promise<void> => {
         // Silent fail
       }
     }
-
-    if (removedCount > 0) {
-      console.log(`Periodic maintenance: removed ${removedCount} entries`);
-    }
   } catch (error) {
-    console.warn('Periodic maintenance failed:', error);
+    console.warn('Periodic service worker maintenance failed:', error);
   }
 };
 
