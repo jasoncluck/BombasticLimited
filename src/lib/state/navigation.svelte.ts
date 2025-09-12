@@ -278,15 +278,16 @@ export class NavigationStateClass implements NavigationState {
     const now = Date.now();
 
     // Only update if:
-    // 1. Force is true (initial page load), OR
-    // 2. URL search query is different from current state AND
-    // 3. We're not currently searching AND
-    // 4. Enough time has passed since the last user input (500ms grace period)
+    // 1. Force is true (initial page load/restore), OR
+    // 2. All of the following are true:
+    //    - URL search query is different from current state
+    //    - We're not currently searching (no pending navigation)
+    //    - Enough time has passed since the last user input (1000ms grace period)
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
     const shouldUpdate = force || 
       (urlSearchQuery !== this.searchQuery && 
        !this.isSearching && 
-       timeSinceLastInput > 500);
+       timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
 
     if (shouldUpdate) {
       this.searchQuery = urlSearchQuery;
@@ -320,7 +321,7 @@ export class NavigationStateClass implements NavigationState {
           const wasSearchPage = this.activeRoute.startsWith('/search/');
           const isSearchPage = currentPath.startsWith('/search/');
           const shouldForce = !wasSearchPage || !isSearchPage;
-          
+
           this.syncSearchQueryFromUrl(currentPath, shouldForce);
           this.updateActiveRoute(currentPath);
         }
