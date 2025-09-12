@@ -36,14 +36,14 @@
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
 
-  // Sync navigation state with the URL search parameter only if navigation is not currently searching
+  // Sync navigation state with the URL search parameter using the improved method
   onMount(() => {
-    if (
-      page.params.query &&
-      navigationState.searchQuery !== page.params.query &&
-      !navigationState.isSearching
-    ) {
-      navigationState.setSearchQuery(page.params.query);
+    if (page.params.query) {
+      // Use syncSearchQueryFromUrl with force=true for initial page mount
+      navigationState.syncSearchQueryFromUrl(
+        `/search/${encodeURIComponent(page.params.query)}`, 
+        true // Force sync on mount since this is intentional navigation
+      );
     }
   });
 
@@ -74,9 +74,12 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-      // Only restore search query if we're not currently searching
-      if (!navigationState.isSearching && page.params.query) {
-        navigationState.setSearchQuery(page.params.query);
+      // Use syncSearchQueryFromUrl with force=true for snapshot restoration
+      if (page.params.query) {
+        navigationState.syncSearchQueryFromUrl(
+          `/search/${encodeURIComponent(page.params.query)}`,
+          true // Force sync on restore since this is intentional state restoration
+        );
       }
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
