@@ -36,8 +36,13 @@
     pageFromQueryParams ? parseInt(pageFromQueryParams) : 1
   );
 
+  // Sync navigation state with the URL search parameter only if navigation is not currently searching
   onMount(() => {
-    if (page.params.query) {
+    if (
+      page.params.query &&
+      navigationState.searchQuery !== page.params.query &&
+      !navigationState.isSearching
+    ) {
       navigationState.setSearchQuery(page.params.query);
     }
   });
@@ -69,6 +74,10 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
+      // Only restore search query if we're not currently searching
+      if (!navigationState.isSearching && page.params.query) {
+        navigationState.setSearchQuery(page.params.query);
+      }
       contentState.selectedVideosBySection[sectionId] = restored.selectedVideos;
     },
   };

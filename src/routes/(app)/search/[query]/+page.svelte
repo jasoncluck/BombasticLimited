@@ -14,7 +14,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
-  import { onMount, tick } from 'svelte';
+  import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -33,30 +33,14 @@
   const mediaQueryState = getMediaQueryState();
   const navigationState = getNavigationState();
 
-  // Sync navigation state with the URL search parameter only when safe
-  onMount(async () => {
-    // Wait for any pending operations to complete
-    await tick();
-
-    // Only sync if searchString exists, navigation query is different,
-    // and we're not in the middle of a search operation
-    if (
-      searchString &&
-      navigationState.searchQuery !== searchString &&
-      !navigationState.isSearching &&
-      navigationState.activeSearchOperation === null
-    ) {
-      // Add a small delay to ensure any ongoing operations complete
-      setTimeout(() => {
-        // Double check conditions are still valid before setting
-        if (
-          navigationState.searchQuery !== searchString &&
-          !navigationState.isSearching &&
-          navigationState.activeSearchOperation === null
-        ) {
-          navigationState.setSearchQuery(searchString);
-        }
-      }, 100);
+  // Sync navigation state with the URL search parameter only when appropriate
+  onMount(() => {
+    // Force sync from URL on mount since this is a fresh page load
+    if (searchString) {
+      navigationState.syncSearchQueryFromUrl(
+        `/search/${encodeURIComponent(searchString)}`,
+        true // Force sync on mount
+      );
     }
   });
 
@@ -100,24 +84,11 @@
     }),
     restore: async (restored) => {
       carouselsState = restored.carouselsState;
-
-      // Only restore search query if we're not currently searching and there's no active operation
-      if (
-        !navigationState.isSearching &&
-        navigationState.activeSearchOperation === null &&
-        restored.searchString !== navigationState.searchQuery
-      ) {
-        // Add a delay to avoid conflicts with any ongoing operations
-        setTimeout(() => {
-          if (
-            !navigationState.isSearching &&
-            navigationState.activeSearchOperation === null
-          ) {
-            navigationState.setSearchQuery(restored.searchString);
-          }
-        }, 50);
-      }
-
+      // Force sync from snapshot restore since this is intentional state restoration
+      navigationState.syncSearchQueryFromUrl(
+        `/search/${encodeURIComponent(restored.searchString)}`,
+        true // Force sync on restore
+      );
       contentState.selectedVideosBySection = restored.selectedVideos;
       previousSearchString = restored.searchString;
     },

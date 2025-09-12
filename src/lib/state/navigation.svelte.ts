@@ -65,7 +65,6 @@ export interface NavigationState {
   isSearching: boolean;
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
   searchAbortController: AbortController | null;
-  activeSearchOperation: string | null | undefined;
 
   // User context
   session: Session | null;
@@ -92,7 +91,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
-  syncSearchQueryFromUrl: (pathname: string) => void;
+  syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -146,7 +145,9 @@ export class NavigationStateClass implements NavigationState {
   private lastRefreshTime: number = 0;
   private preloadTimeout: number | null = null;
   private currentSearchTimestamp: number = 0;
+  private pendingValueUpdate: string | null = null;
   private lastNavigationTimestamp: number = 0;
+  private lastUserInputTimestamp: number = 0;
 
   // Core data state
   data = $state<NavigationData>({
@@ -175,14 +176,13 @@ export class NavigationStateClass implements NavigationState {
   isSearching = $state(false);
   searchAbortController = $state<AbortController | null>(null);
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
-  activeSearchOperation = $state<string | null | undefined>();
 
   // Configuration
   config = $state<NavigationConfig>({
     enableHomeNavigation: true,
     enableBrandLogo: true,
     homeRouteReplaceState: true,
-    searchDebounceMs: 400, // Further reduced for better responsiveness
+    searchDebounceMs: 400,
     preloadDebounceMs: 125,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
@@ -271,19 +271,24 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Sync search query from URL - now exposed as public method
+   * Sync search query from URL - now exposed as public method with better timing controls
    */
-  syncSearchQueryFromUrl = (pathname: string): void => {
+  syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
+    const now = Date.now();
 
-    // Only update if the URL search query is different from current state
-    // and if we're not currently in the middle of a search operation
-    // and if there's no active search operation that might conflict
-    if (
-      urlSearchQuery !== this.searchQuery &&
-      !this.isSearching &&
-      this.activeSearchOperation === null
-    ) {
+    // Only update if:
+    // 1. Force is true (initial page load), OR
+    // 2. URL search query is different from current state AND
+    // 3. We're not currently searching AND
+    // 4. Enough time has passed since the last user input (500ms grace period)
+    const timeSinceLastInput = now - this.lastUserInputTimestamp;
+    const shouldUpdate = force || 
+      (urlSearchQuery !== this.searchQuery && 
+       !this.isSearching && 
+       timeSinceLastInput > 500);
+
+    if (shouldUpdate) {
       this.searchQuery = urlSearchQuery;
     }
   };
@@ -311,7 +316,12 @@ export class NavigationStateClass implements NavigationState {
       $effect(() => {
         if (page) {
           const currentPath = page.url?.pathname || '';
-          this.syncSearchQueryFromUrl(currentPath);
+          // Only force sync on initial effect run or when navigating away from search pages
+          const wasSearchPage = this.activeRoute.startsWith('/search/');
+          const isSearchPage = currentPath.startsWith('/search/');
+          const shouldForce = !wasSearchPage || !isSearchPage;
+          
+          this.syncSearchQueryFromUrl(currentPath, shouldForce);
           this.updateActiveRoute(currentPath);
         }
       });
@@ -508,7 +518,8 @@ export class NavigationStateClass implements NavigationState {
   clearSearchQuery = (): void => {
     this.searchQuery = '';
     this.currentSearchTimestamp = 0;
-    this.activeSearchOperation = null;
+    this.pendingValueUpdate = null;
+    this.lastUserInputTimestamp = 0;
 
     // Cancel any pending searches
     if (this.currentDebouncedSearch?.isPending) {
@@ -534,15 +545,10 @@ export class NavigationStateClass implements NavigationState {
     const input = e.target as HTMLInputElement;
     const searchValue = input.value.trim();
     const navigationTimestamp = Date.now();
-    const operationId = `search-${navigationTimestamp}-${Math.random()}`;
-
-    // Set active operation
-    this.activeSearchOperation = operationId;
     this.lastNavigationTimestamp = navigationTimestamp;
 
     // If an expected value was passed and current value doesn't match, abort
     if (expectedValue !== undefined && searchValue !== expectedValue) {
-      this.activeSearchOperation = null;
       return e;
     }
 
@@ -551,14 +557,12 @@ export class NavigationStateClass implements NavigationState {
       searchTimestamp !== undefined &&
       searchTimestamp < this.currentSearchTimestamp
     ) {
-      this.activeSearchOperation = null;
       return e;
     }
 
     // Verify that the current input value still matches what we expect
     // This prevents stale navigations when user has typed new content
     if (this.searchQuery.trim() !== searchValue) {
-      this.activeSearchOperation = null;
       return e;
     }
 
@@ -571,21 +575,15 @@ export class NavigationStateClass implements NavigationState {
     this.isSearching = true;
 
     try {
-      // Additional check right before navigation
-      if (this.activeSearchOperation !== operationId) {
-        return e;
-      }
-
       if (searchValue === '') {
-        // Before navigating to home, add a longer delay and more checks
-        await new Promise((resolve) => setTimeout(resolve, 50));
+        // Before navigating to home, check if user has started typing something new
+        // Add a small delay to check if the search state has changed
+        await new Promise((resolve) => setTimeout(resolve, 10));
 
-        // Multiple checks to ensure we should still navigate
+        // If navigation timestamp is outdated or user has started typing, abort
         if (
-          this.activeSearchOperation !== operationId ||
           navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchQuery.trim() !== '' ||
-          input.value.trim() !== ''
+          this.searchQuery.trim() !== ''
         ) {
           return e;
         }
@@ -595,10 +593,8 @@ export class NavigationStateClass implements NavigationState {
       } else if (searchValue.length >= 2) {
         // Check again before navigation for non-empty searches
         if (
-          this.activeSearchOperation !== operationId ||
           navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchQuery.trim() !== searchValue ||
-          input.value.trim() !== searchValue
+          this.searchQuery.trim() !== searchValue
         ) {
           return e;
         }
@@ -621,13 +617,9 @@ export class NavigationStateClass implements NavigationState {
       }
     } finally {
       // Only clear isSearching if this is still the most recent navigation
-      if (
-        navigationTimestamp >= this.lastNavigationTimestamp &&
-        this.activeSearchOperation === operationId
-      ) {
+      if (navigationTimestamp >= this.lastNavigationTimestamp) {
         this.isSearching = false;
         this.searchAbortController = null;
-        this.activeSearchOperation = null;
       }
     }
 
@@ -642,6 +634,7 @@ export class NavigationStateClass implements NavigationState {
     // Update the searchQuery state to match the input
     this.searchQuery = input.value;
     this.currentSearchTimestamp = searchTimestamp;
+    this.lastUserInputTimestamp = searchTimestamp; // Track when user last typed
 
     // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
@@ -878,8 +871,9 @@ export class NavigationStateClass implements NavigationState {
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
     this.currentSearchTimestamp = 0;
+    this.pendingValueUpdate = null;
     this.lastNavigationTimestamp = 0;
-    this.activeSearchOperation = null;
+    this.lastUserInputTimestamp = 0;
   }
 }
 
