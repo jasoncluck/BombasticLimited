@@ -45,10 +45,12 @@
     --tw-prose-th-borders: var(--color-border);
     --tw-prose-td-borders: var(--color-border);
 
-    /* Improve line spacing and text flow */
-    line-height: 1.25;
-    white-space: pre-wrap;
+    /* Improve line spacing and text flow - removed white-space: pre-wrap */
+    line-height: 1.6;
     max-width: none;
+    word-break: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
   }
 
   /* Integrate existing header styles from the design system */
@@ -57,7 +59,8 @@
     font-weight: 600;
     transition: color 0.15s ease-in-out;
     color: var(--color-foreground);
-    margin: 0 0 1rem 0;
+    margin: 2rem 0 1rem 0;
+    line-height: 1.2;
   }
 
   @media (min-width: 1024px) {
@@ -67,13 +70,14 @@
   }
 
   :global(.prose h2) {
-    margin: 0.5rem 0 0 0;
+    margin: 2rem 0 1rem 0;
     font-size: 1.5rem;
     font-weight: 600;
     transition: color 0.15s ease-in-out;
     color: var(--color-foreground);
     border-bottom: 1px solid var(--color-border);
     padding-bottom: 0.25rem;
+    line-height: 1.3;
   }
 
   @media (min-width: 1024px) {
@@ -83,11 +87,12 @@
   }
 
   :global(.prose h3) {
-    margin: 0.5rem 0 0 0;
+    margin: 1.5rem 0 0.75rem 0;
     font-size: 1.25rem; /* text-xl */
     font-weight: 600; /* font-semibold */
     transition: color 0.15s ease-in-out;
     color: var(--color-foreground);
+    line-height: 1.3;
   }
 
   @media (min-width: 1024px) {
@@ -97,11 +102,12 @@
   }
 
   :global(.prose h4) {
-    margin: 0.5rem 0 0 0;
+    margin: 1.25rem 0 0.5rem 0;
     font-size: 1.125rem; /* text-lg */
     font-weight: 600;
     transition: color 0.15s ease-in-out;
     color: var(--color-foreground);
+    line-height: 1.3;
   }
 
   @media (min-width: 1024px) {
@@ -110,14 +116,24 @@
     }
   }
 
-  /* Improve paragraph spacing and preserve line breaks */
+  /* Improve paragraph spacing and text flow */
   :global(.prose p) {
-    word-wrap: break-word;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    word-break: normal;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+
+  /* Handle double line breaks as paragraph breaks */
+  :global(.prose p + p) {
+    margin-top: 1rem;
   }
 
   /* Default list styling for regular content lists */
   :global(.prose ul, .prose ol) {
     padding-left: 1.5rem;
+    margin: 1rem 0;
   }
 
   /* Ensure list style types are preserved */
@@ -131,11 +147,13 @@
 
   :global(.prose li) {
     display: list-item; /* Ensure proper list item display */
+    margin: 0.25rem 0;
   }
 
   /* Nested list styling for regular content */
   :global(.prose ul ul, .prose ol ol, .prose ul ol, .prose ol ul) {
     padding-left: 1.25rem;
+    margin: 0.5rem 0;
   }
 
   /* Nested list style types */
@@ -171,10 +189,11 @@
   /* Target the first unordered list after an h2 (Table of Contents) */
   :global(.toc ul) {
     padding-left: 0;
-    line-height: 0.9;
+    line-height: 1.4;
     list-style-type: none;
     border-left: 2px solid var(--color-border);
     padding: 0.5rem;
+    margin: 1rem 0;
   }
 
   /* Remove the left border for the first UL immediately following the H2 */
@@ -184,8 +203,9 @@
   }
 
   :global(.prose h2 + ul li) {
-    margin: 0; /* Tight spacing between TOC items */
+    margin: 0.25rem 0; /* Spacing between TOC items */
     position: relative;
+    line-height: 1.4;
   }
 
   :global(.prose h2 + ul li::before) {
@@ -202,6 +222,7 @@
     background-color: transparent;
     border-radius: 0;
     padding: 0.75rem 0 0 0.5rem;
+    margin: 0.25rem 0;
   }
 
   :global(.prose h2 + ul ul li::before) {
@@ -213,8 +234,8 @@
   /* Third level nesting in TOC */
   :global(.prose h2 + ul ul ul) {
     border-left: 1px solid var(--color-border);
-    margin: 0.125rem 0 0.125rem 0; /* Consistent tight spacing */
-    padding: 0.75rem 0 0 0.5rem;
+    margin: 0.25rem 0; /* Consistent spacing */
+    padding: 0 0 0 0.5rem;
   }
 
   :global(.prose h2 + ul ul ul li::before) {
@@ -229,6 +250,8 @@
     text-decoration: none;
     font-weight: 500;
     transition: color 0.15s ease-in-out;
+    word-break: normal;
+    overflow-wrap: normal;
   }
 
   :global(.prose h2 + ul a:hover) {
@@ -245,6 +268,8 @@
     border-radius: 0.5rem;
     overflow-x: auto;
     padding: 1rem;
+    white-space: pre;
+    word-break: normal;
   }
 
   :global(.prose code) {
@@ -255,6 +280,8 @@
     padding: 0.125rem 0.375rem;
     font-size: 0.875em;
     font-weight: 500;
+    white-space: nowrap;
+    word-break: normal;
   }
 
   /* Don't double-style code inside pre blocks */
@@ -264,6 +291,7 @@
     padding: 0 !important;
     font-size: inherit;
     font-weight: inherit;
+    white-space: inherit;
   }
 
   /* Better blockquote styling */
@@ -277,7 +305,15 @@
   }
 
   :global(.prose blockquote p) {
-    margin: 0; /* No margins inside blockquotes */
+    margin: 0.5rem 0; /* Some margin inside blockquotes */
+  }
+
+  :global(.prose blockquote p:first-child) {
+    margin-top: 0;
+  }
+
+  :global(.prose blockquote p:last-child) {
+    margin-bottom: 0;
   }
 
   /* Table improvements */
@@ -294,6 +330,8 @@
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--color-border);
     text-align: left;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 
   :global(.prose th) {
@@ -321,6 +359,8 @@
     text-underline-offset: 2px;
     transition: color 0.15s ease-in-out;
     font-weight: 500;
+    word-break: normal;
+    overflow-wrap: break-word;
   }
 
   :global(.prose a:hover) {
@@ -341,11 +381,20 @@
 
   /* Better spacing for the flex container in your markdown */
   :global(.prose .flex) {
-    margin: 0; /* No extra margins for flex containers */
+    margin: 1rem 0; /* Add margin for flex containers */
   }
 
   :global(.prose .flex.flex-col.gap-2) {
     gap: 0.5rem;
+  }
+
+  /* Image styling improvements */
+  :global(.prose img) {
+    margin: 1rem auto;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    max-width: 100%;
+    height: auto;
   }
 
   /* Remove default prose margins that conflict with our custom spacing */
@@ -359,20 +408,32 @@
 
   /* Responsive adjustments */
   @media (max-width: 768px) {
+    :global(.prose) {
+      line-height: 1.5;
+    }
+
     :global(.prose h1) {
       font-size: 1.75rem;
+      margin: 1.5rem 0 0.75rem 0;
     }
 
     :global(.prose h2) {
       font-size: 1.375rem;
+      margin: 1.5rem 0 0.75rem 0;
     }
 
     :global(.prose h3) {
       font-size: 1.125rem;
+      margin: 1.25rem 0 0.5rem 0;
     }
 
     :global(.prose h4) {
       font-size: 1rem;
+      margin: 1rem 0 0.5rem 0;
+    }
+
+    :global(.prose p) {
+      margin-bottom: 0.75rem;
     }
   }
 
@@ -409,6 +470,7 @@
     :global(.prose) {
       color: black;
       max-width: none !important;
+      line-height: 1.4;
     }
 
     :global(.prose h1, .prose h2, .prose h3, .prose h4) {
@@ -422,7 +484,8 @@
     }
 
     :global(.prose p) {
-      margin-bottom: 0.375rem;
+      margin-bottom: 0.5rem;
+      line-height: 1.4;
     }
 
     /* Hide TOC styling for print */
