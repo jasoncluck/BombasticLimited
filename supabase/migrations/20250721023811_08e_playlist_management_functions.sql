@@ -160,8 +160,7 @@ $$;
 
 -- Optimized function to follow (add) a playlist to user's account
 CREATE OR REPLACE FUNCTION public.follow_playlist (
-  p_playlist_id bigint,
-  p_playlist_position int2 DEFAULT NULL
+  p_playlist_id bigint
 ) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
@@ -207,15 +206,12 @@ BEGIN
     RAISE EXCEPTION 'Playlist already added to account';
   END IF;
 
-  actual_position := COALESCE(LEAST(GREATEST(p_playlist_position, 1), 50), LEAST(max_position + 1, 50));
+  -- Always put newly followed playlist at the highest position (same as insert_playlist)
+  -- This means max_position + 1, up to the limit of 50
+  actual_position := LEAST(max_position + 1, 50);
 
-  -- Bulk shift and insert - FIXED: Add table alias to avoid ambiguous column reference
-  IF actual_position <= max_position THEN
-    UPDATE public.user_playlists up
-    SET playlist_position = up.playlist_position + 1
-    WHERE up.user_id = current_user_id 
-      AND up.playlist_position >= actual_position;
-  END IF;
+  -- No need to shift positions since we're always adding at the end
+  -- (highest position number)
 
   INSERT INTO public.user_playlists (id, user_id, playlist_position)
   VALUES (p_playlist_id, current_user_id, actual_position);

@@ -525,7 +525,6 @@ describe('playlist mutations module', () => {
 
       const result = await followPlaylist({
         playlistId: 1,
-        position: 5,
         supabase: mockSupabase,
       });
 

@@ -301,7 +301,6 @@ export async function handleFollowPlaylist({
 
   const { error } = await followPlaylist({
     playlistId: playlist.id,
-    position,
     supabase,
   });
 
@@ -385,6 +384,7 @@ export async function handleUpdatePlaylistSort({
     goto('/auth');
     return;
   }
+
 
   const { updatedPlaylist, error } = await updatePlaylistSort({
     playlistId: playlist.id,

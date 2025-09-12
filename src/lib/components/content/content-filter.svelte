@@ -28,6 +28,7 @@
   import type { Database } from '$lib/supabase/database.types';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   let {
     contentFilter,
@@ -44,7 +45,13 @@
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
+  const sidebarState = getSidebarState();
   let contentFilterDrawerOpen = $state(false);
+
+  const userPlaylists = $derived(sidebarState.playlists);
+  const isCurrentPlaylistInSidebar = $derived(
+    userPlaylists.some((up) => up.id === playlist?.id)
+  );
 
   // Search routes have a unique case of showing Search Relevence sort option
   const isSearchRoute = $derived(/^\/search\//.test(page.url.pathname));
@@ -142,7 +149,7 @@
         endDate: contentFilter.endDate,
       };
       // Update playlist sort so it can be retrieved next time until changed again
-      if (playlist && isUserPlaylist(playlist)) {
+      if (playlist && isUserPlaylist(playlist) && isCurrentPlaylistInSidebar) {
         handleUpdatePlaylistSort({
           playlist,
           sortOrder,
