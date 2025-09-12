@@ -31,8 +31,14 @@ export function useNavigation(pageState: PageState) {
         }
       }
 
-      // Note: Removed automatic search query clearing on navigation
-      // to prevent race conditions with user input during transitions
+      // Clear search query when navigating away from search
+      if (
+        to &&
+        !to.url.pathname.startsWith('/search/') &&
+        !navigationState.isSearching
+      ) {
+        navigationState.clearSearchQuery();
+      }
     });
   }
 
