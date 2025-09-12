@@ -41,7 +41,7 @@
     if (page.params.query) {
       // Use syncSearchQueryFromUrl with force=true for initial page mount
       navigationState.syncSearchQueryFromUrl(
-        `/search/${encodeURIComponent(page.params.query)}`, 
+        `/search/${encodeURIComponent(page.params.query)}`,
         true // Force sync on mount since this is intentional navigation
       );
     }

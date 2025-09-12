@@ -27,7 +27,7 @@ vi.mock('debounce', () => ({
   default: vi.fn((fn: any) => {
     const debouncedFn = Object.assign(vi.fn(fn), {
       isPending: false,
-      clear: vi.fn(function(this: any) {
+      clear: vi.fn(function (this: any) {
         this.isPending = false;
       }),
     });
@@ -69,7 +69,11 @@ describe('Navigation Search Race Conditions', () => {
       expect(navigationState.searchQuery).toBe('');
 
       // Simulate navigation to home is about to happen (but takes time)
-      const redirectPromise = navigationState.searchRedirect(clearEvent, '', Date.now());
+      const redirectPromise = navigationState.searchRedirect(
+        clearEvent,
+        '',
+        Date.now()
+      );
 
       // Before navigation completes, user starts typing again
       const newSearchEvent = {
@@ -112,7 +116,7 @@ describe('Navigation Search Race Conditions', () => {
       expect(navigationState.searchQuery).toBe('old search');
 
       // Wait for grace period to pass (1000ms + buffer)
-      await new Promise(resolve => setTimeout(resolve, 1100));
+      await new Promise((resolve) => setTimeout(resolve, 1100));
 
       // Simulate URL change to home page
       navigationState.syncSearchQueryFromUrl('/', false);
@@ -130,7 +134,7 @@ describe('Navigation Search Race Conditions', () => {
       navigationState.handleSearch(firstSearchEvent);
 
       // Wait a millisecond to ensure different timestamp
-      await new Promise(resolve => setTimeout(resolve, 1));
+      await new Promise((resolve) => setTimeout(resolve, 1));
 
       // Start second search quickly
       const secondSearchEvent = {
@@ -140,15 +144,23 @@ describe('Navigation Search Race Conditions', () => {
       navigationState.handleSearch(secondSearchEvent);
 
       // Execute searches - the newer one should work, older one should be ignored
-      await navigationState.searchRedirect(firstSearchEvent, 'first search', Date.now() - 100);
-      await navigationState.searchRedirect(secondSearchEvent, 'second search', Date.now());
+      await navigationState.searchRedirect(
+        firstSearchEvent,
+        'first search',
+        Date.now() - 100
+      );
+      await navigationState.searchRedirect(
+        secondSearchEvent,
+        'second search',
+        Date.now()
+      );
 
       // Should only navigate for the most recent search
       expect(mockGoto).toHaveBeenCalledWith('/search/second%20search', {
         keepFocus: true,
         replaceState: true,
       });
-      
+
       expect(mockGoto).not.toHaveBeenCalledWith('/search/first%20search');
     });
 
@@ -167,9 +179,9 @@ describe('Navigation Search Race Conditions', () => {
     it('should handle navigation timestamp ordering correctly', async () => {
       // Test that searchRedirect properly handles expected value mismatches
       navigationState.searchQuery = 'current search';
-      
+
       const event = {
-        target: { value: 'current search' },  
+        target: { value: 'current search' },
       } as any;
 
       // This should work - matches current search query
@@ -186,7 +198,11 @@ describe('Navigation Search Race Conditions', () => {
         target: { value: 'different search' },
       } as any;
 
-      const result = await navigationState.searchRedirect(mismatchEvent, 'expected search', Date.now());
+      const result = await navigationState.searchRedirect(
+        mismatchEvent,
+        'expected search',
+        Date.now()
+      );
 
       // Should abort navigation when expected value doesn't match
       expect(result).toBe(mismatchEvent);
@@ -196,17 +212,20 @@ describe('Navigation Search Race Conditions', () => {
 
   describe('Search page mount behavior', () => {
     it('should not overwrite user input when mounting search page', () => {
-      // Simulate user is currently typing by calling handleSearch 
+      // Simulate user is currently typing by calling handleSearch
       const userEvent = {
         target: { value: 'user typing' },
       } as any;
-      
+
       navigationState.handleSearch(userEvent);
       expect(navigationState.searchQuery).toBe('user typing');
 
       // Simulate search page mount with different query (should not overwrite recent input)
       const urlSearchQuery = 'url query';
-      navigationState.syncSearchQueryFromUrl(`/search/${encodeURIComponent(urlSearchQuery)}`, false);
+      navigationState.syncSearchQueryFromUrl(
+        `/search/${encodeURIComponent(urlSearchQuery)}`,
+        false
+      );
 
       expect(navigationState.searchQuery).toBe('user typing');
     });
