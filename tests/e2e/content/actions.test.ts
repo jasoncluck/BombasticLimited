@@ -3,6 +3,7 @@ import {
   authenticatedTest as authTest,
   expect,
 } from '../auth-fixtures';
+import { VideoHelpers } from '../helpers/video-helpers';
 
 // Helper function to test scroll lock behavior
 async function testScrollLockBehavior(page: any, contextDescription: string) {
@@ -329,20 +330,19 @@ authTest.describe('Authenticated content actions', () => {
   );
 });
 
-// Table Mode Tests - Testing mobile viewport where table is forced
-authTest.describe('Table mode content actions (mobile viewport)', () => {
-  // Helper function to set viewport to mobile size to force table mode
-  async function setMobileViewport(page: any) {
-    await page.setViewportSize({ width: 375, height: 667 }); // iPhone size
-  }
+// Table Mode Tests - Using switchToTableView helper
+authTest.describe('Table mode content actions', () => {
 
   authTest(
-    'should lock scroll when context menu is open in Table mode (mobile)',
+    'should lock scroll when context menu is open in Table mode',
     async ({ authenticatedPage: page }) => {
-      await setMobileViewport(page);
       await page.goto('/giantbomb/latest/');
 
-      // Wait for table content to load - mobile uses table by default
+      // Switch to table view using the helper function
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToTableView();
+
+      // Wait for table content to load
       const table = page.getByTestId('content-table-defaultSection');
       await table.waitFor();
 
@@ -372,8 +372,11 @@ authTest.describe('Table mode content actions (mobile viewport)', () => {
   authTest(
     'should lock scroll when context menu is open in Table mode with multiple selections',
     async ({ authenticatedPage: page }) => {
-      await setMobileViewport(page);
       await page.goto('/giantbomb/latest/');
+
+      // Switch to table view using the helper function
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToTableView();
 
       // Wait for table content to load
       const table = page.getByTestId('content-table-defaultSection');
@@ -416,8 +419,11 @@ authTest.describe('Table mode content actions (mobile viewport)', () => {
   authTest(
     'should preserve selection when context menu is shown and hidden by clicking non-row areas',
     async ({ authenticatedPage: page }) => {
-      await setMobileViewport(page);
       await page.goto('/giantbomb/latest/');
+
+      // Switch to table view using the helper function
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToTableView();
 
       // Wait for table content to load
       const table = page.getByTestId('content-table-defaultSection');
@@ -460,8 +466,11 @@ authTest.describe('Table mode content actions (mobile viewport)', () => {
   authTest(
     'should preserve selections when using content dropdown in header area',
     async ({ authenticatedPage: page }) => {
-      await setMobileViewport(page);
       await page.goto('/giantbomb/latest/');
+
+      // Switch to table view using the helper function
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToTableView();
 
       // Wait for table content to load
       const table = page.getByTestId('content-table-defaultSection');
@@ -477,7 +486,6 @@ authTest.describe('Table mode content actions (mobile viewport)', () => {
       await secondRow.click({ modifiers: ['Control'] });
 
       // Find and click the content action dropdown at the top of the page
-      // This might not be visible on mobile, so we'll check if it exists first
       const contentActionDropdown = page.getByTestId(
         'content-dropdown-trigger'
       );
@@ -512,8 +520,7 @@ authTest.describe('Table mode content actions (mobile viewport)', () => {
         const selectedCount = await selectedRows.count();
         expect(selectedCount).toBeGreaterThanOrEqual(1);
       } else {
-        // On mobile, the dropdown might not be available, so this test is not applicable
-        // We can still verify the selections remain by some other action
+        // If dropdown is not available, we can still verify the selections remain
         const selectedRows = table.locator(
           'tr.bg-secondary, tr[data-state="selected"], tr.selection-mode'
         );
@@ -526,8 +533,11 @@ authTest.describe('Table mode content actions (mobile viewport)', () => {
   authTest(
     'should deselect items only when clicking outside content area, not when using menus',
     async ({ authenticatedPage: page }) => {
-      await setMobileViewport(page);
       await page.goto('/giantbomb/latest/');
+
+      // Switch to table view using the helper function
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToTableView();
 
       // Wait for table content to load
       const table = page.getByTestId('content-table-defaultSection');
