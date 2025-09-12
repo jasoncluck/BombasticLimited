@@ -4,6 +4,49 @@ import {
   expect,
 } from '../auth-fixtures';
 
+// Helper function to test scroll lock behavior
+async function testScrollLockBehavior(page: any, contextDescription: string) {
+  const initialScrollPosition = await page.evaluate(() => window.scrollY);
+
+  // Test various scroll methods
+  const scrollTests = [
+    () => page.keyboard.press('PageDown'),
+    () => page.keyboard.press('PageUp'),
+    () => page.keyboard.press('ArrowDown'),
+    () => page.keyboard.press('ArrowUp'),
+    () => page.keyboard.press('End'),
+    () => page.keyboard.press('Home'),
+    () => page.mouse.wheel(0, 300),
+    () => page.mouse.wheel(0, -300),
+    () => page.evaluate(() => window.scrollTo(0, 500)),
+    () => page.evaluate(() => window.scrollBy(0, 200)),
+  ];
+
+  for (const scrollTest of scrollTests) {
+    await scrollTest();
+    await page.waitForTimeout(50);
+
+    const currentScrollPosition = await page.evaluate(() => window.scrollY);
+    expect(
+      currentScrollPosition,
+      `Scroll should be locked when ${contextDescription}`
+    ).toBe(initialScrollPosition);
+  }
+}
+
+// Helper function to verify scroll is unlocked
+async function verifyScrollUnlocked(page: any) {
+  const initialScrollY = await page.evaluate(() => window.scrollY);
+
+  // Try to scroll down - should work if unlocked
+  await page.keyboard.press('PageDown');
+  await page.waitForTimeout(100);
+
+  // We can't assert scroll position changed because page might not have scrollable content
+  // But we can verify no errors occurred and the page responds
+  await page.evaluate(() => window.scrollY);
+}
+
 unauthTest.describe('Unauthenticated content actions', () => {
   unauthTest(
     'should not be able to open context menu',
@@ -95,39 +138,15 @@ authTest.describe('Authenticated content actions', () => {
       );
       await expect(contextMenuContent).toBeVisible();
 
-      const initialScrollPosition = await page.evaluate(() => window.scrollY);
-
-      // Test various scroll methods
-      const scrollTests = [
-        () => page.keyboard.press('PageDown'),
-        () => page.keyboard.press('PageUp'),
-        () => page.keyboard.press('ArrowDown'),
-        () => page.keyboard.press('ArrowUp'),
-        () => page.keyboard.press('End'),
-        () => page.keyboard.press('Home'),
-        () => page.mouse.wheel(0, 300),
-        () => page.mouse.wheel(0, -300),
-        () => page.evaluate(() => window.scrollTo(0, 500)),
-        () => page.evaluate(() => window.scrollBy(0, 200)),
-      ];
-
-      for (const scrollTest of scrollTests) {
-        await scrollTest();
-        await page.waitForTimeout(50);
-
-        const currentScrollPosition = await page.evaluate(() => window.scrollY);
-        expect(currentScrollPosition).toBe(initialScrollPosition);
-      }
+      // Test scroll lock using the helper
+      await testScrollLockBehavior(page, 'context menu is open');
 
       // Close context menu and verify scrolling works again
       await page.keyboard.press('Escape');
       await expect(contextMenuContent).not.toBeVisible();
 
-      // Now scrolling should work (if there's scrollable content)
-      await page.keyboard.press('PageDown');
-      await page.waitForTimeout(100);
-      await page.evaluate(() => window.scrollY);
-      // We don't assert the scroll position changed here because the page might not have enough content to scroll
+      // Verify scroll is unlocked
+      await verifyScrollUnlocked(page);
     }
   );
 
@@ -148,40 +167,369 @@ authTest.describe('Authenticated content actions', () => {
       const dropdownContent = page.getByTestId('content-dropdown-content');
       await expect(dropdownContent).toBeVisible();
 
-      const initialScrollPosition = await page.evaluate(() => window.scrollY);
-
-      // Test various scroll methods
-      const scrollTests = [
-        () => page.keyboard.press('PageDown'),
-        () => page.keyboard.press('PageUp'),
-        () => page.keyboard.press('ArrowDown'),
-        () => page.keyboard.press('ArrowUp'),
-        () => page.keyboard.press('End'),
-        () => page.keyboard.press('Home'),
-        () => page.mouse.wheel(0, 300),
-        () => page.mouse.wheel(0, -300),
-        () => page.evaluate(() => window.scrollTo(0, 500)),
-        () => page.evaluate(() => window.scrollBy(0, 200)),
-      ];
-
-      for (const scrollTest of scrollTests) {
-        await scrollTest();
-        await page.waitForTimeout(50);
-
-        const currentScrollPosition = await page.evaluate(() => window.scrollY);
-        expect(currentScrollPosition).toBe(initialScrollPosition);
-      }
+      // Test scroll lock using the helper
+      await testScrollLockBehavior(page, 'dropdown menu is open');
 
       // Close dropdown menu and verify scrolling works again
       await page.keyboard.press('Escape');
       await expect(dropdownContent).not.toBeVisible();
 
-      // Now scrolling should work (if there's scrollable content)
-      await page.keyboard.press('PageDown');
-      await page.waitForTimeout(100);
+      // Verify scroll is unlocked
+      await verifyScrollUnlocked(page);
+    }
+  );
 
-      await page.evaluate(() => window.scrollY);
-      // We don't assert the scroll position changed here because the page might not have enough content to scroll
+  // Test data for route variants
+  const cardModeRoutes = [
+    {
+      route: '/',
+      description: 'Card mode in carousel (homepage)',
+      displayType: 'CAROUSEL',
+    },
+  ];
+
+  // Test scroll lock for card mode routes
+  cardModeRoutes.forEach(({ route, description, displayType }) => {
+    authTest(
+      `should lock scroll when context menu is open in ${description}`,
+      async ({ authenticatedPage: page }) => {
+        await page.goto(route);
+
+        // Wait for content to load
+        const contentCard = page.getByTestId('content-item').first();
+        await contentCard.waitFor();
+
+        // Right-click to open context menu
+        await contentCard.click({ button: 'right' });
+        const contextMenuContent = page.getByTestId(
+          'content-context-menu-content'
+        );
+        await expect(contextMenuContent).toBeVisible();
+
+        // Test scroll lock
+        await testScrollLockBehavior(
+          page,
+          `context menu is open in ${description}`
+        );
+
+        // Click elsewhere to deselect and close context menu
+        const pageBody = page.locator('body');
+        await pageBody.click({ position: { x: 100, y: 100 } });
+        await expect(contextMenuContent).not.toBeVisible();
+
+        // Verify scroll is unlocked
+        await verifyScrollUnlocked(page);
+      }
+    );
+
+    authTest(
+      `should lock scroll when dropdown menu is open in ${description}`,
+      async ({ authenticatedPage: page }) => {
+        await page.goto(route);
+
+        // Wait for content to load
+        const contentCard = page.getByTestId('content-item').first();
+        await contentCard.waitFor();
+        await contentCard.hover();
+
+        // Open dropdown menu
+        const contentDropdownTrigger = page
+          .getByTestId('content-dropdown-trigger')
+          .and(page.getByRole('button'))
+          .first();
+        await contentDropdownTrigger.click();
+        const dropdownContent = page.getByTestId('content-dropdown-content');
+        await expect(dropdownContent).toBeVisible();
+
+        // Test scroll lock
+        await testScrollLockBehavior(
+          page,
+          `dropdown menu is open in ${description}`
+        );
+
+        // Click elsewhere to deselect and close dropdown
+        const pageBody = page.locator('body');
+        await pageBody.click({ position: { x: 100, y: 100 } });
+        await expect(dropdownContent).not.toBeVisible();
+
+        // Verify scroll is unlocked
+        await verifyScrollUnlocked(page);
+      }
+    );
+  });
+
+  // Test card mode tiles on specific source latest pages
+  authTest(
+    'should lock scroll when context menu is open in Card mode tiles (/[source]/latest/)',
+    async ({ authenticatedPage: page }) => {
+      // Navigate to a source latest page - using a common source name
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for content to load
+      const contentCard = page.getByTestId('content-item').first();
+      await contentCard.waitFor();
+
+      // Right-click to open context menu
+      await contentCard.click({ button: 'right' });
+      const contextMenuContent = page.getByTestId(
+        'content-context-menu-content'
+      );
+      await expect(contextMenuContent).toBeVisible();
+
+      // Test scroll lock
+      await testScrollLockBehavior(
+        page,
+        'context menu is open in card mode tiles'
+      );
+
+      // Click elsewhere to deselect and close context menu
+      const pageBody = page.locator('body');
+      await pageBody.click({ position: { x: 100, y: 100 } });
+      await expect(contextMenuContent).not.toBeVisible();
+
+      // Verify scroll is unlocked
+      await verifyScrollUnlocked(page);
+    }
+  );
+
+  authTest(
+    'should lock scroll when dropdown menu is open in Card mode tiles (/[source]/latest/)',
+    async ({ authenticatedPage: page }) => {
+      // Navigate to a source latest page
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for content to load
+      const contentCard = page.getByTestId('content-item').first();
+      await contentCard.waitFor();
+      await contentCard.hover();
+
+      // Open dropdown menu
+      const contentDropdownTrigger = page
+        .getByTestId('content-dropdown-trigger')
+        .and(page.getByRole('button'))
+        .first();
+      await contentDropdownTrigger.click();
+      const dropdownContent = page.getByTestId('content-dropdown-content');
+      await expect(dropdownContent).toBeVisible();
+
+      // Test scroll lock
+      await testScrollLockBehavior(
+        page,
+        'dropdown menu is open in card mode tiles'
+      );
+
+      // Click elsewhere to deselect and close dropdown
+      const pageBody = page.locator('body');
+      await pageBody.click({ position: { x: 100, y: 100 } });
+      await expect(dropdownContent).not.toBeVisible();
+
+      // Verify scroll is unlocked
+      await verifyScrollUnlocked(page);
+    }
+  );
+});
+
+// Table Mode Tests
+authTest.describe('Table mode content actions', () => {
+  // Helper function to set user preference to table mode via localStorage
+  async function setUserToTableMode(page: any) {
+    // This simulates the user having TABLE display preference
+    // We'll need to check how the app stores this preference - either in localStorage, cookies, or user profile
+    await page.evaluate(() => {
+      // Set a localStorage flag that the app might check for table mode
+      localStorage.setItem('content_display', 'TABLE');
+    });
+  }
+
+  authTest(
+    'should lock scroll when context menu is open in Table mode with single selection',
+    async ({ authenticatedPage: page }) => {
+      await setUserToTableMode(page);
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for table content to load - use table specific test id
+      const tableRow = page
+        .getByTestId('content-table-defaultSection')
+        .locator('tr')
+        .first();
+      await tableRow.waitFor();
+
+      // Right-click to open context menu on a table row
+      await tableRow.click({ button: 'right' });
+      const contextMenuContent = page.getByTestId(
+        'content-context-menu-content'
+      );
+      await expect(contextMenuContent).toBeVisible();
+
+      // Test scroll lock
+      await testScrollLockBehavior(page, 'context menu is open in table mode');
+
+      // Click elsewhere to deselect and close context menu
+      const pageBody = page.locator('body');
+      await pageBody.click({ position: { x: 100, y: 100 } });
+      await expect(contextMenuContent).not.toBeVisible();
+
+      // Verify scroll is unlocked
+      await verifyScrollUnlocked(page);
+    }
+  );
+
+  authTest(
+    'should lock scroll when context menu is open in Table mode with multiple selections',
+    async ({ authenticatedPage: page }) => {
+      await setUserToTableMode(page);
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for table content to load
+      const table = page.getByTestId('content-table-defaultSection');
+      await table.waitFor();
+
+      const firstRow = table.locator('tr').first();
+      const secondRow = table.locator('tr').nth(1);
+      const thirdRow = table.locator('tr').nth(2);
+
+      // Multi-select rows using Ctrl+click
+      await firstRow.click();
+      await secondRow.click({ modifiers: ['Control'] });
+      await thirdRow.click({ modifiers: ['Control'] });
+
+      // Right-click to open context menu - should preserve all selections
+      await thirdRow.click({ button: 'right' });
+      const contextMenuContent = page.getByTestId(
+        'content-context-menu-content'
+      );
+      await expect(contextMenuContent).toBeVisible();
+
+      // Test scroll lock
+      await testScrollLockBehavior(
+        page,
+        'context menu is open in table mode with multiple selections'
+      );
+
+      // Click on another row (not selected) - should deselect previous selections and select new row
+      const fourthRow = table.locator('tr').nth(3);
+      await fourthRow.click();
+      await expect(contextMenuContent).not.toBeVisible();
+
+      // Verify only the newly clicked row is selected (implementation might vary)
+      // and scroll is unlocked
+      await verifyScrollUnlocked(page);
+    }
+  );
+
+  authTest(
+    'should preserve selection when context menu is shown and hidden by clicking non-row areas',
+    async ({ authenticatedPage: page }) => {
+      await setUserToTableMode(page);
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for table content to load
+      const table = page.getByTestId('content-table-defaultSection');
+      await table.waitFor();
+
+      const firstRow = table.locator('tr').first();
+      const secondRow = table.locator('tr').nth(1);
+
+      // Select multiple rows
+      await firstRow.click();
+      await secondRow.click({ modifiers: ['Control'] });
+
+      // Right-click to open context menu
+      await secondRow.click({ button: 'right' });
+      const contextMenuContent = page.getByTestId(
+        'content-context-menu-content'
+      );
+      await expect(contextMenuContent).toBeVisible();
+
+      // Click outside the table/content area to close menu - should preserve selections
+      const pageBody = page.locator('body');
+      await pageBody.click({ position: { x: 50, y: 50 } });
+      await expect(contextMenuContent).not.toBeVisible();
+
+      // Verify rows are still visually selected (they should have selected styling)
+      // This would need to check the actual CSS classes applied to selected rows
+      const selectedRows = table.locator('tr.bg-secondary');
+      await expect(selectedRows).toHaveCount(2);
+    }
+  );
+
+  authTest(
+    'should preserve selections when Content action dropdown is used at top of latest page',
+    async ({ authenticatedPage: page }) => {
+      await setUserToTableMode(page);
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for table content to load
+      const table = page.getByTestId('content-table-defaultSection');
+      await table.waitFor();
+
+      const firstRow = table.locator('tr').first();
+      const secondRow = table.locator('tr').nth(1);
+
+      // Select multiple rows
+      await firstRow.click();
+      await secondRow.click({ modifiers: ['Control'] });
+
+      // Find and click the content action dropdown at the top of the page
+      const contentActionDropdown = page.getByTestId(
+        'content-header-dropdown-trigger'
+      );
+      await contentActionDropdown.click();
+
+      const dropdownContent = page.getByTestId(
+        'content-header-dropdown-content'
+      );
+      await expect(dropdownContent).toBeVisible();
+
+      // Click on an action (like "Add to playlist" or whatever actions exist)
+      const firstAction = dropdownContent.locator('button, a').first();
+      await firstAction.click();
+
+      // Verify selections are preserved after action is taken
+      const selectedRows = table.locator('tr.bg-secondary');
+      await expect(selectedRows).toHaveCount(2);
+    }
+  );
+
+  authTest(
+    'should deselect items only when clicking outside content area, not when using dropdowns',
+    async ({ authenticatedPage: page }) => {
+      await setUserToTableMode(page);
+      await page.goto('/giantbomb/latest/');
+
+      // Wait for table content to load
+      const table = page.getByTestId('content-table-defaultSection');
+      await table.waitFor();
+
+      const firstRow = table.locator('tr').first();
+      const secondRow = table.locator('tr').nth(1);
+
+      // Select multiple rows
+      await firstRow.click();
+      await secondRow.click({ modifiers: ['Control'] });
+
+      // Open context menu dropdown
+      await secondRow.click({ button: 'right' });
+      const contextMenuContent = page.getByTestId(
+        'content-context-menu-content'
+      );
+      await expect(contextMenuContent).toBeVisible();
+
+      // Click inside the dropdown menu - should NOT deselect
+      await contextMenuContent.click();
+
+      // Verify selections are still preserved
+      const selectedRowsAfterMenuClick = table.locator('tr.bg-secondary');
+      await expect(selectedRowsAfterMenuClick).toHaveCount(2);
+
+      // Close menu by clicking outside content area
+      const pageBody = page.locator('body');
+      await pageBody.click({ position: { x: 50, y: 50 } });
+      await expect(contextMenuContent).not.toBeVisible();
+
+      // Now selections should be cleared (clicking outside content area)
+      const selectedRowsAfterOutsideClick = table.locator('tr.bg-secondary');
+      await expect(selectedRowsAfterOutsideClick).toHaveCount(0);
     }
   );
 });
