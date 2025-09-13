@@ -206,7 +206,6 @@
       hasFollowAction:
         playlist &&
         variant === 'header' &&
-        !playlist.deleted_at &&
         !isPlaylistOwner &&
         !sidebarState
           .getFollowedPlaylists(session)
