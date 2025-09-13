@@ -538,26 +538,24 @@
           </DropdownMenu.Item>
         {:else if !isFollowingPlaylist}
           <!-- User doesn't own and isn't following - show follow option -->
-          {#if !playlist.deleted_at}
-            <DropdownMenu.Item
-              class="cursor-pointer"
-              onclick={async () => {
-                handleFollowPlaylist({
-                  playlist,
-                  sidebarState,
-                  contentFilter,
-                  supabase,
-                  session,
-                });
-              }}
-            >
-              <div class="flex items-center gap-2">
-                <CirclePlus class="dropdown-icon" />
-                Follow playlist
-              </div>
-            </DropdownMenu.Item>
-          {/if}
-        {:else if !isPlaylistOwner}
+          <DropdownMenu.Item
+            class="cursor-pointer"
+            onclick={async () => {
+              handleFollowPlaylist({
+                playlist,
+                sidebarState,
+                contentFilter,
+                supabase,
+                session,
+              });
+            }}
+          >
+            <div class="flex items-center gap-2">
+              <CirclePlus class="dropdown-icon" />
+              Follow playlist
+            </div>
+          </DropdownMenu.Item>
+        {:else if isFollowingPlaylist}
           <!-- User doesn't own but is following - show unfollow option -->
           <DropdownMenu.Item
             class="cursor-pointer"
