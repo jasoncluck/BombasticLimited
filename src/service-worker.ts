@@ -93,6 +93,7 @@ interface ResourceClassification {
   readonly isCritical: boolean;
   readonly category: 'css' | 'js' | 'font' | 'image' | 'other';
   readonly shouldPreload: boolean;
+  readonly preloadDelay: number; // Added missing property
 }
 
 // Request queue interfaces
@@ -245,10 +246,21 @@ const classifyResource = (url: URL): ResourceClassification => {
   // Determine preload strategy (exclude fonts to prevent preload warnings)
   const shouldPreload = category === 'css' || category === 'js';
 
+  // Calculate preload delay based on priority
+  let preloadDelay = 0;
+  if (isCritical) {
+    preloadDelay = 0; // Load immediately
+  } else if (shouldPreload) {
+    preloadDelay = 1000; // 1 second delay for non-critical preloads
+  } else {
+    preloadDelay = 3000; // 3 second delay for other resources
+  }
+
   return {
     isCritical,
     category,
     shouldPreload,
+    preloadDelay,
   };
 };
 
@@ -521,21 +533,21 @@ const processRequestQueue = async (): Promise<void> => {
       let url: string | undefined;
 
       if (state.requestQueue.highPriority.size > 0) {
-        const [firstUrl, firstRequest] = state.requestQueue.highPriority
-          .entries()
-          .next().value;
-        url = firstUrl;
-        queuedRequest = firstRequest;
-        if (url) {
+        // Fixed: Properly handle the iterator
+        const firstEntry = state.requestQueue.highPriority.entries().next();
+        if (!firstEntry.done) {
+          const [firstUrl, firstRequest] = firstEntry.value;
+          url = firstUrl;
+          queuedRequest = firstRequest;
           state.requestQueue.highPriority.delete(url);
         }
       } else if (state.requestQueue.normal.size > 0) {
-        const [firstUrl, firstRequest] = state.requestQueue.normal
-          .entries()
-          .next().value;
-        url = firstUrl;
-        queuedRequest = firstRequest;
-        if (url) {
+        // Fixed: Properly handle the iterator
+        const firstEntry = state.requestQueue.normal.entries().next();
+        if (!firstEntry.done) {
+          const [firstUrl, firstRequest] = firstEntry.value;
+          url = firstUrl;
+          queuedRequest = firstRequest;
           state.requestQueue.normal.delete(url);
         }
       }
