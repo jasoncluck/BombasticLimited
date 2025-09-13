@@ -3,7 +3,6 @@
     handleRemoveVideosFromPlaylist,
     handleAddVideosToPlaylist,
     handleUpdatePlaylistImage,
-    handleDeletePlaylist,
     handleUnfollowPlaylist,
     handleFollowPlaylist,
   } from '../playlist/playlist-service';
@@ -22,7 +21,6 @@
   } from '../video/video-service';
   import Button from '../ui/button/button.svelte';
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
   import { type ContentSelectVariant } from './content';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { Portal } from 'bits-ui';
@@ -507,26 +505,28 @@
               Delete playlist
             </div>
           </DropdownMenu.Item>
-        {:else if !isFollowingPlaylist}
+        {:else if !isFollowingPlaylist && !isPlaylistOwner}
           <!-- User doesn't own and isn't following - show follow option -->
-          <DropdownMenu.Item
-            class="cursor-pointer"
-            onclick={async () => {
-              handleFollowPlaylist({
-                playlist,
-                sidebarState,
-                contentFilter,
-                supabase,
-                session,
-              });
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <CirclePlus class="dropdown-icon" />
-              Follow playlist
-            </div>
-          </DropdownMenu.Item>
-        {:else}
+          {#if !playlist.deleted_at}
+            <DropdownMenu.Item
+              class="cursor-pointer"
+              onclick={async () => {
+                handleFollowPlaylist({
+                  playlist,
+                  sidebarState,
+                  contentFilter,
+                  supabase,
+                  session,
+                });
+              }}
+            >
+              <div class="flex items-center gap-2">
+                <CirclePlus class="dropdown-icon" />
+                Follow playlist
+              </div>
+            </DropdownMenu.Item>
+          {/if}
+        {:else if !isPlaylistOwner}
           <!-- User doesn't own but is following - show unfollow option -->
           <DropdownMenu.Item
             class="cursor-pointer"

@@ -137,7 +137,7 @@
                 Create an account or login to follow playlists.
               </Popover.Content>
             </Popover.Root>
-          {:else}
+          {:else if !profilePlaylist.deleted_at}
             <Button
               variant="ghost"
               class="ghost-button-minimal !px-3 !py-2"
