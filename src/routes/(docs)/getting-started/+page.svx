@@ -3,6 +3,7 @@
   import { Button } from '$lib/components/ui/button';
 </script>
 
+
 <a class="w-32" href="/">
 <Button class="mb-4 flex gap-2 cursor-pointer" >
 <MoveLeft /> Bombastic
@@ -14,6 +15,7 @@
 ## About Bombastic
 
 Bombastic's goal is to provide a curated experience and a consolidated platform for the expanded Giant Bomb community.
+
 
 Bombastic retrieves data from YouTube for selected video game media creators. This not only creates a simplified cross-channel search view, but also allows for the creation of custom playlists that can contain content from multiple YouTube channels. Bombastic's watch tracking feature allows users to easily resume watching videos and playlists where they previously left off.
 
@@ -187,6 +189,7 @@ In the event that the bug report form is broken, please click the "Contact" butt
 - (Optional) Screenshots of the issue
 
 <div class="mt-8">
+
 <a class="w-32" href="/">
 <Button class="mb-4 flex gap-2 cursor-pointer" >
 <MoveLeft /> Bombastic
