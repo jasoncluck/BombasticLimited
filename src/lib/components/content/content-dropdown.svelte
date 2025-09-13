@@ -536,7 +536,7 @@
               Delete playlist
             </div>
           </DropdownMenu.Item>
-        {:else if !isFollowingPlaylist}
+        {:else if !isPlaylistOwner && !isFollowingPlaylist}
           <!-- User doesn't own and isn't following - show follow option -->
           <DropdownMenu.Item
             class="cursor-pointer"
