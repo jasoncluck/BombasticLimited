@@ -1,4 +1,5 @@
 import { unauthenticatedTest as unauthTest, expect } from '../auth-fixtures';
+import { VideoHelpers } from '../helpers/video-helpers';
 import { playlistTest } from '../playlist-fixtures';
 
 unauthTest.describe('Unauthenticated video page actions', () => {
@@ -39,9 +40,19 @@ unauthTest.describe('Unauthenticated video page actions', () => {
 });
 
 playlistTest.describe('Authenticated video page actions', () => {
+  let videoHelpers: VideoHelpers;
+
+  playlistTest.beforeEach(async ({ authenticatedPage }) => {
+    videoHelpers = new VideoHelpers(authenticatedPage);
+    await videoHelpers.goToHomepage();
+  });
+
   playlistTest(
     'Should be able to create a playlist and add the current video',
     async ({ playlistPage: page, playlistHelpers }) => {
+      if ((await videoHelpers.getCurrentViewMode()) !== 'card') {
+        videoHelpers.switchToCardView();
+      }
       // Playlist is automatically created and will be cleaned up
       const playlistId = await playlistHelpers.createPlaylist();
       await playlistHelpers.verifyPlaylistExists(playlistId);

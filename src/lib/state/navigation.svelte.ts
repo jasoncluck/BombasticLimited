@@ -91,7 +91,6 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
-  syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -288,7 +287,7 @@ export class NavigationStateClass implements NavigationState {
       force ||
       (urlSearchQuery !== this.searchQuery &&
         !this.isSearching &&
-        timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
+        timeSinceLastInput > 500); // 1000ms grace period to protect recent user input
 
     if (shouldUpdate) {
       this.searchQuery = urlSearchQuery;
@@ -311,20 +310,6 @@ export class NavigationStateClass implements NavigationState {
           this.startRefreshInterval();
         } else {
           this.stopRefreshInterval();
-        }
-      });
-
-      // Sync search query from URL when page changes
-      $effect(() => {
-        if (page) {
-          const currentPath = page.url?.pathname || '';
-          // Only force sync on initial effect run or when navigating away from search pages
-          const wasSearchPage = this.activeRoute.startsWith('/search/');
-          const isSearchPage = currentPath.startsWith('/search/');
-          const shouldForce = !wasSearchPage || !isSearchPage;
-
-          this.syncSearchQueryFromUrl(currentPath, shouldForce);
-          this.updateActiveRoute(currentPath);
         }
       });
     }
