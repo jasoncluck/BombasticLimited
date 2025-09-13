@@ -50,7 +50,7 @@
     max-width: none;
     word-break: normal;
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
   }
 
   /* Integrate existing header styles from the design system */
@@ -122,7 +122,7 @@
     line-height: 1.6;
     word-break: normal;
     overflow-wrap: break-word;
-    hyphens: auto;
+    hyphens: none;
   }
 
   /* Handle double line breaks as paragraph breaks */
