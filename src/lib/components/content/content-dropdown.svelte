@@ -90,14 +90,14 @@
   );
 
   $effect(() => {
-  console.log(`isFollowingPlaylist: ${isFollowingPlaylist}`);
-  console.log(
-    `sidebar has playlist: ${sidebarState.getFollowedPlaylists(session).some((fp) => fp.id === playlist?.id)}`
-  );
-  console.log(
-    `sidebar was created by you: ${playlist?.created_by === session?.user.id}`
-  );
-  })
+    console.log(`isFollowingPlaylist: ${isFollowingPlaylist}`);
+    console.log(
+      `sidebar has playlist: ${sidebarState.getFollowedPlaylists(session).some((fp) => fp.id === playlist?.id)}`
+    );
+    console.log(
+      `sidebar was created by you: ${playlist?.created_by === session?.user.id}`
+    );
+  });
 
   // Get selected and hovered videos for this section
   let selectedVideos = $derived(
@@ -524,7 +524,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if hasFollowAction}
+      {#if hasFollowAction && playlist}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={async () => {
@@ -544,7 +544,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if hasUnfollowAction}
+      {#if hasUnfollowAction && playlist}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={async () => {
