@@ -37,6 +37,13 @@
     contentState.selectedVideosBySection[sectionId] ?? []
   );
 
+  // Check if playlist should hide dropdown (created by current user AND has deleted_at timestamp)
+  let shouldHideDropdown = $derived(
+    playlist &&
+      playlist.created_by === session?.user.id &&
+      playlist.deleted_at !== null
+  );
+
   function handleSelectAll() {
     // Check if all videos are already selected in this section
     const allSelected = videos.every((video) =>
@@ -53,7 +60,7 @@
   }
 </script>
 
-{#if mediaQueryState.canHover && !(playlist?.created_by === session?.user.id && !playlist?.deleted_at)}
+{#if mediaQueryState.canHover && !playlist?.deleted_at && !shouldHideDropdown}
   <div class="pointer-events-auto flex items-center">
     <ContentDropdown
       {videos}
@@ -66,7 +73,7 @@
       {session}
     />
   </div>
-{:else if playlist && playlist.created_by === session?.user.id}
+{:else if playlist && playlist.created_by === session?.user.id && !playlist.deleted_at}
   <div class="flex items-center">
     <Button
       variant="ghost"
