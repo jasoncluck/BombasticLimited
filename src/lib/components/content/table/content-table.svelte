@@ -125,6 +125,7 @@
   <Table.Body>
     {#each table.getRowModel().rows as row, i (row.id)}
       <Table.Row
+        data-testid="content-item"
         data-state={row.getIsSelected() && 'selected'}
         class={getRowClasses(row.original, i)}
         draggable={true}

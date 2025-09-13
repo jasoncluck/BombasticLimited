@@ -214,8 +214,9 @@ authTest.describe('Authenticated content actions', () => {
         );
 
         // Click elsewhere to deselect and close context menu
-        const pageBody = page.locator('body');
-        await pageBody.click({ position: { x: 100, y: 100 } });
+        const pageBody = page.getByTestId('content-pane');
+        await pageBody.waitFor();
+        await pageBody.click({ position: { x: 1, y: 1 } });
         await expect(contextMenuContent).not.toBeVisible();
 
         // Verify scroll is unlocked
@@ -332,7 +333,6 @@ authTest.describe('Authenticated content actions', () => {
 
 // Table Mode Tests - Using switchToTableView helper
 authTest.describe('Table mode content actions', () => {
-
   authTest(
     'should lock scroll when context menu is open in Table mode',
     async ({ authenticatedPage: page }) => {
