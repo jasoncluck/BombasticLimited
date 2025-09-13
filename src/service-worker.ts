@@ -807,8 +807,6 @@ const performSmartCacheCleanup = async (): Promise<void> => {
         state.totalEstimatedSize -= metadata.estimatedSize;
       }
     }
-
-    console.log(`Cache cleanup completed: removed ${removed} entries`);
   } catch (error) {
     console.warn('Cache cleanup failed:', error);
   } finally {

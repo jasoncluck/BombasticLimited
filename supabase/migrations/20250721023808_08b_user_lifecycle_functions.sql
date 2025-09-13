@@ -216,6 +216,26 @@ BEGIN
 END;
 $$;
 
+
+-- Updates deleted_at when created_by is set to NULL
+CREATE OR REPLACE FUNCTION public.update_deleted_at_on_created_by_null()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Check if created_by was changed from a non-NULL value to NULL
+  IF OLD.created_by IS NOT NULL AND NEW.created_by IS NULL THEN
+    NEW.deleted_at = CURRENT_TIMESTAMP;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger on the playlists table
+CREATE TRIGGER playlists_update_deleted_at_trigger
+  BEFORE UPDATE ON public.playlists
+  FOR EACH ROW
+  EXECUTE FUNCTION public.update_deleted_at_on_created_by_null();
+
 -- Optimized function to create a user or return existing user (for testing purposes)
 -- Optimized function to create a user or return existing user (for testing purposes)
 CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$

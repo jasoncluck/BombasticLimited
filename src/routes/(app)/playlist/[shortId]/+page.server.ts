@@ -163,7 +163,7 @@ export const actions: Actions = {
     const { data: claimsData, error: claimsError } =
       await supabase.auth.getClaims();
     if (!claimsData?.claims || claimsError) {
-      redirect(302, '/auth');
+      redirect(302, '/auth/login');
     }
 
     const form = await superValidate(request, zod(playlistSchema));

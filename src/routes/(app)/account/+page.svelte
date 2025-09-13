@@ -80,7 +80,6 @@
   const currentUsername = $derived($usernameFormData.username);
 
   const hashParams = parseHashParams(page.url.hash);
-  console.log(hashParams);
 
   const errorCode = hashParams.get('error_code');
   const errorDescription = hashParams.get('error_description');

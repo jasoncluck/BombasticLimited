@@ -46,7 +46,7 @@ ADD CONSTRAINT "videos_pkey" PRIMARY KEY ("id");
 -- Playlists table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlists" (
   "id" bigint DEFAULT nextval('public.playlists_custom_seq'::regclass) NOT NULL,
-  "created_by" uuid NOT NULL,
+  "created_by" uuid REFERENCES auth.users (id) ON DELETE SET NULL,
   "created_at" TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
   "name" text NOT NULL,
   "short_id" text DEFAULT NULL NOT NULL,
@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   CONSTRAINT "playlists_short_id_key" UNIQUE ("short_id")
 );
 
-ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Comments for clarity
 COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'Direct thumbnail URL for playlist display';
@@ -85,7 +84,6 @@ COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage pat
 
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';
 
-ALTER TABLE "public"."playlists" OWNER TO "postgres";
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
@@ -99,7 +97,6 @@ CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
   )
 );
 
-ALTER TABLE "public"."playlist_videos" OWNER TO "postgres";
 
 COMMENT ON COLUMN "public"."playlist_videos"."video_position" IS 'Ordering of videos added to playlist (1-indexed).';
 

@@ -67,39 +67,29 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Validate environment variables
-    const env: EnvironmentVariables = {
-      SUPABASE_URL: Deno.env.get('SUPABASE_URL'),
-      SUPABASE_SERVICE_ROLE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-    };
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error(
-        'Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
-      );
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing required Supabase environment variables');
     }
 
-    console.log(
-      '🚀 Starting playlist cleanup with service role authentication'
-    );
+    console.log('🚀 Starting playlist cleanup process...');
+    console.log('📝 Request time:', requestBody.time);
 
-    // Create Supabase client with service role key for admin operations
-    const supabase = createClient(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        auth: {
-          autoRefreshToken: false,
-          persistSession: false,
-        },
-      }
-    );
+    // Create Supabase client with service role key (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('✅ Supabase client created, calling cleanup function...');
+    console.log('🔧 Supabase client created with service role key');
 
-    // Call the cleanup function
+    // Call the cleanup function with explicit error handling
+    console.log('📞 Calling cleanup_deleted_playlists RPC function...');
+
     const { data, error }: SupabaseRpcResponse = await supabase.rpc(
       'cleanup_deleted_playlists'
     );
+
+    console.log('📊 RPC function result:', { data, error });
 
     if (error) {
       console.error('❌ Cleanup function error:', {

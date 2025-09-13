@@ -7,7 +7,6 @@
 CREATE OR REPLACE FUNCTION public.get_playlist_data (
   p_short_id text DEFAULT NULL,
   p_youtube_id text DEFAULT NULL,
-  p_user_id uuid DEFAULT NULL,
   p_current_page integer DEFAULT 1,
   p_limit integer DEFAULT 20,
   p_sort_key text DEFAULT NULL,
@@ -32,6 +31,7 @@ CREATE OR REPLACE FUNCTION public.get_playlist_data (
   profile_avatar_url text,
   playlist_sorted_by public.playlist_sorted_by,
   playlist_sort_order public.playlist_sort_order,
+  playlist_position int2,
   -- Video data with optimized image paths  
   video_id text,
   video_position int2,
@@ -74,8 +74,7 @@ BEGIN
       p.created_at,
       p.name,
       p.short_id,
-      -- Set created_by to NULL if playlist is deleted
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
+      p.created_by,  -- Use the actual created_by value (NULL for deleted playlists)
       p.description,
       public.select_best_image_format(
         p.image_avif_url,
@@ -89,10 +88,12 @@ BEGIN
       p.thumbnail_url,
       p.deleted_at,
       p.duration_seconds,
+      -- Only get profile info when created_by is NOT NULL
       prof.username AS profile_username,
       prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
+      up.playlist_position,
       -- Get video count in the same query
       (
         SELECT COUNT(*)
@@ -101,8 +102,9 @@ BEGIN
         WHERE pv.playlist_id = p.id AND v.pending_delete = FALSE
       ) as video_count
     FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = p_user_id
+    -- Only join profiles when created_by is NOT NULL to avoid UUID casting issues
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.created_by IS NOT NULL
+    LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
     WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
        OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
   )
@@ -116,8 +118,20 @@ BEGIN
   -- Set variables from record
   video_count := playlist_record.video_count;
   total_duration := playlist_record.duration_seconds;
-  effective_sort_key := COALESCE(p_sort_key, playlist_record.sorted_by::text, 'playlistOrder');
-  effective_sort_order := COALESCE(p_sort_order, playlist_record.sort_order::text, 'ascending');
+  
+  -- FIXED: Prioritize passed parameters first, then fall back to user settings
+  effective_sort_key := COALESCE(
+    p_sort_key,                           -- 1st priority: passed parameter
+    playlist_record.sorted_by::text,      -- 2nd priority: user playlist setting
+    'playlistOrder'                       -- 3rd priority: default
+  );
+  
+  effective_sort_order := COALESCE(
+    p_sort_order,                         -- 1st priority: passed parameter
+    playlist_record.sort_order::text,     -- 2nd priority: user playlist setting
+    'ascending'                           -- 3rd priority: default
+  );
+  
   start_index := (p_current_page - 1) * p_limit;
   
   -- If no videos in playlist, return just the playlist metadata
@@ -141,6 +155,7 @@ BEGIN
       playlist_record.profile_avatar_url,
       playlist_record.sorted_by,
       playlist_record.sort_order,
+      playlist_record.playlist_position,
       -- Video data (all NULL since no videos)
       NULL::text, NULL::int2, NULL::public.source, NULL::text, NULL::text,
       NULL::text, NULL::text, NULL::public.image_processing_status,
@@ -170,6 +185,7 @@ BEGIN
     playlist_record.profile_avatar_url,
     playlist_record.sorted_by,
     playlist_record.sort_order,
+    playlist_record.playlist_position,
     -- Video data from JOIN
     pv.video_id,
     pv.video_position,
@@ -180,7 +196,7 @@ BEGIN
     public.select_best_image_format(
       v.thumbnail_avif_url,
       v.thumbnail_webp_url,
-      p_preferred_image_format
+      p_preferred_image_formaer
     ) as video_image_url,
     v.image_processing_status,
     v.published_at,
@@ -193,7 +209,7 @@ BEGIN
     false
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
-  LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = p_user_id
+  LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
   WHERE pv.playlist_id = playlist_record.id
     AND v.pending_delete = FALSE
   ORDER BY 
@@ -302,7 +318,8 @@ BEGIN
       p.created_at,
       p.name,
       p.short_id,
-      p.created_by,
+      -- Explicitly handle NULL created_by for soft-deleted playlists
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL::uuid ELSE p.created_by END as created_by,
       p.description,
       public.select_best_image_format(
         p.image_avif_url,
@@ -315,8 +332,9 @@ BEGIN
       p.youtube_id,
       p.thumbnail_url,
       p.deleted_at,
-      prof.username AS profile_username,
-      prof.avatar_url AS profile_avatar_url,
+      -- Handle NULL profile data for soft-deleted playlists
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as user_sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as user_sort_order,
       -- Get total video count
@@ -327,9 +345,11 @@ BEGIN
         WHERE pv_count.playlist_id = p.id AND v_count.pending_delete = FALSE
       ) as video_count
     FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    -- Safe LEFT JOIN that only joins when created_by is NOT NULL
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.created_by IS NOT NULL
     LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
-    WHERE p.short_id = p_short_id AND p.deleted_at IS NULL
+    -- Remove the deleted_at IS NULL condition to allow soft-deleted playlists
+    WHERE p.short_id = p_short_id
   )
   SELECT * INTO playlist_record FROM playlist_data;
   
@@ -579,7 +599,7 @@ SET
   search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
-    p.created_by,
+    p.created_by,  -- Use the actual created_by value (NULL for deleted playlists)
     p.created_at,
     p.name,
     p.short_id,
@@ -596,6 +616,7 @@ SET
     p.thumbnail_url,
     p.duration_seconds,
     p.deleted_at,
+    -- Only join profiles when created_by is NOT NULL
     prof.username AS profile_username,
     prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
@@ -604,9 +625,9 @@ SET
     up.added_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  -- Only join profiles when created_by is NOT NULL to avoid UUID casting issues
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.created_by IS NOT NULL
   WHERE up.user_id = auth.uid()
-    AND p.deleted_at IS NULL
   ORDER BY up.playlist_position ASC;
 $$;
 

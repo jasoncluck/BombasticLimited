@@ -172,9 +172,6 @@
     },
     async onUpdated(event) {
       if (event.form.valid) {
-        // Update local playlist object immediately before any UI updates
-        Object.assign(playlist, event.form.data);
-
         if (event.form.data.isDeletingPlaylistImage) {
           playlist.image_url = null;
           playlist.image_properties = null;

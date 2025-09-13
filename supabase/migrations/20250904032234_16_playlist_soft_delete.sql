@@ -12,6 +12,41 @@ CREATE TABLE IF NOT EXISTS public.playlist_cleanup_queue (
 
 ALTER TABLE "public"."playlist_cleanup_queue" ENABLE ROW LEVEL SECURITY;
 
+-- RLS policies for playlist_cleanup_queue
+CREATE POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_queue" FOR
+SELECT
+  USING (
+    -- Allow users to see cleanup queue entries for playlists they created
+    playlist_id IN (
+      SELECT
+        id
+      FROM
+        public.playlists
+      WHERE
+        created_by = (
+          SELECT
+            auth.uid ()
+        )
+    )
+  );
+
+CREATE POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" FOR INSERT TO authenticated
+WITH
+  CHECK (
+    -- Allow users to insert cleanup queue entries for playlists they created
+    playlist_id IN (
+      SELECT
+        id
+      FROM
+        public.playlists
+      WHERE
+        created_by = (
+          SELECT
+            auth.uid ()
+        )
+    )
+  );
+
 -- Create index for efficient cleanup processing
 CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_cleanup_at ON public.playlist_cleanup_queue (cleanup_at)
 WHERE
@@ -171,8 +206,11 @@ SET
   search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
-    -- Set created_by to NULL if playlist is deleted
-    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
+    -- Return NULL for created_by when playlist is deleted to avoid UUID casting issues
+    CASE 
+      WHEN p.deleted_at IS NOT NULL THEN NULL::uuid 
+      ELSE p.created_by 
+    END as created_by,
     p.created_at,
     p.name,
     p.short_id,
@@ -189,24 +227,18 @@ SET
     p.thumbnail_url,
     p.duration_seconds,
     p.deleted_at,
-    -- Set profile info to NULL if playlist is deleted
-    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
-    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
+    -- Only join profiles when created_by is NOT NULL
+    prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order,
     up.playlist_position,
     up.added_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  -- Only join profiles when created_by is NOT NULL to avoid UUID casting issues
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.created_by IS NOT NULL
   WHERE up.user_id = auth.uid()
-    AND (
-      -- Show non-deleted playlists to everyone (owner or follower)
-      p.deleted_at IS NULL
-      OR 
-      -- Show deleted playlists ONLY to followers (not to the creator who deleted it)
-      (p.deleted_at IS NOT NULL AND p.created_by != auth.uid())
-    )
   ORDER BY up.playlist_position ASC;
 $$;
 
@@ -287,14 +319,15 @@ BEGIN
     RAISE EXCEPTION 'Exactly one of p_short_id or p_youtube_id must be provided';
   END IF;
   
-  -- Get playlist data with conditional profile join based on deleted_at status
+  -- Get playlist data, profile, and user settings in one optimized query
   WITH playlist_data AS (
     SELECT
       p.id,
       p.created_at,
       p.name,
       p.short_id,
-      p.created_by,
+      -- Set created_by to NULL if playlist is deleted
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
       p.description,
       public.select_best_image_format(
         p.image_avif_url,
@@ -308,9 +341,9 @@ BEGIN
       p.thumbnail_url,
       p.deleted_at,
       p.duration_seconds,
-      -- Only include profile info if playlist is not deleted
-      prof.username AS profile_username,
-      prof.avatar_url AS profile_avatar_url,
+      -- Set profile info to NULL if playlist is deleted
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
+      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
       up.playlist_position,
@@ -322,8 +355,8 @@ BEGIN
         WHERE pv.playlist_id = p.id AND v.pending_delete = FALSE
       ) as video_count
     FROM public.playlists p
-    -- Conditionally JOIN profiles table only if playlist is not deleted
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.deleted_at IS NULL
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id
+    -- FIXED: Use auth.uid() instead of p_user_id parameter
     LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
     WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
        OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
@@ -339,7 +372,7 @@ BEGIN
   video_count := playlist_record.video_count;
   total_duration := playlist_record.duration_seconds;
   
-  -- Prioritize passed parameters first, then fall back to user settings
+  -- FIXED: Prioritize passed parameters first, then fall back to user settings
   effective_sort_key := COALESCE(
     p_sort_key,                           -- 1st priority: passed parameter
     playlist_record.sorted_by::text,      -- 2nd priority: user playlist setting
@@ -429,6 +462,7 @@ BEGIN
     false
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
+  -- FIXED: Use auth.uid() instead of p_user_id parameter
   LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
   WHERE pv.playlist_id = playlist_record.id
     AND v.pending_delete = FALSE
@@ -962,5 +996,8 @@ COMMENT ON FUNCTION public.get_playlist_cleanup_info (bigint, uuid) IS 'Gets cle
 
 COMMENT ON TRIGGER playlist_deletion_notification_trigger ON public.playlists IS 'Triggers notifications when public playlists are soft-deleted with exact 14-day timing from deletion timestamp';
 
+COMMENT ON POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_queue" IS 'Allow users to SELECT cleanup queue entries for playlists they created';
+
+COMMENT ON POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" IS 'Allow users to INSERT cleanup queue entries for playlists they created';
 
 COMMIT;

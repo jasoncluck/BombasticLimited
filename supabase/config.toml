@@ -113,7 +113,10 @@ allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif"]
 # objects_path = "./images"
 #
 [functions.process-images]
-verify_jwt = false # This allows calls without JWT verification
+verify_jwt = false
+
+[functions.cleanup-playlists]
+verify_jwt = false
 
 [auth]
 enabled = true
