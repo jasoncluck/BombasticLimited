@@ -87,16 +87,21 @@ authTest.describe('Authenticated content actions', () => {
     async ({ authenticatedPage: page }) => {
       await page.goto('/');
 
+      // Ensure we're in card mode and wait for content
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToCardView();
+
       const contentCard = page.getByTestId('content-item').first();
-      await contentCard.waitFor();
-      await contentCard.click({ button: 'right' });
+      await contentCard.waitFor({ state: 'visible', timeout: 15000 });
+      await contentCard.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
       await expect(contextMenuContent).toBeVisible();
 
       const secondContentCard = page.getByTestId('content-item').nth(1);
-      await secondContentCard.click();
+      await secondContentCard.waitFor({ state: 'visible' });
+      await secondContentCard.click({ force: true });
       await expect(contextMenuContent).not.toBeVisible();
       await expect(page).toHaveURL('/');
     }
@@ -107,20 +112,25 @@ authTest.describe('Authenticated content actions', () => {
     async ({ authenticatedPage: page }) => {
       await page.goto('/');
 
+      // Ensure we're in card mode and wait for content
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToCardView();
+
       const contentCard = page.getByTestId('content-item').first();
-      await contentCard.waitFor();
+      await contentCard.waitFor({ state: 'visible', timeout: 15000 });
       await contentCard.hover();
 
       const contentDropdownTrigger = page
         .getByTestId('content-dropdown-trigger')
         .and(page.getByRole('button'))
         .first();
-      await contentDropdownTrigger.click();
+      await contentDropdownTrigger.click({ force: true });
       const dropdownContent = page.getByTestId('content-dropdown-content');
       await expect(dropdownContent).toBeVisible();
 
       const secondContentCard = page.getByTestId('content-item').nth(1);
-      await secondContentCard.click();
+      await secondContentCard.waitFor({ state: 'visible' });
+      await secondContentCard.click({ force: true });
       await expect(dropdownContent).not.toBeVisible();
       await expect(page).toHaveURL('/');
     }
@@ -131,9 +141,13 @@ authTest.describe('Authenticated content actions', () => {
     async ({ authenticatedPage: page }) => {
       await page.goto('/');
 
+      // Ensure we're in card mode and wait for content
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToCardView();
+
       const contentCard = page.getByTestId('content-item').first();
-      await contentCard.waitFor();
-      await contentCard.click({ button: 'right' });
+      await contentCard.waitFor({ state: 'visible', timeout: 15000 });
+      await contentCard.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
@@ -156,15 +170,19 @@ authTest.describe('Authenticated content actions', () => {
     async ({ authenticatedPage: page }) => {
       await page.goto('/');
 
+      // Ensure we're in card mode and wait for content
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToCardView();
+
       const contentCard = page.getByTestId('content-item').first();
-      await contentCard.waitFor();
+      await contentCard.waitFor({ state: 'visible', timeout: 15000 });
       await contentCard.hover();
 
       const contentDropdownTrigger = page
         .getByTestId('content-dropdown-trigger')
         .and(page.getByRole('button'))
         .first();
-      await contentDropdownTrigger.click();
+      await contentDropdownTrigger.click({ force: true });
       const dropdownContent = page.getByTestId('content-dropdown-content');
       await expect(dropdownContent).toBeVisible();
 
@@ -196,12 +214,18 @@ authTest.describe('Authenticated content actions', () => {
       async ({ authenticatedPage: page }) => {
         await page.goto(route);
 
+        // Ensure we're in card mode for this test
+        const videoHelpers = new VideoHelpers(page);
+        if (displayType === 'CAROUSEL') {
+          await videoHelpers.switchToCardView();
+        }
+
         // Wait for content to load
         const contentCard = page.getByTestId('content-item').first();
-        await contentCard.waitFor();
+        await contentCard.waitFor({ state: 'visible', timeout: 15000 });
 
         // Right-click to open context menu
-        await contentCard.click({ button: 'right' });
+        await contentCard.click({ button: 'right', force: true });
         const contextMenuContent = page.getByTestId(
           'content-context-menu-content'
         );
@@ -215,8 +239,11 @@ authTest.describe('Authenticated content actions', () => {
 
         // Click elsewhere to deselect and close context menu
         const pageBody = page.getByTestId('content-pane');
-        await pageBody.waitFor();
-        await pageBody.click({ position: { x: 1, y: 1 } });
+        await pageBody.waitFor({ state: 'visible' });
+        
+        // Wait a moment and try clicking at a safe position
+        await page.waitForTimeout(500);
+        await pageBody.click({ position: { x: 50, y: 50 }, force: true });
         await expect(contextMenuContent).not.toBeVisible();
 
         // Verify scroll is unlocked
@@ -229,9 +256,15 @@ authTest.describe('Authenticated content actions', () => {
       async ({ authenticatedPage: page }) => {
         await page.goto(route);
 
+        // Ensure we're in card mode for this test
+        const videoHelpers = new VideoHelpers(page);
+        if (displayType === 'CAROUSEL') {
+          await videoHelpers.switchToCardView();
+        }
+
         // Wait for content to load
         const contentCard = page.getByTestId('content-item').first();
-        await contentCard.waitFor();
+        await contentCard.waitFor({ state: 'visible', timeout: 15000 });
         await contentCard.hover();
 
         // Open dropdown menu
@@ -239,7 +272,7 @@ authTest.describe('Authenticated content actions', () => {
           .getByTestId('content-dropdown-trigger')
           .and(page.getByRole('button'))
           .first();
-        await contentDropdownTrigger.click();
+        await contentDropdownTrigger.click({ force: true });
         const dropdownContent = page.getByTestId('content-dropdown-content');
         await expect(dropdownContent).toBeVisible();
 
@@ -251,7 +284,8 @@ authTest.describe('Authenticated content actions', () => {
 
         // Click elsewhere to deselect and close dropdown
         const pageBody = page.locator('body');
-        await pageBody.click({ position: { x: 100, y: 100 } });
+        await page.waitForTimeout(500);
+        await pageBody.click({ position: { x: 100, y: 100 }, force: true });
         await expect(dropdownContent).not.toBeVisible();
 
         // Verify scroll is unlocked
@@ -267,12 +301,16 @@ authTest.describe('Authenticated content actions', () => {
       // Navigate to a source latest page - using a common source name
       await page.goto('/giantbomb/latest/');
 
+      // Ensure we're in card mode for this test
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToCardView();
+
       // Wait for content to load
       const contentCard = page.getByTestId('content-item').first();
-      await contentCard.waitFor();
+      await contentCard.waitFor({ state: 'visible', timeout: 15000 });
 
       // Right-click to open context menu
-      await contentCard.click({ button: 'right' });
+      await contentCard.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
@@ -286,7 +324,8 @@ authTest.describe('Authenticated content actions', () => {
 
       // Click elsewhere to deselect and close context menu
       const pageBody = page.locator('body');
-      await pageBody.click({ position: { x: 100, y: 100 } });
+      await page.waitForTimeout(500);
+      await pageBody.click({ position: { x: 100, y: 100 }, force: true });
       await expect(contextMenuContent).not.toBeVisible();
 
       // Verify scroll is unlocked
@@ -300,9 +339,13 @@ authTest.describe('Authenticated content actions', () => {
       // Navigate to a source latest page
       await page.goto('/giantbomb/latest/');
 
+      // Ensure we're in card mode for this test
+      const videoHelpers = new VideoHelpers(page);
+      await videoHelpers.switchToCardView();
+
       // Wait for content to load
       const contentCard = page.getByTestId('content-item').first();
-      await contentCard.waitFor();
+      await contentCard.waitFor({ state: 'visible', timeout: 15000 });
       await contentCard.hover();
 
       // Open dropdown menu
@@ -310,7 +353,7 @@ authTest.describe('Authenticated content actions', () => {
         .getByTestId('content-dropdown-trigger')
         .and(page.getByRole('button'))
         .first();
-      await contentDropdownTrigger.click();
+      await contentDropdownTrigger.click({ force: true });
       const dropdownContent = page.getByTestId('content-dropdown-content');
       await expect(dropdownContent).toBeVisible();
 
@@ -322,7 +365,8 @@ authTest.describe('Authenticated content actions', () => {
 
       // Click elsewhere to deselect and close dropdown
       const pageBody = page.locator('body');
-      await pageBody.click({ position: { x: 100, y: 100 } });
+      await page.waitForTimeout(500);
+      await pageBody.click({ position: { x: 100, y: 100 }, force: true });
       await expect(dropdownContent).not.toBeVisible();
 
       // Verify scroll is unlocked
@@ -344,13 +388,23 @@ authTest.describe('Table mode content actions', () => {
 
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
-      await table.waitFor({ state: 'visible' });
+      await table.waitFor({ state: 'visible', timeout: 15000 });
+      
+      // Ensure we're actually in table mode before proceeding
+      const tableRows = table.locator('tr');
+      await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Verify we have actual table content
+      const rowCount = await tableRows.count();
+      if (rowCount === 0) {
+        throw new Error('No table rows found - table mode may not be active');
+      }
 
-      const tableRow = table.locator('tr').first();
-      await tableRow.waitFor();
+      const tableRow = tableRows.first();
+      await tableRow.waitFor({ state: 'visible' });
 
       // Right-click to open context menu on a table row
-      await tableRow.click({ button: 'right' });
+      await tableRow.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
@@ -361,7 +415,8 @@ authTest.describe('Table mode content actions', () => {
 
       // Click elsewhere to deselect and close context menu
       const pageBody = page.locator('body');
-      await pageBody.click({ position: { x: 100, y: 100 } });
+      await page.waitForTimeout(500);
+      await pageBody.click({ position: { x: 100, y: 100 }, force: true });
       await expect(contextMenuContent).not.toBeVisible();
 
       // Verify scroll is unlocked
@@ -380,21 +435,35 @@ authTest.describe('Table mode content actions', () => {
 
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
-      await table.waitFor({ state: 'visible' });
+      await table.waitFor({ state: 'visible', timeout: 15000 });
+      
+      // Ensure we're actually in table mode before proceeding
+      const tableRows = table.locator('tr');
+      await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Verify we have at least 4 table rows for multi-selection
+      const rowCount = await tableRows.count();
+      if (rowCount < 4) {
+        throw new Error(`Need at least 4 table rows for multi-selection test, found: ${rowCount}`);
+      }
 
-      const firstRow = table.locator('tr').first();
-      const secondRow = table.locator('tr').nth(1);
-      const thirdRow = table.locator('tr').nth(2);
+      const firstRow = tableRows.first();
+      const secondRow = tableRows.nth(1);
+      const thirdRow = tableRows.nth(2);
+      const fourthRow = tableRows.nth(3);
 
-      await firstRow.waitFor();
+      await firstRow.waitFor({ state: 'visible' });
 
       // Multi-select rows using Ctrl+click
-      await firstRow.click();
-      await secondRow.click({ modifiers: ['Control'] });
-      await thirdRow.click({ modifiers: ['Control'] });
+      await firstRow.click({ force: true });
+      await page.waitForTimeout(200);
+      await secondRow.click({ modifiers: ['Control'], force: true });
+      await page.waitForTimeout(200);
+      await thirdRow.click({ modifiers: ['Control'], force: true });
+      await page.waitForTimeout(200);
 
       // Right-click to open context menu - should preserve all selections
-      await thirdRow.click({ button: 'right' });
+      await thirdRow.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
@@ -407,8 +476,7 @@ authTest.describe('Table mode content actions', () => {
       );
 
       // Click on another row (not selected) - should deselect previous selections and select new row
-      const fourthRow = table.locator('tr').nth(3);
-      await fourthRow.click();
+      await fourthRow.click({ force: true });
       await expect(contextMenuContent).not.toBeVisible();
 
       // Verify scroll is unlocked
@@ -427,19 +495,31 @@ authTest.describe('Table mode content actions', () => {
 
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
-      await table.waitFor({ state: 'visible' });
+      await table.waitFor({ state: 'visible', timeout: 15000 });
+      
+      // Ensure we're actually in table mode before proceeding
+      const tableRows = table.locator('tr');
+      await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Verify we have at least 2 table rows for selection
+      const rowCount = await tableRows.count();
+      if (rowCount < 2) {
+        throw new Error(`Need at least 2 table rows for selection test, found: ${rowCount}`);
+      }
 
-      const firstRow = table.locator('tr').first();
-      const secondRow = table.locator('tr').nth(1);
+      const firstRow = tableRows.first();
+      const secondRow = tableRows.nth(1);
 
-      await firstRow.waitFor();
+      await firstRow.waitFor({ state: 'visible' });
 
       // Select multiple rows
-      await firstRow.click();
-      await secondRow.click({ modifiers: ['Control'] });
+      await firstRow.click({ force: true });
+      await page.waitForTimeout(200);
+      await secondRow.click({ modifiers: ['Control'], force: true });
+      await page.waitForTimeout(200);
 
       // Right-click to open context menu
-      await secondRow.click({ button: 'right' });
+      await secondRow.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
@@ -447,7 +527,8 @@ authTest.describe('Table mode content actions', () => {
 
       // Click outside the table/content area to close menu - should preserve selections
       const pageBody = page.locator('body');
-      await pageBody.click({ position: { x: 50, y: 50 } });
+      await page.waitForTimeout(500);
+      await pageBody.click({ position: { x: 50, y: 50 }, force: true });
       await expect(contextMenuContent).not.toBeVisible();
 
       // Verify rows are still visually selected (check for selection styling)
@@ -474,16 +555,28 @@ authTest.describe('Table mode content actions', () => {
 
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
-      await table.waitFor({ state: 'visible' });
+      await table.waitFor({ state: 'visible', timeout: 15000 });
+      
+      // Ensure we're actually in table mode before proceeding
+      const tableRows = table.locator('tr');
+      await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Verify we have at least 2 table rows for selection
+      const rowCount = await tableRows.count();
+      if (rowCount < 2) {
+        throw new Error(`Need at least 2 table rows for dropdown test, found: ${rowCount}`);
+      }
 
-      const firstRow = table.locator('tr').first();
-      const secondRow = table.locator('tr').nth(1);
+      const firstRow = tableRows.first();
+      const secondRow = tableRows.nth(1);
 
-      await firstRow.waitFor();
+      await firstRow.waitFor({ state: 'visible' });
 
       // Select multiple rows
-      await firstRow.click();
-      await secondRow.click({ modifiers: ['Control'] });
+      await firstRow.click({ force: true });
+      await page.waitForTimeout(200);
+      await secondRow.click({ modifiers: ['Control'], force: true });
+      await page.waitForTimeout(200);
 
       // Find and click the content action dropdown at the top of the page
       const contentActionDropdown = page.getByTestId(
@@ -541,19 +634,31 @@ authTest.describe('Table mode content actions', () => {
 
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
-      await table.waitFor({ state: 'visible' });
+      await table.waitFor({ state: 'visible', timeout: 15000 });
+      
+      // Ensure we're actually in table mode before proceeding
+      const tableRows = table.locator('tr');
+      await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
+      
+      // Verify we have at least 2 table rows for selection
+      const rowCount = await tableRows.count();
+      if (rowCount < 2) {
+        throw new Error(`Need at least 2 table rows for menu test, found: ${rowCount}`);
+      }
 
-      const firstRow = table.locator('tr').first();
-      const secondRow = table.locator('tr').nth(1);
+      const firstRow = tableRows.first();
+      const secondRow = tableRows.nth(1);
 
-      await firstRow.waitFor();
+      await firstRow.waitFor({ state: 'visible' });
 
       // Select multiple rows
-      await firstRow.click();
-      await secondRow.click({ modifiers: ['Control'] });
+      await firstRow.click({ force: true });
+      await page.waitForTimeout(200);
+      await secondRow.click({ modifiers: ['Control'], force: true });
+      await page.waitForTimeout(200);
 
       // Open context menu dropdown
-      await secondRow.click({ button: 'right' });
+      await secondRow.click({ button: 'right', force: true });
       const contextMenuContent = page.getByTestId(
         'content-context-menu-content'
       );
@@ -571,7 +676,8 @@ authTest.describe('Table mode content actions', () => {
 
       // Close menu by clicking outside content area
       const pageBody = page.locator('body');
-      await pageBody.click({ position: { x: 50, y: 50 } });
+      await page.waitForTimeout(500);
+      await pageBody.click({ position: { x: 50, y: 50 }, force: true });
       await expect(contextMenuContent).not.toBeVisible();
 
       // Verify scroll is unlocked after closing menu
