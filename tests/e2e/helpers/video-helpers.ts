@@ -305,8 +305,6 @@ export class VideoHelpers {
    * Wait for basic page content to load before attempting view operations
    */
   async waitForPageContent(): Promise<void> {
-    // Wait for the page to have loaded some basic structure
-    await this.page.waitForLoadState('networkidle', { timeout: 30000 });
     
     // Wait for either navigation elements to be present (indicating page structure is ready)
     try {
