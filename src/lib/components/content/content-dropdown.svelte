@@ -499,26 +499,7 @@
           <DropdownMenu.Item
             class="cursor-pointer"
             onclick={async () => {
-              // Check if it's a public playlist
-              if (playlist.type === 'Public') {
-                // Show confirmation dialog for public playlists
-                showDeleteDialog = true;
-              } else {
-                // Delete private playlist immediately
-                const data = await handleDeletePlaylist({
-                  playlist,
-                  sidebarState,
-                  supabase,
-                  session,
-                });
-
-                if (
-                  !data?.error &&
-                  page.url.pathname === `/playlist/${playlist.short_id}`
-                ) {
-                  goto('/');
-                }
-              }
+              showDeleteDialog = true;
             }}
           >
             <div class="flex items-center gap-2">

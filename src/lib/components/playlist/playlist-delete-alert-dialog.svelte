@@ -63,12 +63,22 @@
     data-testid="confirm-delete-playlist"
   >
     <AlertDialog.Header>
-      <AlertDialog.Title>Delete Public Playlist</AlertDialog.Title>
-      <AlertDialog.Description>
-        You are about to delete the public playlist: <b>{playlist.name} </b>.
-        Deleting this will also remove the playlist from any followers'
-        accounts.
-      </AlertDialog.Description>
+      <AlertDialog.Title
+        >{playlist.type === 'Public'
+          ? 'Delete Public Playlist'
+          : 'Delete Playlist'}</AlertDialog.Title
+      >
+      {#if playlist.type === 'Public'}
+        <AlertDialog.Description>
+          You are about to delete the public playlist: <b>{playlist.name} </b>.
+          Users who follow this playlist will have access for 2 more weeks
+          before it's removed from their account.
+        </AlertDialog.Description>
+      {:else}
+        <AlertDialog.Description>
+          You are about to delete the private playlist: <b>{playlist.name} </b>.
+        </AlertDialog.Description>
+      {/if}
     </AlertDialog.Header>
     <AlertDialog.Footer>
       <AlertDialog.Cancel onclick={cancelDelete}>Cancel</AlertDialog.Cancel>

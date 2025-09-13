@@ -507,7 +507,6 @@ export const processImageWebhook = task({
       if (record.thumbnail_url) {
         shouldProcess = true;
         sourceUrl = record.thumbnail_url;
-        console.log(`INSERT: Will process new ${entityType} ${record.id}`);
       }
     } else if (type === 'UPDATE') {
       // Check if thumbnail_url or image_properties changed
