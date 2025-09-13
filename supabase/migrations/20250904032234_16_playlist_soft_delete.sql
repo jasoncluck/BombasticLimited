@@ -12,41 +12,6 @@ CREATE TABLE IF NOT EXISTS public.playlist_cleanup_queue (
 
 ALTER TABLE "public"."playlist_cleanup_queue" ENABLE ROW LEVEL SECURITY;
 
--- RLS policies for playlist_cleanup_queue
-CREATE POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_queue" FOR
-SELECT
-  USING (
-    -- Allow users to see cleanup queue entries for playlists they created
-    playlist_id IN (
-      SELECT
-        id
-      FROM
-        public.playlists
-      WHERE
-        created_by = (
-          SELECT
-            auth.uid ()
-        )
-    )
-  );
-
-CREATE POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" FOR INSERT TO authenticated
-WITH
-  CHECK (
-    -- Allow users to insert cleanup queue entries for playlists they created
-    playlist_id IN (
-      SELECT
-        id
-      FROM
-        public.playlists
-      WHERE
-        created_by = (
-          SELECT
-            auth.uid ()
-        )
-    )
-  );
-
 -- Create index for efficient cleanup processing
 CREATE INDEX IF NOT EXISTS idx_playlist_cleanup_queue_cleanup_at ON public.playlist_cleanup_queue (cleanup_at)
 WHERE
@@ -997,8 +962,5 @@ COMMENT ON FUNCTION public.get_playlist_cleanup_info (bigint, uuid) IS 'Gets cle
 
 COMMENT ON TRIGGER playlist_deletion_notification_trigger ON public.playlists IS 'Triggers notifications when public playlists are soft-deleted with exact 14-day timing from deletion timestamp';
 
-COMMENT ON POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_queue" IS 'Allow users to SELECT cleanup queue entries for playlists they created';
-
-COMMENT ON POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" IS 'Allow users to INSERT cleanup queue entries for playlists they created';
 
 COMMIT;

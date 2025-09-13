@@ -287,20 +287,6 @@
       open = false;
     }
   });
-
-  // Debug effect for isFollowingPlaylist
-  $effect(() => {
-    console.log(`isFollowingPlaylist: ${isFollowingPlaylist}`);
-    console.log(
-      `sidebar has playlist: ${sidebarState.getFollowedPlaylists(session).some((fp) => fp.id === playlist?.id)}`
-    );
-    console.log(
-      `playlist created by user: ${playlist?.created_by === session?.user.id}`
-    );
-    console.log(`variant: ${variant}`);
-    console.log(`playlist:`, playlist);
-    console.log(`session?.user.id:`, session?.user.id);
-  });
 </script>
 
 {#if session && hasAvailableActions}
