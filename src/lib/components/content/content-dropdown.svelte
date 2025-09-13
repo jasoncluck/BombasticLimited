@@ -77,10 +77,17 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
+  // Updated isFollowingPlaylist to include playlists created by the user
   const isFollowingPlaylist = $derived(
-    sidebarState
-      .getFollowedPlaylists(session)
-      .some((fp) => fp.id === playlist?.id) && variant === 'header'
+    playlist &&
+      session?.user.id &&
+      // User is following the playlist
+      (sidebarState
+        .getFollowedPlaylists(session)
+        .some((fp) => fp.id === playlist.id) ||
+        // User created the playlist
+        playlist.created_by === session.user.id) &&
+      variant === 'header'
   );
 
   // Get selected and hovered videos for this section
@@ -127,8 +134,11 @@
     return [];
   }
 
-  // Calculate if any actions are available
+  // Updated hasAvailableActions to be more accurate with current content
   const hasAvailableActions = $derived.by(() => {
+    // Early return if no session
+    if (!session) return false;
+
     // For this calculation, we need to use the current operation videos
     const currentOperationVideos = determineOperationVideos();
 
@@ -136,22 +146,22 @@
       (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id
     );
 
-    // Check for select all action
+    // Check for select all action (only for header variant with table display)
     const hasSelectAll =
       variant === 'header' && userProfile?.content_display === 'TABLE';
 
-    // Check for edit playlist action
-    const hasEditPlaylist = isPlaylistOwner && variant === 'header';
+    // Check for edit playlist action (only playlist owners can edit)
+    const hasEditPlaylist = playlist && isPlaylistOwner && variant === 'header';
 
-    // Check for add to playlist action
+    // Check for add to playlist action (need videos and available playlists)
     const hasAddToPlaylist =
       currentOperationVideos.length > 0 && filteredPlaylists.length > 0;
 
-    // Check for remove from playlist action
+    // Check for remove from playlist action (playlist owner with videos in playlist)
     const hasRemoveFromPlaylist =
       playlist && isPlaylistOwner && currentOperationVideos.length > 0;
 
-    // Check for set as playlist image action
+    // Check for set as playlist image action (single video, list-items variant, playlist owner)
     const hasSetPlaylistImage =
       playlist &&
       currentOperationVideos.length === 1 &&
@@ -159,13 +169,12 @@
       isPlaylistOwner &&
       !hideSetAsPlaylistImage;
 
-    // Check for reset progress action
+    // Check for reset progress action (videos with timestamps)
     const hasResetProgress =
-      session &&
       variant !== 'item' &&
       currentOperationVideos.some((v) => isVideoWithTimestamp(v));
 
-    // Check for set as watched action
+    // Check for set as watched action (videos that aren't watched)
     const hasSetWatched =
       variant !== 'item' &&
       currentOperationVideos.some(
@@ -173,8 +182,27 @@
           !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at)
       );
 
-    // Check for playlist actions (delete/follow/unfollow)
-    const hasPlaylistActions = playlist && variant === 'header';
+    // Check for follow/unfollow playlist actions
+    const hasFollowAction =
+      playlist &&
+      variant === 'header' &&
+      !isPlaylistOwner &&
+      !playlist.deleted_at &&
+      !sidebarState
+        .getFollowedPlaylists(session)
+        .some((fp) => fp.id === playlist.id);
+
+    const hasUnfollowAction =
+      playlist &&
+      variant === 'header' &&
+      !isPlaylistOwner &&
+      sidebarState
+        .getFollowedPlaylists(session)
+        .some((fp) => fp.id === playlist.id);
+
+    // Check for delete playlist action (only playlist owners)
+    const hasDeletePlaylist =
+      playlist && variant === 'header' && isPlaylistOwner;
 
     return (
       hasSelectAll ||
@@ -184,7 +212,9 @@
       hasSetPlaylistImage ||
       hasResetProgress ||
       hasSetWatched ||
-      hasPlaylistActions
+      hasFollowAction ||
+      hasUnfollowAction ||
+      hasDeletePlaylist
     );
   });
 

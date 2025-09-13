@@ -60,7 +60,7 @@
   }
 </script>
 
-{#if mediaQueryState.canHover && !playlist?.deleted_at && !shouldHideDropdown}
+{#if mediaQueryState.canHover}
   <div class="pointer-events-auto flex items-center">
     <ContentDropdown
       {videos}
