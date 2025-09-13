@@ -221,7 +221,7 @@
     border-left: 1px solid var(--color-border);
     background-color: transparent;
     border-radius: 0;
-    padding: 0.75rem 0 0 0.5rem;
+    padding: 0 0 0 0.5rem;
     margin: 0.25rem 0;
   }
 
