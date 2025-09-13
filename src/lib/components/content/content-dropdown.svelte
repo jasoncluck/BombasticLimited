@@ -151,7 +151,11 @@
       variant === 'header' && userProfile?.content_display === 'TABLE';
 
     // Check for edit playlist action (only playlist owners can edit)
-    const hasEditPlaylist = playlist && isPlaylistOwner && variant === 'header';
+    const hasEditPlaylist =
+      playlist &&
+      isPlaylistOwner &&
+      variant === 'header' &&
+      !playlist.deleted_at;
 
     // Check for add to playlist action (need videos and available playlists)
     const hasAddToPlaylist =
@@ -184,13 +188,7 @@
 
     // Check for follow/unfollow playlist actions
     const hasFollowAction =
-      playlist &&
-      variant === 'header' &&
-      !isPlaylistOwner &&
-      !playlist.deleted_at &&
-      !sidebarState
-        .getFollowedPlaylists(session)
-        .some((fp) => fp.id === playlist.id);
+      playlist && variant === 'header' && !isFollowingPlaylist;
 
     const hasUnfollowAction =
       playlist &&
@@ -202,7 +200,10 @@
 
     // Check for delete playlist action (only playlist owners)
     const hasDeletePlaylist =
-      playlist && variant === 'header' && isPlaylistOwner;
+      playlist &&
+      variant === 'header' &&
+      isPlaylistOwner &&
+      !playlist.deleted_at;
 
     return (
       hasSelectAll ||
@@ -325,7 +326,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if isPlaylistOwner && variant === 'header'}
+      {#if isPlaylistOwner && variant === 'header' && !playlist?.deleted_at}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={() => (playlistState.openEditPlaylist = true)}
@@ -521,7 +522,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if playlist && variant === 'header'}
+      {#if playlist && variant === 'header' && !playlist.deleted_at}
         {#if playlist.created_by === session?.user.id}
           <!-- User owns the playlist - show delete option -->
           <DropdownMenu.Item
@@ -535,7 +536,7 @@
               Delete playlist
             </div>
           </DropdownMenu.Item>
-        {:else if !isFollowingPlaylist && !isPlaylistOwner}
+        {:else if !isFollowingPlaylist}
           <!-- User doesn't own and isn't following - show follow option -->
           {#if !playlist.deleted_at}
             <DropdownMenu.Item

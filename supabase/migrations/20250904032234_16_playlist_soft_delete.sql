@@ -322,15 +322,14 @@ BEGIN
     RAISE EXCEPTION 'Exactly one of p_short_id or p_youtube_id must be provided';
   END IF;
   
-  -- Get playlist data, profile, and user settings in one optimized query
+  -- Get playlist data with conditional profile join based on deleted_at status
   WITH playlist_data AS (
     SELECT
       p.id,
       p.created_at,
       p.name,
       p.short_id,
-      -- Set created_by to NULL if playlist is deleted
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
+      p.created_by,
       p.description,
       public.select_best_image_format(
         p.image_avif_url,
@@ -344,9 +343,9 @@ BEGIN
       p.thumbnail_url,
       p.deleted_at,
       p.duration_seconds,
-      -- Set profile info to NULL if playlist is deleted
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
+      -- Only include profile info if playlist is not deleted
+      prof.username AS profile_username,
+      prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as sort_order,
       up.playlist_position,
@@ -358,8 +357,8 @@ BEGIN
         WHERE pv.playlist_id = p.id AND v.pending_delete = FALSE
       ) as video_count
     FROM public.playlists p
-    LEFT JOIN public.profiles prof ON p.created_by = prof.id
-    -- FIXED: Use auth.uid() instead of p_user_id parameter
+    -- Conditionally JOIN profiles table only if playlist is not deleted
+    LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.deleted_at IS NULL
     LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
     WHERE ((p_short_id IS NOT NULL AND p.short_id = p_short_id)
        OR (p_youtube_id IS NOT NULL AND p.youtube_id = p_youtube_id))
@@ -375,7 +374,7 @@ BEGIN
   video_count := playlist_record.video_count;
   total_duration := playlist_record.duration_seconds;
   
-  -- FIXED: Prioritize passed parameters first, then fall back to user settings
+  -- Prioritize passed parameters first, then fall back to user settings
   effective_sort_key := COALESCE(
     p_sort_key,                           -- 1st priority: passed parameter
     playlist_record.sorted_by::text,      -- 2nd priority: user playlist setting
@@ -465,7 +464,6 @@ BEGIN
     false
   FROM public.playlist_videos pv
   JOIN public.videos v ON pv.video_id = v.id
-  -- FIXED: Use auth.uid() instead of p_user_id parameter
   LEFT JOIN public.timestamps t ON v.id = t.video_id AND t.user_id = auth.uid()
   WHERE pv.playlist_id = playlist_record.id
     AND v.pending_delete = FALSE
