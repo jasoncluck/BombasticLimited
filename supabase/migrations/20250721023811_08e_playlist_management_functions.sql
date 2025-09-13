@@ -159,9 +159,7 @@ END;
 $$;
 
 -- Optimized function to follow (add) a playlist to user's account
-CREATE OR REPLACE FUNCTION public.follow_playlist (
-  p_playlist_id bigint
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.follow_playlist (p_playlist_id bigint) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
   playlist_position int2

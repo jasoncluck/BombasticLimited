@@ -61,8 +61,10 @@ export async function getPlaylistData({
 
   if (
     contentFilter &&
-    !(contentFilter.sort.key === 'playlistOrder' &&
-    contentFilter.sort.order === 'ascending')
+    !(
+      contentFilter.sort.key === 'playlistOrder' &&
+      contentFilter.sort.order === 'ascending'
+    )
   ) {
     sortKey = contentFilter.sort.key;
     sortOrder = contentFilter.sort.order;

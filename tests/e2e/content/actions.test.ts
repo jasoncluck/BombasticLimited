@@ -240,7 +240,7 @@ authTest.describe('Authenticated content actions', () => {
         // Click elsewhere to deselect and close context menu
         const pageBody = page.getByTestId('content-pane');
         await pageBody.waitFor({ state: 'visible' });
-        
+
         // Wait a moment and try clicking at a safe position
         await page.waitForTimeout(500);
         await pageBody.click({ position: { x: 50, y: 50 }, force: true });
@@ -389,11 +389,11 @@ authTest.describe('Table mode content actions', () => {
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
       await table.waitFor({ state: 'visible', timeout: 15000 });
-      
+
       // Ensure we're actually in table mode before proceeding
       const tableRows = table.locator('tr');
       await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
-      
+
       // Verify we have actual table content
       const rowCount = await tableRows.count();
       if (rowCount === 0) {
@@ -436,15 +436,17 @@ authTest.describe('Table mode content actions', () => {
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
       await table.waitFor({ state: 'visible', timeout: 15000 });
-      
+
       // Ensure we're actually in table mode before proceeding
       const tableRows = table.locator('tr');
       await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
-      
+
       // Verify we have at least 4 table rows for multi-selection
       const rowCount = await tableRows.count();
       if (rowCount < 4) {
-        throw new Error(`Need at least 4 table rows for multi-selection test, found: ${rowCount}`);
+        throw new Error(
+          `Need at least 4 table rows for multi-selection test, found: ${rowCount}`
+        );
       }
 
       const firstRow = tableRows.first();
@@ -496,15 +498,17 @@ authTest.describe('Table mode content actions', () => {
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
       await table.waitFor({ state: 'visible', timeout: 15000 });
-      
+
       // Ensure we're actually in table mode before proceeding
       const tableRows = table.locator('tr');
       await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
-      
+
       // Verify we have at least 2 table rows for selection
       const rowCount = await tableRows.count();
       if (rowCount < 2) {
-        throw new Error(`Need at least 2 table rows for selection test, found: ${rowCount}`);
+        throw new Error(
+          `Need at least 2 table rows for selection test, found: ${rowCount}`
+        );
       }
 
       const firstRow = tableRows.first();
@@ -556,15 +560,17 @@ authTest.describe('Table mode content actions', () => {
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
       await table.waitFor({ state: 'visible', timeout: 15000 });
-      
+
       // Ensure we're actually in table mode before proceeding
       const tableRows = table.locator('tr');
       await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
-      
+
       // Verify we have at least 2 table rows for selection
       const rowCount = await tableRows.count();
       if (rowCount < 2) {
-        throw new Error(`Need at least 2 table rows for dropdown test, found: ${rowCount}`);
+        throw new Error(
+          `Need at least 2 table rows for dropdown test, found: ${rowCount}`
+        );
       }
 
       const firstRow = tableRows.first();
@@ -635,15 +641,17 @@ authTest.describe('Table mode content actions', () => {
       // Wait for table content to load and be visible
       const table = page.getByTestId('content-table-defaultSection').first();
       await table.waitFor({ state: 'visible', timeout: 15000 });
-      
+
       // Ensure we're actually in table mode before proceeding
       const tableRows = table.locator('tr');
       await tableRows.first().waitFor({ state: 'visible', timeout: 10000 });
-      
+
       // Verify we have at least 2 table rows for selection
       const rowCount = await tableRows.count();
       if (rowCount < 2) {
-        throw new Error(`Need at least 2 table rows for menu test, found: ${rowCount}`);
+        throw new Error(
+          `Need at least 2 table rows for menu test, found: ${rowCount}`
+        );
       }
 
       const firstRow = tableRows.first();

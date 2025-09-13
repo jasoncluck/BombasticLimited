@@ -105,14 +105,18 @@
   />
 
   <!-- Improved header section with better wrapping -->
-  <div class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-    <div class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2">
-      <h1 class="break-words font-semibold leading-tight">{video.title}</h1>
+  <div
+    class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div
+      class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2"
+    >
+      <h1 class="leading-tight font-semibold break-words">{video.title}</h1>
       <span class="text-muted-foreground text-sm sm:text-base">
         {formatPublishedDate(video.published_at)}
       </span>
     </div>
-    
+
     <div class="flex-shrink-0 self-start sm:self-center">
       {#if mediaQueryState.canHover}
         <ContentDropdown
@@ -148,7 +152,7 @@
         {#if line.hasTimestamp}
           <div class="break-words">
             <a
-              class="timestamp-link hover:text-primary inline-block w-full break-words text-left hover:underline"
+              class="timestamp-link hover:text-primary inline-block w-full text-left break-words hover:underline"
               href="{baseUrl}/{video.id}?t={line.timestamp}"
               onclick={() => {
                 pageState.contentScrollPosition = { scrollTop: 0 };

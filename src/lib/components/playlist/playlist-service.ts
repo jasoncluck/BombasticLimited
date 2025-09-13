@@ -385,7 +385,6 @@ export async function handleUpdatePlaylistSort({
     return;
   }
 
-
   const { updatedPlaylist, error } = await updatePlaylistSort({
     playlistId: playlist.id,
     sortedBy,

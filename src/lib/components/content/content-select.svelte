@@ -53,7 +53,7 @@
   }
 </script>
 
-{#if mediaQueryState.canHover && playlist && playlist.created_by === session?.user.id && !playlist.deleted_at}
+{#if mediaQueryState.canHover && !playlist?.deleted_at}
   <div class="pointer-events-auto flex items-center">
     <ContentDropdown
       {videos}

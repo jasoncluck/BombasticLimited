@@ -91,6 +91,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
+  syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -287,7 +288,7 @@ export class NavigationStateClass implements NavigationState {
       force ||
       (urlSearchQuery !== this.searchQuery &&
         !this.isSearching &&
-        timeSinceLastInput > 500); // 1000ms grace period to protect recent user input
+        timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
 
     if (shouldUpdate) {
       this.searchQuery = urlSearchQuery;

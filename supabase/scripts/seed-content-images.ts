@@ -14,8 +14,8 @@ const remoteKey = process.env.PROD_SUPABASE_SERVICE_ROLE_KEY;
 const bucketName = 'content-images';
 const localDownloadPath = join(process.cwd(), '../content-images');
 
-if (!remoteUrl || !remoteKey){ 
-throw new Error("Missing remote environment variables")
+if (!remoteUrl || !remoteKey) {
+  throw new Error('Missing remote environment variables');
 }
 
 const remoteSupabase = createClient(remoteUrl, remoteKey);

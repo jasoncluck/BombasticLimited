@@ -25,20 +25,20 @@ playlistTest.describe('Playlist Watching and Timestamp Integration', () => {
         // Ensure we're in card mode to access carousel items
         const videoHelpers = new VideoHelpers(playlistPage);
         await videoHelpers.switchToCardView();
-        
+
         // Create a playlist and add a video
         const playlistId = await playlistHelpers.createPlaylist();
 
         // Get first video and add to playlist - use more robust selector
         let firstVideo = playlistPage.getByTestId('carousel-item').first();
-        
+
         // If carousel-item is not found, try content-item as fallback
         if (!(await firstVideo.isVisible({ timeout: 3000 }))) {
           firstVideo = playlistPage.getByTestId('content-item').first();
         }
-        
+
         await firstVideo.waitFor({ state: 'visible', timeout: 10000 });
-        
+
         const videoId = await firstVideo
           .locator('[data-testid="content-item"]')
           .getAttribute('data-video-id');
