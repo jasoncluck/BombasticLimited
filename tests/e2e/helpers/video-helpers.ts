@@ -302,14 +302,42 @@ export class VideoHelpers {
   }
 
   /**
+   * Wait for basic page content to load before attempting view operations
+   */
+  async waitForPageContent(): Promise<void> {
+    // Wait for the page to have loaded some basic structure
+    await this.page.waitForLoadState('networkidle', { timeout: 30000 });
+    
+    // Wait for either navigation elements to be present (indicating page structure is ready)
+    try {
+      await this.page.waitForSelector('[data-testid="user-preferences"], [data-testid="content-item"], [data-testid="carousel-item"], [data-testid="content-table-defaultSection"]', {
+        timeout: 15000,
+        state: 'visible'
+      });
+    } catch (e) {
+      // If no content elements are found, wait a bit longer and try again
+      await this.page.waitForTimeout(3000);
+      
+      // Check if we're on a page that might need authentication or has different structure
+      const bodyContent = await this.page.textContent('body');
+      if (bodyContent && bodyContent.includes('Loading') || bodyContent && bodyContent.includes('loading')) {
+        await this.page.waitForTimeout(5000); // Wait for loading to complete
+      }
+    }
+  }
+
+  /**
    * Switch to card view mode (TILES)
    */
   async switchToCardView(): Promise<void> {
+    // First, wait for the page to have some basic content loaded
+    await this.waitForPageContent();
+    
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
 
     // Check if the preferences dropdown is available (authenticated + desktop)
-    if (await userPreferences.isVisible({ timeout: 3000 })) {
+    if (await userPreferences.isVisible({ timeout: 5000 })) {
       // Check current mode first
       const currentMode = await this.getCurrentViewMode();
       
@@ -333,20 +361,20 @@ export class VideoHelpers {
         .locator('[role="menuitem"]')
         .filter({ hasText: /Card/i });
 
-      if (await cardOption.isVisible({ timeout: 3000 })) {
+      if (await cardOption.isVisible({ timeout: 5000 })) {
         await cardOption.click();
         // Wait for the view to change
-        await this.page.waitForTimeout(3000);
+        await this.page.waitForTimeout(4000);
         
         // Wait for card content to be visible with robust checking
         let attempts = 0;
-        const maxAttempts = 5;
+        const maxAttempts = 8;
         while (attempts < maxAttempts) {
           const contentItem = this.page.getByTestId('content-item').first();
           const isVisible = await contentItem.isVisible().catch(() => false);
           if (isVisible) {
             // Success - cards are visible
-            await this.page.waitForTimeout(1000); // Additional stability wait
+            await this.page.waitForTimeout(1500); // Additional stability wait
             return;
           }
           
@@ -356,7 +384,7 @@ export class VideoHelpers {
           }
         }
         
-        throw new Error('Failed to switch to card view - content items not visible');
+        throw new Error('Failed to switch to card view - content items not visible after mode switch');
       } else {
         // If Card option is not visible, check if we're already in card mode
         const contentItem = this.page.getByTestId('content-item').first();
@@ -370,32 +398,44 @@ export class VideoHelpers {
         await this.page.click('body');
       }
     } else {
-      // If preferences dropdown is not available, check if cards are already visible
+      // If preferences dropdown is not available, wait for content to load first
+      await this.waitForPageContent();
+      
+      // Then check if cards are visible
       const contentItem = this.page.getByTestId('content-item').first();
-      const isContentVisible = await contentItem.isVisible().catch(() => false);
+      const isContentVisible = await contentItem.isVisible({ timeout: 10000 }).catch(() => false);
       
       if (!isContentVisible) {
-        throw new Error('User preferences not available and content items not visible - cannot switch to card mode');
+        // Try waiting for carousel items as fallback (for homepage)
+        const carouselItem = this.page.getByTestId('carousel-item').first();
+        const isCarouselVisible = await carouselItem.isVisible({ timeout: 5000 }).catch(() => false);
+        
+        if (!isCarouselVisible) {
+          throw new Error('User preferences not available and no content items visible - page may not be fully loaded');
+        }
       }
     }
     
     // Final verification that card mode is active
     const contentItem = this.page.getByTestId('content-item').first();
-    await contentItem.waitFor({ state: 'visible', timeout: 10000 });
+    await contentItem.waitFor({ state: 'visible', timeout: 15000 });
     
     // Additional wait to ensure content is fully loaded
-    await this.page.waitForTimeout(1000);
+    await this.page.waitForTimeout(1500);
   }
 
   /**
    * Switch to table view mode (TABLE)
    */
   async switchToTableView(): Promise<void> {
+    // First, wait for the page to have some basic content loaded
+    await this.waitForPageContent();
+    
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
 
     // Check if the preferences dropdown is available (authenticated + desktop)
-    if (await userPreferences.isVisible({ timeout: 3000 })) {
+    if (await userPreferences.isVisible({ timeout: 5000 })) {
       // Check current mode first
       const currentMode = await this.getCurrentViewMode();
       
