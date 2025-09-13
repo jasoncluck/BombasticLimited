@@ -82,11 +82,9 @@
     playlist &&
       session?.user.id &&
       // User is following the playlist
-      (sidebarState
+      sidebarState
         .getFollowedPlaylists(session)
-        .some((fp) => fp.id === playlist.id) ||
-        // User created the playlist
-        playlist.created_by === session.user.id) &&
+        .some((fp) => fp.id === playlist.id) &&
       variant === 'header'
   );
 
@@ -188,7 +186,10 @@
 
     // Check for follow/unfollow playlist actions
     const hasFollowAction =
-      playlist && variant === 'header' && !isFollowingPlaylist;
+      playlist &&
+      variant === 'header' &&
+      !isFollowingPlaylist &&
+      !isPlaylistOwner;
 
     const hasUnfollowAction =
       playlist &&
