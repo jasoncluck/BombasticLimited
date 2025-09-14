@@ -72,11 +72,11 @@ BEGIN
     WHERE cleanup_at <= NOW() AND processed_at IS NULL
     ORDER BY cleanup_at
   LOOP
-    -- Remove all user_playlists mappings for this playlist
-    DELETE FROM public.user_playlists 
+    -- Delete the playlist itself - this will cascade to user_playlists via foreign key
+    DELETE FROM public.playlists 
     WHERE id = cleanup_record.playlist_id;
     
-    -- Mark as processed
+    -- Mark as processed (keep the record for audit trail)
     UPDATE public.playlist_cleanup_queue 
     SET processed_at = NOW() 
     WHERE playlist_id = cleanup_record.playlist_id;
@@ -84,10 +84,10 @@ BEGIN
     processed_count := processed_count + 1;
   END LOOP;
   
-  -- Clean up old processed records (older than 30 days)
-  DELETE FROM public.playlist_cleanup_queue 
-  WHERE processed_at IS NOT NULL 
-  AND processed_at < NOW() - INTERVAL '30 days';
+  -- Clean up old processed records (older than 30 days) - optional cleanup
+  -- DELETE FROM public.playlist_cleanup_queue 
+  -- WHERE processed_at IS NOT NULL 
+  -- AND processed_at < NOW() - INTERVAL '30 days';
   
   RETURN processed_count;
 END;
@@ -98,10 +98,10 @@ CREATE OR REPLACE FUNCTION public.force_cleanup_playlist (p_playlist_id bigint) 
 SET
   search_path = '' AS $$
 BEGIN
-  -- Remove all user_playlists mappings for this playlist
-  DELETE FROM public.user_playlists WHERE id = p_playlist_id;
+  -- Delete the playlist itself - this will cascade to user_playlists via foreign key
+  DELETE FROM public.playlists WHERE id = p_playlist_id;
   
-  -- Mark as processed in cleanup queue
+  -- Mark as processed in cleanup queue (keep the record for audit trail)
   UPDATE public.playlist_cleanup_queue 
   SET processed_at = NOW() 
   WHERE playlist_id = p_playlist_id;
