@@ -4,6 +4,7 @@
   import * as Avatar from '$lib/components/ui/avatar';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
   import { getUserInitials } from '../profile/profile-service';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   const {
     playlist,
@@ -14,11 +15,15 @@
     isFollowedPlaylist: boolean;
     showUsername?: boolean;
   } = $props();
+
+  const mediaQueryState = getMediaQueryState();
 </script>
 
 <a
   class="hover:bg-secondary/50 grid transform cursor-pointer grid-cols-[4rem_1fr] items-center
-      gap-4 rounded hover:brightness-110 sm:p-3"
+      gap-4 rounded hover:brightness-110 {mediaQueryState.canHover
+    ? 'p-3'
+    : ''}"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.image_url}
