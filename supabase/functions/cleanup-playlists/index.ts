@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 interface CleanupRequestBody {
   readonly time: string;
@@ -67,30 +67,32 @@ serve(async (req: Request): Promise<Response> => {
     }
 
     // Validate environment variables
-    const env: EnvironmentVariables = {
-      SUPABASE_URL: Deno.env.get('SUPABASE_URL'),
-      SUPABASE_SERVICE_ROLE_KEY: Deno.env.get('SUPABASE_SERVICE_ROLE_KEY'),
-    };
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error(
-        'Missing required environment variables: SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY'
-      );
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error('Missing required Supabase environment variables');
     }
 
-    // Create Supabase client with service role key for admin operations
-    const supabase = createClient(
-      env.SUPABASE_URL,
-      env.SUPABASE_SERVICE_ROLE_KEY
-    );
+    console.log('🚀 Starting playlist cleanup process...');
+    console.log('📝 Request time:', requestBody.time);
 
-    // Call the cleanup function
+    // Create Supabase client with service role key (bypasses RLS)
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    console.log('🔧 Supabase client created with service role key');
+
+    // Call the cleanup function with explicit error handling
+    console.log('📞 Calling cleanup_deleted_playlists RPC function...');
+
     const { data, error }: SupabaseRpcResponse = await supabase.rpc(
       'cleanup_deleted_playlists'
     );
 
+    console.log('📊 RPC function result:', { data, error });
+
     if (error) {
-      console.error('Cleanup function error:', {
+      console.error('❌ Cleanup function error:', {
         message: error.message,
         details: error.details,
         hint: error.hint,
@@ -101,7 +103,7 @@ serve(async (req: Request): Promise<Response> => {
       const errorResponse: CleanupResponse = {
         success: false,
         processedCount: 0,
-        error: error.message,
+        error: `Database error: ${error.message}${error.code ? ` (Code: ${error.code})` : ''}`,
         timestamp: new Date().toISOString(),
       };
 
@@ -113,7 +115,7 @@ serve(async (req: Request): Promise<Response> => {
 
     const processedCount: number = data ?? 0;
 
-    console.log('Playlist cleanup completed successfully', {
+    console.log('✅ Playlist cleanup completed successfully', {
       processedCount,
       requestTime: requestBody.time,
       completedAt: new Date().toISOString(),
@@ -133,7 +135,7 @@ serve(async (req: Request): Promise<Response> => {
     const errorMessage: string =
       error instanceof Error ? error.message : 'Unknown error occurred';
 
-    console.error('Unexpected error in playlist cleanup:', {
+    console.error('❌ Unexpected error in playlist cleanup:', {
       error: errorMessage,
       stack: error instanceof Error ? error.stack : undefined,
       timestamp: new Date().toISOString(),

@@ -34,7 +34,7 @@
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
 
-  // Effect to control scroll blocking when dropdown is open
+  // Effect to control scroll blocking when dropdowno or context menu is open
   $effect(() => {
     const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
     const contentViewport = pageState.viewportRefs.contentViewportRef;
@@ -132,7 +132,10 @@
             : 'm-2'}"
         >
           <div class="w-full max-w-[1000px] @xl:max-w-[1450px]">
-            <div class="relative mb-20 flex flex-col">
+            <div
+              class="relative mb-20 flex flex-col"
+              data-testid="content-pane"
+            >
               <LoadingOverlay {isNavigatingToContent} />
               {@render children()}
             </div>
@@ -169,7 +172,7 @@
               Bombastic Limited is not affiliated with, endorsed by, or
               connected to any of the content creators featured on this website.
               All video content is the property of their respective owners and
-              creators
+              creators.
             </p>
           </div>
         </div>

@@ -302,14 +302,63 @@ export class VideoHelpers {
   }
 
   /**
+   * Wait for basic page content to load before attempting view operations
+   */
+  async waitForPageContent(): Promise<void> {
+    // Wait for either navigation elements to be present (indicating page structure is ready)
+    try {
+      await this.page.waitForSelector(
+        '[data-testid="user-preferences"], [data-testid="content-item"], [data-testid="carousel-item"], [data-testid="content-table-defaultSection"]',
+        {
+          timeout: 15000,
+          state: 'visible',
+        }
+      );
+    } catch (e) {
+      // If no content elements are found, wait a bit longer and try again
+      await this.page.waitForTimeout(3000);
+
+      // Check if we're on a page that might need authentication or has different structure
+      const bodyContent = await this.page.textContent('body');
+      if (
+        (bodyContent && bodyContent.includes('Loading')) ||
+        (bodyContent && bodyContent.includes('loading'))
+      ) {
+        await this.page.waitForTimeout(5000); // Wait for loading to complete
+      }
+    }
+  }
+
+  /**
    * Switch to card view mode (TILES)
    */
   async switchToCardView(): Promise<void> {
+    // First, wait for the page to have some basic content loaded
+    await this.waitForPageContent();
+
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
 
     // Check if the preferences dropdown is available (authenticated + desktop)
-    if (await userPreferences.isVisible({ timeout: 3000 })) {
+    if (await userPreferences.isVisible({ timeout: 5000 })) {
+      // Check current mode first
+      const currentMode = await this.getCurrentViewMode();
+
+      if (currentMode === 'card') {
+        // Already in card mode, but let's verify content is visible
+        const contentItem = this.page.getByTestId('content-item').first();
+        const isContentVisible = await contentItem
+          .isVisible()
+          .catch(() => false);
+
+        if (isContentVisible) {
+          // Content is already visible, wait a bit to ensure stability
+          await this.page.waitForTimeout(1000);
+          return;
+        }
+        // If not visible, continue with switching
+      }
+
       await userPreferences.click();
 
       // Look for the Card option in the dropdown
@@ -317,28 +366,111 @@ export class VideoHelpers {
         .locator('[role="menuitem"]')
         .filter({ hasText: /Card/i });
 
-      if (await cardOption.isVisible({ timeout: 3000 })) {
+      if (await cardOption.isVisible({ timeout: 5000 })) {
         await cardOption.click();
         // Wait for the view to change
-        await this.page.waitForTimeout(1500);
+        await this.page.waitForTimeout(4000);
+
+        // Wait for card content to be visible with robust checking
+        let attempts = 0;
+        const maxAttempts = 8;
+        while (attempts < maxAttempts) {
+          const contentItem = this.page.getByTestId('content-item').first();
+          const isVisible = await contentItem.isVisible().catch(() => false);
+          if (isVisible) {
+            // Success - cards are visible
+            await this.page.waitForTimeout(1500); // Additional stability wait
+            return;
+          }
+
+          attempts++;
+          if (attempts < maxAttempts) {
+            await this.page.waitForTimeout(2000); // Wait before retry
+          }
+        }
+
+        throw new Error(
+          'Failed to switch to card view - content items not visible after mode switch'
+        );
       } else {
-        // If Card option is not visible, we might already be in card mode
+        // If Card option is not visible, check if we're already in card mode
+        const contentItem = this.page.getByTestId('content-item').first();
+        const isContentVisible = await contentItem
+          .isVisible()
+          .catch(() => false);
+
+        if (!isContentVisible) {
+          throw new Error(
+            'Card option not found in preferences and content items not visible'
+          );
+        }
+
         // Click elsewhere to close the dropdown
         await this.page.click('body');
       }
+    } else {
+      // If preferences dropdown is not available, wait for content to load first
+      await this.waitForPageContent();
+
+      // Then check if cards are visible
+      const contentItem = this.page.getByTestId('content-item').first();
+      const isContentVisible = await contentItem
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+
+      if (!isContentVisible) {
+        // Try waiting for carousel items as fallback (for homepage)
+        const carouselItem = this.page.getByTestId('carousel-item').first();
+        const isCarouselVisible = await carouselItem
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
+
+        if (!isCarouselVisible) {
+          throw new Error(
+            'User preferences not available and no content items visible - page may not be fully loaded'
+          );
+        }
+      }
     }
-    // If preferences dropdown is not available, we're likely on mobile or already in correct mode
+
+    // Final verification that card mode is active
+    const contentItem = this.page.getByTestId('content-item').first();
+    await contentItem.waitFor({ state: 'visible', timeout: 15000 });
+
+    // Additional wait to ensure content is fully loaded
+    await this.page.waitForTimeout(1500);
   }
 
   /**
    * Switch to table view mode (TABLE)
    */
   async switchToTableView(): Promise<void> {
+    // First, wait for the page to have some basic content loaded
+    await this.waitForPageContent();
+
     // Click on the user preferences dropdown (desktop only)
     const userPreferences = this.page.getByTestId('user-preferences');
 
     // Check if the preferences dropdown is available (authenticated + desktop)
-    if (await userPreferences.isVisible({ timeout: 3000 })) {
+    if (await userPreferences.isVisible({ timeout: 5000 })) {
+      // Check current mode first
+      const currentMode = await this.getCurrentViewMode();
+
+      if (currentMode === 'table') {
+        // Already in table mode, but let's verify the table is actually visible
+        const table = this.page
+          .getByTestId('content-table-defaultSection')
+          .first();
+        const isTableVisible = await table.isVisible().catch(() => false);
+
+        if (isTableVisible) {
+          // Table is already visible, wait a bit to ensure stability
+          await this.page.waitForTimeout(1000);
+          return;
+        }
+        // If not visible, continue with switching
+      }
+
       await userPreferences.click();
 
       // Look for the Table option in the dropdown
@@ -348,15 +480,85 @@ export class VideoHelpers {
 
       if (await tableOption.isVisible({ timeout: 3000 })) {
         await tableOption.click();
-        // Wait for the view to change
-        await this.page.waitForTimeout(1500);
+        // Wait longer for the view to change and table to be rendered
+        await this.page.waitForTimeout(3000);
+
+        // Wait specifically for the table to be visible with more robust checking
+        const table = this.page
+          .getByTestId('content-table-defaultSection')
+          .first();
+
+        // Try multiple times to ensure the table appears
+        let attempts = 0;
+        const maxAttempts = 5;
+        while (attempts < maxAttempts) {
+          const isVisible = await table.isVisible().catch(() => false);
+          if (isVisible) {
+            // Verify we have table rows
+            const rows = table.locator('tr');
+            const rowCount = await rows.count();
+            if (rowCount > 0) {
+              // Success - table is visible with content
+              await this.page.waitForTimeout(1000); // Additional stability wait
+              return;
+            }
+          }
+
+          attempts++;
+          if (attempts < maxAttempts) {
+            await this.page.waitForTimeout(2000); // Wait before retry
+          }
+        }
+
+        // If we get here, the switch may have failed
+        throw new Error(
+          'Failed to switch to table view - table not visible or no rows found'
+        );
       } else {
-        // If Table option is not visible, we might already be in table mode
+        // If Table option is not visible, check if we're already in table mode
+        const table = this.page
+          .getByTestId('content-table-defaultSection')
+          .first();
+        const isTableVisible = await table.isVisible().catch(() => false);
+
+        if (!isTableVisible) {
+          throw new Error(
+            'Table option not found in preferences and table not visible'
+          );
+        }
+
         // Click elsewhere to close the dropdown
         await this.page.click('body');
       }
+    } else {
+      // If preferences dropdown is not available, check if table is already visible
+      const table = this.page
+        .getByTestId('content-table-defaultSection')
+        .first();
+      const isTableVisible = await table.isVisible().catch(() => false);
+
+      if (!isTableVisible) {
+        throw new Error(
+          'User preferences not available and table not visible - cannot switch to table mode'
+        );
+      }
     }
-    // If preferences dropdown is not available, we're likely on mobile or already in correct mode
+
+    // Final verification that table mode is active
+    const table = this.page.getByTestId('content-table-defaultSection').first();
+    await table.waitFor({ state: 'visible', timeout: 10000 });
+
+    // Ensure table has content
+    const rows = table.locator('tr');
+    const rowCount = await rows.count();
+    if (rowCount === 0) {
+      throw new Error(
+        'Table is visible but has no rows - content may not be loaded'
+      );
+    }
+
+    // Additional wait to ensure table content is fully loaded
+    await this.page.waitForTimeout(1000);
   }
 
   /**
@@ -452,10 +654,6 @@ export class VideoHelpers {
       // Scrub to a specific timestamp by clicking on the progress bar
       await this.scrubYouTubePlayer(scrubToSeconds);
     } else {
-      // Wait for the specified number of seconds to accumulate watch time
-      console.log(
-        `Waiting ${waitSeconds} seconds for video to generate timestamp...`
-      );
       await this.page.waitForTimeout(waitSeconds * 1000);
     }
   }
@@ -477,9 +675,6 @@ export class VideoHelpers {
    * Scrub YouTube player to a specific timestamp by clicking on the progress bar
    */
   private async scrubYouTubePlayer(targetSeconds: number): Promise<void> {
-    console.log(
-      `🎯 Starting YouTube scrub operation to ${targetSeconds} seconds`
-    );
     try {
       // Switch to iframe context to interact with YouTube player
       const iframe = this.page.locator('iframe').first();
@@ -514,15 +709,10 @@ export class VideoHelpers {
             .count()) > 0;
 
         if (isPaused && (await playButton.isVisible({ timeout: 2000 }))) {
-          console.log('Video is paused, clicking play button');
           await playButton.click();
 
           // Wait a moment for the video to start playing
           await this.page.waitForTimeout(1000);
-        } else {
-          console.log(
-            'Video appears to be already playing or play button not found'
-          );
         }
       } catch (playError) {
         console.warn('Could not interact with play button:', playError);
@@ -573,13 +763,6 @@ export class VideoHelpers {
           // Calculate more accurate position if we have duration
           if (videoDuration > 0) {
             scrubPosition = Math.min(targetSeconds / videoDuration, 0.95); // Cap at 95% to avoid end of video
-            console.log(
-              `Calculated scrub position: ${scrubPosition * 100}% (${targetSeconds}s of ${videoDuration}s)`
-            );
-          } else {
-            console.log(
-              `Using default scrub position: ${scrubPosition * 100}%`
-            );
           }
 
           // Calculate click position
@@ -595,13 +778,8 @@ export class VideoHelpers {
             },
           });
 
-          console.log(
-            `Scrubbed YouTube player to approximate ${targetSeconds}s timestamp`
-          );
-
           // Wait longer for the scrub to take effect and stabilize
           // Increased from 2 seconds to 3 seconds for better reliability
-          console.log('Waiting 3 seconds for scrub to take effect...');
           await this.page.waitForTimeout(3000);
 
           // Verify the video is still playing after scrub
@@ -613,9 +791,6 @@ export class VideoHelpers {
                 )
                 .count()) > 0;
             if (isStillPaused) {
-              console.log(
-                'Video paused after scrub, attempting to resume playback'
-              );
               const playButtonAfterScrub = frame
                 .locator('.ytp-play-button')
                 .first();
@@ -632,7 +807,6 @@ export class VideoHelpers {
 
           // Additional wait to ensure the video state is fully registered
           // This gives the video time to buffer and stabilize at the new position
-          console.log('Waiting for video state to stabilize after scrub...');
           await this.page.waitForTimeout(3000);
 
           // Verify the scrub was successful by checking current time position
@@ -650,13 +824,8 @@ export class VideoHelpers {
                   actualPosition - targetSeconds
                 );
 
-                console.log(
-                  `Scrub verification: target=${targetSeconds}s, actual=${actualPosition}s, difference=${positionDifference}s`
-                );
-
                 if (positionDifference <= tolerance) {
                   scrubSuccessful = true;
-                  console.log('✓ Scrub position verification successful');
                 } else {
                   console.warn(
                     `✗ Scrub position verification failed: expected ~${targetSeconds}s, got ${actualPosition}s`
@@ -678,34 +847,16 @@ export class VideoHelpers {
                 .count()) > 0;
 
             if (finalPauseCheck) {
-              console.log('Final attempt to ensure video is playing...');
               const finalPlayButton = frame.locator('.ytp-play-button').first();
               if (await finalPlayButton.isVisible({ timeout: 1000 })) {
                 await finalPlayButton.click();
                 // Wait after final play attempt for stability
                 await this.page.waitForTimeout(1000);
               }
-            } else {
-              console.log(
-                'Video appears to be playing successfully after scrub'
-              );
             }
-
             // Additional wait to ensure stable playback at new position
             // This helps prevent intermittent issues where playback state changes
-            console.log('Ensuring stable playback at new position...');
             await this.page.waitForTimeout(2000);
-
-            // Final status log
-            if (scrubSuccessful) {
-              console.log(
-                '✓ Scrub operation completed successfully with position verification'
-              );
-            } else {
-              console.log(
-                '⚠ Scrub operation completed but position verification failed'
-              );
-            }
           } catch (finalVerifyError) {
             console.warn(
               'Could not perform final playback verification:',

@@ -3,7 +3,6 @@
     handleRemoveVideosFromPlaylist,
     handleAddVideosToPlaylist,
     handleUpdatePlaylistImage,
-    handleDeletePlaylist,
     handleUnfollowPlaylist,
     handleFollowPlaylist,
   } from '../playlist/playlist-service';
@@ -22,7 +21,6 @@
   } from '../video/video-service';
   import Button from '../ui/button/button.svelte';
   import { page } from '$app/state';
-  import { goto } from '$app/navigation';
   import { type ContentSelectVariant } from './content';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { Portal } from 'bits-ui';
@@ -79,10 +77,16 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
+  // Updated isFollowingPlaylist to include playlists created by the user
   const isFollowingPlaylist = $derived(
-    sidebarState
-      .getFollowedPlaylists(session)
-      .some((fp) => fp.id === playlist?.id) && variant === 'header'
+    playlist &&
+      session?.user.id &&
+      variant === 'header' &&
+      // User is following the playlist OR user created the playlist
+      (sidebarState
+        .getFollowedPlaylists(session)
+        .some((fp) => fp.id === playlist.id) ||
+        playlist.created_by === session.user.id)
   );
 
   // Get selected and hovered videos for this section
@@ -129,8 +133,26 @@
     return [];
   }
 
-  // Calculate if any actions are available
-  const hasAvailableActions = $derived.by(() => {
+  // Individual action availability checks
+  const availableActions = $derived.by(() => {
+    // Early return if no session
+    if (!session) {
+      return {
+        hasSelectAll: false,
+        hasEditPlaylist: false,
+        hasAddToPlaylist: false,
+        hasRemoveFromPlaylist: false,
+        hasSetPlaylistImage: false,
+        hasResetProgress: false,
+        hasSetWatched: false,
+        hasFollowAction: false,
+        hasUnfollowAction: false,
+        hasDeletePlaylist: false,
+        filteredPlaylists: [],
+        currentOperationVideos: [],
+      };
+    }
+
     // For this calculation, we need to use the current operation videos
     const currentOperationVideos = determineOperationVideos();
 
@@ -138,57 +160,92 @@
       (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id
     );
 
-    // Check for select all action
-    const hasSelectAll =
-      variant === 'header' && userProfile?.content_display === 'TABLE';
+    return {
+      // Check for select all action (only for header variant with table display)
+      hasSelectAll:
+        variant === 'header' && userProfile?.content_display === 'TABLE',
 
-    // Check for edit playlist action
-    const hasEditPlaylist = isPlaylistOwner && variant === 'header';
+      // Check for edit playlist action (only playlist owners can edit)
+      hasEditPlaylist:
+        playlist &&
+        isPlaylistOwner &&
+        variant === 'header' &&
+        !playlist.deleted_at,
 
-    // Check for add to playlist action
-    const hasAddToPlaylist =
-      currentOperationVideos.length > 0 && filteredPlaylists.length > 0;
+      // Check for add to playlist action (need videos and available playlists)
+      hasAddToPlaylist:
+        currentOperationVideos.length > 0 && filteredPlaylists.length > 0,
 
-    // Check for remove from playlist action
-    const hasRemoveFromPlaylist =
-      playlist && isPlaylistOwner && currentOperationVideos.length > 0;
+      // Check for remove from playlist action (playlist owner with videos in playlist)
+      hasRemoveFromPlaylist:
+        playlist && isPlaylistOwner && currentOperationVideos.length > 0,
 
-    // Check for set as playlist image action
-    const hasSetPlaylistImage =
-      playlist &&
-      currentOperationVideos.length === 1 &&
-      variant === 'list-items' &&
-      isPlaylistOwner &&
-      !hideSetAsPlaylistImage;
+      // Check for set as playlist image action (single video, list-items variant, playlist owner)
+      hasSetPlaylistImage:
+        playlist &&
+        currentOperationVideos.length === 1 &&
+        variant === 'list-items' &&
+        isPlaylistOwner &&
+        !hideSetAsPlaylistImage,
 
-    // Check for reset progress action
-    const hasResetProgress =
-      session &&
-      variant !== 'item' &&
-      currentOperationVideos.some((v) => isVideoWithTimestamp(v));
+      // Check for reset progress action (videos with timestamps)
+      hasResetProgress:
+        variant !== 'item' &&
+        currentOperationVideos.some((v) => isVideoWithTimestamp(v)),
 
-    // Check for set as watched action
-    const hasSetWatched =
-      variant !== 'item' &&
-      currentOperationVideos.some(
-        (v) =>
-          !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at)
-      );
+      // Check for set as watched action (videos that aren't watched)
+      hasSetWatched:
+        variant !== 'item' &&
+        currentOperationVideos.some(
+          (v) =>
+            !isVideoWithTimestamp(v) ||
+            (isVideoWithTimestamp(v) && !v.watched_at)
+        ),
 
-    // Check for playlist actions (delete/follow/unfollow)
-    const hasPlaylistActions = playlist && variant === 'header';
+      // Check for follow playlist action
+      hasFollowAction:
+        playlist &&
+        variant === 'header' &&
+        !isPlaylistOwner &&
+        !sidebarState
+          .getFollowedPlaylists(session)
+          .some((fp) => fp.id === playlist.id),
 
-    return (
-      hasSelectAll ||
-      hasEditPlaylist ||
-      hasAddToPlaylist ||
-      hasRemoveFromPlaylist ||
-      hasSetPlaylistImage ||
-      hasResetProgress ||
-      hasSetWatched ||
-      hasPlaylistActions
-    );
+      // Check for unfollow playlist action
+      hasUnfollowAction:
+        playlist &&
+        variant === 'header' &&
+        !isPlaylistOwner &&
+        sidebarState
+          .getFollowedPlaylists(session)
+          .some((fp) => fp.id === playlist.id),
+
+      // Check for delete playlist action (only playlist owners)
+      hasDeletePlaylist:
+        playlist &&
+        variant === 'header' &&
+        isPlaylistOwner &&
+        !playlist.deleted_at,
+
+      // Helper data
+      filteredPlaylists,
+      currentOperationVideos,
+    };
   });
+
+  // Calculate if any actions are available
+  const hasAvailableActions = $derived(
+    availableActions.hasSelectAll ||
+      availableActions.hasEditPlaylist ||
+      availableActions.hasAddToPlaylist ||
+      availableActions.hasRemoveFromPlaylist ||
+      availableActions.hasSetPlaylistImage ||
+      availableActions.hasResetProgress ||
+      availableActions.hasSetWatched ||
+      availableActions.hasFollowAction ||
+      availableActions.hasUnfollowAction ||
+      availableActions.hasDeletePlaylist
+  );
 
   // Keep the button visible when dropdown OR sub-menu is open, but also check if actions are available
   // Now includes focus state for keyboard navigation
@@ -283,7 +340,7 @@
       class="stable-dropdown outline-none"
       data-testid="content-dropdown-content"
     >
-      {#if variant === 'header' && userProfile?.content_display === 'TABLE'}
+      {#if availableActions.hasSelectAll}
         <DropdownMenu.Item
           class="p-2"
           onclick={() => {
@@ -297,7 +354,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if isPlaylistOwner && variant === 'header'}
+      {#if availableActions.hasEditPlaylist}
         <DropdownMenu.Item
           class="cursor-pointer"
           onclick={() => (playlistState.openEditPlaylist = true)}
@@ -310,10 +367,7 @@
       {/if}
 
       {#if frozenOperationVideos.length > 0}
-        {@const filteredPlaylists = playlists.filter(
-          (pl) => pl.id !== playlist?.id && pl.created_by === session?.user.id
-        )}
-        {#if filteredPlaylists.length > 0}
+        {#if availableActions.hasAddToPlaylist}
           <DropdownMenu.Sub bind:open={subMenuOpen}>
             <DropdownMenu.SubTrigger
               onclick={(e) => e.stopPropagation()}
@@ -339,30 +393,30 @@
               >
                 <ScrollArea
                   type="scroll"
-                  class={filteredPlaylists.length <= 6 ? 'h-auto' : 'h-56'}
+                  class={availableActions.filteredPlaylists.length <= 6
+                    ? 'h-auto'
+                    : 'h-56'}
                 >
-                  {#each filteredPlaylists as addPlaylist (addPlaylist.id)}
-                    {#if !playlist || (playlist && playlist.id !== addPlaylist.id)}
-                      <DropdownMenu.Item
-                        class="p-2"
-                        data-playlist-id={addPlaylist.id}
-                        onclick={async () => {
-                          const { error } = await handleAddVideosToPlaylist({
-                            videos: frozenOperationVideos,
-                            playlist: addPlaylist,
-                            sidebarState,
-                            supabase,
-                            session,
-                          });
+                  {#each availableActions.filteredPlaylists as addPlaylist (addPlaylist.id)}
+                    <DropdownMenu.Item
+                      class="p-2"
+                      data-playlist-id={addPlaylist.id}
+                      onclick={async () => {
+                        const { error } = await handleAddVideosToPlaylist({
+                          videos: frozenOperationVideos,
+                          playlist: addPlaylist,
+                          sidebarState,
+                          supabase,
+                          session,
+                        });
 
-                          if (!error) {
-                            handleSelectionAfterAction();
-                          }
-                        }}
-                      >
-                        {addPlaylist.name}
-                      </DropdownMenu.Item>
-                    {/if}
+                        if (!error) {
+                          handleSelectionAfterAction();
+                        }
+                      }}
+                    >
+                      {addPlaylist.name}
+                    </DropdownMenu.Item>
                   {/each}
                 </ScrollArea>
               </DropdownMenu.SubContent>
@@ -370,7 +424,7 @@
           </DropdownMenu.Sub>
         {/if}
 
-        {#if playlist && isPlaylistOwner}
+        {#if availableActions.hasRemoveFromPlaylist && playlist}
           <DropdownMenu.Item
             class="p-2"
             onclick={async () => {
@@ -393,7 +447,6 @@
           >
             <div class="flex items-center gap-2">
               <CircleMinus class="dropdown-icon" />
-
               Remove {frozenOperationVideos.length === 1
                 ? 'video'
                 : `${frozenOperationVideos.length} videos`} from playlist
@@ -401,7 +454,7 @@
           </DropdownMenu.Item>
         {/if}
 
-        {#if playlist && frozenOperationVideos.length === 1 && variant === 'list-items' && isPlaylistOwner && !hideSetAsPlaylistImage}
+        {#if availableActions.hasSetPlaylistImage && playlist}
           <DropdownMenu.Item
             class="p-2"
             onclick={async () => {
@@ -425,7 +478,7 @@
         {/if}
       {/if}
 
-      {#if session && variant !== 'item' && frozenOperationVideos.some( (v) => isVideoWithTimestamp(v) )}
+      {#if availableActions.hasResetProgress}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
@@ -468,7 +521,7 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if variant !== 'item' && frozenOperationVideos.some((v) => !isVideoWithTimestamp(v) || (isVideoWithTimestamp(v) && !v.watched_at))}
+      {#if availableActions.hasSetWatched}
         <DropdownMenu.Item
           class="p-2"
           onclick={async () => {
@@ -493,77 +546,60 @@
         </DropdownMenu.Item>
       {/if}
 
-      {#if playlist && variant === 'header'}
-        {#if playlist.created_by === session?.user.id}
-          <!-- User owns the playlist - show delete option -->
-          <DropdownMenu.Item
-            class="cursor-pointer"
-            onclick={async () => {
-              // Check if it's a public playlist
-              if (playlist.type === 'Public') {
-                // Show confirmation dialog for public playlists
-                showDeleteDialog = true;
-              } else {
-                // Delete private playlist immediately
-                const data = await handleDeletePlaylist({
-                  playlist,
-                  sidebarState,
-                  supabase,
-                  session,
-                });
+      {#if availableActions.hasDeletePlaylist}
+        <!-- User owns the playlist - show delete option -->
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={async () => {
+            showDeleteDialog = true;
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <CircleMinus class="dropdown-icon" />
+            Delete playlist
+          </div>
+        </DropdownMenu.Item>
+      {/if}
 
-                if (
-                  !data?.error &&
-                  page.url.pathname === `/playlist/${playlist.short_id}`
-                ) {
-                  goto('/');
-                }
-              }
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <CircleMinus class="dropdown-icon" />
-              Delete playlist
-            </div>
-          </DropdownMenu.Item>
-        {:else if !isFollowingPlaylist}
-          <!-- User doesn't own and isn't following - show follow option -->
-          <DropdownMenu.Item
-            class="cursor-pointer"
-            onclick={async () => {
-              handleFollowPlaylist({
-                playlist,
-                sidebarState,
-                contentFilter,
-                supabase,
-                session,
-              });
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <CirclePlus class="dropdown-icon" />
-              Follow playlist
-            </div>
-          </DropdownMenu.Item>
-        {:else}
-          <!-- User doesn't own but is following - show unfollow option -->
-          <DropdownMenu.Item
-            class="cursor-pointer"
-            onclick={async () => {
-              handleUnfollowPlaylist({
-                playlist,
-                sidebarState,
-                supabase,
-                session,
-              });
-            }}
-          >
-            <div class="flex items-center gap-2">
-              <CircleMinus class="dropdown-icon" />
-              Unfollow playlist
-            </div>
-          </DropdownMenu.Item>
-        {/if}
+      {#if availableActions.hasFollowAction && playlist}
+        <!-- User doesn't own and isn't following - show follow option -->
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={async () => {
+            handleFollowPlaylist({
+              playlist,
+              sidebarState,
+              contentFilter,
+              supabase,
+              session,
+            });
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <CirclePlus class="dropdown-icon" />
+            Follow playlist
+          </div>
+        </DropdownMenu.Item>
+      {/if}
+
+      {#if availableActions.hasUnfollowAction && playlist}
+        <!-- User doesn't own but is following - show unfollow option -->
+        <DropdownMenu.Item
+          class="cursor-pointer"
+          onclick={async () => {
+            handleUnfollowPlaylist({
+              playlist,
+              sidebarState,
+              supabase,
+              session,
+            });
+          }}
+        >
+          <div class="flex items-center gap-2">
+            <CircleMinus class="dropdown-icon" />
+            Unfollow playlist
+          </div>
+        </DropdownMenu.Item>
       {/if}
     </DropdownMenu.Content>
   </DropdownMenu.Root>

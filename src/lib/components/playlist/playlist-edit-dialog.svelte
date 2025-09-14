@@ -49,7 +49,7 @@
 
   // State variables
   let isSubmitting = $state(false);
-  let isPublic = $state(playlist.type === 'Public');
+  let isPublic = $derived(playlist.type === 'Public');
 
   // Cropper state
   let cropperDialogOpen = $state(false);
@@ -168,9 +168,6 @@
     },
     async onUpdated(event) {
       if (event.form.valid) {
-        // Update the playlist object immediately before any UI updates
-        Object.assign(playlist, event.form.data);
-
         if (event.form.data.isDeletingPlaylistImage) {
           playlist.image_url = null;
           playlist.image_properties = null;
@@ -179,8 +176,8 @@
 
         // Now close dialog and refresh data
         open = false;
-        sidebarState.refreshData();
         invalidate('supabase:db:playlists');
+        sidebarState.refreshData();
       }
 
       isSubmitting = false;
@@ -224,20 +221,13 @@
       currentCropArea = null;
     }
   });
-
-  // Reset form when dialog closes
-  $effect(() => {
-    if (!open) {
-      playlistForm.reset();
-      playlistState.openEditPlaylist = false;
-    }
-  });
 </script>
 
 <Dialog.Root
   bind:open
   onOpenChange={(open) => {
     if (open === false) {
+      playlistForm.reset();
       playlistState.openEditPlaylist = false;
     }
   }}

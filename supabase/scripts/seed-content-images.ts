@@ -3,12 +3,20 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { existsSync } from 'fs';
 
-// Remote Supabase configuration
-const remoteUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
-const remoteKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+// Production Supabase configuration to pull images from
+const remoteUrl = process.env.PROD_SUPABASE_URL;
+const remoteKey = process.env.PROD_SUPABASE_SERVICE_ROLE_KEY;
 
 const bucketName = 'content-images';
 const localDownloadPath = join(process.cwd(), '../content-images');
+
+if (!remoteUrl || !remoteKey) {
+  throw new Error('Missing remote environment variables');
+}
 
 const remoteSupabase = createClient(remoteUrl, remoteKey);
 

@@ -274,16 +274,13 @@ export async function updatePlaylistThumbnail({
 export async function followPlaylist({
   playlistId,
   supabase,
-  position,
 }: {
   playlistId: number;
   supabase: SupabaseClient<Database>;
-  position?: number;
 }) {
   const { error } = await supabase
     .rpc('follow_playlist', {
       p_playlist_id: playlistId,
-      p_playlist_position: position,
     })
     .select();
 

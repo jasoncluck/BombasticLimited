@@ -91,7 +91,7 @@ export interface NavigationState {
   // Search methods
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
-  syncSearchQueryFromUrl: (pathname: string) => void;
+  syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
 
   // Account drawer methods
   toggleAccountDrawer: () => void;
@@ -147,6 +147,7 @@ export class NavigationStateClass implements NavigationState {
   private currentSearchTimestamp: number = 0;
   private pendingValueUpdate: string | null = null;
   private lastNavigationTimestamp: number = 0;
+  private lastUserInputTimestamp: number = 0;
 
   // Core data state
   data = $state<NavigationData>({
@@ -181,7 +182,7 @@ export class NavigationStateClass implements NavigationState {
     enableHomeNavigation: true,
     enableBrandLogo: true,
     homeRouteReplaceState: true,
-    searchDebounceMs: 400, // Further reduced for better responsiveness
+    searchDebounceMs: 400,
     preloadDebounceMs: 125,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
@@ -270,14 +271,26 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Sync search query from URL - now exposed as public method
+   * Sync search query from URL - now exposed as public method with better timing controls
    */
-  syncSearchQueryFromUrl = (pathname: string): void => {
+  syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
+    const now = Date.now();
 
-    // Only update if the URL search query is different from current state
-    // and if we're not currently in the middle of a search operation
-    if (urlSearchQuery !== this.searchQuery && !this.isSearching) {
+    // Only update if:
+    // 1. Force is true (initial page load/restore), OR
+    // 2. All of the following are true:
+    //    - URL search query is different from current state
+    //    - We're not currently searching (no pending navigation)
+    //    - Enough time has passed since the last user input (1000ms grace period)
+    const timeSinceLastInput = now - this.lastUserInputTimestamp;
+    const shouldUpdate =
+      force ||
+      (urlSearchQuery !== this.searchQuery &&
+        !this.isSearching &&
+        timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
+
+    if (shouldUpdate) {
       this.searchQuery = urlSearchQuery;
     }
   };
@@ -298,15 +311,6 @@ export class NavigationStateClass implements NavigationState {
           this.startRefreshInterval();
         } else {
           this.stopRefreshInterval();
-        }
-      });
-
-      // Sync search query from URL when page changes
-      $effect(() => {
-        if (page) {
-          const currentPath = page.url?.pathname || '';
-          this.syncSearchQueryFromUrl(currentPath);
-          this.updateActiveRoute(currentPath);
         }
       });
     }
@@ -503,6 +507,7 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = '';
     this.currentSearchTimestamp = 0;
     this.pendingValueUpdate = null;
+    this.lastUserInputTimestamp = 0;
 
     // Cancel any pending searches
     if (this.currentDebouncedSearch?.isPending) {
@@ -617,6 +622,7 @@ export class NavigationStateClass implements NavigationState {
     // Update the searchQuery state to match the input
     this.searchQuery = input.value;
     this.currentSearchTimestamp = searchTimestamp;
+    this.lastUserInputTimestamp = searchTimestamp; // Track when user last typed
 
     // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
@@ -855,6 +861,7 @@ export class NavigationStateClass implements NavigationState {
     this.currentSearchTimestamp = 0;
     this.pendingValueUpdate = null;
     this.lastNavigationTimestamp = 0;
+    this.lastUserInputTimestamp = 0;
   }
 }
 

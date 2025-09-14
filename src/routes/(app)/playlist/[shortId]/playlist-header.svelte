@@ -89,7 +89,7 @@
     // Create cleanup date: add 14 days to deletion date and set to midnight UTC
     // This matches the SQL: date_trunc('day', (deletion_timestamp AT TIME ZONE 'UTC')::date + INTERVAL '14 days') AT TIME ZONE 'UTC'
     const cleanupDate = new SvelteDate(deletedDate);
-    cleanupDate.setUTCDate(cleanupDate.getUTCDate() + 14);
+    cleanupDate.setUTCDate(cleanupDate.getUTCDate() + 13);
     cleanupDate.setUTCHours(0, 0, 0, 0);
 
     const month = cleanupDate.toLocaleDateString('en-US', {

@@ -61,8 +61,10 @@ export async function getPlaylistData({
 
   if (
     contentFilter &&
-    contentFilter.sort.key !== 'playlistOrder' &&
-    contentFilter.sort.order === 'ascending'
+    !(
+      contentFilter.sort.key === 'playlistOrder' &&
+      contentFilter.sort.order === 'ascending'
+    )
   ) {
     sortKey = contentFilter.sort.key;
     sortOrder = contentFilter.sort.order;
@@ -406,6 +408,7 @@ export async function getUserPlaylists({
 }> {
   const { data: claimsData, error: claimsError } =
     await supabase.auth.getClaims();
+
   if (!claimsData?.claims || claimsError) {
     return { userPlaylists: [], count: null, error: null };
   }

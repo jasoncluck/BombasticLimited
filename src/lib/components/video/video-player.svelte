@@ -104,15 +104,20 @@
     durationSeconds={videoDurationToSeconds(video?.duration)}
   />
 
-  <div class="mt-6 flex justify-between">
-    <div class="flex flex-wrap items-center gap-2">
-      <p class="font-semibold">{video.title}</p>
-
-      <span class="text-muted-foreground">
+  <!-- Improved header section with better wrapping -->
+  <div
+    class="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+  >
+    <div
+      class="flex flex-col gap-1 sm:flex-row sm:flex-wrap sm:items-center sm:gap-2"
+    >
+      <h1 class="leading-tight font-semibold break-words">{video.title}</h1>
+      <span class="text-muted-foreground text-sm sm:text-base">
         {formatPublishedDate(video.published_at)}
       </span>
     </div>
-    <div class="ml-auto">
+
+    <div class="flex-shrink-0 self-start sm:self-center">
       {#if mediaQueryState.canHover}
         <ContentDropdown
           videos={[video]}
@@ -140,13 +145,14 @@
     </div>
   </div>
 
+  <!-- Improved description section with proper text wrapping -->
   {#if video?.description}
-    <div class="mt-4 whitespace-pre-line">
+    <div class="mt-4 overflow-hidden">
       {#each processTimestamps(video.description) as line (line)}
         {#if line.hasTimestamp}
-          <div>
+          <div class="break-words">
             <a
-              class="timestamp-link hover:text-primary w-full text-left hover:underline"
+              class="timestamp-link hover:text-primary inline-block w-full text-left break-words hover:underline"
               href="{baseUrl}/{video.id}?t={line.timestamp}"
               onclick={() => {
                 pageState.contentScrollPosition = { scrollTop: 0 };
@@ -156,7 +162,7 @@
             </a>
           </div>
         {:else}
-          <p>{line.text}</p>
+          <p class="break-words whitespace-pre-line">{line.text}</p>
         {/if}
       {/each}
     </div>

@@ -159,10 +159,7 @@ END;
 $$;
 
 -- Optimized function to follow (add) a playlist to user's account
-CREATE OR REPLACE FUNCTION public.follow_playlist (
-  p_playlist_id bigint,
-  p_playlist_position int2 DEFAULT NULL
-) RETURNS TABLE (
+CREATE OR REPLACE FUNCTION public.follow_playlist (p_playlist_id bigint) RETURNS TABLE (
   playlist_id bigint,
   user_id uuid,
   playlist_position int2
@@ -175,6 +172,8 @@ DECLARE
   current_user_id uuid;
   playlist_count int2;
   already_linked boolean;
+  playlist_owner_id uuid;
+  playlist_deleted boolean;
 BEGIN
   current_user_id := auth.uid();
   
@@ -184,6 +183,12 @@ BEGIN
   END IF;
 
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
+  -- Check if playlist exists and get owner info
+  SELECT p.created_by, (p.deleted_at IS NOT NULL)
+  INTO playlist_owner_id, playlist_deleted
+  FROM public.playlists p
+  WHERE p.id = p_playlist_id;
 
   -- Check count, max position, and existing relationship in one query
   WITH user_data AS (
@@ -207,30 +212,33 @@ BEGIN
     RAISE EXCEPTION 'Playlist already added to account';
   END IF;
 
-  actual_position := COALESCE(LEAST(GREATEST(p_playlist_position, 1), 50), LEAST(max_position + 1, 50));
+  -- Always put newly followed playlist at the highest position (same as insert_playlist)
+  -- This means max_position + 1, up to the limit of 50
+  actual_position := LEAST(max_position + 1, 50);
 
-  -- Bulk shift and insert - FIXED: Add table alias to avoid ambiguous column reference
-  IF actual_position <= max_position THEN
-    UPDATE public.user_playlists up
-    SET playlist_position = up.playlist_position + 1
-    WHERE up.user_id = current_user_id 
-      AND up.playlist_position >= actual_position;
-  END IF;
+  -- No need to shift positions since we're always adding at the end
+  -- (highest position number)
 
   INSERT INTO public.user_playlists (id, user_id, playlist_position)
   VALUES (p_playlist_id, current_user_id, actual_position);
 
-  RETURN QUERY SELECT p_playlist_id, current_user_id, actual_position;
+  -- Return NULL for user_id if playlist is deleted (owner anonymized)
+  RETURN QUERY SELECT 
+    p_playlist_id, 
+    CASE WHEN playlist_deleted THEN NULL ELSE current_user_id END,
+    actual_position;
 END;
 $$;
 
--- Optimized function to unfollow (remove) a playlist from user's account
+-- Updated unfollow_playlist function to allow NULL user_id in return
 CREATE OR REPLACE FUNCTION public.unfollow_playlist (p_playlist_id bigint) RETURNS TABLE (playlist_id bigint, user_id uuid) LANGUAGE plpgsql
 SET
   search_path = '' AS $$
 DECLARE
   removed_position int2;
   current_user_id uuid;
+  playlist_owner_id uuid;
+  playlist_deleted boolean;
 BEGIN
   current_user_id := auth.uid();
   
@@ -240,6 +248,12 @@ BEGIN
   END IF;
 
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
+
+  -- Check if playlist exists and get owner info
+  SELECT p.created_by, (p.deleted_at IS NOT NULL)
+  INTO playlist_owner_id, playlist_deleted
+  FROM public.playlists p
+  WHERE p.id = p_playlist_id;
 
   -- Get position and delete in one operation
   DELETE FROM public.user_playlists up
@@ -256,7 +270,10 @@ BEGIN
   WHERE up.user_id = current_user_id 
     AND up.playlist_position > removed_position;
 
-  RETURN QUERY SELECT p_playlist_id, current_user_id;
+  -- Return NULL for user_id if playlist is deleted (owner anonymized)
+  RETURN QUERY SELECT 
+    p_playlist_id, 
+    CASE WHEN playlist_deleted THEN NULL ELSE current_user_id END;
 END;
 $$;
 
@@ -370,27 +387,6 @@ BEGIN
 END;
 $$;
 
--- Optimized function to restore a playlist
-CREATE OR REPLACE FUNCTION public.restore_playlist (p_playlist_id bigint) RETURNS BOOLEAN LANGUAGE plpgsql
-SET
-  search_path = '' AS $$
-BEGIN
-  -- Check and restore in one operation
-  UPDATE public.playlists
-  SET deleted_at = NULL
-  WHERE id = p_playlist_id AND deleted_at IS NOT NULL;
-
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'Playlist not found or not deleted for playlist_id: %', p_playlist_id;
-  END IF;
-
-  RETURN TRUE;
-EXCEPTION
-  WHEN OTHERS THEN
-    RAISE INFO 'Error in restore_playlist: %', SQLERRM;
-    RETURN FALSE;
-END;
-$$;
 
 -- Optimized function to initialize playlist positions
 CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () RETURNS VOID LANGUAGE plpgsql

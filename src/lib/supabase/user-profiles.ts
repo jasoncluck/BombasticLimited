@@ -59,9 +59,13 @@ export async function getProfileById({
   userId,
   supabase,
 }: {
-  userId: string;
+  userId: string | null;
   supabase: SupabaseClient<Database>;
 }) {
+  if (!userId) {
+    return { profile: null };
+  }
+
   const { data: profile, error } = await supabase
     .from('profiles')
     .select()

@@ -845,70 +845,58 @@ export class ContentState {
   }
 
   setupClickOutsideListener(
-    containerElement: HTMLElement,
     sectionId: string = DEFAULT_SECTION_ID
   ): () => void {
     const handleClickOutside = (event: MouseEvent): void => {
       this.hoverTimeoutId = null;
 
-      // Check if click is outside the container
-      if (!containerElement.contains(event.target as Node)) {
-        // Check if the click is on a context menu or dropdown menu
-        const target = event.target as HTMLElement;
-        const isClickingOnContextMenu =
-          target.closest('[role="menu"]') ||
-          target.closest('[data-radix-popper-content-wrapper]');
-        const isClickingOnDropdown =
-          target.closest('[data-dropdown]') ||
-          target.closest('[role="listbox"]') ||
-          target.closest('[role="combobox"]');
+      // Check if the click is on a context menu or dropdown menu
+      const target = event.target as HTMLElement;
+      const isClickingOnDropdown =
+        target.closest('[data-dropdown]') ||
+        target.closest('[role="listbox"]') ||
+        target.closest('[role="combobox"]');
 
-        // If clicking on context menu items, don't clear anything
-        if (isClickingOnContextMenu) {
-          return;
-        }
+      // If clicking on drawer elements, don't clear anything
+      if (this.isDrawerOpenForAnySection()) {
+        return;
+      }
 
-        // If clicking on drawer elements, don't clear anything
-        if (this.isDrawerOpenForAnySection()) {
-          return;
-        }
+      // If context menu is open and we're clicking elsewhere (like dropdown),
+      // close the context menu but preserve selection temporarily
+      if (this.openContextMenuSection) {
+        // Use a small delay to allow the click handler to run first
+        this.contextMenuCloseScheduled = setTimeout(() => {
+          this.openContextMenuSection = null;
+          this.contextMenuCloseScheduled = null;
+        }, 0);
+        return;
+      }
 
-        // If context menu is open and we're clicking elsewhere (like dropdown),
-        // close the context menu but preserve selection temporarily
-        if (this.openContextMenuSection) {
-          // Use a small delay to allow the click handler to run first
-          this.contextMenuCloseScheduled = setTimeout(() => {
-            this.openContextMenuSection = null;
-            this.contextMenuCloseScheduled = null;
-          }, 0);
-          return;
-        }
+      // Don't clear selection if:
+      // - User is dragging
+      // - User is holding modifier keys (shift, ctrl, cmd)
+      // - Dropdown menu is open
+      // - Clicking on dropdown elements
+      if (
+        this.dragContentType ||
+        event.shiftKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        isClickingOnDropdown
+      ) {
+        return;
+      }
 
-        // Don't clear selection if:
-        // - User is dragging
-        // - User is holding modifier keys (shift, ctrl, cmd)
-        // - Dropdown menu is open
-        // - Clicking on dropdown elements
-        if (
-          this.dragContentType ||
-          event.shiftKey ||
-          event.ctrlKey ||
-          event.metaKey ||
-          isClickingOnDropdown
-        ) {
-          return;
-        }
+      // Normal click outside behavior - clear selection
+      const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+      const hoveredVideo = this.hoveredVideosBySection[sectionId];
 
-        // Normal click outside behavior - clear selection
-        const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
-        const hoveredVideo = this.hoveredVideosBySection[sectionId];
-
-        // Only clear if there are selected videos
-        if (selectedVideos.length > 0) {
-          this.selectedVideosBySection[sectionId] = hoveredVideo
-            ? [hoveredVideo]
-            : [];
-        }
+      // Only clear if there are selected videos
+      if (selectedVideos.length > 0) {
+        this.selectedVideosBySection[sectionId] = hoveredVideo
+          ? [hoveredVideo]
+          : [];
       }
     };
 

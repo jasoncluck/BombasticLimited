@@ -20,7 +20,7 @@ export type Playlist = {
   created_at: GetPlaylistDataResponse['playlist_created_at'];
   name: GetPlaylistDataResponse['playlist_name'];
   short_id: GetPlaylistDataResponse['playlist_short_id'];
-  created_by: GetPlaylistDataResponse['playlist_created_by'];
+  created_by: GetPlaylistDataResponse['playlist_created_by'] | null;
   description: GetPlaylistDataResponse['playlist_description'];
   image_url: GetPlaylistDataResponse['playlist_image_url'] | null;
   image_processing_status: GetPlaylistDataResponse['playlist_image_processing_status'];

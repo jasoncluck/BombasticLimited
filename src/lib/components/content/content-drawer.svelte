@@ -11,7 +11,6 @@
     handleAddVideosToPlaylist,
     handleRemoveVideosFromPlaylist,
     handleUpdatePlaylistImage,
-    handleDeletePlaylist,
     handleUpdatePlaylistVideoPosition,
   } from '../playlist/playlist-service';
   import type { Snippet } from 'svelte';
@@ -34,7 +33,7 @@
     TimerReset,
   } from '@lucide/svelte';
   import { SOURCE_INFO } from '$lib/constants/source';
-  import { goto, invalidate } from '$app/navigation';
+  import { invalidate } from '$app/navigation';
   import { page } from '$app/state';
   import FullHeightDrawer from './drawer/full-height-drawer.svelte';
   import EditListDrawer from './drawer/edit-list-drawer.svelte';
@@ -456,29 +455,10 @@
           <Button
             class="drawer-button"
             variant="ghost"
-            onclick={async () => {
+            onclick={() => {
               // Check if it's a public playlist
-              if (playlist.type === 'Public') {
-                // Show confirmation drawer for public playlists
-                showDeleteDrawer = true;
-                contentState.openDrawerSection = null;
-              } else {
-                // Delete private playlist immediately
-                const data = await handleDeletePlaylist({
-                  playlist,
-                  sidebarState,
-                  supabase,
-                  session,
-                });
-
-                if (
-                  !data?.error &&
-                  page.url.pathname === `/playlist/${playlist.short_id}`
-                ) {
-                  goto('/');
-                }
-                clearSelectionAfterAction();
-              }
+              showDeleteDrawer = true;
+              contentState.openDrawerSection = null;
             }}
           >
             <CircleMinus class="drawer-icon" />

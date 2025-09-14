@@ -276,7 +276,6 @@ export async function handleUpdatePlaylistPosition({
 
 export async function handleFollowPlaylist({
   playlist,
-  position,
   sidebarState,
   contentFilter,
   supabase,
@@ -301,7 +300,6 @@ export async function handleFollowPlaylist({
 
   const { error } = await followPlaylist({
     playlistId: playlist.id,
-    position,
     supabase,
   });
 

@@ -124,10 +124,7 @@
 
   onMount(() => {
     if (contentRef) {
-      clickOutsideCleanup = contentState.setupClickOutsideListener(
-        contentRef,
-        sectionId
-      );
+      clickOutsideCleanup = contentState.setupClickOutsideListener(sectionId);
     }
 
     // Cleanup function for when component unmounts
@@ -207,67 +204,51 @@
         {...restProps}
         class="flex flex-col gap-5 overflow-x-clip"
       >
-        <!-- Table view for small screens (up to sm breakpoint) -->
-        <div class="sm:hidden">
+        <!-- User preference for larger screens (sm and above) -->
+        {#if userProfile?.content_display === 'TABLE' || !mediaQueryState.isSm}
           <ContentTable
             {videos}
             {contentFilter}
             {videosCount}
+            {allowVideoReorder}
             {columns}
             {playlist}
             {sectionId}
             {supabase}
             {session}
           />
-        </div>
-
-        <!-- User preference for larger screens (sm and above) -->
-        <div class="hidden sm:block">
-          {#if userProfile?.content_display === 'TABLE'}
-            <ContentTable
-              {videos}
-              {contentFilter}
-              {videosCount}
-              {allowVideoReorder}
-              {columns}
-              {playlist}
-              {sectionId}
-              {supabase}
-              {session}
-            />
-          {:else if tilesDisplay === 'CAROUSEL'}
-            <ContentCarousel
+        {:else if tilesDisplay === 'CAROUSEL'}
+          <ContentCarousel
+            {videos}
+            {videosCount}
+            {playlists}
+            {playlist}
+            {isContinueVideos}
+            {contentFilter}
+            bind:carouselState
+            {sectionId}
+            {supabase}
+            {session}
+            {allowVideoReorder}
+          />
+        {:else}
+          <div class="mb-20">
+            <ContentTiles
               {videos}
               {videosCount}
               {playlists}
               {playlist}
               {isContinueVideos}
+              {allowVideoReorder}
               {contentFilter}
-              bind:carouselState
               {sectionId}
               {supabase}
               {session}
-              {allowVideoReorder}
             />
-          {:else}
-            <div class="mb-20">
-              <ContentTiles
-                {videos}
-                {videosCount}
-                {playlists}
-                {playlist}
-                {isContinueVideos}
-                {allowVideoReorder}
-                {contentFilter}
-                {sectionId}
-                {supabase}
-                {session}
-              />
-            </div>
-          {/if}
-        </div>
-      </div></ContentDrawer
-    >
+          </div>
+        {/if}
+      </div>
+    </ContentDrawer>
   </ContentContextMenu>
 
   {#if currentPage && numPages > 1}

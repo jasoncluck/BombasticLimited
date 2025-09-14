@@ -17,12 +17,14 @@ const config = {
   kit: {
     adapter: adapter({
       csp: {
-        mode: 'nonce', // Changed from 'hash' - try this first, then 'auto' if needed
+        mode: 'auto',
         directives: {
           'default-src': ['self'],
           'script-src': [
             'self',
-            // AdSense & Google Ad domains (complete list)
+            // PostHog analytics
+            'https://alpine.bombastic.ltd',
+            // AdSense & Google Ad domains
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
             'https://www.googlesyndication.com',
@@ -31,9 +33,9 @@ const config = {
             'https://www.gstatic.com',
             'https://pagead2.googlesyndication.com',
             'https://securepubads.g.doubleclick.net',
-            'https://partner.googleadservices.com', // Added
-            'https://googletagservices.com', // Added
-            'https://fundingchoicesmessages.google.com', // Added
+            'https://partner.googleadservices.com',
+            'https://googletagservices.com',
+            'https://fundingchoicesmessages.google.com',
             // YouTube domains
             'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
@@ -64,8 +66,8 @@ const config = {
             'https://tpc.googlesyndication.com',
             'https://securepubads.g.doubleclick.net',
             'https://pubads.g.doubleclick.net',
-            'https://googletagservices.com', // Added
-            'https://fundingchoicesmessages.google.com', // Added
+            'https://googletagservices.com',
+            'https://fundingchoicesmessages.google.com',
             // YouTube domains
             'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
@@ -86,11 +88,13 @@ const config = {
             'https://www.googlesyndication.com',
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
-            'https://googletagservices.com', // Added
+            'https://googletagservices.com',
           ],
           'frame-ancestors': ['self'],
           'connect-src': [
             'self',
+            // PostHog analytics
+            'https://alpine.bombastic.ltd',
             // AdSense & Google Ad domains
             'https://www.google.com',
             'https://googleads.g.doubleclick.net',
@@ -102,9 +106,9 @@ const config = {
             'https://securepubads.g.doubleclick.net',
             'https://pagead2.googlesyndication.com',
             'https://pubads.g.doubleclick.net',
-            'https://partner.googleadservices.com', // Added
-            'https://googletagservices.com', // Added
-            'https://fundingchoicesmessages.google.com', // Added
+            'https://partner.googleadservices.com',
+            'https://googletagservices.com',
+            'https://fundingchoicesmessages.google.com',
             // YouTube domains
             'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
@@ -141,7 +145,7 @@ const config = {
             'https://pagead2.googlesyndication.com',
             'https://www.gstatic.com',
             'https://pubads.g.doubleclick.net',
-            'https://partner.googleadservices.com', // Added
+            'https://partner.googleadservices.com',
             // YouTube domains
             'https://i.ytimg.com',
             'https://s.ytimg.com',
@@ -180,7 +184,7 @@ const config = {
             'https://www.googlesyndication.com',
             'https://www.gstatic.com',
             'https://www.youtube-nocookie.com',
-            'https://googletagservices.com', // Added
+            'https://googletagservices.com',
             // Twitch domains
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',

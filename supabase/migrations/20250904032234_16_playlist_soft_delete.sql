@@ -206,8 +206,11 @@ SET
   search_path = '' LANGUAGE sql AS $$
   SELECT
     p.id,
-    -- Set created_by to NULL if playlist is deleted
-    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE p.created_by END as created_by,
+    -- Return NULL for created_by when playlist is deleted to avoid UUID casting issues
+    CASE 
+      WHEN p.deleted_at IS NOT NULL THEN NULL::uuid 
+      ELSE p.created_by 
+    END as created_by,
     p.created_at,
     p.name,
     p.short_id,
@@ -224,24 +227,18 @@ SET
     p.thumbnail_url,
     p.duration_seconds,
     p.deleted_at,
-    -- Set profile info to NULL if playlist is deleted
-    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
-    CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
+    -- Only join profiles when created_by is NOT NULL
+    prof.username AS profile_username,
+    prof.avatar_url AS profile_avatar_url,
     up.sorted_by,
     up.sort_order,
     up.playlist_position,
     up.added_at
   FROM public.user_playlists up
   JOIN public.playlists p ON up.id = p.id
-  LEFT JOIN public.profiles prof ON p.created_by = prof.id
+  -- Only join profiles when created_by is NOT NULL to avoid UUID casting issues
+  LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.created_by IS NOT NULL
   WHERE up.user_id = auth.uid()
-    AND (
-      -- Show non-deleted playlists to everyone (owner or follower)
-      p.deleted_at IS NULL
-      OR 
-      -- Show deleted playlists ONLY to followers (not to the creator who deleted it)
-      (p.deleted_at IS NOT NULL AND p.created_by != auth.uid())
-    )
   ORDER BY up.playlist_position ASC;
 $$;
 
