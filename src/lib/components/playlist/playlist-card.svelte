@@ -18,7 +18,7 @@
 
 <a
   class="hover:bg-secondary/50 grid transform cursor-pointer grid-cols-[4rem_1fr] items-center
-      gap-4 rounded p-3 hover:brightness-110"
+      gap-4 rounded hover:brightness-110 sm:p-3"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.image_url}
