@@ -228,7 +228,7 @@
               {#if isPlaylistOwner}
                 <button
                   type="button"
-                  class="mb-2 flex w-full cursor-pointer items-start border-none bg-transparent p-0 text-left transition-opacity hover:opacity-80"
+                  class="mb-2 flex w-full max-w-xl cursor-pointer items-start border-none bg-transparent p-0 text-left transition-opacity hover:opacity-80"
                   onclick={handleEditClick}
                   aria-label="Edit playlist description"
                 >
