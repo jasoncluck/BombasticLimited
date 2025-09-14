@@ -663,6 +663,7 @@ export class NavigationStateClass implements NavigationState {
     // Set up preloading at half the debounce time if search value is valid for navigation
     if (searchValue.length >= 2) {
       this.preloadTimeout = window.setTimeout(() => {
+        console.log('preloading');
         // Only preload if the search value hasn't changed and timestamp is still current
         if (this.searchInputValue.trim()) {
           const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
