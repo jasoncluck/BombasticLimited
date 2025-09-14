@@ -4,7 +4,7 @@ BEGIN;
 
 -- Create the cleanup queue table
 CREATE TABLE IF NOT EXISTS public.playlist_cleanup_queue (
-  playlist_id bigint PRIMARY KEY REFERENCES public.playlists (id) ON DELETE CASCADE,
+  playlist_id bigint PRIMARY KEY REFERENCES public.playlists (id),
   cleanup_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   processed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
