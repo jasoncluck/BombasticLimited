@@ -238,7 +238,7 @@
                 </button>
               {:else}
                 <p
-                  class="text-muted-foreground my-2 text-left text-sm break-all"
+                  class="text-muted-foreground mb-2 text-left text-sm break-all"
                 >
                   {playlist.description}
                 </p>
