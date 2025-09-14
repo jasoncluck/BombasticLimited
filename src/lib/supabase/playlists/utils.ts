@@ -103,7 +103,7 @@ export function isUserPlaylist(obj: unknown): obj is UserPlaylist {
     typeof obj.name === 'string' &&
     typeof obj.short_id === 'string' &&
     typeof obj.created_at === 'string' &&
-    (typeof obj.created_by === 'string' || obj.created_at === null) &&
+    (typeof obj.created_by === 'string' || obj.created_by === null) &&
     (typeof obj.description === 'string' || obj.description === null) &&
     'image_properties' in obj &&
     (typeof obj.image_url === 'string' || obj.image_url === null) &&

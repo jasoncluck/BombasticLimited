@@ -276,7 +276,6 @@ export async function handleUpdatePlaylistPosition({
 
 export async function handleFollowPlaylist({
   playlist,
-  position,
   sidebarState,
   contentFilter,
   supabase,
