@@ -32,6 +32,20 @@ export default [
     },
   },
   {
+    files: ['**/*.svelte.ts'],
+    languageOptions: {
+      parser: ts.parser,
+      parserOptions: {
+        ecmaVersion: 2022,
+        sourceType: 'module',
+      },
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+  },
+  {
     // Disable specific rules
     rules: {
       'svelte/no-navigation-without-resolve': 'off',

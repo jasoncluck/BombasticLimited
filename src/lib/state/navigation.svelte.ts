@@ -9,7 +9,6 @@ import type { UserProfile } from '$lib/supabase/user-profiles';
 import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
-import { page } from '$app/state';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -275,7 +274,24 @@ export class NavigationStateClass implements NavigationState {
    */
   syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
-    this.searchQuery = urlSearchQuery;
+    const now = Date.now();
+
+    // Only update if:
+    // 1. Force is true (initial page load/restore), OR
+    // 2. All of the following are true:
+    //    - URL search query is different from current state
+    //    - We're not currently searching (no pending navigation)
+    //    - Enough time has passed since the last user input (1000ms grace period)
+    const timeSinceLastInput = now - this.lastUserInputTimestamp;
+    const shouldUpdate =
+      force ||
+      (urlSearchQuery !== this.searchQuery &&
+        !this.isSearching &&
+        timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
+
+    if (shouldUpdate) {
+      this.searchQuery = urlSearchQuery;
+    }
   };
 
   // Initialize effects (should be called when component is mounted)
@@ -624,19 +640,12 @@ export class NavigationStateClass implements NavigationState {
       this.preloadTimeout = null;
     }
 
-    // Capture the search value and timestamp at the time of creating the debounced function
-    const capturedSearchValue = searchValue;
-    const capturedTimestamp = searchTimestamp;
-
     // Set up preloading at half the debounce time if search value is valid for navigation
-    if (capturedSearchValue.length >= 2) {
+    if (searchValue.length >= 2) {
       this.preloadTimeout = window.setTimeout(() => {
         // Only preload if the search value hasn't changed and timestamp is still current
-        if (
-          this.searchQuery.trim() === capturedSearchValue &&
-          this.currentSearchTimestamp === capturedTimestamp
-        ) {
-          const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
+        if (this.searchQuery.trim()) {
+          const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
           preloadData(searchUrl);
         }
       }, this.config.preloadDebounceMs);
@@ -644,11 +653,8 @@ export class NavigationStateClass implements NavigationState {
 
     // Always use debounced search for all cases (including empty)
     this.currentDebouncedSearch = debounce(() => {
-      if (
-        this.searchQuery.trim() === capturedSearchValue &&
-        this.currentSearchTimestamp === capturedTimestamp
-      ) {
-        this.searchRedirect(e, capturedSearchValue, capturedTimestamp);
+      if (this.searchQuery.trim() === searchValue) {
+        this.searchRedirect(e, searchValue);
       }
     }, this.config.searchDebounceMs);
 
