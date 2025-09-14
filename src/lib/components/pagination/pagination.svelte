@@ -1,9 +1,8 @@
 <script lang="ts">
   import * as Pagination from '$lib/components/ui/pagination/index.js';
   import { preloadData } from '$app/navigation';
-  import { page } from '$app/state';
   import { generatePaginationUrl } from './pagination.js';
-  import { MediaQuery, SvelteSet } from 'svelte/reactivity';
+  import { MediaQuery } from 'svelte/reactivity';
 
   let {
     count,
@@ -24,21 +23,6 @@
   // Track preloaded pages to avoid duplicate preloading
   let preloadedPages = $state(new Set<number>());
 
-  // Sync currentPage with URL parameters
-  $effect(() => {
-    const urlPage = parseInt(page.url.searchParams.get('page') || '1', 10);
-    if (urlPage !== currentPage && urlPage > 0) {
-      currentPage = urlPage;
-    }
-  });
-
-  // Reset preloaded pages when current page changes
-  $effect(() => {
-    // Clear preloaded pages when currentPage changes to avoid stale cache
-    preloadedPages.clear();
-    preloadedPages = new SvelteSet<number>();
-  });
-
   // Preload a specific page
   async function preloadPage(pageNum: number): Promise<void> {
     if (preloadedPages.has(pageNum) || pageNum === currentPage) return;
@@ -48,7 +32,7 @@
         url: new URL(window.location.href),
         pageNum,
       });
-      preloadData(url);
+      await preloadData(url);
       preloadedPages.add(pageNum);
     } catch (error) {
       // Silently fail if preloading doesn't work
