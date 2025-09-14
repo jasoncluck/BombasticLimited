@@ -195,6 +195,7 @@ SET
 DECLARE
     user_id uuid;
     deleted_count integer;
+    playlist_record RECORD;
 BEGIN
     -- Get user ID once
     user_id := auth.uid();
@@ -205,6 +206,24 @@ BEGIN
     
     -- Lock operations for this user to prevent concurrent modifications
     PERFORM pg_advisory_xact_lock(hashtext('user_lifecycle_operations_' || user_id::text));
+    
+    -- Process all playlists owned by this user before deletion
+    FOR playlist_record IN 
+        SELECT id, name, type, short_id, created_by, deleted_at
+        FROM public.playlists 
+        WHERE created_by = user_id 
+        AND deleted_at IS NULL  -- Only process non-deleted playlists
+    LOOP
+        -- Simulate the playlist deletion trigger by updating deleted_at
+        -- This will trigger notify_playlist_deletion if it's set up as a trigger
+        UPDATE public.playlists 
+        SET deleted_at = NOW() 
+        WHERE id = playlist_record.id;
+        
+        -- Log for debugging
+        RAISE NOTICE 'Marked playlist % (%) for deletion before user deletion', 
+            playlist_record.name, playlist_record.id;
+    END LOOP;
     
     -- Delete user and check result in one operation
     DELETE FROM auth.users WHERE id = user_id;
