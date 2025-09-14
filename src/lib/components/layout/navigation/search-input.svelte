@@ -18,6 +18,6 @@
     oninput={(e) => navigationState.handleSearch(e)}
     placeholder="Search"
     class={className}
-    bind:value={navigationState.searchQuery}
+    bind:value={navigationState.searchInputValue}
   />
 </div>

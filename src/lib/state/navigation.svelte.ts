@@ -59,8 +59,9 @@ export interface NavigationState {
   isNavigating: boolean;
   navigationItems: NavigationItem[];
 
-  // Search state
-  searchQuery: string;
+  // Search state - separated into input value and URL value
+  searchInputValue: string; // What the user is actually typing
+  searchQuery: string; // What's in the URL/navigation state
   isSearching: boolean;
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
   searchAbortController: AbortController | null;
@@ -88,6 +89,7 @@ export interface NavigationState {
   handleNavigation: (event: Event, item: NavigationItem) => Promise<void>;
 
   // Search methods
+  setSearchInputValue: (value: string) => void;
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
   syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
@@ -146,7 +148,6 @@ export class NavigationStateClass implements NavigationState {
   private currentSearchTimestamp: number = 0;
   private lastNavigationTimestamp: number = 0;
   private lastUserInputTimestamp: number = 0;
-  private pendingNavigationUrl: string | null = null;
 
   // Core data state
   data = $state<NavigationData>({
@@ -170,8 +171,9 @@ export class NavigationStateClass implements NavigationState {
   // Notifications
   userNotifications = $state<NotificationWithMeta[]>([]);
 
-  // Search state
-  searchQuery = $state('');
+  // Search state - now separated
+  searchInputValue = $state(''); // What the user is typing in the input
+  searchQuery = $state(''); // What's in the URL/navigation state
   isSearching = $state(false);
   searchAbortController = $state<AbortController | null>(null);
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
@@ -270,29 +272,23 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Sync search query from URL - Fixed to prevent overwriting user input
+   * Sync search query from URL - now only updates the URL state, not the input value
    */
   syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
+    
+    // Always update the URL-based search query (this doesn't affect the input)
+    this.searchQuery = urlSearchQuery;
+    
+    // Only sync to input value on force (page load/restore) or when input is empty and not actively being typed in
     const now = Date.now();
-
-    // Only update if:
-    // 1. Force is true (initial page load/restore), OR
-    // 2. All of the following are true:
-    //    - URL search query is different from current state
-    //    - We're not currently searching (no pending navigation)
-    //    - Enough time has passed since the last user input (2000ms grace period)
-    //    - The URL doesn't match our pending navigation URL (prevents race conditions)
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
-    const shouldUpdate =
-      force ||
-      (urlSearchQuery !== this.searchQuery &&
-        !this.isSearching &&
-        timeSinceLastInput > 2000 && // Increased grace period
-        this.pendingNavigationUrl !== pathname); // Prevent race condition overwrites
-
-    if (shouldUpdate) {
-      this.searchQuery = urlSearchQuery;
+    const shouldSyncToInput = 
+      force || 
+      (this.searchInputValue === '' && timeSinceLastInput > 2000); // Only sync if input is empty and user hasn't typed recently
+    
+    if (shouldSyncToInput) {
+      this.searchInputValue = urlSearchQuery;
     }
   };
 
@@ -499,16 +495,20 @@ export class NavigationStateClass implements NavigationState {
   /**
    * Search methods
    */
+  setSearchInputValue = (value: string): void => {
+    this.searchInputValue = value;
+  };
+
   setSearchQuery = (value: string): void => {
     this.searchQuery = value;
   };
 
   // Clear all search-related state
   clearSearchQuery = (): void => {
+    this.searchInputValue = '';
     this.searchQuery = '';
     this.currentSearchTimestamp = 0;
     this.lastUserInputTimestamp = 0;
-    this.pendingNavigationUrl = null;
 
     // Cancel any pending searches
     if (this.currentDebouncedSearch?.isPending) {
@@ -551,7 +551,7 @@ export class NavigationStateClass implements NavigationState {
 
     // Verify that the current input value still matches what we expect
     // This prevents stale navigations when user has typed new content
-    if (this.searchQuery.trim() !== searchValue) {
+    if (this.searchInputValue.trim() !== searchValue) {
       return e;
     }
 
@@ -564,11 +564,7 @@ export class NavigationStateClass implements NavigationState {
     this.isSearching = true;
 
     try {
-      let targetUrl: string;
-
       if (searchValue === '') {
-        targetUrl = '/';
-
         // Before navigating to home, check if user has started typing something new
         // Add a small delay to check if the search state has changed
         await new Promise((resolve) => setTimeout(resolve, 10));
@@ -576,48 +572,34 @@ export class NavigationStateClass implements NavigationState {
         // If navigation timestamp is outdated or user has started typing, abort
         if (
           navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchQuery.trim() !== ''
+          this.searchInputValue.trim() !== ''
         ) {
           return e;
         }
-      } else if (searchValue.length >= 2) {
-        targetUrl = `/search/${encodeURIComponent(searchValue)}`;
 
+        // Only navigate to "/" if we're still in the empty state
+        await goto(`/`, { keepFocus: true, replaceState: false });
+      } else if (searchValue.length >= 2) {
         // Check again before navigation for non-empty searches
         if (
           navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchQuery.trim() !== searchValue
+          this.searchInputValue.trim() !== searchValue
         ) {
           return e;
         }
-      } else {
-        // For single characters (length === 1), do nothing - stay on current page
-        return e;
-      }
 
-      // Track pending navigation to prevent URL sync from overwriting user input
-      this.pendingNavigationUrl = targetUrl;
+        // Only navigate to search if 2+ characters
+        // Create new abort controller for this search
+        this.searchAbortController = new AbortController();
 
-      // Create new abort controller for this search
-      this.searchAbortController = new AbortController();
-
-      if (searchValue === '') {
-        // Only navigate to "/" if we're still in the empty state
-        await goto(targetUrl, { keepFocus: true, replaceState: false });
-      } else {
         // Use replaceState: true to avoid creating new history entries for search
-        await goto(targetUrl, {
+        await goto(`/search/${encodeURIComponent(searchValue)}`, {
           keepFocus: true,
           replaceState: true,
         });
       }
-
-      // Clear pending navigation after successful navigation
-      this.pendingNavigationUrl = null;
+      // For single characters (length === 1), do nothing - stay on current page
     } catch (error) {
-      // Clear pending navigation on error
-      this.pendingNavigationUrl = null;
-
       // Don't log abort errors - they're expected
       if ((error as Error)?.name !== 'AbortError') {
         console.error('Search navigation error:', error);
@@ -638,8 +620,8 @@ export class NavigationStateClass implements NavigationState {
     const searchValue = input.value.trim();
     const searchTimestamp = Date.now();
 
-    // Update the searchQuery state to match the input
-    this.searchQuery = input.value;
+    // Update the input value state to match the input
+    this.searchInputValue = input.value;
     this.currentSearchTimestamp = searchTimestamp;
     this.lastUserInputTimestamp = searchTimestamp; // Track when user last typed
 
@@ -664,7 +646,7 @@ export class NavigationStateClass implements NavigationState {
     if (searchValue.length >= 2) {
       this.preloadTimeout = window.setTimeout(() => {
         // Only preload if the search value hasn't changed and timestamp is still current
-        if (this.searchQuery.trim()) {
+        if (this.searchInputValue.trim()) {
           const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
           preloadData(searchUrl);
         }
@@ -673,8 +655,8 @@ export class NavigationStateClass implements NavigationState {
 
     // Always use debounced search for all cases (including empty)
     this.currentDebouncedSearch = debounce(() => {
-      if (this.searchQuery.trim() === searchValue) {
-        this.searchRedirect(e, searchValue, searchTimestamp);
+      if (this.searchInputValue.trim() === searchValue) {
+        this.searchRedirect(e, searchValue);
       }
     }, this.config.searchDebounceMs);
 
@@ -864,13 +846,13 @@ export class NavigationStateClass implements NavigationState {
     this.#hasLoadedOnce = false;
     this.isNavigating = false;
     this.isSearching = false;
+    this.searchInputValue = '';
     this.searchQuery = '';
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
     this.currentSearchTimestamp = 0;
     this.lastNavigationTimestamp = 0;
     this.lastUserInputTimestamp = 0;
-    this.pendingNavigationUrl = null;
   }
 }
 
