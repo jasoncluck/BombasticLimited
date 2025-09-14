@@ -18,7 +18,7 @@
 
 <a
   class="hover:bg-secondary/50 grid transform cursor-pointer grid-cols-[4rem_1fr] items-center
-      gap-4 rounded p-3 hover:brightness-110"
+      gap-4 rounded hover:brightness-110 sm:p-3"
   href={`/playlist/${playlist.short_id}`}
 >
   {#if playlist.image_url}
@@ -64,7 +64,7 @@
           </p>
         </div>
       {:else if playlist.profile_username}
-        <div class="mt-2 flex items-center gap-2">
+        <div class="flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
             <Avatar.Image
               src={playlist.profile_avatar_url}

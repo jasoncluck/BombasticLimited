@@ -112,7 +112,7 @@
           Playlists
         </a>
         <p
-          class="text-muted-foreground -mt-1 mb-2 ml-2 text-sm tracking-tight sm:ml-0"
+          class="text-muted-foreground -mt-1 mb-2 text-sm tracking-tight sm:ml-0"
         >
           {playlistsCount}
           {playlistsCount === 1 ? 'playlist' : 'playlists'}
