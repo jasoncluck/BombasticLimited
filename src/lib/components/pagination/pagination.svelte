@@ -23,6 +23,12 @@
   // Track preloaded pages to avoid duplicate preloading
   let preloadedPages = $state(new Set<number>());
 
+  // Track which buttons are currently being hovered
+  let hoveredButtons = $state(new Set<'prev' | 'next'>());
+
+  // Calculate max page for bounds checking
+  const maxPage = $derived(Math.ceil(count / perPage));
+
   // Preload a specific page
   async function preloadPage(pageNum: number): Promise<void> {
     if (preloadedPages.has(pageNum) || pageNum === currentPage) return;
@@ -50,8 +56,42 @@
     onPageChange(pageNum);
   }
 
-  // Calculate max page for bounds checking
-  const maxPage = $derived(Math.ceil(count / perPage));
+  // Handle prev button hover
+  function handlePrevHover(): void {
+    hoveredButtons.add('prev');
+    if (currentPage > 1) {
+      handlePageHover(currentPage - 1);
+    }
+  }
+
+  // Handle next button hover
+  function handleNextHover(): void {
+    hoveredButtons.add('next');
+    if (currentPage < maxPage) {
+      handlePageHover(currentPage + 1);
+    }
+  }
+
+  // Handle mouse leave for buttons
+  function handlePrevLeave(): void {
+    hoveredButtons.delete('prev');
+  }
+
+  function handleNextLeave(): void {
+    hoveredButtons.delete('next');
+  }
+
+  // Effect to preload when currentPage changes and buttons are still hovered
+  $effect(() => {
+    // When currentPage changes, check if prev/next buttons are still hovered
+    // and preload the new target pages
+    if (hoveredButtons.has('prev') && currentPage > 1) {
+      handlePageHover(currentPage - 1);
+    }
+    if (hoveredButtons.has('next') && currentPage < maxPage) {
+      handlePageHover(currentPage + 1);
+    }
+  });
 </script>
 
 <div class="flex w-full justify-center px-2">
@@ -67,8 +107,8 @@
         <Pagination.Item>
           <Pagination.PrevButton
             class="cursor-pointer"
-            onmouseenter={() =>
-              currentPage > 1 && handlePageHover(currentPage - 1)}
+            onmouseenter={handlePrevHover}
+            onmouseleave={handlePrevLeave}
           />
         </Pagination.Item>
         {#each pages as page (page.key)}
@@ -92,8 +132,8 @@
         <Pagination.Item>
           <Pagination.NextButton
             class="cursor-pointer"
-            onmouseenter={() =>
-              currentPage < maxPage && handlePageHover(currentPage + 1)}
+            onmouseenter={handleNextHover}
+            onmouseleave={handleNextLeave}
           />
         </Pagination.Item>
       </Pagination.Content>
