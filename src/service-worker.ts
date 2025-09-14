@@ -11,27 +11,31 @@ const sw = self as unknown as ServiceWorkerGlobalScope;
 
 // Simplified configuration focused on performance
 interface CacheConfig {
-  readonly maxConcurrentRequests: number;
-  readonly maxCacheSize: number;
+  readonly maxImageCacheSize: number;
   readonly maxCacheAgeMs: number;
-  readonly cleanupIntervalMs: number;
-  readonly requestTimeout: number;
+  readonly maxConcurrentRequests: number;
+  readonly batchTimeoutMs: number;
+  readonly maxBatchSize: number;
 }
 
-const CONFIG: CacheConfig = {
-  maxConcurrentRequests: 25, // Much higher for better parallelism
-  maxCacheSize: 5000,
+const CACHE_CONFIG: CacheConfig = {
+  maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
-  cleanupIntervalMs: 30 * 60 * 1000, // 30 minutes
-  requestTimeout: 15000, // 15 seconds
+  maxConcurrentRequests: 25, // High concurrency for fast loading
+  batchTimeoutMs: 200, // 200ms batch window as requested
+  maxBatchSize: 20, // Process up to 20 images per batch
 };
 
 // Cache names
-const STATIC_CACHE = `bombastic-static-${version}`;
-const IMAGE_CACHE = `bombastic-images-${version}`;
+const STATIC_CACHE = `bombastic-static-${version}` as const;
+const IMAGE_CACHE = `bombastic-images-${version}` as const;
 
-// Asset patterns
+// Static assets
 const STATIC_ASSETS: readonly string[] = [...build, ...files];
+const STATIC_EXTENSIONS =
+  /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
+
+// Image domains
 const IMAGE_DOMAINS = [
   'i.ytimg.com',
   'img.youtube.com',
@@ -43,7 +47,7 @@ const IMAGE_DOMAINS = [
 ] as const;
 
 // Supabase hostname
-const SUPABASE_HOST = (() => {
+const SUPABASE_HOSTNAME: string | null = (() => {
   try {
     return new URL(PUBLIC_SUPABASE_URL).hostname;
   } catch {
@@ -51,90 +55,79 @@ const SUPABASE_HOST = (() => {
   }
 })();
 
-// Simplified cache metadata
-interface CacheEntry {
-  url: string;
-  timestamp: number;
-  size: number;
-  hits: number;
+// Simple batch request interface
+interface BatchRequest {
+  readonly url: string;
+  readonly request: Request;
+  readonly timestamp: number;
+  resolve: (response: Response) => void;
+  reject: (error: Error) => void;
 }
 
-// Simple global state
+interface BatchGroup {
+  readonly id: string;
+  readonly requests: BatchRequest[];
+  readonly startTime: number;
+  timer?: ReturnType<typeof setTimeout>;
+}
+
+// Simplified global state
 interface ServiceWorkerState {
-  activeRequests: Set<string>;
-  requestQueue: Map<
-    string,
-    Array<{
-      resolve: (response: Response) => void;
-      reject: (error: Error) => void;
-    }>
-  >;
-  cacheMetadata: Map<string, CacheEntry>;
-  lastCleanup: number;
+  activeFetches: Set<string>;
+  currentBatch: BatchRequest[];
+  batchTimer?: ReturnType<typeof setTimeout>;
+  pendingBatches: BatchGroup[];
+  requestCount: number;
 }
 
 const state: ServiceWorkerState = {
-  activeRequests: new Set(),
-  requestQueue: new Map(),
-  cacheMetadata: new Map(),
-  lastCleanup: Date.now(),
+  activeFetches: new Set<string>(),
+  currentBatch: [],
+  pendingBatches: [],
+  requestCount: 0,
 };
+
+// Essential headers to preserve
+const ESSENTIAL_HEADERS = [
+  'content-type',
+  'content-length',
+  'cache-control',
+  'expires',
+  'last-modified',
+  'etag',
+  'access-control-allow-origin',
+] as const;
 
 // Utility functions
-const isImageUrl = (url: URL): boolean => {
-  const isImageDomain = IMAGE_DOMAINS.includes(url.hostname as any);
-  const isSupabaseImage =
-    SUPABASE_HOST &&
-    url.hostname === SUPABASE_HOST &&
-    url.pathname.includes('/storage/');
-
-  return isImageDomain || !!isSupabaseImage;
-};
-
-const isStaticAsset = (url: URL): boolean => {
+const isSupabaseImageUrl = (url: URL): boolean => {
+  if (!SUPABASE_HOSTNAME) return false;
   return (
-    url.origin === sw.location.origin &&
-    (STATIC_ASSETS.includes(url.pathname) ||
-      /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/.test(
-        url.pathname
-      ))
+    url.hostname === SUPABASE_HOSTNAME && url.pathname.includes('/storage/')
   );
 };
 
-const estimateSize = (response: Response): number => {
-  const contentLength = response.headers.get('content-length');
-  if (contentLength) {
-    const size = parseInt(contentLength, 10);
-    if (!isNaN(size) && size > 0) return size;
-  }
+const isImageUrl = (url: URL): boolean => {
+  return STATIC_EXTENSIONS.test(url.pathname);
+};
 
-  // Simple fallback estimation
-  const contentType = response.headers.get('content-type') || '';
-  if (contentType.includes('image/')) return 50000; // 50KB
-  if (contentType.includes('javascript')) return 100000; // 100KB
-  if (contentType.includes('css')) return 30000; // 30KB
-  return 10000; // 10KB default
+const shouldCacheAsImage = (url: URL): boolean => {
+  const isKnownImageDomain = (IMAGE_DOMAINS as readonly string[]).includes(
+    url.hostname
+  );
+  return (isKnownImageDomain && isImageUrl(url)) || isSupabaseImageUrl(url);
 };
 
 const createCachedResponse = (originalResponse: Response): Response => {
   const headers = new Headers();
 
   // Copy essential headers
-  const essentialHeaders = [
-    'content-type',
-    'content-length',
-    'cache-control',
-    'expires',
-    'last-modified',
-    'etag',
-  ];
+  for (const headerName of ESSENTIAL_HEADERS) {
+    const headerValue = originalResponse.headers.get(headerName);
+    if (headerValue) {
+      headers.set(headerName, headerValue);
+    }
+  }
 
-  essentialHeaders.forEach((header) => {
-    const value = originalResponse.headers.get(header);
-    if (value) headers.set(header, value);
-  });
-
-  // Add cache indicators
   headers.set('x-served-by', 'service-worker');
   headers.set('x-cache-status', 'HIT');
 
@@ -145,145 +138,192 @@ const createCachedResponse = (originalResponse: Response): Response => {
   });
 };
 
-// Core caching functions
+const createCorsRequest = (originalRequest: Request): Request => {
+  const url = new URL(originalRequest.url);
+
+  if (isSupabaseImageUrl(url)) {
+    return new Request(originalRequest.url, {
+      method: originalRequest.method,
+      headers: originalRequest.headers,
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'default',
+    });
+  }
+
+  return originalRequest;
+};
+
+// Smart batching system - groups requests that arrive within 200ms
+const addToBatch = (request: Request): Promise<Response> => {
+  const url = request.url;
+  const now = Date.now();
+
+  // Check if already being fetched (avoid duplicates)
+  if (state.activeFetches.has(url)) {
+    // Fall back to direct fetch for duplicate requests
+    return fetch(createCorsRequest(request));
+  }
+
+  return new Promise<Response>((resolve, reject) => {
+    const batchRequest: BatchRequest = {
+      url,
+      request,
+      timestamp: now,
+      resolve,
+      reject,
+    };
+
+    // Add to current batch
+    state.currentBatch.push(batchRequest);
+
+    // If this is the first request in the batch, start the timer
+    if (state.currentBatch.length === 1) {
+      state.batchTimer = setTimeout(() => {
+        processBatch();
+      }, CACHE_CONFIG.batchTimeoutMs);
+    }
+
+    // Process immediately if batch is full
+    if (state.currentBatch.length >= CACHE_CONFIG.maxBatchSize) {
+      if (state.batchTimer) {
+        clearTimeout(state.batchTimer);
+        state.batchTimer = undefined;
+      }
+      processBatch();
+    }
+  });
+};
+
+// Process the current batch
+const processBatch = (): void => {
+  if (state.currentBatch.length === 0) return;
+
+  // Move current batch to processing
+  const batchToProcess = [...state.currentBatch];
+  state.currentBatch = [];
+
+  if (state.batchTimer) {
+    clearTimeout(state.batchTimer);
+    state.batchTimer = undefined;
+  }
+
+  // Create batch group
+  const batchGroup: BatchGroup = {
+    id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+    requests: batchToProcess,
+    startTime: Date.now(),
+  };
+
+  state.pendingBatches.push(batchGroup);
+
+  // Process all requests in parallel
+  const batchPromises = batchToProcess.map(async (batchRequest) => {
+    const { url, request, resolve, reject } = batchRequest;
+
+    try {
+      // Mark as active
+      state.activeFetches.add(url);
+
+      const corsRequest = createCorsRequest(request);
+      const response = await fetch(corsRequest);
+
+      // Cache successful responses
+      if (response.ok && response.status === 200) {
+        cacheResponse(request, response.clone()).catch(() => {
+          // Silent fail on cache errors
+        });
+      }
+
+      resolve(response);
+    } catch (error) {
+      reject(error instanceof Error ? error : new Error('Fetch failed'));
+    } finally {
+      state.activeFetches.delete(url);
+    }
+  });
+
+  // Clean up batch group when all requests complete
+  Promise.allSettled(batchPromises).then(() => {
+    const batchIndex = state.pendingBatches.findIndex(
+      (b) => b.id === batchGroup.id
+    );
+    if (batchIndex !== -1) {
+      state.pendingBatches.splice(batchIndex, 1);
+    }
+  });
+};
+
+// Simple cache function
 const cacheResponse = async (
   request: Request,
   response: Response
 ): Promise<void> => {
   try {
     const cache = await caches.open(IMAGE_CACHE);
-    const clonedResponse = response.clone();
-
-    // Non-blocking cache write
-    cache.put(request, clonedResponse).catch(() => {
-      // Silent fail - don't block the response
-    });
-
-    // Update metadata
-    const entry: CacheEntry = {
-      url: request.url,
-      timestamp: Date.now(),
-      size: estimateSize(response),
-      hits: 1,
-    };
-
-    const existing = state.cacheMetadata.get(request.url);
-    if (existing) {
-      entry.hits = existing.hits + 1;
-    }
-
-    state.cacheMetadata.set(request.url, entry);
+    await cache.put(request, response);
   } catch (error) {
-    console.warn('Cache write failed:', error);
+    console.warn('Failed to cache response:', error);
   }
 };
 
-// Simplified request handling with automatic batching
-const handleImageRequest = async (request: Request): Promise<Response> => {
+// Main image caching function with batching
+const cacheImage = async (request: Request): Promise<Response> => {
+  const cache = await caches.open(IMAGE_CACHE);
+  const cached = await cache.match(request);
+
+  state.requestCount++;
+
+  // Serve from cache immediately if available (fastest path)
+  if (cached) {
+    return createCachedResponse(cached);
+  }
+
+  // Check current concurrency - if we're at the limit, use batching
+  if (state.activeFetches.size >= CACHE_CONFIG.maxConcurrentRequests) {
+    return addToBatch(request);
+  }
+
+  // For low concurrency situations, fetch immediately for lowest latency
   const url = request.url;
-
-  // Check cache first
-  try {
-    const cache = await caches.open(IMAGE_CACHE);
-    const cached = await cache.match(request);
-
-    if (cached) {
-      // Update hit count
-      const entry = state.cacheMetadata.get(url);
-      if (entry) {
-        entry.hits++;
-        entry.timestamp = Date.now();
-      }
-      return createCachedResponse(cached);
-    }
-  } catch (error) {
-    console.warn('Cache read failed:', error);
+  if (state.activeFetches.has(url)) {
+    return addToBatch(request); // Avoid duplicates
   }
-
-  // Handle concurrent requests to same URL
-  if (state.activeRequests.has(url)) {
-    return new Promise<Response>((resolve, reject) => {
-      const queue = state.requestQueue.get(url) || [];
-      queue.push({ resolve, reject });
-      state.requestQueue.set(url, queue);
-
-      // Timeout for queued requests
-      setTimeout(
-        () => reject(new Error('Request timeout')),
-        CONFIG.requestTimeout
-      );
-    });
-  }
-
-  // Respect concurrency limit
-  while (state.activeRequests.size >= CONFIG.maxConcurrentRequests) {
-    await new Promise((resolve) => setTimeout(resolve, 10));
-  }
-
-  // Mark as active
-  state.activeRequests.add(url);
 
   try {
-    // Create CORS-friendly request for Supabase
-    const fetchRequest =
-      SUPABASE_HOST && new URL(url).hostname === SUPABASE_HOST
-        ? new Request(url, {
-            method: request.method,
-            headers: request.headers,
-            mode: 'cors',
-            credentials: 'omit',
-          })
-        : request;
-
-    const response = await fetch(fetchRequest);
+    state.activeFetches.add(url);
+    const corsRequest = createCorsRequest(request);
+    const response = await fetch(corsRequest);
 
     // Cache successful responses
     if (response.ok && response.status === 200) {
-      await cacheResponse(request, response.clone());
-    }
-
-    // Resolve any queued requests
-    const queue = state.requestQueue.get(url);
-    if (queue) {
-      queue.forEach(({ resolve }) => resolve(response.clone()));
-      state.requestQueue.delete(url);
+      cacheResponse(request, response.clone()).catch(() => {
+        // Silent fail on cache errors
+      });
     }
 
     return response;
   } catch (error) {
-    // Reject queued requests
-    const queue = state.requestQueue.get(url);
-    if (queue) {
-      queue.forEach(({ reject }) =>
-        reject(error instanceof Error ? error : new Error('Fetch failed'))
-      );
-      state.requestQueue.delete(url);
-    }
-
-    throw error;
+    throw error instanceof Error ? error : new Error('Fetch failed');
   } finally {
-    state.activeRequests.delete(url);
+    state.activeFetches.delete(url);
   }
 };
 
-// Static asset handling
-const handleStaticAsset = async (request: Request): Promise<Response> => {
+// Simple static asset caching
+const cacheStaticAsset = async (request: Request): Promise<Response> => {
+  const cache = await caches.open(STATIC_CACHE);
+  const cached = await cache.match(request);
+
+  if (cached) {
+    return createCachedResponse(cached);
+  }
+
   try {
-    const cache = await caches.open(STATIC_CACHE);
-    const cached = await cache.match(request);
-
-    if (cached) {
-      return createCachedResponse(cached);
-    }
-
     const response = await fetch(request);
-    if (response.ok) {
-      // Non-blocking cache write
-      cache.put(request, response.clone()).catch(() => {
-        // Silent fail
-      });
+    if (response.ok && response.status === 200) {
+      await cache.put(request, response.clone());
     }
-
     return response;
   } catch (error) {
     throw new Error(
@@ -292,41 +332,32 @@ const handleStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Simple cleanup
+// Periodic cleanup (simplified)
 const performCleanup = async (): Promise<void> => {
   try {
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
 
-    if (keys.length <= CONFIG.maxCacheSize) return;
+    if (keys.length > CACHE_CONFIG.maxImageCacheSize) {
+      const now = Date.now();
+      const keysToDelete = keys.slice(
+        0,
+        keys.length - CACHE_CONFIG.maxImageCacheSize + 500
+      );
 
-    const now = Date.now();
-    const entries = Array.from(state.cacheMetadata.entries());
+      // Remove old entries in batches
+      for (let i = 0; i < keysToDelete.length; i += 20) {
+        const batch = keysToDelete.slice(i, i + 20);
+        await Promise.allSettled(batch.map((key) => cache.delete(key)));
 
-    // Sort by age and hit count (least valuable first)
-    entries.sort(([, a], [, b]) => {
-      const ageA = now - a.timestamp;
-      const ageB = now - b.timestamp;
-      const scoreA = a.hits / (ageA / 86400000); // hits per day
-      const scoreB = b.hits / (ageB / 86400000);
-      return scoreA - scoreB;
-    });
-
-    // Remove oldest/least used entries
-    const toRemove = entries.slice(0, keys.length - CONFIG.maxCacheSize + 100);
-
-    await Promise.all(
-      toRemove.map(async ([url]) => {
-        try {
-          await cache.delete(url);
-          state.cacheMetadata.delete(url);
-        } catch {
-          // Silent fail
+        // Yield to prevent blocking
+        if (i + 20 < keysToDelete.length) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
-      })
-    );
+      }
+    }
   } catch (error) {
-    console.warn('Cleanup failed:', error);
+    console.warn('Cache cleanup failed:', error);
   }
 };
 
@@ -343,33 +374,44 @@ sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  if (request.method !== 'GET') return;
+  if (request.method !== 'GET') {
+    return;
+  }
 
-  if (isStaticAsset(url)) {
-    event.respondWith(handleStaticAsset(request));
-  } else if (isImageUrl(url)) {
-    event.respondWith(handleImageRequest(request));
+  // Handle static assets
+  if (
+    url.origin === sw.location.origin &&
+    (STATIC_ASSETS.includes(url.pathname) ||
+      STATIC_EXTENSIONS.test(url.pathname))
+  ) {
+    event.respondWith(cacheStaticAsset(request));
+    return;
+  }
+
+  // Handle images with smart batching
+  if (shouldCacheAsImage(url)) {
+    event.respondWith(cacheImage(request));
+    return;
   }
 });
 
 // Message handling
-type MessageType =
+type ServiceWorkerMessageType =
   | 'SKIP_WAITING'
   | 'CLEAR_IMAGE_CACHE'
   | 'CLEAR_ALL_CACHE'
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
-  | 'GET_QUEUE_STATS'
-  | 'GET_PRELOAD_STATS'
-  | 'CANCEL_PENDING_REQUESTS';
+  | 'CANCEL_BATCHES';
 
 interface ServiceWorkerMessage {
-  type: MessageType;
+  type: ServiceWorkerMessageType;
   payload?: unknown;
 }
 
 sw.addEventListener('message', (event) => {
-  const { type } = (event.data as ServiceWorkerMessage) || {};
+  const messageData = event.data as ServiceWorkerMessage | undefined;
+  const { type } = messageData || {};
 
   switch (type) {
     case 'SKIP_WAITING':
@@ -387,53 +429,59 @@ sw.addEventListener('message', (event) => {
     case 'GET_CACHE_STATS':
       event.waitUntil(
         getCacheStats().then((stats) => {
-          if (event.ports?.[0]) {
+          if (event.ports && event.ports[0]) {
             event.ports[0].postMessage(stats);
           }
         })
       );
       break;
 
-    case 'GET_QUEUE_STATS':
-      if (event.ports?.[0]) {
-        event.ports[0].postMessage({
-          activeRequests: state.activeRequests.size,
-          queuedRequests: Array.from(state.requestQueue.values()).reduce(
-            (sum, queue) => sum + queue.length,
-            0
-          ),
-          maxConcurrentRequests: CONFIG.maxConcurrentRequests,
-        });
-      }
-      break;
-
     case 'FORCE_CLEANUP':
       event.waitUntil(performCleanup());
       break;
 
-    case 'CANCEL_PENDING_REQUESTS':
-      // Cancel all queued requests
-      state.requestQueue.forEach((queue) => {
-        queue.forEach(({ reject }) => reject(new Error('Request cancelled')));
-      });
-      state.requestQueue.clear();
+    case 'CANCEL_BATCHES':
+      cancelAllBatches();
+      break;
+
+    default:
       break;
   }
 });
 
-// Cache management functions
+// Helper functions
+const cancelAllBatches = (): void => {
+  // Clear current batch timer
+  if (state.batchTimer) {
+    clearTimeout(state.batchTimer);
+    state.batchTimer = undefined;
+  }
+
+  // Cancel all pending batch requests
+  state.currentBatch.forEach((request) => {
+    request.reject(new Error('Batch cancelled'));
+  });
+  state.currentBatch = [];
+
+  // Cancel pending batches
+  state.pendingBatches.forEach((batch) => {
+    batch.requests.forEach((request) => {
+      request.reject(new Error('Batch cancelled'));
+    });
+  });
+  state.pendingBatches = [];
+
+  state.activeFetches.clear();
+};
+
 const clearImageCache = async (): Promise<void> => {
+  cancelAllBatches();
   await caches.delete(IMAGE_CACHE);
-  state.cacheMetadata.clear();
-  state.requestQueue.clear();
-  state.activeRequests.clear();
 };
 
 const clearAllCaches = async (): Promise<void> => {
+  cancelAllBatches();
   await Promise.all([caches.delete(STATIC_CACHE), caches.delete(IMAGE_CACHE)]);
-  state.cacheMetadata.clear();
-  state.requestQueue.clear();
-  state.activeRequests.clear();
 };
 
 const getCacheStats = async () => {
@@ -445,31 +493,26 @@ const getCacheStats = async () => {
     const imageCacheKeys = await imageCache.keys();
     const staticCacheKeys = await staticCache.keys();
 
-    const totalSize = Array.from(state.cacheMetadata.values()).reduce(
-      (sum, entry) => sum + entry.size,
-      0
-    );
-
     return {
       imageCache: {
         size: imageCacheKeys.length,
-        estimatedSizeMB: Math.round((totalSize / (1024 * 1024)) * 100) / 100,
-        entries: imageCacheKeys.map((req) => req.url),
+        maxSize: CACHE_CONFIG.maxImageCacheSize,
       },
       staticCache: {
         size: staticCacheKeys.length,
-        entries: staticCacheKeys.map((req) => req.url),
+      },
+      batching: {
+        activeFetches: state.activeFetches.size,
+        currentBatchSize: state.currentBatch.length,
+        pendingBatches: state.pendingBatches.length,
+        maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
+        batchTimeoutMs: CACHE_CONFIG.batchTimeoutMs,
+        maxBatchSize: CACHE_CONFIG.maxBatchSize,
       },
       performance: {
-        activeRequests: state.activeRequests.size,
-        queuedRequests: Array.from(state.requestQueue.values()).reduce(
-          (sum, queue) => sum + queue.length,
-          0
-        ),
-        maxConcurrentRequests: CONFIG.maxConcurrentRequests,
-        cacheUtilization: imageCacheKeys.length / CONFIG.maxCacheSize,
+        totalRequests: state.requestCount,
       },
-      config: CONFIG,
+      config: CACHE_CONFIG,
       allCaches,
     };
   } catch (error) {
@@ -479,32 +522,31 @@ const getCacheStats = async () => {
   }
 };
 
-// Preload critical assets
 const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
 
-  // Preload critical assets in parallel
+  // Preload the most critical assets (app CSS/JS)
   const criticalAssets = build.filter(
     (asset) =>
-      /\.(css|js)$/.test(asset) &&
-      (asset.includes('app.') || asset.includes('layout.'))
+      asset.includes('app.') &&
+      (asset.endsWith('.css') || asset.endsWith('.js'))
   );
 
-  await Promise.allSettled(
-    criticalAssets.map(async (asset) => {
+  const preloadPromises = criticalAssets.map(async (asset) => {
+    const cached = await cache.match(asset);
+    if (!cached) {
       try {
-        const cached = await cache.match(asset);
-        if (!cached) {
-          const response = await fetch(asset);
-          if (response.ok) {
-            await cache.put(asset, response);
-          }
+        const response = await fetch(asset);
+        if (response.ok) {
+          await cache.put(asset, response);
         }
       } catch (error) {
         console.warn(`Failed to preload ${asset}:`, error);
       }
-    })
-  );
+    }
+  });
+
+  await Promise.allSettled(preloadPromises);
 };
 
 const cleanupOldCaches = async (): Promise<void> => {
@@ -519,13 +561,5 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Periodic cleanup
-setInterval(() => {
-  const now = Date.now();
-  if (now - state.lastCleanup > CONFIG.cleanupIntervalMs) {
-    state.lastCleanup = now;
-    performCleanup().catch(() => {
-      // Silent fail
-    });
-  }
-}, CONFIG.cleanupIntervalMs);
+// Periodic maintenance
+setInterval(performCleanup, 15 * 60 * 1000); // Every 15 minutes
