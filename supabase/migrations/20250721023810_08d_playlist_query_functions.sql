@@ -318,8 +318,7 @@ BEGIN
       p.created_at,
       p.name,
       p.short_id,
-      -- Explicitly handle NULL created_by for soft-deleted playlists
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL::uuid ELSE p.created_by END as created_by,
+      p.created_by,
       p.description,
       public.select_best_image_format(
         p.image_avif_url,
@@ -332,9 +331,8 @@ BEGIN
       p.youtube_id,
       p.thumbnail_url,
       p.deleted_at,
-      -- Handle NULL profile data for soft-deleted playlists
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.username END AS profile_username,
-      CASE WHEN p.deleted_at IS NOT NULL THEN NULL ELSE prof.avatar_url END AS profile_avatar_url,
+      prof.username AS profile_username,
+      prof.avatar_url AS profile_avatar_url,
       COALESCE(up.sorted_by, 'playlistOrder'::public.playlist_sorted_by) as user_sorted_by,
       COALESCE(up.sort_order, 'ascending'::public.playlist_sort_order) as user_sort_order,
       -- Get total video count
@@ -345,10 +343,9 @@ BEGIN
         WHERE pv_count.playlist_id = p.id AND v_count.pending_delete = FALSE
       ) as video_count
     FROM public.playlists p
-    -- Safe LEFT JOIN that only joins when created_by is NOT NULL
+    -- Only join profiles when created_by is NOT NULL to avoid UUID casting issues
     LEFT JOIN public.profiles prof ON p.created_by = prof.id AND p.created_by IS NOT NULL
     LEFT JOIN public.user_playlists up ON up.id = p.id AND up.user_id = auth.uid()
-    -- Remove the deleted_at IS NULL condition to allow soft-deleted playlists
     WHERE p.short_id = p_short_id
   )
   SELECT * INTO playlist_record FROM playlist_data;

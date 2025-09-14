@@ -406,7 +406,6 @@ export async function getUserPlaylists({
   count: number | null;
   error: PostgrestError | null;
 }> {
-  console.log('JMC');
   const { data: claimsData, error: claimsError } =
     await supabase.auth.getClaims();
 
