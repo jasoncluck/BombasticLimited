@@ -541,7 +541,7 @@ export class NavigationStateClass implements NavigationState {
     // Clear typing timeout
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
-      this.typingTimeout = null;
+      this.typingTimeout = undefined;
     }
   };
 
@@ -855,7 +855,7 @@ export class NavigationStateClass implements NavigationState {
     // Clear typing timeout
     if (this.typingTimeout) {
       clearTimeout(this.typingTimeout);
-      this.typingTimeout = null;
+      this.typingTimeout = undefined;
     }
 
     // Reset all state
@@ -881,7 +881,7 @@ export class NavigationStateClass implements NavigationState {
   }
 
   // Add typing timeout property
-  private typingTimeout: ReturnType<typeof setTimeout> | null = null;
+  private typingTimeout: ReturnType<typeof setTimeout> | undefined;
 }
 
 const DEFAULT_KEY = '$_navigation_state';
