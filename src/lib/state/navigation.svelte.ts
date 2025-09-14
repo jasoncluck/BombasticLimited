@@ -275,14 +275,13 @@ export class NavigationStateClass implements NavigationState {
    * Sync search query from URL - now only updates the URL state, not the input value
    */
   syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
+    console.log('syncing now');
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
 
     // Always update the URL-based search query (this doesn't affect the input)
     this.searchQuery = urlSearchQuery;
 
     // Only sync to input value on force (page load/restore) or when input is empty and not actively being typed in
-    const now = Date.now();
-    const timeSinceLastInput = now - this.lastUserInputTimestamp;
     const shouldSyncToInput = force;
 
     if (shouldSyncToInput) {

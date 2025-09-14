@@ -37,10 +37,7 @@
   onMount(() => {
     // Force sync from URL on mount since this is a fresh page load
     if (searchString) {
-      navigationState.syncSearchQueryFromUrl(
-        `/search/${encodeURIComponent(searchString)}`,
-        true // Force sync on mount
-      );
+      navigationState.searchInputValue = searchString;
     }
   });
 
