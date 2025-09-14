@@ -14,7 +14,6 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
-  import { onMount } from 'svelte';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -32,14 +31,6 @@
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
   const navigationState = getNavigationState();
-
-  // Sync navigation state with the URL search parameter only when appropriate
-  onMount(() => {
-    // Force sync from URL on mount since this is a fresh page load
-    if (searchString) {
-      navigationState.searchInputValue = searchString;
-    }
-  });
 
   const sources = $derived(userProfile?.sources ?? SOURCES);
 

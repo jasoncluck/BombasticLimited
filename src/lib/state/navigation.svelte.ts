@@ -2,11 +2,9 @@ import { getContext, setContext } from 'svelte';
 import { goto } from '$app/navigation';
 import { invalidateAll } from '$app/navigation';
 import { showToast } from '$lib/state/notifications.svelte.js';
-import debounce from 'debounce';
 import type { SupabaseClient, Session } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { UserProfile } from '$lib/supabase/user-profiles';
-import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
 
@@ -45,7 +43,7 @@ export interface NavigationData {
 }
 
 /**
- * Navigation state interface
+ * Navigation state interface - simplified for search delegation
  */
 export interface NavigationState {
   // Core data state
@@ -59,12 +57,9 @@ export interface NavigationState {
   isNavigating: boolean;
   navigationItems: NavigationItem[];
 
-  // Search state - separated into input value and URL value
-  searchInputValue: string; // What the user is actually typing
-  searchQuery: string; // What's in the URL/navigation state
-  isSearching: boolean;
-  currentDebouncedSearch: ReturnType<typeof debounce> | null;
-  searchAbortController: AbortController | null;
+  // Simplified search state - URL tracking only
+  searchQuery: string; // What's in the URL
+  isSearching: boolean; // For UI feedback
 
   // User context
   session: Session | null;
@@ -79,18 +74,11 @@ export interface NavigationState {
 
   // Navigation methods
   handleLogout: () => Promise<void>;
-  searchRedirect: (
-    e: Event,
-    expectedValue?: string,
-    searchTimestamp?: number
-  ) => Promise<Event>;
-  handleSearch: (e: Event) => void;
+  goto: (url: string, opts?: any) => Promise<void>;
   handleHomeNavigation: (event: Event, href?: string) => Promise<void>;
   handleNavigation: (event: Event, item: NavigationItem) => Promise<void>;
 
-  // Search methods
-  setSearchInputValue: (value: string) => void;
-  setSearchQuery: (value: string) => void;
+  // Search methods - simplified
   clearSearchQuery: () => void;
   syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
 
@@ -137,17 +125,12 @@ export interface NavigationState {
 }
 
 /**
- * Navigation state class implementing the NavigationState interface
- * Centralizes navigation logic, state management, and user interactions
+ * Simplified navigation state class with search delegation
  */
 export class NavigationStateClass implements NavigationState {
   // Private tracking variables
   private refreshInterval: number | null = null;
   private lastRefreshTime: number = 0;
-  private preloadTimeout: number | null = null;
-  private currentSearchTimestamp: number = 0;
-  private lastNavigationTimestamp: number = 0;
-  private lastUserInputTimestamp: number = 0;
 
   // Core data state
   data = $state<NavigationData>({
@@ -171,12 +154,9 @@ export class NavigationStateClass implements NavigationState {
   // Notifications
   userNotifications = $state<NotificationWithMeta[]>([]);
 
-  // Search state - now separated
-  searchInputValue = $state(''); // What the user is typing in the input
-  searchQuery = $state(''); // What's in the URL/navigation state
-  isSearching = $state(false);
-  searchAbortController = $state<AbortController | null>(null);
-  currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
+  // Simplified search state - only URL tracking
+  searchQuery = $state(''); // What's in the URL
+  isSearching = $state(false); // For UI feedback only
 
   // Configuration
   config = $state<NavigationConfig>({
@@ -188,12 +168,12 @@ export class NavigationStateClass implements NavigationState {
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
-  // User context - now properly reactive
+  // User context
   session = $state<Session | null>(null);
   userProfile = $state<UserProfile | null>(null);
   supabase = $state<SupabaseClient<Database> | null>(null);
 
-  // Account drawer state (shared with user menu)
+  // Account drawer state
   openAccountDrawer = $state(false);
 
   constructor() {
@@ -231,12 +211,10 @@ export class NavigationStateClass implements NavigationState {
     if (!browser || this.refreshInterval) return;
 
     this.refreshInterval = window.setInterval(() => {
-      // Only refresh if we have a session and enough time has passed
       if (this.session && this.#hasLoadedOnce) {
         const now = Date.now();
         const timeSinceLastRefresh = now - this.lastRefreshTime;
 
-        // Ensure at least 4.5 minutes have passed since last refresh to avoid rapid refreshes
         if (timeSinceLastRefresh >= 4.5 * 60 * 1000) {
           this.loadDataInBackground();
           this.lastRefreshTime = now;
@@ -256,7 +234,7 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Extract search query from URL and update state
+   * Extract search query from URL
    */
   private extractSearchFromUrl(pathname: string): string {
     const searchMatch = pathname.match(/^\/search\/(.+?)(?:\/.*)?$/);
@@ -272,34 +250,27 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Sync search query from URL - now only updates the URL state, not the input value
+   * Simplified URL sync - just tracks URL state
    */
-  syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
-    console.log('syncing now');
+  syncSearchQueryFromUrl = (pathname: string): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
-
-    // Always update the URL-based search query (this doesn't affect the input)
     this.searchQuery = urlSearchQuery;
-
-    // Only sync to input value on force (page load/restore) or when input is empty and not actively being typed in
-    const shouldSyncToInput = force;
-
-    if (shouldSyncToInput) {
-      this.searchInputValue = urlSearchQuery;
-    }
   };
 
-  // Initialize effects (should be called when component is mounted)
+  // Simplified goto wrapper
+  goto = async (url: string, opts: any = {}) => {
+    await goto(url, opts);
+  };
+
+  // Initialize effects
   initializeEffects() {
     if (browser) {
-      // Initialize navigation items from data when loaded
       $effect(() => {
         if (this.data?.navigationItems) {
           this.navigationItems = [...this.data.navigationItems];
         }
       });
 
-      // Start/stop refresh interval based on session state
       $effect(() => {
         if (this.session && this.#hasLoadedOnce) {
           this.startRefreshInterval();
@@ -314,57 +285,40 @@ export class NavigationStateClass implements NavigationState {
     return this.#initialized;
   }
 
-  /**
-   * Initialize the navigation state. Should be called in onMount.
-   * Loads initial data and sets up any necessary listeners.
-   */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
       return () => {};
     }
 
-    // Load initial data
     await this.loadData();
     this.#initialized = true;
 
-    // Start refresh interval if we have a session
     if (this.session) {
       this.startRefreshInterval();
     }
 
-    // Return cleanup function
     return () => {
       this.cleanup();
     };
   };
 
-  /**
-   * Non-blocking initialization for faster UI loading.
-   * Marks as initialized immediately and loads data in background.
-   */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
       return () => {};
     }
 
-    // Mark as initialized immediately for UI purposes
     this.#initialized = true;
-    this.loading = false; // Allow UI to render
+    this.loading = false;
 
-    // Load data in background
     if (browser) {
       this.loadDataInBackground();
     }
 
-    // Return cleanup function
     return () => {
       this.cleanup();
     };
   };
 
-  /**
-   * Update user context (called by parent components)
-   */
   updateContext(updates: {
     session?: Session | null;
     userProfile?: UserProfile | null;
@@ -381,23 +335,14 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
-  /**
-   * Update the active route (should be called when route changes)
-   */
   updateActiveRoute(pathname: string): void {
     this.activeRoute = pathname;
   }
 
-  /**
-   * Get navigation item by ID
-   */
   getNavigationItem(id: string): NavigationItem | null {
     return this.navigationItems.find((item) => item.id === id) || null;
   }
 
-  /**
-   * Check if a navigation item is active
-   */
   isNavigationItemActive(item: NavigationItem): boolean {
     if (item.isActive) {
       return item.isActive(this.activeRoute);
@@ -405,9 +350,6 @@ export class NavigationStateClass implements NavigationState {
     return this.activeRoute === item.href;
   }
 
-  /**
-   * Handle home navigation with search query clearing
-   */
   async handleHomeNavigation(event: Event, href: string = '/'): Promise<void> {
     if (!browser) return;
 
@@ -415,9 +357,7 @@ export class NavigationStateClass implements NavigationState {
     this.isNavigating = true;
 
     try {
-      // Clear search query when navigating home
       this.clearSearchQuery();
-
       await goto(href, {
         replaceState: this.config.homeRouteReplaceState,
       });
@@ -428,9 +368,6 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
-  /**
-   * Generic navigation handler for other routes
-   */
   async handleNavigation(event: Event, item: NavigationItem): Promise<void> {
     if (!browser) return;
 
@@ -450,9 +387,6 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
-  /**
-   * Handle logout functionality
-   */
   async handleLogout(): Promise<void> {
     if (!this.supabase) {
       console.error('Supabase client not available for logout');
@@ -460,9 +394,7 @@ export class NavigationStateClass implements NavigationState {
     }
 
     try {
-      // Stop refresh interval on logout
       this.stopRefreshInterval();
-
       const { error } = await this.supabase.auth.signOut();
 
       if (error) {
@@ -472,216 +404,35 @@ export class NavigationStateClass implements NavigationState {
       }
 
       showToast('Logged out successfully', 'success');
-
-      // Invalidate all data and let SvelteKit handle the state updates
       this.refreshData();
       await invalidateAll();
-
-      // Navigate to home page
       await goto('/', { replaceState: true });
     } catch (error) {
       console.error('Logout error:', error);
       showToast('Error during logout', 'error');
-      // Fallback to page reload if invalidation fails
       if (browser && window) {
         window.location.href = '/';
       }
     }
   }
 
-  /**
-   * Search methods
-   */
-  setSearchInputValue = (value: string): void => {
-    this.searchInputValue = value;
-  };
-
-  setSearchQuery = (value: string): void => {
-    this.searchQuery = value;
-  };
-
-  // Clear all search-related state
+  // Simplified clear - just clears URL state
   clearSearchQuery = (): void => {
-    this.searchInputValue = '';
     this.searchQuery = '';
-    this.currentSearchTimestamp = 0;
-    this.lastUserInputTimestamp = 0;
-
-    // Cancel any pending searches
-    if (this.currentDebouncedSearch?.isPending) {
-      this.currentDebouncedSearch.clear();
-    }
-    if (this.searchAbortController) {
-      this.searchAbortController.abort();
-      this.searchAbortController = null;
-    }
-
-    // Clear any preload timeout
-    if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
-      this.preloadTimeout = null;
-    }
   };
 
-  async searchRedirect(
-    e: Event,
-    expectedValue?: string,
-    searchTimestamp?: number
-  ): Promise<Event> {
-    const input = e.target as HTMLInputElement;
-    const searchValue = input.value.trim();
-    const navigationTimestamp = Date.now();
-    this.lastNavigationTimestamp = navigationTimestamp;
-
-    // If an expected value was passed and current value doesn't match, abort
-    if (expectedValue !== undefined && searchValue !== expectedValue) {
-      return e;
-    }
-
-    // If this search is from an older timestamp, abort
-    if (
-      searchTimestamp !== undefined &&
-      searchTimestamp < this.currentSearchTimestamp
-    ) {
-      return e;
-    }
-
-    // Verify that the current input value still matches what we expect
-    // This prevents stale navigations when user has typed new content
-    if (this.searchInputValue.trim() !== searchValue) {
-      return e;
-    }
-
-    // Cancel any pending search request
-    if (this.searchAbortController) {
-      this.searchAbortController.abort();
-      this.searchAbortController = null;
-    }
-
-    this.isSearching = true;
-
-    try {
-      if (searchValue === '') {
-        // Before navigating to home, check if user has started typing something new
-        // Add a small delay to check if the search state has changed
-        await new Promise((resolve) => setTimeout(resolve, 10));
-
-        // If navigation timestamp is outdated or user has started typing, abort
-        if (
-          navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchInputValue.trim() !== ''
-        ) {
-          return e;
-        }
-
-        // Only navigate to "/" if we're still in the empty state
-        await goto(`/`, { keepFocus: true, replaceState: false });
-      } else if (searchValue.length >= 2) {
-        // Check again before navigation for non-empty searches
-        if (
-          navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchInputValue.trim() !== searchValue
-        ) {
-          return e;
-        }
-
-        // Only navigate to search if 2+ characters
-        // Create new abort controller for this search
-        this.searchAbortController = new AbortController();
-
-        // Use replaceState: true to avoid creating new history entries for search
-        await goto(`/search/${encodeURIComponent(searchValue)}`, {
-          keepFocus: true,
-          replaceState: true,
-        });
-      }
-      // For single characters (length === 1), do nothing - stay on current page
-    } catch (error) {
-      // Don't log abort errors - they're expected
-      if ((error as Error)?.name !== 'AbortError') {
-        console.error('Search navigation error:', error);
-      }
-    } finally {
-      // Only clear isSearching if this is still the most recent navigation
-      if (navigationTimestamp >= this.lastNavigationTimestamp) {
-        this.isSearching = false;
-        this.searchAbortController = null;
-      }
-    }
-
-    return e;
-  }
-
-  handleSearch(e: Event) {
-    const input = e.target as HTMLInputElement;
-    const searchValue = input.value.trim();
-    const searchTimestamp = Date.now();
-
-    // Update the input value state to match the input
-    this.searchInputValue = input.value;
-    this.currentSearchTimestamp = searchTimestamp;
-    this.lastUserInputTimestamp = searchTimestamp; // Track when user last typed
-
-    // Cancel current debounced search if it exists
-    if (this.currentDebouncedSearch?.isPending) {
-      this.currentDebouncedSearch.clear();
-    }
-
-    // Cancel any ongoing search request
-    if (this.searchAbortController) {
-      this.searchAbortController.abort();
-      this.searchAbortController = null;
-    }
-
-    // Clear any existing preload timeout
-    if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
-      this.preloadTimeout = null;
-    }
-
-    // Set up preloading at half the debounce time if search value is valid for navigation
-    if (searchValue.length >= 2) {
-      this.preloadTimeout = window.setTimeout(() => {
-        // Only preload if the search value hasn't changed and timestamp is still current
-        if (this.searchInputValue.trim()) {
-          const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
-          preloadData(searchUrl);
-        }
-      }, this.config.preloadDebounceMs);
-    }
-
-    // Always use debounced search for all cases (including empty)
-    this.currentDebouncedSearch = debounce(() => {
-      if (this.searchInputValue.trim() === searchValue) {
-        this.searchRedirect(e, searchValue);
-      }
-    }, this.config.searchDebounceMs);
-
-    this.currentDebouncedSearch();
-  }
-
-  /**
-   * Toggle account drawer state
-   */
   toggleAccountDrawer(): void {
     this.openAccountDrawer = !this.openAccountDrawer;
   }
 
-  /**
-   * Set account drawer state
-   */
   setAccountDrawer(open: boolean): void {
     this.openAccountDrawer = open;
   }
 
-  /**
-   * Update configuration
-   */
   updateConfig(updates: Partial<NavigationConfig>): void {
     const oldInterval = this.config.notificationRefreshIntervalMs;
     this.config = { ...this.config, ...updates };
 
-    // If refresh interval changed, restart the interval
     if (
       updates.notificationRefreshIntervalMs &&
       updates.notificationRefreshIntervalMs !== oldInterval &&
@@ -692,9 +443,6 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
-  /**
-   * Add custom navigation item
-   */
   addNavigationItem(item: NavigationItem): void {
     const existingIndex = this.navigationItems.findIndex(
       (existing) => existing.id === item.id
@@ -707,16 +455,13 @@ export class NavigationStateClass implements NavigationState {
     }
   }
 
-  /**
-   * Remove navigation item
-   */
   removeNavigationItem(id: string): void {
     this.navigationItems = this.navigationItems.filter(
       (item) => item.id !== id
     );
   }
 
-  // Data loading methods
+  // Data loading methods (unchanged)
   async loadData(): Promise<void> {
     if (!browser) return;
 
@@ -750,7 +495,6 @@ export class NavigationStateClass implements NavigationState {
   async loadDataInBackground(): Promise<void> {
     if (!browser) return;
 
-    // Don't show loading state for background loads
     this.error = null;
 
     try {
@@ -780,7 +524,6 @@ export class NavigationStateClass implements NavigationState {
     await this.loadData();
   }
 
-  // Data validation helpers
   get isDataLoaded(): boolean {
     return this.data !== null && !this.loading;
   }
@@ -790,13 +533,9 @@ export class NavigationStateClass implements NavigationState {
   }
 
   get showPlaceholder(): boolean {
-    // Only show placeholder on initial load (initialized but never loaded data successfully)
     return this.#initialized && !this.#hasLoadedOnce && !this.hasError;
   }
 
-  /**
-   * Get button classes for navigation elements
-   */
   getNavigationButtonClasses(
     item: NavigationItem,
     additionalClasses: string = ''
@@ -809,29 +548,8 @@ export class NavigationStateClass implements NavigationState {
     return `${baseClasses} ${activeClasses} ${additionalClasses}`.trim();
   }
 
-  /**
-   * Cleanup method
-   */
   cleanup(): void {
-    // Stop refresh interval
     this.stopRefreshInterval();
-
-    // Cancel any pending search operations
-    if (this.currentDebouncedSearch?.isPending) {
-      this.currentDebouncedSearch.clear();
-    }
-    if (this.searchAbortController) {
-      this.searchAbortController.abort();
-      this.searchAbortController = null;
-    }
-
-    // Clear preload timeout
-    if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
-      this.preloadTimeout = null;
-    }
-
-    // Reset all state
     this.data = {
       userProfile: null,
       navigationItems: [],
@@ -843,29 +561,19 @@ export class NavigationStateClass implements NavigationState {
     this.#hasLoadedOnce = false;
     this.isNavigating = false;
     this.isSearching = false;
-    this.searchInputValue = '';
     this.searchQuery = '';
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
-    this.currentSearchTimestamp = 0;
-    this.lastNavigationTimestamp = 0;
-    this.lastUserInputTimestamp = 0;
   }
 }
 
 const DEFAULT_KEY = '$_navigation_state';
 
-/**
- * Set navigation state in context
- */
 export function setNavigationState(key = DEFAULT_KEY): NavigationStateClass {
   const navigationState = new NavigationStateClass();
   return setContext(key, navigationState);
 }
 
-/**
- * Get navigation state from context
- */
 export function getNavigationState(key = DEFAULT_KEY): NavigationState {
   return getContext<NavigationState>(key);
 }

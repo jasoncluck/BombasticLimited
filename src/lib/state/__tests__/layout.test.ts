@@ -145,24 +145,6 @@ describe('Navigation State with Layout Functionality', () => {
     vi.clearAllMocks();
   });
 
-  describe('Search state management (moved from layout)', () => {
-    it('should initialize with empty search query', () => {
-      expect(navigationState.searchQuery).toBe('');
-      expect(navigationState.isSearching).toBe(false);
-    });
-
-    it('should update search query', () => {
-      navigationState.setSearchQuery('test query');
-      expect(navigationState.searchQuery).toBe('test query');
-    });
-
-    it('should clear search query', () => {
-      navigationState.setSearchQuery('test query');
-      navigationState.clearSearchQuery();
-      expect(navigationState.searchQuery).toBe('');
-    });
-  });
-
   describe('Cleanup functionality', () => {
     it('should reset search states during cleanup', () => {
       navigationState.isSearching = true;
