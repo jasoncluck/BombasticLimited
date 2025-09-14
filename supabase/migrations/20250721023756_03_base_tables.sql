@@ -72,7 +72,6 @@ CREATE TABLE IF NOT EXISTS "public"."playlists" (
   CONSTRAINT "playlists_short_id_key" UNIQUE ("short_id")
 );
 
-
 -- Comments for clarity
 COMMENT ON COLUMN "public"."playlists"."thumbnail_url" IS 'Direct thumbnail URL for playlist display';
 
@@ -83,7 +82,6 @@ COMMENT ON COLUMN "public"."playlists"."image_webp_url" IS 'Supabase Storage pat
 COMMENT ON COLUMN "public"."playlists"."image_avif_url" IS 'Supabase Storage path for cropped playlist image in AVIF format';
 
 COMMENT ON COLUMN "public"."playlists"."image_processing_status" IS 'Status of background image processing for playlist thumbnail generation';
-
 
 -- Playlist videos table (without foreign keys initially)
 CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
@@ -96,7 +94,6 @@ CREATE TABLE IF NOT EXISTS "public"."playlist_videos" (
       1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1
   )
 );
-
 
 COMMENT ON COLUMN "public"."playlist_videos"."video_position" IS 'Ordering of videos added to playlist (1-indexed).';
 

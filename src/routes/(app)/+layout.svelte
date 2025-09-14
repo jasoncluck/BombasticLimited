@@ -394,11 +394,6 @@
 <svelte:head>
   <script src="https://www.youtube.com/iframe_api"></script>
   <script src="https://embed.twitch.tv/embed/v1.js"></script>
-  <script
-    async
-    src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2791319096648377"
-    crossorigin="anonymous"
-  ></script>
 </svelte:head>
 
 <!-- Main Application -->

@@ -387,7 +387,6 @@ BEGIN
 END;
 $$;
 
-
 -- Optimized function to initialize playlist positions
 CREATE OR REPLACE FUNCTION public.initialize_user_playlist_positions () RETURNS VOID LANGUAGE plpgsql
 SET

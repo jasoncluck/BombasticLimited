@@ -523,7 +523,6 @@ describe('playlist service module', () => {
 
       expect(followPlaylist).toHaveBeenCalledWith({
         playlistId: 1,
-        position: 1,
         supabase: mockSupabase,
       });
       expect(showNotification).toHaveBeenCalledWith(

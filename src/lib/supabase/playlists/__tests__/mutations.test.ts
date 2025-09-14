@@ -530,7 +530,6 @@ describe('playlist mutations module', () => {
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('follow_playlist', {
         p_playlist_id: 1,
-        p_playlist_position: 5,
       });
       expect(result.error).toBeNull();
     });

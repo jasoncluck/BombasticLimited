@@ -64,7 +64,7 @@
           </p>
         </div>
       {:else if playlist.profile_username}
-        <div class="mt-2 flex items-center gap-2">
+        <div class="flex items-center gap-2">
           <Avatar.Root class="h-6 w-6">
             <Avatar.Image
               src={playlist.profile_avatar_url}
