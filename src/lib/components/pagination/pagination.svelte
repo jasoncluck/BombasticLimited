@@ -31,7 +31,14 @@
 
   // Preload a specific page
   async function preloadPage(pageNum: number): Promise<void> {
-    if (preloadedPages.has(pageNum) || pageNum === currentPage) return;
+    if (
+      preloadedPages.has(pageNum) ||
+      pageNum === currentPage ||
+      pageNum < 1 ||
+      pageNum > maxPage
+    ) {
+      return;
+    }
 
     try {
       const url = generatePaginationUrl({
@@ -46,6 +53,23 @@
     }
   }
 
+  // Preload adjacent pages for the current page
+  async function preloadAdjacentPages(pageNum: number): Promise<void> {
+    const preloadPromises: Promise<void>[] = [];
+
+    // Preload previous page if it exists
+    if (pageNum > 1) {
+      preloadPromises.push(preloadPage(pageNum - 1));
+    }
+
+    // Preload next page if it exists
+    if (pageNum < maxPage) {
+      preloadPromises.push(preloadPage(pageNum + 1));
+    }
+
+    await Promise.all(preloadPromises);
+  }
+
   // Handle page hover for preloading
   function handlePageHover(pageNum: number): void {
     preloadPage(pageNum);
@@ -54,6 +78,24 @@
   // Handle page click
   function handlePageClick(pageNum: number): void {
     onPageChange(pageNum);
+    // After changing pages, preload the new adjacent pages
+    preloadAdjacentPages(pageNum);
+  }
+
+  // Handle prev button click
+  function handlePrevClick(): void {
+    if (currentPage > 1) {
+      const newPage = currentPage - 1;
+      handlePageClick(newPage);
+    }
+  }
+
+  // Handle next button click
+  function handleNextClick(): void {
+    if (currentPage < maxPage) {
+      const newPage = currentPage + 1;
+      handlePageClick(newPage);
+    }
   }
 
   // Handle prev button hover
@@ -92,6 +134,11 @@
       handlePageHover(currentPage + 1);
     }
   });
+
+  // Initial preload of adjacent pages when component mounts
+  $effect(() => {
+    preloadAdjacentPages(currentPage);
+  });
 </script>
 
 <div class="flex w-full justify-center px-2">
@@ -107,6 +154,7 @@
         <Pagination.Item>
           <Pagination.PrevButton
             class="cursor-pointer"
+            onclick={handlePrevClick}
             onmouseenter={handlePrevHover}
             onmouseleave={handlePrevLeave}
           />
@@ -123,6 +171,7 @@
                 {page}
                 isActive={currentPage === page.value}
                 onmouseenter={() => handlePageHover(page.value)}
+                onclick={() => handlePageClick(page.value)}
               >
                 {page.value}
               </Pagination.Link>
@@ -132,6 +181,7 @@
         <Pagination.Item>
           <Pagination.NextButton
             class="cursor-pointer"
+            onclick={handleNextClick}
             onmouseenter={handleNextHover}
             onmouseleave={handleNextLeave}
           />

@@ -282,6 +282,7 @@ OR
 UPDATE ON "auth"."users" FOR EACH ROW
 EXECUTE PROCEDURE "public"."handle_user_changes" ();
 
+
 CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
 SET
   search_path = '' LANGUAGE plpgsql SECURITY DEFINER AS $$
@@ -289,6 +290,8 @@ DECLARE
     user_id uuid;
     deleted_count integer;
     playlist_record RECORD;
+    deletion_timestamp TIMESTAMP WITH TIME ZONE;
+    cleanup_timestamp TIMESTAMP WITH TIME ZONE;
 BEGIN
     -- Get user ID once
     user_id := auth.uid();
@@ -300,6 +303,10 @@ BEGIN
     -- Lock operations for this user to prevent concurrent modifications
     PERFORM pg_advisory_xact_lock(hashtext('user_lifecycle_operations_' || user_id::text));
     
+    -- Get the current timestamp for deletion
+    deletion_timestamp := NOW();
+    cleanup_timestamp := deletion_timestamp + INTERVAL '14 days';
+    
     -- Process all playlists owned by this user before deletion
     FOR playlist_record IN 
         SELECT id, name, type, short_id, created_by, deleted_at
@@ -307,11 +314,22 @@ BEGIN
         WHERE created_by = user_id 
         AND deleted_at IS NULL  -- Only process non-deleted playlists
     LOOP
-        -- Simulate the playlist deletion trigger by updating deleted_at
-        -- This will trigger notify_playlist_deletion if it's set up as a trigger
+        -- Set deleted_at timestamp
         UPDATE public.playlists 
-        SET deleted_at = NOW() 
+        SET deleted_at = deletion_timestamp 
         WHERE id = playlist_record.id;
+        
+        -- For Public playlists, add to cleanup queue
+        IF playlist_record.type = 'Public' THEN
+            INSERT INTO public.playlist_cleanup_queue (playlist_id, cleanup_at, created_at)
+            VALUES (playlist_record.id, cleanup_timestamp, deletion_timestamp)
+            ON CONFLICT (playlist_id) DO UPDATE SET 
+              cleanup_at = EXCLUDED.cleanup_at,
+              created_at = EXCLUDED.created_at;
+              
+            RAISE NOTICE 'Added public playlist % (%) to cleanup queue for user deletion', 
+                playlist_record.name, playlist_record.id;
+        END IF;
         
         -- Log for debugging
         RAISE NOTICE 'Marked playlist % (%) for deletion before user deletion', 

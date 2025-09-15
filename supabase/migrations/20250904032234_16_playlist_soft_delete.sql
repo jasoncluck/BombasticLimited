@@ -4,7 +4,7 @@ BEGIN;
 
 -- Create the cleanup queue table
 CREATE TABLE IF NOT EXISTS public.playlist_cleanup_queue (
-  playlist_id bigint PRIMARY KEY REFERENCES public.playlists (id),
+  playlist_id bigint PRIMARY KEY REFERENCES public.playlists (id) ON DELETE CASCADE,
   cleanup_at TIMESTAMP WITH TIME ZONE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
   processed_at TIMESTAMP WITH TIME ZONE DEFAULT NULL
@@ -125,6 +125,7 @@ BEGIN
   
   IF current_user_id IS NULL THEN
     RAISE EXCEPTION 'AUTHENTICATION_REQUIRED: User must be authenticated to delete playlists'
+
       USING ERRCODE = 'P0001';
   END IF;
 
