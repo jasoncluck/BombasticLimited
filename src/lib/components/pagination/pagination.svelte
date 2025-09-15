@@ -79,7 +79,7 @@
   function handlePageClick(pageNum: number): void {
     onPageChange(pageNum);
     // After changing pages, preload the new adjacent pages
-    preloadAdjacentPages(pageNum);
+    // preloadAdjacentPages(pageNum);
   }
 
   // Handle prev button click
