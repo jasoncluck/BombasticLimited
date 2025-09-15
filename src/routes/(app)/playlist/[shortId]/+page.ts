@@ -3,7 +3,12 @@ import type { PageLoad } from './$types';
 
 export const load: PageLoad = ({ data }) => {
   if (typeof document !== 'undefined') {
-    // Preload images for the first 10 playlist videos
+    // preload playlist image
+    if (data.playlist.image_url) {
+      new Image().src = data.playlist.image_url;
+    }
+
+    // preload videos
     const videosToPreload = data.videos.slice(0, DEFAULT_PRELOAD_VIDEOS_LIST);
 
     videosToPreload.forEach((video) => {
