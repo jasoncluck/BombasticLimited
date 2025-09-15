@@ -29,11 +29,11 @@ const CACHE_CONFIG: CacheConfig = {
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   cleanupIntervalMs: 15 * 60 * 1000, // 15 minutes
   maxRemovePerCycle: 100,
-  maxConcurrentRequests: 100, // High concurrency for fast loading
-  batchTimeoutMs: 300, // 300ms batch window
+  maxConcurrentRequests: 50, // High concurrency for fast loading
+  batchTimeoutMs: 200, // 300ms batch window
   maxBatchSize: 50, // Process up to 50 images per batch
-  maxPendingRequests: 500, // NEW: Maximum total pending requests across all batches
-  maxQueuedBatches: 10, // NEW: Maximum number of queued batches
+  maxPendingRequests: 200, // NEW: Maximum total pending requests across all batches
+  maxQueuedBatches: 2, // NEW: Maximum number of queued batches
 };
 
 // Cache names with versioning
