@@ -282,6 +282,71 @@ OR
 UPDATE ON "auth"."users" FOR EACH ROW
 EXECUTE PROCEDURE "public"."handle_user_changes" ();
 
+CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
+SET
+  search_path = '' LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+    user_id uuid;
+    deleted_count integer;
+    playlist_record RECORD;
+BEGIN
+    -- Get user ID once
+    user_id := auth.uid();
+    
+    IF user_id IS NULL THEN
+        RAISE EXCEPTION 'User must be authenticated to delete account';
+    END IF;
+    
+    -- Lock operations for this user to prevent concurrent modifications
+    PERFORM pg_advisory_xact_lock(hashtext('user_lifecycle_operations_' || user_id::text));
+    
+    -- Process all playlists owned by this user before deletion
+    FOR playlist_record IN 
+        SELECT id, name, type, short_id, created_by, deleted_at
+        FROM public.playlists 
+        WHERE created_by = user_id 
+        AND deleted_at IS NULL  -- Only process non-deleted playlists
+    LOOP
+        -- Simulate the playlist deletion trigger by updating deleted_at
+        -- This will trigger notify_playlist_deletion if it's set up as a trigger
+        UPDATE public.playlists 
+        SET deleted_at = NOW() 
+        WHERE id = playlist_record.id;
+        
+        -- Log for debugging
+        RAISE NOTICE 'Marked playlist % (%) for deletion before user deletion', 
+            playlist_record.name, playlist_record.id;
+    END LOOP;
+    
+    -- Delete user and check result in one operation
+    DELETE FROM auth.users WHERE id = user_id;
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    IF deleted_count = 0 THEN
+        RAISE EXCEPTION 'User deletion failed or user not found';
+    END IF;
+END;
+$$;
+
+-- Updates deleted_at when created_by is set to NULL
+CREATE OR REPLACE FUNCTION public.update_deleted_at_on_created_by_null () RETURNS TRIGGER AS $$
+BEGIN
+  -- Check if created_by was changed from a non-NULL value to NULL
+  IF OLD.created_by IS NOT NULL AND NEW.created_by IS NULL THEN
+    NEW.deleted_at = CURRENT_TIMESTAMP;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create the trigger on the playlists table
+CREATE TRIGGER playlists_update_deleted_at_trigger BEFORE
+UPDATE ON public.playlists FOR EACH ROW
+EXECUTE FUNCTION public.update_deleted_at_on_created_by_null ();
+
+
+
 -- Update the create_user function to not automatically confirm users
 CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$
 DECLARE

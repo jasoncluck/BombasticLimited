@@ -714,6 +714,10 @@ export type Database = {
           watched_at: string
         }[]
       }
+      delete_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       duration_to_seconds: {
         Args: { duration_text: string }
         Returns: number
@@ -1211,15 +1215,13 @@ export type Database = {
         }[]
       }
       search_playlists: {
-        Args:
-          | {
-              current_user_id?: string
-              limit_count?: number
-              offset_count?: number
-              p_preferred_image_format?: string
-              search_term: string
-            }
-          | { p_preferred_image_format?: string; search_term: string }
+        Args: {
+          current_user_id?: string
+          limit_count?: number
+          offset_count?: number
+          p_preferred_image_format?: string
+          search_term: string
+        }
         Returns: {
           created_at: string
           created_by: string
