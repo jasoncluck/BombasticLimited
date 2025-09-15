@@ -19,6 +19,8 @@ interface CacheConfig {
   readonly maxConcurrentRequests: number;
   readonly batchTimeoutMs: number;
   readonly maxBatchSize: number;
+  readonly maxPendingRequests: number; // NEW: Maximum total pending requests
+  readonly maxQueuedBatches: number; // NEW: Maximum queued batches
 }
 
 const CACHE_CONFIG: CacheConfig = {
@@ -30,6 +32,8 @@ const CACHE_CONFIG: CacheConfig = {
   maxConcurrentRequests: 100, // High concurrency for fast loading
   batchTimeoutMs: 300, // 300ms batch window
   maxBatchSize: 50, // Process up to 50 images per batch
+  maxPendingRequests: 500, // NEW: Maximum total pending requests across all batches
+  maxQueuedBatches: 10, // NEW: Maximum number of queued batches
 };
 
 // Cache names with versioning
@@ -89,11 +93,12 @@ interface ResourceClassification {
   readonly preloadDelay: number;
 }
 
-// Batch request interface
+// Batch request interface with priority support
 interface BatchRequest {
   readonly url: string;
   readonly request: Request;
   readonly timestamp: number;
+  readonly priority: number; // NEW: Request priority (higher = more important)
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
 }
@@ -102,7 +107,28 @@ interface BatchGroup {
   readonly id: string;
   readonly requests: BatchRequest[];
   readonly startTime: number;
+  readonly averagePriority: number; // NEW: Average priority of requests in batch
   timer?: ReturnType<typeof setTimeout>;
+}
+
+// Request rejection reasons for better error handling
+enum RejectionReason {
+  QUEUE_FULL = 'QUEUE_FULL',
+  BATCH_LIMIT_EXCEEDED = 'BATCH_LIMIT_EXCEEDED',
+  REQUEST_TIMEOUT = 'REQUEST_TIMEOUT',
+  FETCH_FAILED = 'FETCH_FAILED',
+  CANCELLED = 'CANCELLED',
+}
+
+class ServiceWorkerError extends Error {
+  constructor(
+    message: string,
+    public readonly reason: RejectionReason,
+    public readonly url?: string
+  ) {
+    super(message);
+    this.name = 'ServiceWorkerError';
+  }
 }
 
 // Essential headers for image responses
@@ -148,6 +174,8 @@ interface ServiceWorkerState {
   currentBatch: BatchRequest[];
   batchTimer?: ReturnType<typeof setTimeout>;
   pendingBatches: BatchGroup[];
+  totalPendingRequests: number; // NEW: Track total pending requests
+  rejectedRequestCount: number; // NEW: Track rejected requests for monitoring
 }
 
 const state: ServiceWorkerState = {
@@ -161,6 +189,8 @@ const state: ServiceWorkerState = {
   activeFetches: new Set<string>(),
   currentBatch: [],
   pendingBatches: [],
+  totalPendingRequests: 0, // NEW
+  rejectedRequestCount: 0, // NEW
 };
 
 // Content type mapping for images
@@ -212,6 +242,190 @@ const getContentTypeFromUrl = (url: URL): string | null => {
   }
 
   return null;
+};
+
+// NEW: Calculate request priority based on various factors
+const calculateRequestPriority = (request: Request): number => {
+  const url = new URL(request.url);
+  const classification = classifyResource(url);
+
+  let priority = 50; // Base priority
+
+  // Critical resources get highest priority
+  if (classification.isCritical) {
+    priority += 40;
+  }
+
+  // Resource type priorities
+  switch (classification.category) {
+    case 'css':
+      priority += 30;
+      break;
+    case 'js':
+      priority += 25;
+      break;
+    case 'font':
+      priority += 20;
+      break;
+    case 'image':
+      priority += 10;
+      break;
+    default:
+      priority += 5;
+  }
+
+  // Supabase images get slight priority boost
+  if (isSupabaseImageUrl(url)) {
+    priority += 15;
+  }
+
+  // Small images (likely icons) get priority boost
+  if (url.pathname.includes('icon') || url.pathname.includes('logo')) {
+    priority += 10;
+  }
+
+  return priority;
+};
+
+// NEW: Remove oldest/lowest priority requests when queue is full
+const enforceRequestLimits = (): void => {
+  // Check total pending requests across all batches
+  const totalPending =
+    state.currentBatch.length +
+    state.pendingBatches.reduce((sum, batch) => sum + batch.requests.length, 0);
+
+  if (totalPending <= CACHE_CONFIG.maxPendingRequests) {
+    return;
+  }
+
+  // Calculate how many requests to remove
+  const excessCount = totalPending - CACHE_CONFIG.maxPendingRequests + 50; // Remove extra buffer
+
+  // Collect all pending requests with their priorities
+  interface PendingRequest {
+    request: BatchRequest;
+    source: 'current' | 'batch';
+    batchIndex?: number;
+  }
+
+  const allPendingRequests: PendingRequest[] = [
+    ...state.currentBatch.map((req) => ({
+      request: req,
+      source: 'current' as const,
+    })),
+    ...state.pendingBatches.flatMap((batch, index) =>
+      batch.requests.map((req) => ({
+        request: req,
+        source: 'batch' as const,
+        batchIndex: index,
+      }))
+    ),
+  ];
+
+  // Sort by priority (lowest first) and age (oldest first)
+  allPendingRequests.sort((a, b) => {
+    const priorityDiff = a.request.priority - b.request.priority;
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.request.timestamp - b.request.timestamp; // Older first
+  });
+
+  // Remove the lowest priority/oldest requests
+  const toRemove = allPendingRequests.slice(
+    0,
+    Math.min(excessCount, allPendingRequests.length)
+  );
+
+  toRemove.forEach(({ request, source, batchIndex }) => {
+    // Reject the request
+    request.reject(
+      new ServiceWorkerError(
+        `Request queue full. Oldest/lowest priority requests are being dropped.`,
+        RejectionReason.QUEUE_FULL,
+        request.url
+      )
+    );
+
+    state.rejectedRequestCount++;
+
+    // Remove from appropriate collection
+    if (source === 'current') {
+      const index = state.currentBatch.findIndex((r) => r === request);
+      if (index !== -1) {
+        state.currentBatch.splice(index, 1);
+      }
+    } else if (source === 'batch' && batchIndex !== undefined) {
+      const batch = state.pendingBatches[batchIndex];
+      if (batch) {
+        const requestIndex = batch.requests.findIndex((r) => r === request);
+        if (requestIndex !== -1) {
+          batch.requests.splice(requestIndex, 1);
+
+          // Remove empty batches
+          if (batch.requests.length === 0) {
+            if (batch.timer) {
+              clearTimeout(batch.timer);
+            }
+            state.pendingBatches.splice(batchIndex, 1);
+          }
+        }
+      }
+    }
+  });
+
+  // Update total pending count
+  state.totalPendingRequests =
+    state.currentBatch.length +
+    state.pendingBatches.reduce((sum, batch) => sum + batch.requests.length, 0);
+};
+
+// NEW: Enforce batch limits by removing oldest batches
+const enforceBatchLimits = (): void => {
+  if (state.pendingBatches.length <= CACHE_CONFIG.maxQueuedBatches) {
+    return;
+  }
+
+  // Remove oldest batches (they'll have the oldest start times)
+  const excessBatchCount =
+    state.pendingBatches.length - CACHE_CONFIG.maxQueuedBatches;
+
+  // Sort by start time and average priority
+  const sortedBatches = [...state.pendingBatches].sort((a, b) => {
+    // Prioritize by average priority first, then by age
+    const priorityDiff = a.averagePriority - b.averagePriority;
+    if (priorityDiff !== 0) return priorityDiff;
+    return a.startTime - b.startTime; // Older first
+  });
+
+  const batchesToRemove = sortedBatches.slice(0, excessBatchCount);
+
+  batchesToRemove.forEach((batch) => {
+    // Reject all requests in the batch
+    batch.requests.forEach((request) => {
+      request.reject(
+        new ServiceWorkerError(
+          `Batch queue limit exceeded. Removing oldest/lowest priority batches.`,
+          RejectionReason.BATCH_LIMIT_EXCEEDED,
+          request.url
+        )
+      );
+      state.rejectedRequestCount++;
+    });
+
+    // Clear timer and remove batch
+    if (batch.timer) {
+      clearTimeout(batch.timer);
+    }
+
+    const batchIndex = state.pendingBatches.findIndex((b) => b.id === batch.id);
+    if (batchIndex !== -1) {
+      state.pendingBatches.splice(batchIndex, 1);
+    }
+  });
+
+  // Update total pending count
+  state.totalPendingRequests =
+    state.currentBatch.length +
+    state.pendingBatches.reduce((sum, batch) => sum + batch.requests.length, 0);
 };
 
 const classifyResource = (url: URL): ResourceClassification => {
@@ -342,7 +556,7 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
-// Smart batching system - groups requests that arrive within the timeout window
+// UPDATED: Smart batching system with request limiting
 const addToBatch = (request: Request): Promise<Response> => {
   const url = request.url;
   const now = Date.now();
@@ -353,17 +567,54 @@ const addToBatch = (request: Request): Promise<Response> => {
     return fetch(createCorsRequest(request));
   }
 
+  // Enforce limits before adding new requests
+  enforceRequestLimits();
+  enforceBatchLimits();
+
+  // Check if we're still over limits after cleanup
+  const totalPending =
+    state.currentBatch.length +
+    state.pendingBatches.reduce((sum, batch) => sum + batch.requests.length, 0);
+
+  if (totalPending >= CACHE_CONFIG.maxPendingRequests) {
+    // Reject immediately if still over limit
+    state.rejectedRequestCount++;
+    return Promise.reject(
+      new ServiceWorkerError(
+        `Request queue is full and cannot accept more requests`,
+        RejectionReason.QUEUE_FULL,
+        url
+      )
+    );
+  }
+
+  if (state.pendingBatches.length >= CACHE_CONFIG.maxQueuedBatches) {
+    // Reject immediately if too many batches
+    state.rejectedRequestCount++;
+    return Promise.reject(
+      new ServiceWorkerError(
+        `Batch queue is full and cannot accept more batches`,
+        RejectionReason.BATCH_LIMIT_EXCEEDED,
+        url
+      )
+    );
+  }
+
   return new Promise<Response>((resolve, reject) => {
+    const priority = calculateRequestPriority(request);
+
     const batchRequest: BatchRequest = {
       url,
       request,
       timestamp: now,
+      priority,
       resolve,
       reject,
     };
 
     // Add to current batch
     state.currentBatch.push(batchRequest);
+    state.totalPendingRequests++;
 
     // If this is the first request in the batch, start the timer
     if (state.currentBatch.length === 1) {
@@ -383,7 +634,7 @@ const addToBatch = (request: Request): Promise<Response> => {
   });
 };
 
-// Process the current batch
+// UPDATED: Process batch with priority calculation
 const processBatch = (): void => {
   if (state.currentBatch.length === 0) return;
 
@@ -396,11 +647,17 @@ const processBatch = (): void => {
     state.batchTimer = undefined;
   }
 
+  // Calculate average priority for the batch
+  const averagePriority =
+    batchToProcess.reduce((sum, req) => sum + req.priority, 0) /
+    batchToProcess.length;
+
   // Create batch group
   const batchGroup: BatchGroup = {
     id: `batch-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
     requests: batchToProcess,
     startTime: Date.now(),
+    averagePriority,
   };
 
   state.pendingBatches.push(batchGroup);
@@ -429,6 +686,7 @@ const processBatch = (): void => {
       reject(error instanceof Error ? error : new Error('Fetch failed'));
     } finally {
       state.activeFetches.delete(url);
+      state.totalPendingRequests--;
     }
   });
 
@@ -528,7 +786,7 @@ const handleFetchError = async (url: string, error: unknown): Promise<void> => {
   }
 };
 
-// Main image caching function with smart batching
+// UPDATED: Main image caching function with enhanced request limiting
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
@@ -555,8 +813,16 @@ const cacheImage = async (request: Request): Promise<Response> => {
     });
   }
 
-  // Check current concurrency - if we're at the limit, use batching
-  if (state.activeFetches.size >= CACHE_CONFIG.maxConcurrentRequests) {
+  // Check current concurrency and pending requests
+  const totalPending =
+    state.currentBatch.length +
+    state.pendingBatches.reduce((sum, batch) => sum + batch.requests.length, 0);
+
+  // Use batching if we're at concurrency limit or have too many pending requests
+  if (
+    state.activeFetches.size >= CACHE_CONFIG.maxConcurrentRequests ||
+    totalPending > CACHE_CONFIG.maxBatchSize
+  ) {
     return addToBatch(request);
   }
 
@@ -800,7 +1066,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images with smart batching
+  // Handle images with smart batching and request limiting
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;
@@ -814,7 +1080,8 @@ type ServiceWorkerMessageType =
   | 'CLEAR_ALL_CACHE'
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
-  | 'CANCEL_BATCHES';
+  | 'CANCEL_BATCHES'
+  | 'FORCE_REQUEST_CLEANUP'; // NEW
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -856,6 +1123,11 @@ sw.addEventListener('message', (event) => {
       cancelAllBatches();
       break;
 
+    case 'FORCE_REQUEST_CLEANUP': // NEW
+      enforceRequestLimits();
+      enforceBatchLimits();
+      break;
+
     default:
       break;
   }
@@ -871,19 +1143,34 @@ const cancelAllBatches = (): void => {
 
   // Cancel all pending batch requests
   state.currentBatch.forEach((request) => {
-    request.reject(new Error('Batch cancelled'));
+    request.reject(
+      new ServiceWorkerError(
+        'Batch cancelled by user request',
+        RejectionReason.CANCELLED,
+        request.url
+      )
+    );
+    state.rejectedRequestCount++;
   });
   state.currentBatch = [];
 
   // Cancel pending batches
   state.pendingBatches.forEach((batch) => {
     batch.requests.forEach((request) => {
-      request.reject(new Error('Batch cancelled'));
+      request.reject(
+        new ServiceWorkerError(
+          'Batch cancelled by user request',
+          RejectionReason.CANCELLED,
+          request.url
+        )
+      );
+      state.rejectedRequestCount++;
     });
   });
   state.pendingBatches = [];
 
   state.activeFetches.clear();
+  state.totalPendingRequests = 0;
 };
 
 const clearImageCache = async (): Promise<void> => {
@@ -904,7 +1191,7 @@ const clearAllCaches = async (): Promise<void> => {
   state.criticalResourcesLoaded.clear();
 };
 
-// Enhanced cache statistics
+// UPDATED: Enhanced cache statistics with request limiting info
 interface CacheStatistics {
   imageCache: {
     size: number;
@@ -939,9 +1226,13 @@ interface CacheStatistics {
     activeFetches: number;
     currentBatchSize: number;
     pendingBatches: number;
+    totalPendingRequests: number; // NEW
     maxConcurrentRequests: number;
     batchTimeoutMs: number;
     maxBatchSize: number;
+    maxPendingRequests: number; // NEW
+    maxQueuedBatches: number; // NEW
+    rejectedRequestCount: number; // NEW
   };
   preload: {
     preloadedResources: number;
@@ -1033,9 +1324,13 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
         activeFetches: state.activeFetches.size,
         currentBatchSize: state.currentBatch.length,
         pendingBatches: state.pendingBatches.length,
+        totalPendingRequests: state.totalPendingRequests, // NEW
         maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
         batchTimeoutMs: CACHE_CONFIG.batchTimeoutMs,
         maxBatchSize: CACHE_CONFIG.maxBatchSize,
+        maxPendingRequests: CACHE_CONFIG.maxPendingRequests, // NEW
+        maxQueuedBatches: CACHE_CONFIG.maxQueuedBatches, // NEW
+        rejectedRequestCount: state.rejectedRequestCount, // NEW
       },
       preload: {
         preloadedResources: state.preloadedResources.size,
@@ -1131,11 +1426,15 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Periodic maintenance with simplified cleanup logic
+// UPDATED: Periodic maintenance with request limiting enforcement
 const performPeriodicMaintenance = async (): Promise<void> => {
   if (state.cleanupInProgress) return;
 
   try {
+    // Enforce request limits periodically
+    enforceRequestLimits();
+    enforceBatchLimits();
+
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
 
