@@ -807,11 +807,16 @@ BEGIN
     DECLARE
       selected_before int := 0;
       selected_after int := 0;
+      selected_at_target int := 0;
       pos int2;
-      contiguous_before boolean := true;  -- Assume contiguous until proven otherwise
-      contiguous_after boolean := true;   -- Assume contiguous until proven otherwise
+      contiguous_before boolean := true;  
+      contiguous_after boolean := true;   
+      before_positions int2[] := '{}';
+      after_positions int2[] := '{}';
+      at_target_positions int2[] := '{}';
+      i int;
     BEGIN
-      -- Count and check contiguity of positions before/after target
+      -- First pass: collect and count positions
       FOR i IN 1..array_length(p_video_ids, 1) LOOP
         SELECT video_position INTO pos
         FROM public.playlist_videos 
@@ -819,18 +824,47 @@ BEGIN
         
         IF pos < p_new_position THEN
           selected_before := selected_before + 1;
-          -- Check if this before position is contiguous to target (should be target - selected_before)
-          IF pos != p_new_position - selected_before THEN
-            contiguous_before := false;
-          END IF;
+          before_positions := array_append(before_positions, pos);
         ELSIF pos > p_new_position THEN
           selected_after := selected_after + 1;
-          -- Check if this after position is contiguous to target (should be target + selected_after)
-          IF pos != p_new_position + selected_after THEN
-            contiguous_after := false;
-          END IF;
+          after_positions := array_append(after_positions, pos);
+        ELSE
+          -- pos = p_new_position
+          selected_at_target := selected_at_target + 1;
+          at_target_positions := array_append(at_target_positions, pos);
         END IF;
       END LOOP;
+      
+      -- Check contiguity for before positions (should be consecutive ending at target-1)
+      IF selected_before > 0 THEN
+        SELECT array_agg(pos ORDER BY pos) INTO before_positions FROM unnest(before_positions) pos;
+        FOR i IN 1..array_length(before_positions, 1) LOOP
+          -- Each position should be target - (selected_before - i + 1)
+          IF before_positions[i] != p_new_position - (selected_before - i + 1) THEN
+            contiguous_before := false;
+            EXIT;
+          END IF;
+        END LOOP;
+      END IF;
+      
+      -- Check contiguity for after positions (should be consecutive starting at target+1)
+      -- Include videos at target position as part of the "after" contiguous check
+      IF selected_after > 0 OR selected_at_target > 0 THEN
+        -- Combine at_target and after positions for contiguity check
+        after_positions := at_target_positions || after_positions;
+        SELECT array_agg(pos ORDER BY pos) INTO after_positions FROM unnest(after_positions) pos;
+        
+        -- Check if they form a consecutive sequence starting at target
+        FOR i IN 1..array_length(after_positions, 1) LOOP
+          IF after_positions[i] != p_new_position + i - 1 THEN
+            contiguous_after := false;
+            EXIT;
+          END IF;
+        END LOOP;
+        
+        -- Adjust counts for decision making
+        selected_after := selected_after + selected_at_target;
+      END IF;
       
       -- Use MIN logic if we have contiguous before positions and more before than after
       IF contiguous_before AND selected_before > 0 AND selected_before > selected_after THEN
