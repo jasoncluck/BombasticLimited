@@ -9,7 +9,7 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Simplified configuration focused on performance and stability
+// Configuration with proper request limits to prevent crashes
 interface CacheConfig {
   readonly maxImageCacheSize: number;
   readonly maxMetadataSize: number;
@@ -19,8 +19,8 @@ interface CacheConfig {
   readonly maxConcurrentRequests: number;
   readonly batchTimeoutMs: number;
   readonly maxBatchSize: number;
-  readonly maxPendingRequests: number; // New: Hard limit on total pending requests
-  readonly maxQueueSize: number; // New: Hard limit on queue size
+  readonly maxPendingRequests: number; // Hard limit on total pending requests
+  readonly maxQueueSize: number; // Hard limit on queue size
 }
 
 const CACHE_CONFIG: CacheConfig = {
@@ -32,8 +32,8 @@ const CACHE_CONFIG: CacheConfig = {
   maxConcurrentRequests: 8, // Reduced from 100
   batchTimeoutMs: 200, // Reduced from 300ms
   maxBatchSize: 20, // Reduced from 50
-  maxPendingRequests: 50, // New: Maximum total pending requests
-  maxQueueSize: 100, // New: Maximum queue size
+  maxPendingRequests: 50, // NEW: Hard limit on total pending requests
+  maxQueueSize: 100, // NEW: Hard limit on queue size
 };
 
 // Cache names with versioning
@@ -132,7 +132,7 @@ const ESSENTIAL_STATIC_HEADERS = [
   'vary',
 ] as const;
 
-// Simplified global state management
+// Simplified global state management with proper limits
 interface ServiceWorkerState {
   metadata: Map<string, ImageCacheMetadata>;
   lastCleanup: number;
@@ -142,9 +142,10 @@ interface ServiceWorkerState {
   preloadedResources: Set<string>;
   criticalResourcesLoaded: Set<string>;
   activeFetches: Set<string>;
-  pendingRequests: Map<string, BatchRequest>; // Simplified: single map for pending requests
+  pendingRequests: Map<string, BatchRequest>; // Single map for pending requests
+  requestQueue: string[]; // Simple array for request order (FIFO)
   batchTimer?: ReturnType<typeof setTimeout>;
-  requestQueue: string[]; // Simple array for request order
+  rejectedRequestCount: number; // Track rejected requests for monitoring
 }
 
 const state: ServiceWorkerState = {
@@ -158,6 +159,7 @@ const state: ServiceWorkerState = {
   activeFetches: new Set<string>(),
   pendingRequests: new Map<string, BatchRequest>(),
   requestQueue: [],
+  rejectedRequestCount: 0,
 };
 
 // Content type mapping for images
@@ -339,33 +341,59 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
-// Simplified request management with hard limits
-const addToQueue = (request: Request): Promise<Response> => {
-  const url = request.url;
-  const now = Date.now();
-
-  // Hard limit check - if we're at capacity, reject immediately
-  const totalPending = state.pendingRequests.size + state.activeFetches.size;
-  if (totalPending >= CACHE_CONFIG.maxPendingRequests) {
-    return Promise.reject(new Error('Request queue full'));
-  }
-
-  // Check if already being processed
-  if (state.activeFetches.has(url) || state.pendingRequests.has(url)) {
-    // For duplicate requests, just fall back to direct fetch
-    return fetch(createCorsRequest(request));
-  }
-
-  // Queue size limit check - remove oldest if needed
-  if (state.requestQueue.length >= CACHE_CONFIG.maxQueueSize) {
+// Request management with hard limits to prevent crashes
+const enforceQueueLimits = (): void => {
+  // Check if we're over the queue size limit
+  while (state.requestQueue.length > CACHE_CONFIG.maxQueueSize) {
     const oldestUrl = state.requestQueue.shift();
     if (oldestUrl) {
       const oldRequest = state.pendingRequests.get(oldestUrl);
       if (oldRequest) {
-        oldRequest.reject(new Error('Request evicted from queue'));
+        oldRequest.reject(new Error('Request evicted from queue - queue size limit exceeded'));
         state.pendingRequests.delete(oldestUrl);
+        state.rejectedRequestCount++;
       }
     }
+  }
+
+  // Check if we're over the total pending requests limit
+  const totalPending = state.pendingRequests.size + state.activeFetches.size;
+  const excessCount = totalPending - CACHE_CONFIG.maxPendingRequests;
+  
+  if (excessCount > 0) {
+    // Remove the oldest pending requests
+    for (let i = 0; i < excessCount && state.requestQueue.length > 0; i++) {
+      const oldestUrl = state.requestQueue.shift();
+      if (oldestUrl) {
+        const oldRequest = state.pendingRequests.get(oldestUrl);
+        if (oldRequest) {
+          oldRequest.reject(new Error('Request evicted - pending requests limit exceeded'));
+          state.pendingRequests.delete(oldestUrl);
+          state.rejectedRequestCount++;
+        }
+      }
+    }
+  }
+};
+
+const addToQueue = (request: Request): Promise<Response> => {
+  const url = request.url;
+  const now = Date.now();
+
+  // Enforce limits before adding new requests
+  enforceQueueLimits();
+
+  // Hard limit check - if we're still at capacity after cleanup, reject immediately
+  const totalPending = state.pendingRequests.size + state.activeFetches.size;
+  if (totalPending >= CACHE_CONFIG.maxPendingRequests) {
+    state.rejectedRequestCount++;
+    return Promise.reject(new Error('Request queue full - cannot accept more requests'));
+  }
+
+  // Check if already being processed (avoid duplicates)
+  if (state.activeFetches.has(url) || state.pendingRequests.has(url)) {
+    // For duplicate requests, fall back to direct fetch
+    return fetch(createCorsRequest(request));
   }
 
   return new Promise<Response>((resolve, reject) => {
@@ -399,7 +427,7 @@ const addToQueue = (request: Request): Promise<Response> => {
   });
 };
 
-// Simplified batch processing
+// Simplified batch processing with capacity checks
 const processBatch = (): void => {
   if (state.pendingRequests.size === 0) return;
 
@@ -409,28 +437,30 @@ const processBatch = (): void => {
     state.batchTimer = undefined;
   }
 
-  // Take up to maxBatchSize requests from the queue
+  // Calculate how many requests we can process based on current capacity
+  const availableCapacity = CACHE_CONFIG.maxConcurrentRequests - state.activeFetches.size;
   const batchSize = Math.min(
     CACHE_CONFIG.maxBatchSize,
     state.pendingRequests.size,
-    CACHE_CONFIG.maxConcurrentRequests - state.activeFetches.size
+    availableCapacity
   );
 
   if (batchSize <= 0) {
-    // No capacity, reschedule
+    // No capacity available, reschedule for later
     state.batchTimer = setTimeout(() => {
       processBatch();
     }, CACHE_CONFIG.batchTimeoutMs);
     return;
   }
 
-  // Process batch
+  // Process the next batch of requests from the queue
   const urlsToProcess = state.requestQueue.splice(0, batchSize);
 
   urlsToProcess.forEach((url) => {
     const batchRequest = state.pendingRequests.get(url);
     if (!batchRequest) return;
 
+    // Remove from pending and add to active
     state.pendingRequests.delete(url);
     state.activeFetches.add(url);
 
@@ -438,7 +468,7 @@ const processBatch = (): void => {
     processRequest(batchRequest, url).finally(() => {
       state.activeFetches.delete(url);
 
-      // Continue processing if there are more requests
+      // Continue processing if there are more requests and capacity
       if (state.pendingRequests.size > 0) {
         processBatch();
       }
@@ -555,7 +585,7 @@ const handleFetchError = async (url: string, error: unknown): Promise<void> => {
   }
 };
 
-// Main image caching function with controlled queuing
+// Main image caching function with controlled queuing to prevent crashes
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
@@ -582,7 +612,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
     });
   }
 
-  // Use controlled queuing with hard limits
+  // Use controlled queuing with hard limits to prevent crashes
   try {
     return await addToQueue(request);
   } catch (error) {
@@ -592,7 +622,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
       return await fetch(corsRequest);
     } catch {
       // If network also fails, return a simple error response
-      return new Response('Request failed', {
+      return new Response('Request failed - queue full and network unavailable', {
         status: 503,
         statusText: 'Service Unavailable',
       });
@@ -814,7 +844,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images with controlled queuing
+  // Handle images with controlled queuing to prevent crashes
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;
@@ -828,7 +858,8 @@ type ServiceWorkerMessageType =
   | 'CLEAR_ALL_CACHE'
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
-  | 'CANCEL_REQUESTS';
+  | 'CANCEL_REQUESTS'
+  | 'ENFORCE_LIMITS'; // NEW: Force limit enforcement
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -870,6 +901,10 @@ sw.addEventListener('message', (event) => {
       cancelAllRequests();
       break;
 
+    case 'ENFORCE_LIMITS': // NEW: Force limit enforcement
+      enforceQueueLimits();
+      break;
+
     default:
       break;
   }
@@ -883,9 +918,10 @@ const cancelAllRequests = (): void => {
     state.batchTimer = undefined;
   }
 
-  // Cancel all pending requests
+  // Cancel all pending requests with proper error messages
   for (const [url, request] of state.pendingRequests) {
-    request.reject(new Error('Request cancelled'));
+    request.reject(new Error('Request cancelled by user'));
+    state.rejectedRequestCount++;
   }
   state.pendingRequests.clear();
   state.requestQueue = [];
@@ -912,7 +948,7 @@ const clearAllCaches = async (): Promise<void> => {
   state.criticalResourcesLoaded.clear();
 };
 
-// Enhanced cache statistics
+// Enhanced cache statistics with queue monitoring
 interface CacheStatistics {
   imageCache: {
     size: number;
@@ -950,6 +986,8 @@ interface CacheStatistics {
     maxConcurrentRequests: number;
     maxPendingRequests: number;
     maxQueueSize: number;
+    rejectedRequestCount: number; // NEW: Track rejected requests
+    queueUtilization: number; // NEW: Queue usage percentage
   };
   preload: {
     preloadedResources: number;
@@ -998,6 +1036,10 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
       return classifyResource(url).isCritical;
     }).length;
 
+    // Calculate queue utilization
+    const totalPending = state.pendingRequests.size + state.activeFetches.size;
+    const queueUtilization = totalPending / CACHE_CONFIG.maxPendingRequests;
+
     return {
       imageCache: {
         size: imageCacheKeys.length,
@@ -1044,6 +1086,8 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
         maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
         maxPendingRequests: CACHE_CONFIG.maxPendingRequests,
         maxQueueSize: CACHE_CONFIG.maxQueueSize,
+        rejectedRequestCount: state.rejectedRequestCount,
+        queueUtilization: Math.round(queueUtilization * 100) / 100,
       },
       preload: {
         preloadedResources: state.preloadedResources.size,
@@ -1139,11 +1183,14 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Periodic maintenance with simplified cleanup logic
+// Periodic maintenance with limit enforcement
 const performPeriodicMaintenance = async (): Promise<void> => {
   if (state.cleanupInProgress) return;
 
   try {
+    // Enforce queue limits periodically to prevent gradual buildup
+    enforceQueueLimits();
+
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
 
