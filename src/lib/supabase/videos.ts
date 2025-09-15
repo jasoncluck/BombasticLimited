@@ -13,6 +13,9 @@ import { getFullImageUrl, type PlaylistVideo } from './playlists';
 
 export const DEFAULT_NUM_VIDEOS_PAGINATION = 100;
 export const DEFAULT_NUM_VIDEOS_OVERVIEW = 15;
+// Default number of videos to preload for pages that are list views: /latest, /playlist, etc
+export const DEFAULT_PRELOAD_VIDEOS_LIST = 20;
+export const DEFAULT_PRELOAD_VIDEOS_CAROUSEL = 5;
 
 // Infer types from Supabase RPC functions
 type GetVideosWithTimestampsResponse =
