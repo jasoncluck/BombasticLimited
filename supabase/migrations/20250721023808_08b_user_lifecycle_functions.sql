@@ -282,7 +282,6 @@ OR
 UPDATE ON "auth"."users" FOR EACH ROW
 EXECUTE PROCEDURE "public"."handle_user_changes" ();
 
-
 CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
 SET
   search_path = '' LANGUAGE plpgsql SECURITY DEFINER AS $$
