@@ -2,7 +2,7 @@
   import * as Pagination from '$lib/components/ui/pagination/index.js';
   import { preloadData } from '$app/navigation';
   import { generatePaginationUrl } from './pagination.js';
-  import { MediaQuery } from 'svelte/reactivity';
+  import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
 
   let {
     count,
@@ -16,12 +16,18 @@
     onPageChange: (pageNum: number) => void;
   } = $props();
 
+  const mediaQueryState = getMediaQueryState();
+
   // Responsive design
-  const isDesktop = new MediaQuery('(min-width: 768px)');
-  const siblingCount = $derived(isDesktop.current ? 1 : 0);
+  const siblingCount = $derived(mediaQueryState.isSm ? 1 : 0);
 
   // Track preloaded pages to avoid duplicate preloading
   let preloadedPages = $state(new Set<number>());
+
+  // Track timeouts for delayed preloading
+  let preloadTimeouts = $state(
+    new Map<string, ReturnType<typeof setTimeout>>()
+  );
 
   // Preload a specific page
   async function preloadPage(pageNum: number): Promise<void> {
@@ -45,13 +51,51 @@
     preloadPage(pageNum);
   }
 
-  // Handle page click
+  // Handle page click with delayed preloading
   function handlePageClick(pageNum: number): void {
     onPageChange(pageNum);
+
+    // Schedule preloading of adjacent pages after 300ms
+    scheduleAdjacentPreload(pageNum);
+  }
+
+  // Schedule preloading of adjacent pages after a delay
+  function scheduleAdjacentPreload(newCurrentPage: number): void {
+    // Clear any existing timeouts
+    clearAllPreloadTimeouts();
+
+    // Schedule preload for next page (if exists)
+    if (newCurrentPage < maxPage) {
+      const nextTimeout = setTimeout(() => {
+        preloadPage(newCurrentPage + 1);
+      }, 300);
+      preloadTimeouts.set('next', nextTimeout);
+    }
+
+    // Schedule preload for previous page (if exists)
+    if (newCurrentPage > 1) {
+      const prevTimeout = setTimeout(() => {
+        preloadPage(newCurrentPage - 1);
+      }, 300);
+      preloadTimeouts.set('prev', prevTimeout);
+    }
+  }
+
+  // Clear all preload timeouts
+  function clearAllPreloadTimeouts(): void {
+    preloadTimeouts.forEach((timeout) => clearTimeout(timeout));
+    preloadTimeouts.clear();
   }
 
   // Calculate max page for bounds checking
   const maxPage = $derived(Math.ceil(count / perPage));
+
+  // Cleanup timeouts when component is destroyed
+  $effect(() => {
+    return () => {
+      clearAllPreloadTimeouts();
+    };
+  });
 </script>
 
 <div class="flex w-full justify-center px-2">
