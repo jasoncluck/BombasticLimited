@@ -741,11 +741,9 @@ SET
 DECLARE
   video_count int;
   max_position int2;
-  min_current_pos int2;
-  max_current_pos int2;
-  effective_target_pos int2;
   current_user_id uuid;
   playlist_owner_id uuid;
+  selected_positions int2[];
 BEGIN
   current_user_id := auth.uid();
   IF current_user_id IS NULL THEN
@@ -768,23 +766,19 @@ BEGIN
     RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
   END IF;
 
-  -- Get all necessary data in one query
-  WITH video_data AS (
-    SELECT 
-      video_position,
-      MIN(video_position) OVER () as min_pos,
-      MAX(video_position) OVER () as max_pos,
-      (SELECT MAX(video_position) FROM public.playlist_videos WHERE playlist_id = p_playlist_id) as total_max
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids)
-  )
-  SELECT min_pos, max_pos, total_max
-  INTO min_current_pos, max_current_pos, max_position
-  FROM video_data
-  LIMIT 1;
+  -- Get max position and selected video positions
+  SELECT MAX(video_position) INTO max_position
+  FROM public.playlist_videos
+  WHERE playlist_id = p_playlist_id;
+  
+  -- Get current positions of selected videos
+  SELECT array_agg(video_position ORDER BY video_position)
+  INTO selected_positions
+  FROM public.playlist_videos pv
+  WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids);
   
   -- Validate that all videos were found
-  IF min_current_pos IS NULL THEN
+  IF array_length(selected_positions, 1) != video_count THEN
     RAISE EXCEPTION 'One or more videos not found in playlist';
   END IF;
   
@@ -792,127 +786,62 @@ BEGIN
     RAISE EXCEPTION 'New position % is out of range (1-%)', p_new_position, max_position;
   END IF;
   
-  -- Calculate effective target position to handle overlaps correctly
-  -- Only use MIN/MAX logic when target position is contiguous with selected videos
+  -- Simplified reordering approach:
+  -- 1. Assign new positions to selected videos starting at target position
+  -- 2. Compress remaining videos to fill gaps sequentially
   
-  IF p_new_position < min_current_pos THEN
-    -- Moving to position before all selected videos
-    effective_target_pos := p_new_position;
-  ELSIF p_new_position > max_current_pos THEN
-    -- Moving to position after all selected videos  
-    effective_target_pos := p_new_position;
-  ELSE
-    -- Target position falls within the selected range
-    -- Check if target position is contiguous with selected positions
-    DECLARE
-      selected_before int := 0;
-      selected_after int := 0;
-      selected_at_target int := 0;
-      pos int2;
-      contiguous_before boolean := true;  
-      contiguous_after boolean := true;   
-      before_positions int2[] := '{}';
-      after_positions int2[] := '{}';
-      at_target_positions int2[] := '{}';
-      i int;
-    BEGIN
-      -- First pass: collect and count positions
-      FOR i IN 1..array_length(p_video_ids, 1) LOOP
-        SELECT video_position INTO pos
-        FROM public.playlist_videos 
-        WHERE playlist_id = p_playlist_id AND video_id = p_video_ids[i];
-        
-        IF pos < p_new_position THEN
-          selected_before := selected_before + 1;
-          before_positions := array_append(before_positions, pos);
-        ELSIF pos > p_new_position THEN
-          selected_after := selected_after + 1;
-          after_positions := array_append(after_positions, pos);
-        ELSE
-          -- pos = p_new_position
-          selected_at_target := selected_at_target + 1;
-          at_target_positions := array_append(at_target_positions, pos);
-        END IF;
-      END LOOP;
-      
-      -- Check contiguity for before positions (should be consecutive ending at target-1)
-      IF selected_before > 0 THEN
-        SELECT array_agg(pos ORDER BY pos) INTO before_positions FROM unnest(before_positions) pos;
-        FOR i IN 1..array_length(before_positions, 1) LOOP
-          -- Each position should be target - (selected_before - i + 1)
-          IF before_positions[i] != p_new_position - (selected_before - i + 1) THEN
-            contiguous_before := false;
-            EXIT;
-          END IF;
-        END LOOP;
-      END IF;
-      
-      -- Check contiguity for after positions (should be consecutive starting at target+1)
-      -- Include videos at target position as part of the "after" contiguous check
-      IF selected_after > 0 OR selected_at_target > 0 THEN
-        -- Combine at_target and after positions for contiguity check
-        after_positions := at_target_positions || after_positions;
-        SELECT array_agg(pos ORDER BY pos) INTO after_positions FROM unnest(after_positions) pos;
-        
-        -- Check if they form a consecutive sequence starting at target
-        FOR i IN 1..array_length(after_positions, 1) LOOP
-          IF after_positions[i] != p_new_position + i - 1 THEN
-            contiguous_after := false;
-            EXIT;
-          END IF;
-        END LOOP;
-        
-        -- Adjust counts for decision making
-        selected_after := selected_after + selected_at_target;
-      END IF;
-      
-      -- Use MIN logic if we have contiguous before positions and more before than after
-      IF contiguous_before AND selected_before > 0 AND selected_before > selected_after THEN
-        effective_target_pos := min_current_pos;
-      -- Use MAX logic if we have contiguous after positions and more after than before
-      ELSIF contiguous_after AND selected_after > 0 AND selected_after > selected_before THEN
-        effective_target_pos := max_current_pos - video_count + 1;
-      ELSE
-        -- No contiguity or equal counts: use normal positioning at target
-        effective_target_pos := p_new_position;
-      END IF;
-    END;
-  END IF;
+  -- Create a temporary table to track new positions
+  CREATE TEMPORARY TABLE temp_positions (
+    video_id text,
+    old_position int2,
+    new_position int2
+  ) ON COMMIT DROP;
   
-  -- Early exit if no movement needed
-  IF min_current_pos = effective_target_pos THEN
-    RETURN QUERY
-    SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids)
-    ORDER BY pv.video_position;
-    RETURN;
-  END IF;
+  -- Insert selected videos with their new positions
+  INSERT INTO temp_positions (video_id, old_position, new_position)
+  SELECT 
+    p_video_ids[i],
+    selected_positions[i],
+    (p_new_position + i - 1)::int2
+  FROM generate_series(1, video_count) i;
   
-  -- Bulk position update ensuring sequential positioning without gaps
-  UPDATE public.playlist_videos 
-  SET video_position = CASE 
-    -- Videos being moved get new sequential positions starting from effective_target_pos
-    WHEN video_id = ANY(p_video_ids) THEN 
-      (effective_target_pos + array_position(p_video_ids, video_id) - 1)::int2
-    -- Shift other videos based on movement direction
-    WHEN effective_target_pos < min_current_pos THEN
-      -- Moving videos to lower positions: shift videos in target range upward
-      CASE WHEN video_position >= effective_target_pos AND video_position < min_current_pos THEN
-        (video_position + video_count)::int2
-      ELSE video_position
-      END
-    WHEN effective_target_pos > max_current_pos THEN
-      -- Moving videos to higher positions: shift videos between old and new positions downward  
-      CASE WHEN video_position > max_current_pos AND video_position < effective_target_pos + video_count THEN
-        (video_position - video_count)::int2
-      ELSE video_position
-      END
-    ELSE video_position
-  END
-  WHERE playlist_id = p_playlist_id;
+  -- Insert non-selected videos with compressed positions
+  WITH non_selected_videos AS (
+    SELECT video_id, video_position
+    FROM public.playlist_videos
+    WHERE playlist_id = p_playlist_id 
+    AND NOT (video_id = ANY(p_video_ids))
+    ORDER BY video_position
+  ),
+  compressed_positions AS (
+    SELECT 
+      video_id,
+      video_position as old_position,
+      row_number() OVER (ORDER BY video_position) as compressed_pos
+    FROM non_selected_videos
+  ),
+  new_positions AS (
+    SELECT 
+      video_id,
+      old_position,
+      CASE 
+        -- If compressed position would conflict with target range, shift it
+        WHEN compressed_pos >= p_new_position THEN compressed_pos + video_count
+        ELSE compressed_pos
+      END as new_position
+    FROM compressed_positions
+  )
+  INSERT INTO temp_positions (video_id, old_position, new_position)
+  SELECT video_id, old_position, new_position::int2 FROM new_positions;
   
-  -- Return updated rows
+  -- Apply the new positions
+  UPDATE public.playlist_videos pv
+  SET video_position = tp.new_position
+  FROM temp_positions tp
+  WHERE pv.playlist_id = p_playlist_id 
+  AND pv.video_id = tp.video_id;
+  
+  -- Return updated rows for selected videos
   RETURN QUERY
   SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
   FROM public.playlist_videos pv
