@@ -512,8 +512,6 @@ $$;
 -- Updated search_playlists function to exclude soft deleted playlists
 CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "search_term" "text",
-  "limit_count" integer DEFAULT 50,
-  "offset_count" integer DEFAULT 0,
   "p_preferred_image_format" text DEFAULT 'avif'
 ) RETURNS TABLE (
   "id" bigint,
