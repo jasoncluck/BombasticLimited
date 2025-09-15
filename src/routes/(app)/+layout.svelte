@@ -387,6 +387,25 @@
       // SSE connection is now automatically cleaned up by sidebarCleanup
     };
   }
+
+  /**
+   * Prevents the default browser context menu from appearing.
+   * This ensures custom context menus (like Svelte/ShadCN) work properly
+   * without interference from the browser's default right-click menu.
+   */
+  function handleContextMenu(event: MouseEvent): void {
+    if (!dev) {
+      // Always prevent the default browser context menu
+      event.preventDefault();
+
+      // Stop propagation to prevent conflicts with custom context menus
+      event.stopPropagation();
+
+      // In development or on non-production domains, we could optionally
+      // allow some debugging context menu functionality, but for now
+      // we'll keep it consistently disabled for better UX
+    }
+  }
 </script>
 
 <Toaster position="top-right" />
@@ -398,14 +417,7 @@
 
 <!-- Main Application -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div
-  class="flex h-full flex-col"
-  oncontextmenu={(e) => {
-    if (!dev && window.location.hostname.includes('bombastic.ltd')) {
-      e.preventDefault();
-    }
-  }}
->
+<div class="flex h-full flex-col" oncontextmenu={handleContextMenu}>
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
