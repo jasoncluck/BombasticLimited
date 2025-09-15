@@ -9,7 +9,6 @@ import type { UserProfile } from '$lib/supabase/user-profiles';
 import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
-import { page } from '$app/state';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -60,8 +59,9 @@ export interface NavigationState {
   isNavigating: boolean;
   navigationItems: NavigationItem[];
 
-  // Search state
-  searchQuery: string;
+  // Search state - separated into input value and URL value
+  searchInputValue: string; // What the user is actually typing
+  searchQuery: string; // What's in the URL/navigation state
   isSearching: boolean;
   currentDebouncedSearch: ReturnType<typeof debounce> | null;
   searchAbortController: AbortController | null;
@@ -89,6 +89,7 @@ export interface NavigationState {
   handleNavigation: (event: Event, item: NavigationItem) => Promise<void>;
 
   // Search methods
+  setSearchInputValue: (value: string) => void;
   setSearchQuery: (value: string) => void;
   clearSearchQuery: () => void;
   syncSearchQueryFromUrl: (pathname: string, force?: boolean) => void;
@@ -141,13 +142,15 @@ export interface NavigationState {
  */
 export class NavigationStateClass implements NavigationState {
   // Private tracking variables
-  private refreshInterval: number | null = null;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private lastRefreshTime: number = 0;
-  private preloadTimeout: number | null = null;
+  private preloadTimeout: ReturnType<typeof setTimeout> | null = null;
   private currentSearchTimestamp: number = 0;
-  private pendingValueUpdate: string | null = null;
   private lastNavigationTimestamp: number = 0;
   private lastUserInputTimestamp: number = 0;
+  private isUserTyping: boolean = false;
+  private typingTimeout: ReturnType<typeof setTimeout> | undefined;
+  private lastPreloadedValue: string = '';
 
   // Core data state
   data = $state<NavigationData>({
@@ -171,8 +174,9 @@ export class NavigationStateClass implements NavigationState {
   // Notifications
   userNotifications = $state<NotificationWithMeta[]>([]);
 
-  // Search state
-  searchQuery = $state('');
+  // Search state - separated into input and URL state
+  searchInputValue = $state(''); // What the user is typing in the input
+  searchQuery = $state(''); // What's in the URL/navigation state
   isSearching = $state(false);
   searchAbortController = $state<AbortController | null>(null);
   currentDebouncedSearch = $state<ReturnType<typeof debounce> | null>(null);
@@ -183,7 +187,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 400,
-    preloadDebounceMs: 125,
+    preloadDebounceMs: 150,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -229,7 +233,7 @@ export class NavigationStateClass implements NavigationState {
   private startRefreshInterval(): void {
     if (!browser || this.refreshInterval) return;
 
-    this.refreshInterval = window.setInterval(() => {
+    this.refreshInterval = setInterval(() => {
       // Only refresh if we have a session and enough time has passed
       if (this.session && this.#hasLoadedOnce) {
         const now = Date.now();
@@ -249,7 +253,7 @@ export class NavigationStateClass implements NavigationState {
    */
   private stopRefreshInterval(): void {
     if (this.refreshInterval) {
-      window.clearInterval(this.refreshInterval);
+      clearInterval(this.refreshInterval);
       this.refreshInterval = null;
     }
   }
@@ -271,27 +275,26 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Sync search query from URL - now exposed as public method with better timing controls
+   * Sync search query from URL - Enhanced to prevent overwriting user input
    */
   syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
+
+    // Always update the URL-based search query (this doesn't affect the input)
+    this.searchQuery = urlSearchQuery;
+
+    // Only sync to input value if:
+    // 1. Force is true (page load/restore), OR
+    // 2. User is not currently typing AND no recent user input
     const now = Date.now();
-
-    // Only update if:
-    // 1. Force is true (initial page load/restore), OR
-    // 2. All of the following are true:
-    //    - URL search query is different from current state
-    //    - We're not currently searching (no pending navigation)
-    //    - Enough time has passed since the last user input (1000ms grace period)
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
-    const shouldUpdate =
-      force ||
-      (urlSearchQuery !== this.searchQuery &&
-        !this.isSearching &&
-        timeSinceLastInput > 1000); // 1000ms grace period to protect recent user input
 
-    if (shouldUpdate) {
-      this.searchQuery = urlSearchQuery;
+    const shouldSyncToInput =
+      force ||
+      (!this.isUserTyping && !this.isSearching && timeSinceLastInput > 3000); // Longer grace period
+
+    if (shouldSyncToInput) {
+      this.searchInputValue = urlSearchQuery;
     }
   };
 
@@ -488,26 +491,36 @@ export class NavigationStateClass implements NavigationState {
     } catch (error) {
       console.error('Logout error:', error);
       showToast('Error during logout', 'error');
-      // Fallback to page reload if invalidation fails
-      if (browser && window) {
-        window.location.href = '/';
-      }
     }
   }
 
   /**
    * Search methods
    */
+  setSearchInputValue = (value: string): void => {
+    this.searchInputValue = value;
+    this.lastUserInputTimestamp = Date.now();
+    this.isUserTyping = true;
+
+    // Clear the typing flag after a short delay
+    clearTimeout(this.typingTimeout);
+    this.typingTimeout = setTimeout(() => {
+      this.isUserTyping = false;
+    }, 500); // 500ms after user stops typing
+  };
+
   setSearchQuery = (value: string): void => {
     this.searchQuery = value;
   };
 
   // Clear all search-related state
   clearSearchQuery = (): void => {
+    this.searchInputValue = '';
     this.searchQuery = '';
     this.currentSearchTimestamp = 0;
-    this.pendingValueUpdate = null;
     this.lastUserInputTimestamp = 0;
+    this.isUserTyping = false;
+    this.lastPreloadedValue = '';
 
     // Cancel any pending searches
     if (this.currentDebouncedSearch?.isPending) {
@@ -520,8 +533,14 @@ export class NavigationStateClass implements NavigationState {
 
     // Clear any preload timeout
     if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
+      clearTimeout(this.preloadTimeout);
       this.preloadTimeout = null;
+    }
+
+    // Clear typing timeout
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+      this.typingTimeout = undefined;
     }
   };
 
@@ -550,7 +569,7 @@ export class NavigationStateClass implements NavigationState {
 
     // Verify that the current input value still matches what we expect
     // This prevents stale navigations when user has typed new content
-    if (this.searchQuery.trim() !== searchValue) {
+    if (this.searchInputValue.trim() !== searchValue) {
       return e;
     }
 
@@ -571,7 +590,7 @@ export class NavigationStateClass implements NavigationState {
         // If navigation timestamp is outdated or user has started typing, abort
         if (
           navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchQuery.trim() !== ''
+          this.searchInputValue.trim() !== ''
         ) {
           return e;
         }
@@ -582,7 +601,7 @@ export class NavigationStateClass implements NavigationState {
         // Check again before navigation for non-empty searches
         if (
           navigationTimestamp < this.lastNavigationTimestamp ||
-          this.searchQuery.trim() !== searchValue
+          this.searchInputValue.trim() !== searchValue
         ) {
           return e;
         }
@@ -619,10 +638,9 @@ export class NavigationStateClass implements NavigationState {
     const searchValue = input.value.trim();
     const searchTimestamp = Date.now();
 
-    // Update the searchQuery state to match the input
-    this.searchQuery = input.value;
+    // Update the input value state to match the input AND mark as user typing
+    this.setSearchInputValue(input.value);
     this.currentSearchTimestamp = searchTimestamp;
-    this.lastUserInputTimestamp = searchTimestamp; // Track when user last typed
 
     // Cancel current debounced search if it exists
     if (this.currentDebouncedSearch?.isPending) {
@@ -635,37 +653,45 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
-    // Clear any existing preload timeout
-    if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
-      this.preloadTimeout = null;
-    }
-
-    // Capture the search value and timestamp at the time of creating the debounced function
-    const capturedSearchValue = searchValue;
-    const capturedTimestamp = searchTimestamp;
-
-    // Set up preloading at half the debounce time if search value is valid for navigation
-    if (capturedSearchValue.length >= 2) {
-      this.preloadTimeout = window.setTimeout(() => {
-        // Only preload if the search value hasn't changed and timestamp is still current
-        if (
-          this.searchQuery.trim() === capturedSearchValue &&
-          this.currentSearchTimestamp === capturedTimestamp
-        ) {
-          const searchUrl = `/search/${encodeURIComponent(capturedSearchValue)}`;
-          preloadData(searchUrl);
+    // Handle preloading logic - don't clear existing timeout if same value
+    if (searchValue.length >= 2) {
+      // Only set up new preload if we haven't already preloaded this value
+      if (this.lastPreloadedValue !== searchValue) {
+        // Clear any existing preload timeout
+        if (this.preloadTimeout) {
+          clearTimeout(this.preloadTimeout);
+          this.preloadTimeout = null;
         }
-      }, this.config.preloadDebounceMs);
+
+        this.preloadTimeout = setTimeout(() => {
+          console.log('preloading:', searchValue);
+          // Double-check the search value hasn't changed
+          if (
+            this.searchInputValue.trim() === searchValue &&
+            searchValue.length >= 2
+          ) {
+            const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
+            preloadData(searchUrl);
+            this.lastPreloadedValue = searchValue;
+          }
+          this.preloadTimeout = null;
+        }, this.config.preloadDebounceMs);
+      }
+    } else {
+      // Clear preload timeout for searches less than 2 characters
+      if (this.preloadTimeout) {
+        clearTimeout(this.preloadTimeout);
+        this.preloadTimeout = null;
+      }
+      if (searchValue === '') {
+        this.lastPreloadedValue = '';
+      }
     }
 
     // Always use debounced search for all cases (including empty)
     this.currentDebouncedSearch = debounce(() => {
-      if (
-        this.searchQuery.trim() === capturedSearchValue &&
-        this.currentSearchTimestamp === capturedTimestamp
-      ) {
-        this.searchRedirect(e, capturedSearchValue, capturedTimestamp);
+      if (this.searchInputValue.trim() === searchValue) {
+        this.searchRedirect(e, searchValue, searchTimestamp);
       }
     }, this.config.searchDebounceMs);
 
@@ -839,8 +865,14 @@ export class NavigationStateClass implements NavigationState {
 
     // Clear preload timeout
     if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
+      clearTimeout(this.preloadTimeout);
       this.preloadTimeout = null;
+    }
+
+    // Clear typing timeout
+    if (this.typingTimeout) {
+      clearTimeout(this.typingTimeout);
+      this.typingTimeout = undefined;
     }
 
     // Reset all state
@@ -855,13 +887,15 @@ export class NavigationStateClass implements NavigationState {
     this.#hasLoadedOnce = false;
     this.isNavigating = false;
     this.isSearching = false;
+    this.searchInputValue = '';
     this.searchQuery = '';
     this.openAccountDrawer = false;
     this.lastRefreshTime = 0;
     this.currentSearchTimestamp = 0;
-    this.pendingValueUpdate = null;
     this.lastNavigationTimestamp = 0;
     this.lastUserInputTimestamp = 0;
+    this.isUserTyping = false;
+    this.lastPreloadedValue = '';
   }
 }
 

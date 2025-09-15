@@ -1,10 +1,14 @@
 import { browser } from '$app/environment';
+import { DEFAULT_PRELOAD_VIDEOS_CAROUSEL } from '$lib/supabase/videos';
 import type { PageLoad } from './$types';
 
 export const load: PageLoad = ({ data }) => {
   if (browser) {
     // Preload first 5 videos of source
-    const videosToPreload = data.videos.slice(0, 5);
+    const videosToPreload = data.videos.slice(
+      0,
+      DEFAULT_PRELOAD_VIDEOS_CAROUSEL
+    );
 
     videosToPreload.forEach((video) => {
       if (video.image_url) {
@@ -16,7 +20,10 @@ export const load: PageLoad = ({ data }) => {
 
     // Preload first 5 images of highlighted playlists
     for (const highlightPlaylist of data.highlightPlaylists) {
-      const videosToPreload = highlightPlaylist.videos.slice(0, 5);
+      const videosToPreload = highlightPlaylist.videos.slice(
+        0,
+        DEFAULT_PRELOAD_VIDEOS_CAROUSEL
+      );
       videosToPreload.forEach((video) => {
         if (video.image_url) {
           new Image().src = video.image_url;

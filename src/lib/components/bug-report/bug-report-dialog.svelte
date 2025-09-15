@@ -259,7 +259,7 @@
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Dialog.Content
-    class="flex h-[95vh] max-w-2xl flex-col"
+    class="flex h-auto max-w-2xl flex-col"
     onInteractOutside={(e) => e.preventDefault()}
   >
     <ScrollArea class="flex h-full flex-col">

@@ -44,11 +44,11 @@
   {/if}
 
   <div class="min-w-0">
-    <p class="mb-1 text-sm font-medium">
+    <p class="text-sm font-medium">
       {playlist.name}
     </p>
     <p
-      class="text-muted-foreground line-clamp-1 max-w-48 text-xs text-wrap break-words"
+      class="text-muted-foreground mb-2 line-clamp-1 max-w-48 text-xs text-wrap break-words"
     >
       {playlist.description}
     </p>

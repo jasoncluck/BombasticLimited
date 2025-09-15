@@ -654,6 +654,10 @@ export type Database = {
         };
         Returns: boolean;
       };
+      confirm_user: {
+        Args: { user_email: string };
+        Returns: boolean;
+      };
       create_notification: {
         Args: {
           notification_action_url?: string;
@@ -1245,11 +1249,7 @@ export type Database = {
         }[];
       };
       search_videos: {
-        Args: {
-          offset_count?: number;
-          p_preferred_image_format?: string;
-          search_term: string;
-        };
+        Args: { p_preferred_image_format?: string; search_term: string };
         Returns: {
           description: string;
           duration: string;

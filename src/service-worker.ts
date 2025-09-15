@@ -9,19 +9,18 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Cache configuration optimized for 5000 images with smart queuing
+// Configuration with proper request limits to prevent crashes
 interface CacheConfig {
   readonly maxImageCacheSize: number;
   readonly maxMetadataSize: number;
   readonly maxCacheAgeMs: number;
   readonly cleanupIntervalMs: number;
   readonly maxRemovePerCycle: number;
-  readonly corsErrorRetentionMs: number;
-  readonly aggressiveCleanupThreshold: number;
   readonly maxConcurrentRequests: number;
-  readonly queueTimeout: number;
-  readonly priorityThreshold: number;
-  readonly criticalResourceTimeout: number;
+  readonly batchTimeoutMs: number;
+  readonly maxBatchSize: number;
+  readonly maxPendingRequests: number; // Hard limit on total pending requests
+  readonly maxQueueSize: number; // Hard limit on queue size
 }
 
 const CACHE_CONFIG: CacheConfig = {
@@ -30,12 +29,11 @@ const CACHE_CONFIG: CacheConfig = {
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   cleanupIntervalMs: 15 * 60 * 1000, // 15 minutes
   maxRemovePerCycle: 100,
-  corsErrorRetentionMs: 30 * 60 * 1000, // 30 minutes
-  aggressiveCleanupThreshold: 0.85, // Start cleanup at 85%
-  maxConcurrentRequests: 6, // Limit concurrent fetches
-  queueTimeout: 30000, // 30 second timeout for queued requests
-  priorityThreshold: 3, // High priority after 3 hits
-  criticalResourceTimeout: 5000, // 5 second timeout for critical resources
+  maxConcurrentRequests: 8, // Reduced from 100
+  batchTimeoutMs: 200, // Reduced from 300ms
+  maxBatchSize: 20, // Reduced from 50
+  maxPendingRequests: 50, // NEW: Hard limit on total pending requests
+  maxQueueSize: 100, // NEW: Hard limit on queue size
 };
 
 // Cache names with versioning
@@ -47,7 +45,7 @@ const STATIC_ASSETS: readonly string[] = [...build, ...files];
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
-// Critical resource patterns - these should be preloaded immediately
+// Critical resource patterns
 const CRITICAL_PATTERNS = [
   /app\.[a-zA-Z0-9]+\.css$/, // Main app CSS
   /app\.[a-zA-Z0-9]+\.js$/, // Main app JS
@@ -85,7 +83,6 @@ interface ImageCacheMetadata {
   hitCount: number;
   lastAccessed: number;
   lastUpdated: number;
-  priority: number;
 }
 
 // Resource priority classification
@@ -93,25 +90,16 @@ interface ResourceClassification {
   readonly isCritical: boolean;
   readonly category: 'css' | 'js' | 'font' | 'image' | 'other';
   readonly shouldPreload: boolean;
-  readonly preloadDelay: number; // Added missing property
+  readonly preloadDelay: number;
 }
 
-// Request queue interfaces
-interface QueuedRequest {
-  readonly id: string;
+// Simplified batch request interface
+interface BatchRequest {
+  readonly url: string;
   readonly request: Request;
   readonly timestamp: number;
-  readonly priority: number;
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
-  timeoutId?: ReturnType<typeof setTimeout>;
-}
-
-interface RequestQueue {
-  highPriority: Map<string, QueuedRequest>;
-  normal: Map<string, QueuedRequest>;
-  activeFetches: Set<string>;
-  processing: boolean;
 }
 
 // Essential headers for image responses
@@ -144,32 +132,34 @@ const ESSENTIAL_STATIC_HEADERS = [
   'vary',
 ] as const;
 
-// Global state management
+// Simplified global state management with proper limits
 interface ServiceWorkerState {
   metadata: Map<string, ImageCacheMetadata>;
-  requestQueue: RequestQueue;
   lastCleanup: number;
   cleanupInProgress: boolean;
   totalEstimatedSize: number;
   requestCount: number;
   preloadedResources: Set<string>;
   criticalResourcesLoaded: Set<string>;
+  activeFetches: Set<string>;
+  pendingRequests: Map<string, BatchRequest>; // Single map for pending requests
+  requestQueue: string[]; // Simple array for request order (FIFO)
+  batchTimer?: ReturnType<typeof setTimeout>;
+  rejectedRequestCount: number; // Track rejected requests for monitoring
 }
 
 const state: ServiceWorkerState = {
   metadata: new Map<string, ImageCacheMetadata>(),
-  requestQueue: {
-    highPriority: new Map<string, QueuedRequest>(),
-    normal: new Map<string, QueuedRequest>(),
-    activeFetches: new Set<string>(),
-    processing: false,
-  },
   lastCleanup: Date.now(),
   cleanupInProgress: false,
   totalEstimatedSize: 0,
   requestCount: 0,
   preloadedResources: new Set<string>(),
   criticalResourcesLoaded: new Set<string>(),
+  activeFetches: new Set<string>(),
+  pendingRequests: new Map<string, BatchRequest>(),
+  requestQueue: [],
+  rejectedRequestCount: 0,
 };
 
 // Content type mapping for images
@@ -292,10 +282,6 @@ const estimateResponseSize = (response: Response): number => {
   return 10000; // 10KB default
 };
 
-const generateRequestId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
-};
-
 const createCachedResponse = (
   originalResponse: Response,
   isStatic = false
@@ -355,256 +341,162 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
-// Smart request queue management
-const determineRequestPriority = (url: string): number => {
-  const metadata = state.metadata.get(url);
-  const urlObj = new URL(url);
-  const classification = classifyResource(urlObj);
-
-  // Critical resources get highest priority
-  if (classification.isCritical) {
-    return 20;
+// Request management with hard limits to prevent crashes
+const enforceQueueLimits = (): void => {
+  // Check if we're over the queue size limit
+  while (state.requestQueue.length > CACHE_CONFIG.maxQueueSize) {
+    const oldestUrl = state.requestQueue.shift();
+    if (oldestUrl) {
+      const oldRequest = state.pendingRequests.get(oldestUrl);
+      if (oldRequest) {
+        oldRequest.reject(new Error('Request evicted from queue - queue size limit exceeded'));
+        state.pendingRequests.delete(oldestUrl);
+        state.rejectedRequestCount++;
+      }
+    }
   }
 
-  // High priority for frequently accessed images
-  if (metadata && metadata.hitCount >= CACHE_CONFIG.priorityThreshold) {
-    return 10;
+  // Check if we're over the total pending requests limit
+  const totalPending = state.pendingRequests.size + state.activeFetches.size;
+  const excessCount = totalPending - CACHE_CONFIG.maxPendingRequests;
+  
+  if (excessCount > 0) {
+    // Remove the oldest pending requests
+    for (let i = 0; i < excessCount && state.requestQueue.length > 0; i++) {
+      const oldestUrl = state.requestQueue.shift();
+      if (oldestUrl) {
+        const oldRequest = state.pendingRequests.get(oldestUrl);
+        if (oldRequest) {
+          oldRequest.reject(new Error('Request evicted - pending requests limit exceeded'));
+          state.pendingRequests.delete(oldestUrl);
+          state.rejectedRequestCount++;
+        }
+      }
+    }
   }
-
-  // Medium priority for known images
-  if (metadata) {
-    return 5;
-  }
-
-  // Normal priority for new images
-  return 1;
 };
 
 const addToQueue = (request: Request): Promise<Response> => {
   const url = request.url;
-  const requestId = generateRequestId();
-  const priority = determineRequestPriority(url);
   const now = Date.now();
 
-  // Auto-cleanup if queue is getting too large (performance protection)
-  const totalQueueSize =
-    state.requestQueue.highPriority.size + state.requestQueue.normal.size;
-  if (totalQueueSize > 50) {
-    // console.warn(
-    //   `Service worker: Queue size (${totalQueueSize}) exceeding threshold, performing cleanup`
-    // );
-    // Cancel oldest requests from normal queue first
-    const normalEntries = Array.from(state.requestQueue.normal.entries());
-    const oldestRequests = normalEntries
-      .sort(([, a], [, b]) => a.timestamp - b.timestamp)
-      .slice(0, 25);
+  // Enforce limits before adding new requests
+  enforceQueueLimits();
 
-    for (const [url, request] of oldestRequests) {
-      if (request.timeoutId) {
-        clearTimeout(request.timeoutId);
-      }
-      request.reject(new Error('Request cancelled due to queue overflow'));
-      state.requestQueue.normal.delete(url);
-    }
+  // Hard limit check - if we're still at capacity after cleanup, reject immediately
+  const totalPending = state.pendingRequests.size + state.activeFetches.size;
+  if (totalPending >= CACHE_CONFIG.maxPendingRequests) {
+    state.rejectedRequestCount++;
+    return Promise.reject(new Error('Request queue full - cannot accept more requests'));
+  }
+
+  // Check if already being processed (avoid duplicates)
+  if (state.activeFetches.has(url) || state.pendingRequests.has(url)) {
+    // For duplicate requests, fall back to direct fetch
+    return fetch(createCorsRequest(request));
   }
 
   return new Promise<Response>((resolve, reject) => {
-    // Check if already queued or being fetched
-    if (
-      state.requestQueue.activeFetches.has(url) ||
-      state.requestQueue.highPriority.has(url) ||
-      state.requestQueue.normal.has(url)
-    ) {
-      // Find existing request and piggyback on it
-      const existingRequest =
-        state.requestQueue.highPriority.get(url) ||
-        state.requestQueue.normal.get(url);
-
-      if (existingRequest) {
-        const originalResolve = existingRequest.resolve;
-        existingRequest.resolve = (response: Response) => {
-          // Clone response for multiple consumers
-          resolve(response.clone());
-          originalResolve(response);
-        };
-        return;
-      }
-    }
-
-    const queuedRequest: QueuedRequest = {
-      id: requestId,
+    const batchRequest: BatchRequest = {
+      url,
       request,
       timestamp: now,
-      priority,
       resolve,
       reject,
     };
 
-    // Set timeout for queued request
-    queuedRequest.timeoutId = setTimeout(() => {
-      removeFromQueue(url);
-      reject(new Error('Request timeout'));
-    }, CACHE_CONFIG.queueTimeout);
+    // Add to pending requests and queue
+    state.pendingRequests.set(url, batchRequest);
+    state.requestQueue.push(url);
 
-    // Add to appropriate queue
-    if (priority >= 5) {
-      state.requestQueue.highPriority.set(url, queuedRequest);
-    } else {
-      state.requestQueue.normal.set(url, queuedRequest);
+    // Start batch timer if this is the first request
+    if (state.pendingRequests.size === 1) {
+      state.batchTimer = setTimeout(() => {
+        processBatch();
+      }, CACHE_CONFIG.batchTimeoutMs);
     }
 
-    // Process queue
-    processRequestQueue().catch(() => {
-      // Silent fail on queue processing errors
+    // Process immediately if batch is full
+    if (state.pendingRequests.size >= CACHE_CONFIG.maxBatchSize) {
+      if (state.batchTimer) {
+        clearTimeout(state.batchTimer);
+        state.batchTimer = undefined;
+      }
+      processBatch();
+    }
+  });
+};
+
+// Simplified batch processing with capacity checks
+const processBatch = (): void => {
+  if (state.pendingRequests.size === 0) return;
+
+  // Clear the timer
+  if (state.batchTimer) {
+    clearTimeout(state.batchTimer);
+    state.batchTimer = undefined;
+  }
+
+  // Calculate how many requests we can process based on current capacity
+  const availableCapacity = CACHE_CONFIG.maxConcurrentRequests - state.activeFetches.size;
+  const batchSize = Math.min(
+    CACHE_CONFIG.maxBatchSize,
+    state.pendingRequests.size,
+    availableCapacity
+  );
+
+  if (batchSize <= 0) {
+    // No capacity available, reschedule for later
+    state.batchTimer = setTimeout(() => {
+      processBatch();
+    }, CACHE_CONFIG.batchTimeoutMs);
+    return;
+  }
+
+  // Process the next batch of requests from the queue
+  const urlsToProcess = state.requestQueue.splice(0, batchSize);
+
+  urlsToProcess.forEach((url) => {
+    const batchRequest = state.pendingRequests.get(url);
+    if (!batchRequest) return;
+
+    // Remove from pending and add to active
+    state.pendingRequests.delete(url);
+    state.activeFetches.add(url);
+
+    // Process individual request
+    processRequest(batchRequest, url).finally(() => {
+      state.activeFetches.delete(url);
+
+      // Continue processing if there are more requests and capacity
+      if (state.pendingRequests.size > 0) {
+        processBatch();
+      }
     });
   });
 };
 
-const removeFromQueue = (url: string): void => {
-  const highPriorityRequest = state.requestQueue.highPriority.get(url);
-  const normalRequest = state.requestQueue.normal.get(url);
-
-  if (highPriorityRequest) {
-    if (highPriorityRequest.timeoutId) {
-      clearTimeout(highPriorityRequest.timeoutId);
-    }
-    state.requestQueue.highPriority.delete(url);
-  }
-
-  if (normalRequest) {
-    if (normalRequest.timeoutId) {
-      clearTimeout(normalRequest.timeoutId);
-    }
-    state.requestQueue.normal.delete(url);
-  }
-};
-
-const cancelPendingRequests = (): void => {
-  // Track metrics for debugging
-  // const totalCancelled =
-  //   state.requestQueue.highPriority.size + state.requestQueue.normal.size;
-
-  // Cancel all pending requests in high priority queue
-  for (const [, request] of state.requestQueue.highPriority) {
-    if (request.timeoutId) {
-      clearTimeout(request.timeoutId);
-    }
-    request.reject(new Error('Request cancelled due to navigation'));
-  }
-  state.requestQueue.highPriority.clear();
-
-  // Cancel all pending requests in normal queue
-  for (const [, request] of state.requestQueue.normal) {
-    if (request.timeoutId) {
-      clearTimeout(request.timeoutId);
-    }
-    request.reject(new Error('Request cancelled due to navigation'));
-  }
-  state.requestQueue.normal.clear();
-
-  // Clear active fetches tracking to make cancellation more aggressive
-  // While we can't cancel in-flight requests, we prevent their results from being cached
-  state.requestQueue.activeFetches.clear();
-
-  // Reset processing state to allow new requests
-  state.requestQueue.processing = false;
-
-  // Log for debugging queue performance issues
-  // if (totalCancelled > 10) {
-  //   console.log(
-  //     `Service worker: Cancelled ${totalCancelled} queued requests on navigation`
-  //   );
-  // }
-};
-
-const processRequestQueue = async (): Promise<void> => {
-  if (state.requestQueue.processing) return;
-
-  state.requestQueue.processing = true;
-
-  try {
-    while (
-      (state.requestQueue.highPriority.size > 0 ||
-        state.requestQueue.normal.size > 0) &&
-      state.requestQueue.activeFetches.size < CACHE_CONFIG.maxConcurrentRequests
-    ) {
-      // Process high priority first
-      let queuedRequest: QueuedRequest | undefined;
-      let url: string | undefined;
-
-      if (state.requestQueue.highPriority.size > 0) {
-        // Fixed: Properly handle the iterator
-        const firstEntry = state.requestQueue.highPriority.entries().next();
-        if (!firstEntry.done) {
-          const [firstUrl, firstRequest] = firstEntry.value;
-          url = firstUrl;
-          queuedRequest = firstRequest;
-          state.requestQueue.highPriority.delete(url);
-        }
-      } else if (state.requestQueue.normal.size > 0) {
-        // Fixed: Properly handle the iterator
-        const firstEntry = state.requestQueue.normal.entries().next();
-        if (!firstEntry.done) {
-          const [firstUrl, firstRequest] = firstEntry.value;
-          url = firstUrl;
-          queuedRequest = firstRequest;
-          state.requestQueue.normal.delete(url);
-        }
-      }
-
-      if (!queuedRequest || !url) break;
-
-      // Clear timeout
-      if (queuedRequest.timeoutId) {
-        clearTimeout(queuedRequest.timeoutId);
-      }
-
-      // Mark as active
-      state.requestQueue.activeFetches.add(url);
-
-      // Process request
-      processQueuedRequest(queuedRequest, url).catch(() => {
-        // Silent fail - error handling is done in processQueuedRequest
-      });
-    }
-  } finally {
-    state.requestQueue.processing = false;
-  }
-};
-
-const processQueuedRequest = async (
-  queuedRequest: QueuedRequest,
+const processRequest = async (
+  batchRequest: BatchRequest,
   url: string
 ): Promise<void> => {
   try {
-    const corsRequest = createCorsRequest(queuedRequest.request);
+    const corsRequest = createCorsRequest(batchRequest.request);
     const response = await fetch(corsRequest);
 
-    // Handle successful response
+    // Cache successful responses
     if (response.ok && response.status === 200 && !isCorsError(response)) {
-      await cacheSuccessfulResponse(queuedRequest.request, response.clone());
+      await cacheSuccessfulResponse(batchRequest.request, response.clone());
     } else if (isCorsError(response)) {
       await handleCorsError(url);
     }
 
-    queuedRequest.resolve(response);
+    batchRequest.resolve(response);
   } catch (error) {
     await handleFetchError(url, error);
-    queuedRequest.reject(
-      error instanceof Error ? error : new Error('Unknown fetch error')
+    batchRequest.reject(
+      error instanceof Error ? error : new Error('Fetch failed')
     );
-  } finally {
-    state.requestQueue.activeFetches.delete(url);
-
-    // Continue processing queue
-    if (
-      state.requestQueue.highPriority.size > 0 ||
-      state.requestQueue.normal.size > 0
-    ) {
-      processRequestQueue().catch(() => {
-        // Silent fail
-      });
-    }
   }
 };
 
@@ -636,7 +528,6 @@ const cacheSuccessfulResponse = async (
         existingMetadata.hitCount++;
         existingMetadata.lastAccessed = now;
         existingMetadata.lastUpdated = now;
-        existingMetadata.priority = determineRequestPriority(url);
         state.totalEstimatedSize +=
           estimatedSize - existingMetadata.estimatedSize;
       } else {
@@ -650,7 +541,6 @@ const cacheSuccessfulResponse = async (
           contentType: metadataContentType || undefined,
           corsError: false,
           estimatedSize,
-          priority: 1,
         });
 
         state.totalEstimatedSize += estimatedSize;
@@ -673,7 +563,6 @@ const handleCorsError = async (url: string): Promise<void> => {
       lastUpdated: now,
       corsError: true,
       estimatedSize: 0,
-      priority: 0,
     });
   }
 };
@@ -692,130 +581,11 @@ const handleFetchError = async (url: string, error: unknown): Promise<void> => {
       lastUpdated: now,
       corsError: true,
       estimatedSize: 0,
-      priority: 0,
     });
   }
 };
 
-// Cache eviction priority calculation
-const calculateEvictionPriority = (
-  metadata: ImageCacheMetadata,
-  now: number
-): number => {
-  const ageInDays = (now - metadata.createdAt) / (24 * 60 * 60 * 1000);
-  const daysSinceLastAccess =
-    (now - metadata.lastAccessed) / (24 * 60 * 60 * 1000);
-  const hitFrequency = metadata.hitCount / Math.max(ageInDays, 0.1);
-
-  // CORS errors get highest priority for removal
-  if (metadata.corsError) {
-    return 1000 + ageInDays;
-  }
-
-  // Calculate composite score (higher = more likely to be evicted)
-  const ageScore = ageInDays * 0.3;
-  const accessScore = daysSinceLastAccess * 0.4;
-  const frequencyScore = (1 / (hitFrequency + 0.1)) * 0.3;
-
-  return ageScore + accessScore + frequencyScore;
-};
-
-// Optimized cache cleanup
-const performSmartCacheCleanup = async (): Promise<void> => {
-  if (state.cleanupInProgress) return;
-
-  state.cleanupInProgress = true;
-
-  try {
-    const cache = await caches.open(IMAGE_CACHE);
-    const keys = await cache.keys();
-
-    const currentSize = keys.length;
-    const metadataSize = state.metadata.size;
-
-    // Determine if cleanup is needed
-    const needsCleanup =
-      currentSize >
-        CACHE_CONFIG.maxImageCacheSize *
-          CACHE_CONFIG.aggressiveCleanupThreshold ||
-      metadataSize >
-        CACHE_CONFIG.maxMetadataSize * CACHE_CONFIG.aggressiveCleanupThreshold;
-
-    if (!needsCleanup) {
-      return;
-    }
-
-    const now = Date.now();
-
-    // Create eviction candidates with priorities
-    interface EvictionCandidate {
-      url: string;
-      metadata: ImageCacheMetadata;
-      priority: number;
-    }
-
-    const candidates: EvictionCandidate[] = Array.from(state.metadata.entries())
-      .map(([url, metadata]) => ({
-        url,
-        metadata,
-        priority: calculateEvictionPriority(metadata, now),
-      }))
-      .sort((a, b) => b.priority - a.priority); // Highest priority first
-
-    // Calculate removal target
-    const targetReduction = Math.max(
-      currentSize - CACHE_CONFIG.maxImageCacheSize + 200,
-      metadataSize - CACHE_CONFIG.maxMetadataSize + 200
-    );
-
-    const toRemove = candidates.slice(
-      0,
-      Math.min(targetReduction, CACHE_CONFIG.maxRemovePerCycle)
-    );
-
-    // Remove entries in optimized batches
-    const batchSize = 20;
-    let removed = 0;
-
-    for (let i = 0; i < toRemove.length; i += batchSize) {
-      const batch = toRemove.slice(i, i + batchSize);
-
-      const deletionPromises = batch.map(async ({ url, metadata }) => {
-        try {
-          await cache.delete(url);
-          state.metadata.delete(url);
-          state.totalEstimatedSize -= metadata.estimatedSize;
-          removed++;
-        } catch {
-          // Silent fail on individual deletions
-        }
-      });
-
-      await Promise.allSettled(deletionPromises);
-
-      // Micro-yield to prevent blocking
-      if (i + batchSize < toRemove.length) {
-        await new Promise((resolve) => setTimeout(resolve, 0));
-      }
-    }
-
-    // Clean up orphaned metadata
-    const cacheUrls = new Set((await cache.keys()).map((req) => req.url));
-    for (const [url, metadata] of state.metadata) {
-      if (!cacheUrls.has(url)) {
-        state.metadata.delete(url);
-        state.totalEstimatedSize -= metadata.estimatedSize;
-      }
-    }
-  } catch (error) {
-    console.warn('Cache cleanup failed:', error);
-  } finally {
-    state.cleanupInProgress = false;
-    state.lastCleanup = Date.now();
-  }
-};
-
-// Main image caching function with smart queuing
+// Main image caching function with controlled queuing to prevent crashes
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
@@ -824,13 +594,12 @@ const cacheImage = async (request: Request): Promise<Response> => {
 
   state.requestCount++;
 
-  // Serve from cache if available
+  // Serve from cache if available (fastest path)
   if (cached) {
     const metadata = state.metadata.get(url);
     if (metadata) {
       metadata.hitCount++;
       metadata.lastAccessed = now;
-      metadata.priority = determineRequestPriority(url);
     }
 
     return createCachedResponse(cached);
@@ -843,20 +612,17 @@ const cacheImage = async (request: Request): Promise<Response> => {
     });
   }
 
-  // Use smart queuing for new requests with cancellation handling
+  // Use controlled queuing with hard limits to prevent crashes
   try {
     return await addToQueue(request);
-  } catch {
-    // If this is a planned cancellation, fall back to network request
-    // This prevents unhandled promise rejections in the console
-    // For cancelled requests, try to fetch directly from network as fallback
-    // This ensures the fetch event always resolves with a response
+  } catch (error) {
+    // If queue is full or other issues, fall back to direct fetch
     try {
       const corsRequest = createCorsRequest(request);
       return await fetch(corsRequest);
     } catch {
       // If network also fails, return a simple error response
-      return new Response('Request cancelled and network unavailable', {
+      return new Response('Request failed - queue full and network unavailable', {
         status: 503,
         statusText: 'Service Unavailable',
       });
@@ -900,6 +666,119 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
+// Cache eviction priority calculation
+const calculateEvictionPriority = (
+  metadata: ImageCacheMetadata,
+  now: number
+): number => {
+  const ageInDays = (now - metadata.createdAt) / (24 * 60 * 60 * 1000);
+  const daysSinceLastAccess =
+    (now - metadata.lastAccessed) / (24 * 60 * 60 * 1000);
+  const hitFrequency = metadata.hitCount / Math.max(ageInDays, 0.1);
+
+  // CORS errors get highest priority for removal
+  if (metadata.corsError) {
+    return 1000 + ageInDays;
+  }
+
+  // Calculate composite score (higher = more likely to be evicted)
+  const ageScore = ageInDays * 0.3;
+  const accessScore = daysSinceLastAccess * 0.4;
+  const frequencyScore = (1 / (hitFrequency + 0.1)) * 0.3;
+
+  return ageScore + accessScore + frequencyScore;
+};
+
+// Optimized cache cleanup
+const performSmartCacheCleanup = async (): Promise<void> => {
+  if (state.cleanupInProgress) return;
+
+  state.cleanupInProgress = true;
+
+  try {
+    const cache = await caches.open(IMAGE_CACHE);
+    const keys = await cache.keys();
+
+    const currentSize = keys.length;
+    const metadataSize = state.metadata.size;
+
+    // Determine if cleanup is needed
+    const needsCleanup =
+      currentSize > CACHE_CONFIG.maxImageCacheSize * 0.85 ||
+      metadataSize > CACHE_CONFIG.maxMetadataSize * 0.85;
+
+    if (!needsCleanup) {
+      return;
+    }
+
+    const now = Date.now();
+
+    // Create eviction candidates with priorities
+    interface EvictionCandidate {
+      url: string;
+      metadata: ImageCacheMetadata;
+      priority: number;
+    }
+
+    const candidates: EvictionCandidate[] = Array.from(state.metadata.entries())
+      .map(([url, metadata]) => ({
+        url,
+        metadata,
+        priority: calculateEvictionPriority(metadata, now),
+      }))
+      .sort((a, b) => b.priority - a.priority); // Highest priority first
+
+    // Calculate removal target
+    const targetReduction = Math.max(
+      currentSize - CACHE_CONFIG.maxImageCacheSize + 200,
+      metadataSize - CACHE_CONFIG.maxMetadataSize + 200
+    );
+
+    const toRemove = candidates.slice(
+      0,
+      Math.min(targetReduction, CACHE_CONFIG.maxRemovePerCycle)
+    );
+
+    // Remove entries in optimized batches
+    const batchSize = 20;
+
+    for (let i = 0; i < toRemove.length; i += batchSize) {
+      const batch = toRemove.slice(i, i + batchSize);
+
+      const deletionPromises = batch.map(async ({ url, metadata }) => {
+        try {
+          await cache.delete(url);
+          state.metadata.delete(url);
+          state.totalEstimatedSize -= metadata.estimatedSize;
+        } catch {
+          // Silent fail on individual deletions
+        }
+      });
+
+      await Promise.allSettled(deletionPromises);
+
+      // Micro-yield to prevent blocking
+      if (i + batchSize < toRemove.length) {
+        await new Promise((resolve) => setTimeout(resolve, 0));
+      }
+    }
+
+    // Clean up orphaned metadata
+    const cacheUrls = new Set((await cache.keys()).map((req) => req.url));
+    for (const [url, metadata] of state.metadata) {
+      if (!cacheUrls.has(url)) {
+        state.metadata.delete(url);
+        state.totalEstimatedSize -= metadata.estimatedSize;
+      }
+    }
+  } catch (error) {
+    console.warn('Cache cleanup failed:', error);
+  } finally {
+    state.cleanupInProgress = false;
+    state.lastCleanup = Date.now();
+  }
+};
+
 // Intelligent preloading with delays
 const preloadResourceWithDelay = async (
   asset: string,
@@ -921,10 +800,7 @@ const preloadResourceWithDelay = async (
       const response = await Promise.race([
         fetch(asset),
         new Promise<never>((_, reject) =>
-          setTimeout(
-            () => reject(new Error('Timeout')),
-            CACHE_CONFIG.criticalResourceTimeout
-          )
+          setTimeout(() => reject(new Error('Timeout')), 5000)
         ),
       ]);
 
@@ -968,7 +844,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images from supported sources
+  // Handle images with controlled queuing to prevent crashes
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;
@@ -982,9 +858,8 @@ type ServiceWorkerMessageType =
   | 'CLEAR_ALL_CACHE'
   | 'GET_CACHE_STATS'
   | 'FORCE_CLEANUP'
-  | 'GET_QUEUE_STATS'
-  | 'GET_PRELOAD_STATS'
-  | 'CANCEL_PENDING_REQUESTS';
+  | 'CANCEL_REQUESTS'
+  | 'ENFORCE_LIMITS'; // NEW: Force limit enforcement
 
 interface ServiceWorkerMessage {
   type: ServiceWorkerMessageType;
@@ -1018,24 +893,16 @@ sw.addEventListener('message', (event) => {
       );
       break;
 
-    case 'GET_QUEUE_STATS':
-      if (event.ports && event.ports[0]) {
-        event.ports[0].postMessage(getQueueStats());
-      }
-      break;
-
-    case 'GET_PRELOAD_STATS':
-      if (event.ports && event.ports[0]) {
-        event.ports[0].postMessage(getPreloadStats());
-      }
-      break;
-
     case 'FORCE_CLEANUP':
       event.waitUntil(performSmartCacheCleanup());
       break;
 
-    case 'CANCEL_PENDING_REQUESTS':
-      cancelPendingRequests();
+    case 'CANCEL_REQUESTS':
+      cancelAllRequests();
+      break;
+
+    case 'ENFORCE_LIMITS': // NEW: Force limit enforcement
+      enforceQueueLimits();
       break;
 
     default:
@@ -1044,81 +911,44 @@ sw.addEventListener('message', (event) => {
 });
 
 // Cache management functions
+const cancelAllRequests = (): void => {
+  // Clear batch timer
+  if (state.batchTimer) {
+    clearTimeout(state.batchTimer);
+    state.batchTimer = undefined;
+  }
+
+  // Cancel all pending requests with proper error messages
+  for (const [url, request] of state.pendingRequests) {
+    request.reject(new Error('Request cancelled by user'));
+    state.rejectedRequestCount++;
+  }
+  state.pendingRequests.clear();
+  state.requestQueue = [];
+
+  // Clear active fetches tracking
+  state.activeFetches.clear();
+};
+
 const clearImageCache = async (): Promise<void> => {
+  cancelAllRequests();
   await caches.delete(IMAGE_CACHE);
   state.metadata.clear();
   state.totalEstimatedSize = 0;
   state.cleanupInProgress = false;
-
-  // Clear queue
-  state.requestQueue.highPriority.clear();
-  state.requestQueue.normal.clear();
-  state.requestQueue.activeFetches.clear();
-  state.requestQueue.processing = false;
 };
 
 const clearAllCaches = async (): Promise<void> => {
+  cancelAllRequests();
   await Promise.all([caches.delete(STATIC_CACHE), caches.delete(IMAGE_CACHE)]);
   state.metadata.clear();
   state.totalEstimatedSize = 0;
   state.cleanupInProgress = false;
   state.preloadedResources.clear();
   state.criticalResourcesLoaded.clear();
-
-  // Clear queue
-  state.requestQueue.highPriority.clear();
-  state.requestQueue.normal.clear();
-  state.requestQueue.activeFetches.clear();
-  state.requestQueue.processing = false;
 };
 
-// Preload statistics
-interface PreloadStatistics {
-  preloadedResources: number;
-  criticalResourcesLoaded: number;
-  totalCriticalResources: number;
-  preloadSuccess: boolean;
-}
-
-const getPreloadStats = (): PreloadStatistics => {
-  const totalCriticalResources = STATIC_ASSETS.filter((asset) => {
-    const url = new URL(asset, sw.location.origin);
-    return classifyResource(url).isCritical;
-  }).length;
-
-  return {
-    preloadedResources: state.preloadedResources.size,
-    criticalResourcesLoaded: state.criticalResourcesLoaded.size,
-    totalCriticalResources,
-    preloadSuccess:
-      state.criticalResourcesLoaded.size >= totalCriticalResources * 0.8,
-  };
-};
-
-// Queue statistics
-interface QueueStatistics {
-  highPriorityQueue: number;
-  normalQueue: number;
-  activeFetches: number;
-  processing: boolean;
-  totalRequests: number;
-  maxConcurrentRequests: number;
-  queueTimeout: number;
-}
-
-const getQueueStats = (): QueueStatistics => {
-  return {
-    highPriorityQueue: state.requestQueue.highPriority.size,
-    normalQueue: state.requestQueue.normal.size,
-    activeFetches: state.requestQueue.activeFetches.size,
-    processing: state.requestQueue.processing,
-    totalRequests: state.requestCount,
-    maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
-    queueTimeout: CACHE_CONFIG.queueTimeout,
-  };
-};
-
-// Enhanced cache statistics
+// Enhanced cache statistics with queue monitoring
 interface CacheStatistics {
   imageCache: {
     size: number;
@@ -1126,6 +956,7 @@ interface CacheStatistics {
     cacheExists: boolean;
     estimatedTotalSizeMB: number;
     averageImageSizeKB: number;
+    maxSize: number;
   };
   staticCache: {
     size: number;
@@ -1140,7 +971,6 @@ interface CacheStatistics {
     averageHitCount: number;
     oldestEntryAge: number;
     newestEntryAge: number;
-    highPriorityCount: number;
   };
   performance: {
     cleanupInProgress: boolean;
@@ -1149,8 +979,22 @@ interface CacheStatistics {
     cacheUtilization: number;
     totalRequests: number;
   };
-  preload: PreloadStatistics;
-  queue: QueueStatistics;
+  queuing: {
+    activeFetches: number;
+    pendingRequests: number;
+    queueSize: number;
+    maxConcurrentRequests: number;
+    maxPendingRequests: number;
+    maxQueueSize: number;
+    rejectedRequestCount: number; // NEW: Track rejected requests
+    queueUtilization: number; // NEW: Queue usage percentage
+  };
+  preload: {
+    preloadedResources: number;
+    criticalResourcesLoaded: number;
+    totalCriticalResources: number;
+    preloadSuccess: boolean;
+  };
   config: CacheConfig;
   allCaches: string[];
 }
@@ -1167,9 +1011,6 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
     const metadataArray = Array.from(state.metadata.values());
     const corsErrors = metadataArray.filter((m) => m.corsError).length;
     const successfulCaches = metadataArray.filter((m) => !m.corsError).length;
-    const highPriorityCount = metadataArray.filter(
-      (m) => m.priority >= CACHE_CONFIG.priorityThreshold
-    ).length;
 
     const totalEstimatedSizeBytes = metadataArray.reduce(
       (sum, m) => sum + m.estimatedSize,
@@ -1189,6 +1030,16 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
     const cacheUtilization =
       imageCacheKeys.length / CACHE_CONFIG.maxImageCacheSize;
 
+    // Calculate preload statistics
+    const totalCriticalResources = STATIC_ASSETS.filter((asset) => {
+      const url = new URL(asset, sw.location.origin);
+      return classifyResource(url).isCritical;
+    }).length;
+
+    // Calculate queue utilization
+    const totalPending = state.pendingRequests.size + state.activeFetches.size;
+    const queueUtilization = totalPending / CACHE_CONFIG.maxPendingRequests;
+
     return {
       imageCache: {
         size: imageCacheKeys.length,
@@ -1202,6 +1053,7 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
                 (totalEstimatedSizeBytes / successfulCaches / 1024) * 100
               ) / 100
             : 0,
+        maxSize: CACHE_CONFIG.maxImageCacheSize,
       },
       staticCache: {
         size: staticCacheKeys.length,
@@ -1217,7 +1069,6 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
         averageHitCount: Math.round(averageHitCount * 100) / 100,
         oldestEntryAge: Math.round(oldestEntryAge / (1000 * 60 * 60)), // Hours
         newestEntryAge: Math.round(newestEntryAge / (1000 * 60 * 60)), // Hours
-        highPriorityCount,
       },
       performance: {
         cleanupInProgress: state.cleanupInProgress,
@@ -1228,8 +1079,23 @@ const getCacheStats = async (): Promise<CacheStatistics> => {
         cacheUtilization: Math.round(cacheUtilization * 100) / 100,
         totalRequests: state.requestCount,
       },
-      preload: getPreloadStats(),
-      queue: getQueueStats(),
+      queuing: {
+        activeFetches: state.activeFetches.size,
+        pendingRequests: state.pendingRequests.size,
+        queueSize: state.requestQueue.length,
+        maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
+        maxPendingRequests: CACHE_CONFIG.maxPendingRequests,
+        maxQueueSize: CACHE_CONFIG.maxQueueSize,
+        rejectedRequestCount: state.rejectedRequestCount,
+        queueUtilization: Math.round(queueUtilization * 100) / 100,
+      },
+      preload: {
+        preloadedResources: state.preloadedResources.size,
+        criticalResourcesLoaded: state.criticalResourcesLoaded.size,
+        totalCriticalResources,
+        preloadSuccess:
+          state.criticalResourcesLoaded.size >= totalCriticalResources * 0.8,
+      },
       config: CACHE_CONFIG,
       allCaches,
     };
@@ -1276,10 +1142,7 @@ const preloadCriticalAssets = async (): Promise<void> => {
         const response = await Promise.race([
           fetch(asset),
           new Promise<never>((_, reject) =>
-            setTimeout(
-              () => reject(new Error('Timeout')),
-              CACHE_CONFIG.criticalResourceTimeout
-            )
+            setTimeout(() => reject(new Error('Timeout')), 5000)
           ),
         ]);
 
@@ -1320,66 +1183,33 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Periodic maintenance
+// Periodic maintenance with limit enforcement
 const performPeriodicMaintenance = async (): Promise<void> => {
   if (state.cleanupInProgress) return;
 
   try {
+    // Enforce queue limits periodically to prevent gradual buildup
+    enforceQueueLimits();
+
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
-    const now = Date.now();
 
-    let removedCount = 0;
-    const maxRemovePerCycle = Math.min(CACHE_CONFIG.maxRemovePerCycle, 50);
+    // Simple cleanup for old entries
+    if (keys.length > CACHE_CONFIG.maxImageCacheSize) {
+      const keysToDelete = keys.slice(
+        0,
+        keys.length - CACHE_CONFIG.maxImageCacheSize + 500
+      );
 
-    // Quick cleanup of obvious candidates
-    const quickCleanupCandidates: Array<{
-      request: Request;
-      metadata?: ImageCacheMetadata;
-    }> = [];
+      // Remove old entries in batches
+      for (let i = 0; i < keysToDelete.length; i += 20) {
+        const batch = keysToDelete.slice(i, i + 20);
+        await Promise.allSettled(batch.map((key) => cache.delete(key)));
 
-    for (const request of keys) {
-      if (removedCount >= maxRemovePerCycle) break;
-
-      const metadata = state.metadata.get(request.url);
-
-      if (!metadata) {
-        quickCleanupCandidates.push({ request });
-        continue;
-      }
-
-      const ageFromCreation = now - metadata.createdAt;
-      const ageFromLastAccess = now - metadata.lastAccessed;
-
-      // Aggressive CORS error cleanup
-      if (
-        metadata.corsError &&
-        ageFromCreation > CACHE_CONFIG.corsErrorRetentionMs
-      ) {
-        quickCleanupCandidates.push({ request, metadata });
-        continue;
-      }
-
-      // Remove very old or unused entries
-      if (
-        ageFromCreation > CACHE_CONFIG.maxCacheAgeMs ||
-        (ageFromLastAccess > 48 * 60 * 60 * 1000 && metadata.hitCount === 1)
-      ) {
-        quickCleanupCandidates.push({ request, metadata });
-      }
-    }
-
-    // Batch delete candidates
-    for (const { request, metadata } of quickCleanupCandidates) {
-      try {
-        await cache.delete(request);
-        if (metadata) {
-          state.metadata.delete(request.url);
-          state.totalEstimatedSize -= metadata.estimatedSize;
+        // Yield to prevent blocking
+        if (i + 20 < keysToDelete.length) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
         }
-        removedCount++;
-      } catch {
-        // Silent fail
       }
     }
   } catch (error) {

@@ -468,7 +468,8 @@ export async function searchPlaylists({
       },
       { count: 'exact' }
     )
-    .range((currentPage - 1) * limit, currentPage * limit - 1);
+    .range((currentPage - 1) * limit, currentPage * limit - 1)
+    .limit(limit);
 
   if (error) {
     console.error('Error searching playlists:', error);
