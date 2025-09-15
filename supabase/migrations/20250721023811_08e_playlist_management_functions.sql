@@ -725,7 +725,7 @@ EXCEPTION
 END;
 $$;
 
--- Optimized function to update playlist video positions
+-- Optimized function to update playlist video positions  
 CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
   "p_playlist_id" int8,
   "p_video_ids" TEXT[],
@@ -743,6 +743,7 @@ DECLARE
   max_position int2;
   min_current_pos int2;
   max_current_pos int2;
+  effective_target_pos int2;
   current_user_id uuid;
   playlist_owner_id uuid;
 BEGIN
@@ -791,8 +792,51 @@ BEGIN
     RAISE EXCEPTION 'New position % is out of range (1-%)', p_new_position, max_position;
   END IF;
   
+  -- Calculate effective target position to handle overlaps correctly
+  -- Problem statement: "if [1,2,4] are move to position 3, we already selected 1 and 2 
+  -- so we want the MIN value to be the actual insert position, we have the same situation 
+  -- on the other side and inserting into a larger position should use the MAX"
+  
+  IF p_new_position < min_current_pos THEN
+    -- Moving to position before all selected videos
+    effective_target_pos := p_new_position;
+  ELSIF p_new_position > max_current_pos THEN
+    -- Moving to position after all selected videos  
+    effective_target_pos := p_new_position;
+  ELSE
+    -- Target position falls within the selected range - need to determine MIN vs MAX
+    -- Check if there are more selected positions before or after the target
+    DECLARE
+      selected_before int := 0;
+      selected_after int := 0;
+      pos int2;
+    BEGIN
+      -- Count selected positions before and after target position
+      FOR i IN 1..array_length(p_video_ids, 1) LOOP
+        SELECT video_position INTO pos
+        FROM public.playlist_videos 
+        WHERE playlist_id = p_playlist_id AND video_id = p_video_ids[i];
+        
+        IF pos < p_new_position THEN
+          selected_before := selected_before + 1;
+        ELSIF pos > p_new_position THEN
+          selected_after := selected_after + 1;
+        END IF;
+      END LOOP;
+      
+      -- Use MIN logic when there are selected positions before target
+      -- Use MAX logic when there are selected positions after target  
+      IF selected_before > selected_after THEN
+        effective_target_pos := min_current_pos;
+      ELSE
+        -- For MAX logic, calculate position that allows sequential placement
+        effective_target_pos := max_current_pos - video_count + 1;
+      END IF;
+    END;
+  END IF;
+  
   -- Early exit if no movement needed
-  IF min_current_pos = p_new_position THEN
+  IF min_current_pos = effective_target_pos THEN
     RETURN QUERY
     SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
     FROM public.playlist_videos pv
@@ -801,17 +845,25 @@ BEGIN
     RETURN;
   END IF;
   
-  -- Bulk position update using CASE statements
+  -- Bulk position update ensuring sequential positioning without gaps
   UPDATE public.playlist_videos 
   SET video_position = CASE 
-    -- Videos being moved get new sequential positions
+    -- Videos being moved get new sequential positions starting from effective_target_pos
     WHEN video_id = ANY(p_video_ids) THEN 
-      (p_new_position + array_position(p_video_ids, video_id) - 1)::int2
+      (effective_target_pos + array_position(p_video_ids, video_id) - 1)::int2
     -- Shift other videos based on movement direction
-    WHEN p_new_position > max_current_pos AND video_position > max_current_pos AND video_position <= p_new_position + video_count - 1 THEN 
-      (video_position - video_count)::int2
-    WHEN p_new_position < min_current_pos AND video_position >= p_new_position AND video_position < min_current_pos THEN 
-      (video_position + video_count)::int2
+    WHEN effective_target_pos < min_current_pos THEN
+      -- Moving videos to lower positions: shift videos in target range upward
+      CASE WHEN video_position >= effective_target_pos AND video_position < min_current_pos THEN
+        (video_position + video_count)::int2
+      ELSE video_position
+      END
+    WHEN effective_target_pos > max_current_pos THEN
+      -- Moving videos to higher positions: shift videos between old and new positions downward  
+      CASE WHEN video_position > max_current_pos AND video_position < effective_target_pos + video_count THEN
+        (video_position - video_count)::int2
+      ELSE video_position
+      END
     ELSE video_position
   END
   WHERE playlist_id = p_playlist_id;
