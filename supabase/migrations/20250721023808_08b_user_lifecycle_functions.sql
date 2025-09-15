@@ -345,8 +345,6 @@ CREATE TRIGGER playlists_update_deleted_at_trigger BEFORE
 UPDATE ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.update_deleted_at_on_created_by_null ();
 
-
-
 -- Update the create_user function to not automatically confirm users
 CREATE OR REPLACE FUNCTION public.create_user (email text, password text, username text) RETURNS uuid AS $$
 DECLARE
