@@ -793,9 +793,7 @@ BEGIN
   END IF;
   
   -- Calculate effective target position to handle overlaps correctly
-  -- Problem statement: "if [1,2,4] are move to position 3, we already selected 1 and 2 
-  -- so we want the MIN value to be the actual insert position, we have the same situation 
-  -- on the other side and inserting into a larger position should use the MAX"
+  -- Only use MIN/MAX logic when target position is contiguous with selected videos
   
   IF p_new_position < min_current_pos THEN
     -- Moving to position before all selected videos
@@ -804,14 +802,16 @@ BEGIN
     -- Moving to position after all selected videos  
     effective_target_pos := p_new_position;
   ELSE
-    -- Target position falls within the selected range - need to determine MIN vs MAX
-    -- Check if there are more selected positions before or after the target
+    -- Target position falls within the selected range
+    -- Check if target position is contiguous with selected positions
     DECLARE
       selected_before int := 0;
       selected_after int := 0;
       pos int2;
+      contiguous_before boolean := true;  -- Assume contiguous until proven otherwise
+      contiguous_after boolean := true;   -- Assume contiguous until proven otherwise
     BEGIN
-      -- Count selected positions before and after target position
+      -- Count and check contiguity of positions before/after target
       FOR i IN 1..array_length(p_video_ids, 1) LOOP
         SELECT video_position INTO pos
         FROM public.playlist_videos 
@@ -819,18 +819,28 @@ BEGIN
         
         IF pos < p_new_position THEN
           selected_before := selected_before + 1;
+          -- Check if this before position is contiguous to target (should be target - selected_before)
+          IF pos != p_new_position - selected_before THEN
+            contiguous_before := false;
+          END IF;
         ELSIF pos > p_new_position THEN
           selected_after := selected_after + 1;
+          -- Check if this after position is contiguous to target (should be target + selected_after)
+          IF pos != p_new_position + selected_after THEN
+            contiguous_after := false;
+          END IF;
         END IF;
       END LOOP;
       
-      -- Use MIN logic when there are selected positions before target
-      -- Use MAX logic when there are selected positions after target  
-      IF selected_before > selected_after THEN
+      -- Use MIN logic if we have contiguous before positions and more before than after
+      IF contiguous_before AND selected_before > 0 AND selected_before > selected_after THEN
         effective_target_pos := min_current_pos;
-      ELSE
-        -- For MAX logic, calculate position that allows sequential placement
+      -- Use MAX logic if we have contiguous after positions and more after than before
+      ELSIF contiguous_after AND selected_after > 0 AND selected_after > selected_before THEN
         effective_target_pos := max_current_pos - video_count + 1;
+      ELSE
+        -- No contiguity or equal counts: use normal positioning at target
+        effective_target_pos := p_new_position;
       END IF;
     END;
   END IF;
