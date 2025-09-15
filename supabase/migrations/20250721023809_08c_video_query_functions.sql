@@ -94,7 +94,6 @@ $$;
 -- Optimized function to search videos with advanced ranking
 CREATE OR REPLACE FUNCTION "public"."search_videos" (
   "search_term" "text",
-  "offset_count" integer DEFAULT 0,
   "p_preferred_image_format" text DEFAULT 'avif'
 ) RETURNS TABLE (
   "id" "text",
@@ -297,9 +296,7 @@ BEGIN
             WHEN filtered_word_count >= 1 AND v.description IS NOT NULL AND lower(v.description) LIKE '%' || filtered_words[1] || '%' THEN 200.0
             ELSE 0.0 
         END) DESC,
-        v.published_at DESC
-    LIMIT 50
-    OFFSET offset_count;
+        v.published_at DESC;
 END;
 $$;
 

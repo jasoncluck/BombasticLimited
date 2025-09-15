@@ -177,7 +177,6 @@ export async function getVideos({
         'search_videos',
         {
           search_term: searchString,
-          offset_count: 0,
           p_preferred_image_format: preferredImageFormat,
         },
         { count: 'exact' }

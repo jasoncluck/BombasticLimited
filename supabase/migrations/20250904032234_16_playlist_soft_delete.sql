@@ -718,9 +718,7 @@ BEGIN
             WHEN filtered_word_count >= 1 AND p.description IS NOT NULL AND lower(p.description) LIKE '%' || filtered_words[1] || '%' THEN 200.0
             ELSE 0.0 
         END) DESC,
-        p.created_at DESC
-    LIMIT limit_count
-    OFFSET offset_count;
+        p.created_at DESC;
 END;
 $$;
 
