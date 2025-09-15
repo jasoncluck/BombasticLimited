@@ -176,7 +176,6 @@ const config = {
           ],
           'style-src': [
             'self',
-            'unsafe-inline',
             // Google domains
             'https://www.youtube.com',
             'https://fonts.googleapis.com',
