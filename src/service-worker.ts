@@ -339,7 +339,6 @@ const performCleanup = async (): Promise<void> => {
     const keys = await cache.keys();
 
     if (keys.length > CACHE_CONFIG.maxImageCacheSize) {
-      const now = Date.now();
       const keysToDelete = keys.slice(
         0,
         keys.length - CACHE_CONFIG.maxImageCacheSize + 500
@@ -395,133 +394,7 @@ sw.addEventListener('fetch', (event) => {
   }
 });
 
-// Message handling
-type ServiceWorkerMessageType =
-  | 'SKIP_WAITING'
-  | 'CLEAR_IMAGE_CACHE'
-  | 'CLEAR_ALL_CACHE'
-  | 'GET_CACHE_STATS'
-  | 'FORCE_CLEANUP'
-  | 'CANCEL_BATCHES';
-
-interface ServiceWorkerMessage {
-  type: ServiceWorkerMessageType;
-  payload?: unknown;
-}
-
-sw.addEventListener('message', (event) => {
-  const messageData = event.data as ServiceWorkerMessage | undefined;
-  const { type } = messageData || {};
-
-  switch (type) {
-    case 'SKIP_WAITING':
-      sw.skipWaiting();
-      break;
-
-    case 'CLEAR_IMAGE_CACHE':
-      event.waitUntil(clearImageCache());
-      break;
-
-    case 'CLEAR_ALL_CACHE':
-      event.waitUntil(clearAllCaches());
-      break;
-
-    case 'GET_CACHE_STATS':
-      event.waitUntil(
-        getCacheStats().then((stats) => {
-          if (event.ports && event.ports[0]) {
-            event.ports[0].postMessage(stats);
-          }
-        })
-      );
-      break;
-
-    case 'FORCE_CLEANUP':
-      event.waitUntil(performCleanup());
-      break;
-
-    case 'CANCEL_BATCHES':
-      cancelAllBatches();
-      break;
-
-    default:
-      break;
-  }
-});
-
 // Helper functions
-const cancelAllBatches = (): void => {
-  // Clear current batch timer
-  if (state.batchTimer) {
-    clearTimeout(state.batchTimer);
-    state.batchTimer = undefined;
-  }
-
-  // Cancel all pending batch requests
-  state.currentBatch.forEach((request) => {
-    request.reject(new Error('Batch cancelled'));
-  });
-  state.currentBatch = [];
-
-  // Cancel pending batches
-  state.pendingBatches.forEach((batch) => {
-    batch.requests.forEach((request) => {
-      request.reject(new Error('Batch cancelled'));
-    });
-  });
-  state.pendingBatches = [];
-
-  state.activeFetches.clear();
-};
-
-const clearImageCache = async (): Promise<void> => {
-  cancelAllBatches();
-  await caches.delete(IMAGE_CACHE);
-};
-
-const clearAllCaches = async (): Promise<void> => {
-  cancelAllBatches();
-  await Promise.all([caches.delete(STATIC_CACHE), caches.delete(IMAGE_CACHE)]);
-};
-
-const getCacheStats = async () => {
-  try {
-    const allCaches = await caches.keys();
-    const imageCache = await caches.open(IMAGE_CACHE);
-    const staticCache = await caches.open(STATIC_CACHE);
-
-    const imageCacheKeys = await imageCache.keys();
-    const staticCacheKeys = await staticCache.keys();
-
-    return {
-      imageCache: {
-        size: imageCacheKeys.length,
-        maxSize: CACHE_CONFIG.maxImageCacheSize,
-      },
-      staticCache: {
-        size: staticCacheKeys.length,
-      },
-      batching: {
-        activeFetches: state.activeFetches.size,
-        currentBatchSize: state.currentBatch.length,
-        pendingBatches: state.pendingBatches.length,
-        maxConcurrentRequests: CACHE_CONFIG.maxConcurrentRequests,
-        batchTimeoutMs: CACHE_CONFIG.batchTimeoutMs,
-        maxBatchSize: CACHE_CONFIG.maxBatchSize,
-      },
-      performance: {
-        totalRequests: state.requestCount,
-      },
-      config: CACHE_CONFIG,
-      allCaches,
-    };
-  } catch (error) {
-    throw new Error(
-      `Failed to get cache stats: ${error instanceof Error ? error.message : 'Unknown error'}`
-    );
-  }
-};
-
 const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
 
