@@ -21,9 +21,9 @@ interface CacheConfig {
 const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
-  maxConcurrentRequests: 25, // High concurrency for fast loading
+  maxConcurrentRequests: 100, // High concurrency for fast loading
   batchTimeoutMs: 300, // 300ms batch window as requested
-  maxBatchSize: 20, // Process up to 20 images per batch
+  maxBatchSize: 50, // Process up to 20 images per batch
 };
 
 // Cache names

@@ -142,13 +142,15 @@ export interface NavigationState {
  */
 export class NavigationStateClass implements NavigationState {
   // Private tracking variables
-  private refreshInterval: number | null = null;
+  private refreshInterval: ReturnType<typeof setInterval> | null = null;
   private lastRefreshTime: number = 0;
-  private preloadTimeout: number | null = null;
+  private preloadTimeout: ReturnType<typeof setTimeout> | null = null;
   private currentSearchTimestamp: number = 0;
   private lastNavigationTimestamp: number = 0;
   private lastUserInputTimestamp: number = 0;
   private isUserTyping: boolean = false;
+  private typingTimeout: ReturnType<typeof setTimeout> | undefined;
+  private lastPreloadedValue: string = '';
 
   // Core data state
   data = $state<NavigationData>({
@@ -185,7 +187,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 400,
-    preloadDebounceMs: 125,
+    preloadDebounceMs: 75,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -231,7 +233,7 @@ export class NavigationStateClass implements NavigationState {
   private startRefreshInterval(): void {
     if (!browser || this.refreshInterval) return;
 
-    this.refreshInterval = window.setInterval(() => {
+    this.refreshInterval = setInterval(() => {
       // Only refresh if we have a session and enough time has passed
       if (this.session && this.#hasLoadedOnce) {
         const now = Date.now();
@@ -251,7 +253,7 @@ export class NavigationStateClass implements NavigationState {
    */
   private stopRefreshInterval(): void {
     if (this.refreshInterval) {
-      window.clearInterval(this.refreshInterval);
+      clearInterval(this.refreshInterval);
       this.refreshInterval = null;
     }
   }
@@ -489,10 +491,6 @@ export class NavigationStateClass implements NavigationState {
     } catch (error) {
       console.error('Logout error:', error);
       showToast('Error during logout', 'error');
-      // Fallback to page reload if invalidation fails
-      if (browser && window) {
-        window.location.href = '/';
-      }
     }
   }
 
@@ -522,6 +520,7 @@ export class NavigationStateClass implements NavigationState {
     this.currentSearchTimestamp = 0;
     this.lastUserInputTimestamp = 0;
     this.isUserTyping = false;
+    this.lastPreloadedValue = '';
 
     // Cancel any pending searches
     if (this.currentDebouncedSearch?.isPending) {
@@ -534,7 +533,7 @@ export class NavigationStateClass implements NavigationState {
 
     // Clear any preload timeout
     if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
+      clearTimeout(this.preloadTimeout);
       this.preloadTimeout = null;
     }
 
@@ -654,22 +653,39 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
-    // Clear any existing preload timeout
-    if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
-      this.preloadTimeout = null;
-    }
-
-    // Set up preloading at half the debounce time if search value is valid for navigation
+    // Handle preloading logic - don't clear existing timeout if same value
     if (searchValue.length >= 2) {
-      this.preloadTimeout = window.setTimeout(() => {
-        console.log('preloading');
-        // Only preload if the search value hasn't changed and timestamp is still current
-        if (this.searchInputValue.trim()) {
-          const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
-          preloadData(searchUrl);
+      // Only set up new preload if we haven't already preloaded this value
+      if (this.lastPreloadedValue !== searchValue) {
+        // Clear any existing preload timeout
+        if (this.preloadTimeout) {
+          clearTimeout(this.preloadTimeout);
+          this.preloadTimeout = null;
         }
-      }, this.config.preloadDebounceMs);
+
+        this.preloadTimeout = setTimeout(() => {
+          console.log('preloading:', searchValue);
+          // Double-check the search value hasn't changed
+          if (
+            this.searchInputValue.trim() === searchValue &&
+            searchValue.length >= 2
+          ) {
+            const searchUrl = `/search/${encodeURIComponent(searchValue)}`;
+            preloadData(searchUrl);
+            this.lastPreloadedValue = searchValue;
+          }
+          this.preloadTimeout = null;
+        }, this.config.preloadDebounceMs);
+      }
+    } else {
+      // Clear preload timeout for searches less than 2 characters
+      if (this.preloadTimeout) {
+        clearTimeout(this.preloadTimeout);
+        this.preloadTimeout = null;
+      }
+      if (searchValue === '') {
+        this.lastPreloadedValue = '';
+      }
     }
 
     // Always use debounced search for all cases (including empty)
@@ -849,7 +865,7 @@ export class NavigationStateClass implements NavigationState {
 
     // Clear preload timeout
     if (this.preloadTimeout) {
-      window.clearTimeout(this.preloadTimeout);
+      clearTimeout(this.preloadTimeout);
       this.preloadTimeout = null;
     }
 
@@ -879,10 +895,8 @@ export class NavigationStateClass implements NavigationState {
     this.lastNavigationTimestamp = 0;
     this.lastUserInputTimestamp = 0;
     this.isUserTyping = false;
+    this.lastPreloadedValue = '';
   }
-
-  // Add typing timeout property
-  private typingTimeout: ReturnType<typeof setTimeout> | undefined;
 }
 
 const DEFAULT_KEY = '$_navigation_state';
