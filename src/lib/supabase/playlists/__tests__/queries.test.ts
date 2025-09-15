@@ -13,7 +13,7 @@ import type { Database } from '../../database.types';
 
 // Mock the transforms module
 vi.mock('../playlists/transforms', () => ({
-  transformPlaylistFromRPC: vi.fn((data, supabase) => ({
+  transformPlaylistFromRPC: vi.fn((data) => ({
     id: data.playlist_id,
     created_at: data.playlist_created_at,
     name: data.playlist_name,
@@ -29,7 +29,7 @@ vi.mock('../playlists/transforms', () => ({
     duration_seconds: data.duration_seconds,
     image_processing_status: data.playlist_image_processing_status,
   })),
-  transformUserPlaylistFromRPC: vi.fn((data, supabase) => ({
+  transformUserPlaylistFromRPC: vi.fn((data) => ({
     id: data.playlist_id,
     created_at: data.playlist_created_at,
     name: data.playlist_name,
@@ -858,7 +858,6 @@ describe('playlist queries module', () => {
         'search_playlists',
         {
           search_term: 'test search',
-          current_user_id: 'current_user',
           p_preferred_image_format: 'webp',
         },
         { count: 'exact' }

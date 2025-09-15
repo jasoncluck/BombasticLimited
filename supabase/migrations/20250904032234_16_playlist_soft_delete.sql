@@ -512,7 +512,6 @@ $$;
 -- Updated search_playlists function to exclude soft deleted playlists
 CREATE OR REPLACE FUNCTION "public"."search_playlists" (
   "search_term" "text",
-  "current_user_id" uuid DEFAULT NULL,
   "limit_count" integer DEFAULT 50,
   "offset_count" integer DEFAULT 0,
   "p_preferred_image_format" text DEFAULT 'avif'
@@ -542,6 +541,7 @@ DECLARE
     words text[];
     filtered_words text[];
     word_count int;
+    current_user_id uuid;
     filtered_word_count int;
     phrase_query tsquery;
     plain_query tsquery;
@@ -557,9 +557,7 @@ DECLARE
     ];
 BEGIN
     -- Get current user if not provided
-    IF current_user_id IS NULL THEN
-        current_user_id := auth.uid();
-    END IF;
+    current_user_id := auth.uid();
     
     -- Early exit for empty search
     IF search_term IS NULL OR trim(search_term) = '' OR length(trim(search_term)) < 1 THEN

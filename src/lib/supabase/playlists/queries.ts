@@ -451,9 +451,6 @@ export async function searchPlaylists({
   error: PostgrestError | null;
   count?: number | null;
 }> {
-  const { data: claimsData } = await supabase.auth.getClaims();
-  const currentUserId = claimsData?.claims?.sub || undefined;
-
   const {
     data: playlists,
     error,
@@ -463,13 +460,11 @@ export async function searchPlaylists({
       'search_playlists',
       {
         search_term: searchString,
-        current_user_id: currentUserId,
         p_preferred_image_format: preferredImageFormat,
       },
       { count: 'exact' }
     )
-    .range((currentPage - 1) * limit, currentPage * limit - 1)
-    .limit(limit);
+    .range((currentPage - 1) * limit, currentPage * limit - 1);
 
   if (error) {
     console.error('Error searching playlists:', error);

@@ -191,7 +191,6 @@ describe('videos module', () => {
         'search_videos',
         {
           search_term: 'test search',
-          offset_count: 0,
           p_preferred_image_format: 'avif',
         },
         { count: 'exact' }
