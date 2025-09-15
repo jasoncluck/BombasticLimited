@@ -48,7 +48,7 @@
       {playlist.name}
     </p>
     <p
-      class="text-muted-foreground mb-1 line-clamp-1 max-w-48 text-xs text-wrap break-words"
+      class="text-muted-foreground mb-2 line-clamp-1 max-w-48 text-xs text-wrap break-words"
     >
       {playlist.description}
     </p>
