@@ -44,7 +44,7 @@
   {/if}
 
   <div class="min-w-0">
-    <p class="mb-1 text-sm font-medium">
+    <p class="text-sm font-medium">
       {playlist.name}
     </p>
     <p
