@@ -73,10 +73,10 @@ BEGIN
     VALUES (test_user_id, 'timestampuser');
     
     -- Create test videos for timestamp testing
-    INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration_seconds)
+    INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration)
     VALUES 
-        (test_video_id_1, 'giantbomb', 'Timestamp Test Video 1', 'Video for timestamp testing', 'https://example.com/timestamp1.jpg', now() - interval '1 day', 3600),
-        (test_video_id_2, 'jeffgerstmann', 'Timestamp Test Video 2', 'Another video for timestamp testing', 'https://example.com/timestamp2.jpg', now() - interval '2 days', 1800);
+        (test_video_id_1, 'giantbomb', 'Timestamp Test Video 1', 'Video for timestamp testing', 'https://example.com/timestamp1.jpg', now() - interval '1 day', '1:00:00'),
+        (test_video_id_2, 'jeffgerstmann', 'Timestamp Test Video 2', 'Another video for timestamp testing', 'https://example.com/timestamp2.jpg', now() - interval '2 days', '30:00');
     
     -- Create some test timestamps manually
     INSERT INTO public.timestamps (id, video_id, video_start_seconds, user_id, created_at)

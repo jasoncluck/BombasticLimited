@@ -76,10 +76,10 @@ BEGIN
     VALUES (test_user_id, 'analyticsuser');
     
     -- Create test videos
-    INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration_seconds, view_count)
+    INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, views)
     VALUES 
-        (test_video_id_1, 'giantbomb', 'Analytics Test Video 1', 'Description for analytics testing', 'https://example.com/analytics1.jpg', now() - interval '1 day', 3600, 10),
-        (test_video_id_2, 'jeffgerstmann', 'Analytics Test Video 2', 'Another test video for analytics', 'https://example.com/analytics2.jpg', now() - interval '2 days', 1800, 5);
+        (test_video_id_1, 'giantbomb', 'Analytics Test Video 1', 'Description for analytics testing', 'https://example.com/analytics1.jpg', now() - interval '1 day', '1:00:00', 10),
+        (test_video_id_2, 'jeffgerstmann', 'Analytics Test Video 2', 'Another test video for analytics', 'https://example.com/analytics2.jpg', now() - interval '2 days', '30:00', 5);
 END;
 $$;
 
@@ -91,13 +91,13 @@ DECLARE
     test_video_id text := 'analytics_test_video_1';
 BEGIN
     -- Get initial view count
-    SELECT view_count INTO initial_views FROM public.videos WHERE id = test_video_id;
+    SELECT views INTO initial_views FROM public.videos WHERE id = test_video_id;
     
     -- Increment views
     PERFORM public.increment_video_views(test_video_id);
     
     -- Get updated view count
-    SELECT view_count INTO updated_views FROM public.videos WHERE id = test_video_id;
+    SELECT views INTO updated_views FROM public.videos WHERE id = test_video_id;
     
     PERFORM ok(
         updated_views = initial_views + 1,
