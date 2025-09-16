@@ -14,6 +14,8 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
+  import { onMount } from 'svelte';
+  import { page } from '$app/state';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -45,6 +47,11 @@
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
   let previousSearchString = $state<string>('');
+
+  onMount(() => {
+      navigationState.syncSearchQueryFromUrl(page.url.pathname, true)
+
+  })
 
   // Reset carousel state when searchString changes
   $effect(() => {
