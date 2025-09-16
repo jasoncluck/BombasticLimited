@@ -245,7 +245,7 @@ Select desired video(s), right-click, then select "Reset progress".
 ### Notifications
 
 Notifications will appear when relevant events occur, such as when a followed
-playlist is deleted or when new videos are available from channels you follow.
+playlist is deleted.
 
 Notifications can be deleted by clicking the 'X' in the upper right-hand corner
 of the notification.

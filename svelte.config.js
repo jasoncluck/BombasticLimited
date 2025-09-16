@@ -49,11 +49,11 @@ const config = {
             'https://passport.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
-            'https://d2v02itv0y9u9t.cloudfront.net',
+            'https://static-cdn.jtvnw.net',
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
-            'https://pubsub-edge.twitch.tv',
             'https://usher.ttvnw.net',
+            'https://client-event-reporter.twitch.tv',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -122,11 +122,17 @@ const config = {
             'https://passport.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
             'wss://irc-ws.chat.twitch.tv',
             'wss://pubsub-edge.twitch.tv',
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
+            'https://client-event-reporter.twitch.tv',
+            // Twitch video streaming domains
+            'https://*.hls.ttvnw.net',
+            'https://*.playlist.live-video.net',
+            'https://*.playlist.ttvnw.net',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -169,10 +175,13 @@ const config = {
             'https://*.googlevideo.com',
             'https://googleads.g.doubleclick.net',
             'https://www.youtube-nocookie.com',
-            // Twitch domains
+            // Twitch video streaming domains
             'https://vod-secure.twitch.tv',
             'https://vod-metro.twitch.tv',
             'https://clips-media-assets2.twitch.tv',
+            'https://*.hls.ttvnw.net',
+            'https://*.playlist.live-video.net',
+            'https://*.playlist.ttvnw.net',
           ],
           'style-src': [
             'self',
@@ -187,6 +196,7 @@ const config = {
             // Twitch domains
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
           ],
           'font-src': [
             'self',
@@ -195,6 +205,7 @@ const config = {
             'https://www.gstatic.com',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
           ],
           'worker-src': ['self', 'blob:'],
           'object-src': ['none'],

@@ -152,7 +152,10 @@
       if (playlist && isUserPlaylist(playlist) && isCurrentPlaylistInSidebar) {
         handleUpdatePlaylistSort({
           playlist,
-          sortOrder,
+          sortOrder:
+            newContentFilter.sort.key === 'playlistOrder'
+              ? 'ascending'
+              : sortOrder,
           sortedBy: newContentFilter.sort.key,
           supabase,
           session,

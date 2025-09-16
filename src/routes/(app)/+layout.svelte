@@ -47,6 +47,9 @@
   let lastKnownAuthState: boolean | null = $state(null);
   let wasTabHidden = $state(false);
 
+  // Add debouncing for data refresh to prevent multiple calls
+  let isRefreshing = $state(false);
+
   const navigation = $derived(useNavigation(pageState));
 
   const layoutEffects = $derived(
@@ -58,17 +61,6 @@
       navigationState
     )
   );
-
-  // Update the navigation state session when needed
-  $effect(() => {
-    navigationState.updateContext({
-      session: data.session,
-      supabase: data.supabase,
-    });
-    sidebarState.updateContext({
-      preferredImageFormat,
-    });
-  });
 
   // Simplified navigation state
   const isNavigatingToContent = $derived(false); // Simplified - no complex navigation detection
@@ -108,21 +100,40 @@
     await sidebarState.refreshData();
   }
 
-  // Simplified data refresh function
+  // Enhanced data refresh function with proper debouncing and error handling
   async function performDataRefresh(
     reason: string,
     includeAuth: boolean = false,
     retryAfterAuthCleanup: boolean = false
   ): Promise<void> {
+    // Prevent multiple simultaneous refresh operations
+    if (isRefreshing) {
+      return;
+    }
+
+    isRefreshing = true;
+
     try {
       // Step 1: Invalidate auth first if requested
       if (includeAuth) {
         await invalidate('supabase:auth');
       }
 
-      // Step 2: Refresh sidebar and navigation state concurrently
-      sidebarState.refreshData();
-      navigationState.refreshData();
+      // Step 2: Update context for both states
+      navigationState.updateContext({
+        session: data.session,
+        supabase: data.supabase,
+      });
+
+      sidebarState.updateContext({
+        preferredImageFormat,
+      });
+
+      // Step 3: Refresh data concurrently but await both
+      await Promise.all([
+        sidebarState.refreshData(),
+        navigationState.refreshData(),
+      ]);
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
 
@@ -147,6 +158,8 @@
           );
         }
       }
+    } finally {
+      isRefreshing = false;
     }
   }
 
@@ -285,13 +298,26 @@
     contentState.dragContentType = null;
   }
 
-  // Initialize lastKnownAuthState when session changes
+  // React to session changes and trigger data refresh when user logs in/out
   $effect(() => {
     if (isHydrated) {
       const currentAuthState = !!session;
+
+      // Initialize on first run
       if (lastKnownAuthState === null) {
-        // Initialize on first run
         lastKnownAuthState = currentAuthState;
+        return;
+      }
+
+      // Check if auth state actually changed
+      if (lastKnownAuthState !== currentAuthState) {
+        lastKnownAuthState = currentAuthState;
+
+        // Trigger data refresh when auth state changes
+        performDataRefresh(
+          currentAuthState ? 'user logged in' : 'user logged out',
+          true // Include auth invalidation
+        );
       }
     }
   });

@@ -56,8 +56,8 @@
     <Card.Footer class="flex items-center justify-center">
       <div class="flex flex-col gap-4">
         <p class="self-start">
-          Check your email for an email from admin@bombastic.ltd. If it's still
-          not there you can request another code.
+          Check your inbox or spam folder for an email from admin@bombastic.ltd.
+          If it's still not there you can request another code.
         </p>
 
         {#if loading}

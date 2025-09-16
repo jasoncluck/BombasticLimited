@@ -9,21 +9,29 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Simplified configuration focused on performance
+// Enhanced configuration with adaptive batching
 interface CacheConfig {
   readonly maxImageCacheSize: number;
   readonly maxCacheAgeMs: number;
   readonly maxConcurrentRequests: number;
   readonly batchTimeoutMs: number;
   readonly maxBatchSize: number;
+  readonly minBatchSize: number;
+  readonly adaptiveTimeoutMs: number;
+  readonly immediateThreshold: number;
+  readonly highConcurrencyThreshold: number;
 }
 
 const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
-  maxConcurrentRequests: 100, // High concurrency for fast loading
-  batchTimeoutMs: 200, 
-  maxBatchSize: 100, 
+  maxConcurrentRequests: 100,
+  batchTimeoutMs: 400,
+  maxBatchSize: 100,
+  minBatchSize: 5,
+  adaptiveTimeoutMs: 50, // Reduced timeout for small batches
+  immediateThreshold: 3, // Process immediately if only 1-2 requests
+  highConcurrencyThreshold: 50, // Threshold for high concurrency mode
 };
 
 // Cache names
@@ -55,11 +63,12 @@ const SUPABASE_HOSTNAME: string | null = (() => {
   }
 })();
 
-// Simple batch request interface
+// Enhanced batch request interface
 interface BatchRequest {
   readonly url: string;
   readonly request: Request;
   readonly timestamp: number;
+  readonly priority: 'immediate' | 'normal' | 'batched';
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
 }
@@ -68,16 +77,19 @@ interface BatchGroup {
   readonly id: string;
   readonly requests: BatchRequest[];
   readonly startTime: number;
+  readonly priority: 'immediate' | 'normal' | 'batched';
   timer?: ReturnType<typeof setTimeout>;
 }
 
-// Simplified global state
+// Enhanced service worker state
 interface ServiceWorkerState {
   activeFetches: Set<string>;
   currentBatch: BatchRequest[];
   batchTimer?: ReturnType<typeof setTimeout>;
   pendingBatches: BatchGroup[];
   requestCount: number;
+  recentRequestTimes: number[];
+  averageRequestRate: number;
 }
 
 const state: ServiceWorkerState = {
@@ -85,6 +97,8 @@ const state: ServiceWorkerState = {
   currentBatch: [],
   pendingBatches: [],
   requestCount: 0,
+  recentRequestTimes: [],
+  averageRequestRate: 0,
 };
 
 // Essential headers to preserve
@@ -97,6 +111,71 @@ const ESSENTIAL_HEADERS = [
   'etag',
   'access-control-allow-origin',
 ] as const;
+
+// Request rate tracking for adaptive behavior
+const updateRequestRate = (): void => {
+  const now = Date.now();
+  state.recentRequestTimes.push(now);
+
+  // Keep only last 10 seconds of requests
+  const tenSecondsAgo = now - 10000;
+  state.recentRequestTimes = state.recentRequestTimes.filter(
+    (time) => time > tenSecondsAgo
+  );
+
+  // Calculate requests per second
+  state.averageRequestRate = state.recentRequestTimes.length / 10;
+};
+
+// Determine request priority based on current conditions
+const getRequestPriority = (
+  request: Request
+): 'immediate' | 'normal' | 'batched' => {
+  const currentBatchSize = state.currentBatch.length;
+  const activeFetchCount = state.activeFetches.size;
+
+  // Always batch if we're at high concurrency to prevent overload
+  if (activeFetchCount >= CACHE_CONFIG.highConcurrencyThreshold) {
+    return 'batched';
+  }
+
+  // Process immediately for very small numbers or low concurrency
+  if (
+    currentBatchSize <= CACHE_CONFIG.immediateThreshold &&
+    activeFetchCount < 10
+  ) {
+    return 'immediate';
+  }
+
+  // Use normal priority for moderate situations
+  if (currentBatchSize < CACHE_CONFIG.minBatchSize && activeFetchCount < 25) {
+    return 'normal';
+  }
+
+  return 'batched';
+};
+
+// Get adaptive timeout based on current batch and system state
+const getAdaptiveTimeout = (
+  batchSize: number,
+  priority: 'immediate' | 'normal' | 'batched'
+): number => {
+  if (priority === 'immediate') {
+    return 0; // Process immediately
+  }
+
+  if (priority === 'normal') {
+    return CACHE_CONFIG.adaptiveTimeoutMs; // Short timeout
+  }
+
+  // For batched requests, use shorter timeout for small batches
+  if (batchSize < CACHE_CONFIG.minBatchSize) {
+    return CACHE_CONFIG.adaptiveTimeoutMs;
+  }
+
+  // Use full timeout for larger batches
+  return CACHE_CONFIG.batchTimeoutMs;
+};
 
 // Utility functions
 const isSupabaseImageUrl = (url: URL): boolean => {
@@ -154,10 +233,13 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
-// Smart batching system - groups requests that arrive within 200ms
+// Enhanced batching system with adaptive timing
 const addToBatch = (request: Request): Promise<Response> => {
   const url = request.url;
   const now = Date.now();
+
+  // Update request rate tracking
+  updateRequestRate();
 
   // Check if already being fetched (avoid duplicates)
   if (state.activeFetches.has(url)) {
@@ -166,26 +248,48 @@ const addToBatch = (request: Request): Promise<Response> => {
   }
 
   return new Promise<Response>((resolve, reject) => {
+    const priority = getRequestPriority(request);
+
     const batchRequest: BatchRequest = {
       url,
       request,
       timestamp: now,
+      priority,
       resolve,
       reject,
     };
 
+    // Handle immediate priority - process right away
+    if (priority === 'immediate') {
+      processImmediateRequest(batchRequest);
+      return;
+    }
+
     // Add to current batch
     state.currentBatch.push(batchRequest);
+    const currentBatchSize = state.currentBatch.length;
 
-    // If this is the first request in the batch, start the timer
-    if (state.currentBatch.length === 1) {
+    // Clear existing timer if we're changing the timeout strategy
+    if (state.batchTimer) {
+      clearTimeout(state.batchTimer);
+      state.batchTimer = undefined;
+    }
+
+    // Get adaptive timeout based on current conditions
+    const timeout = getAdaptiveTimeout(currentBatchSize, priority);
+
+    if (timeout === 0) {
+      // Process immediately
+      processBatch();
+    } else {
+      // Set new timer with adaptive timeout
       state.batchTimer = setTimeout(() => {
         processBatch();
-      }, CACHE_CONFIG.batchTimeoutMs);
+      }, timeout);
     }
 
     // Process immediately if batch is full
-    if (state.currentBatch.length >= CACHE_CONFIG.maxBatchSize) {
+    if (currentBatchSize >= CACHE_CONFIG.maxBatchSize) {
       if (state.batchTimer) {
         clearTimeout(state.batchTimer);
         state.batchTimer = undefined;
@@ -195,7 +299,33 @@ const addToBatch = (request: Request): Promise<Response> => {
   });
 };
 
-// Process the current batch
+// Process a single request immediately (for immediate priority)
+const processImmediateRequest = async (
+  batchRequest: BatchRequest
+): Promise<void> => {
+  const { url, request, resolve, reject } = batchRequest;
+
+  try {
+    state.activeFetches.add(url);
+    const corsRequest = createCorsRequest(request);
+    const response = await fetch(corsRequest);
+
+    // Cache successful responses
+    if (response.ok && response.status === 200) {
+      cacheResponse(request, response.clone()).catch(() => {
+        // Silent fail on cache errors
+      });
+    }
+
+    resolve(response);
+  } catch (error) {
+    reject(error instanceof Error ? error : new Error('Fetch failed'));
+  } finally {
+    state.activeFetches.delete(url);
+  }
+};
+
+// Enhanced batch processing
 const processBatch = (): void => {
   if (state.currentBatch.length === 0) return;
 
@@ -208,11 +338,24 @@ const processBatch = (): void => {
     state.batchTimer = undefined;
   }
 
+  // Determine batch priority based on the requests in it
+  const hasImmediatePriority = batchToProcess.some(
+    (req) => req.priority === 'immediate'
+  );
+  const hasNormalPriority = batchToProcess.some(
+    (req) => req.priority === 'normal'
+  );
+
+  let batchPriority: 'immediate' | 'normal' | 'batched' = 'batched';
+  if (hasImmediatePriority) batchPriority = 'immediate';
+  else if (hasNormalPriority) batchPriority = 'normal';
+
   // Create batch group
   const batchGroup: BatchGroup = {
     id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     requests: batchToProcess,
     startTime: Date.now(),
+    priority: batchPriority,
   };
 
   state.pendingBatches.push(batchGroup);
@@ -267,7 +410,7 @@ const cacheResponse = async (
   }
 };
 
-// Main image caching function with batching
+// Enhanced image caching function with adaptive batching
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
@@ -279,35 +422,33 @@ const cacheImage = async (request: Request): Promise<Response> => {
     return createCachedResponse(cached);
   }
 
-  // Check current concurrency - if we're at the limit, use batching
-  if (state.activeFetches.size >= CACHE_CONFIG.maxConcurrentRequests) {
-    return addToBatch(request);
-  }
-
-  // For low concurrency situations, fetch immediately for lowest latency
   const url = request.url;
-  if (state.activeFetches.has(url)) {
-    return addToBatch(request); // Avoid duplicates
-  }
+  const activeFetchCount = state.activeFetches.size;
 
-  try {
-    state.activeFetches.add(url);
-    const corsRequest = createCorsRequest(request);
-    const response = await fetch(corsRequest);
+  // For very low concurrency (like lazy loading single images), fetch immediately
+  if (activeFetchCount < 5 && !state.activeFetches.has(url)) {
+    try {
+      state.activeFetches.add(url);
+      const corsRequest = createCorsRequest(request);
+      const response = await fetch(corsRequest);
 
-    // Cache successful responses
-    if (response.ok && response.status === 200) {
-      cacheResponse(request, response.clone()).catch(() => {
-        // Silent fail on cache errors
-      });
+      // Cache successful responses
+      if (response.ok && response.status === 200) {
+        cacheResponse(request, response.clone()).catch(() => {
+          // Silent fail on cache errors
+        });
+      }
+
+      return response;
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Fetch failed');
+    } finally {
+      state.activeFetches.delete(url);
     }
-
-    return response;
-  } catch (error) {
-    throw error instanceof Error ? error : new Error('Fetch failed');
-  } finally {
-    state.activeFetches.delete(url);
   }
+
+  // Use adaptive batching for higher concurrency situations
+  return addToBatch(request);
 };
 
 // Simple static asset caching
@@ -387,7 +528,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images with smart batching
+  // Handle images with adaptive smart batching
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;

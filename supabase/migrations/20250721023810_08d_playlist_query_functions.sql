@@ -683,4 +683,3 @@ SET
   WHERE prof.username = p_username
   ORDER BY p.created_at DESC;
 $$;
-

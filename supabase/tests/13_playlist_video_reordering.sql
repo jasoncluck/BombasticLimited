@@ -28,23 +28,40 @@ INSERT INTO public.videos (id, source, title, description, thumbnail_url, publis
   ('pl_test_2', 'jeffgerstmann', 'Playlist Test Video 2', 'Test description 2', 'https://example.com/thumb2.jpg', now(), false),
   ('pl_test_3', 'nextlander', 'Playlist Test Video 3', 'Test description 3', 'https://example.com/thumb3.jpg', now(), false),
   ('pl_test_4', 'remap', 'Playlist Test Video 4', 'Test description 4', 'https://example.com/thumb4.jpg', now(), false)
+
 ON CONFLICT (id) DO NOTHING;
 
 -- Create test playlist
-INSERT INTO public.playlists (id, name, created_by, type) VALUES 
-    (9999, 'Reorder Test Playlist', '99999999-9999-9999-9999-999999999999', 'Private')
-ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
+INSERT INTO
+  public.playlists (id, name, created_by, type)
+VALUES
+  (
+    9999,
+    'Reorder Test Playlist',
+    '99999999-9999-9999-9999-999999999999',
+    'Private'
+  )
+ON CONFLICT (id) DO UPDATE
+SET
+  name = EXCLUDED.name;
 
 -- Set auth context
-SELECT set_config('request.jwt.claims', '{"sub":"99999999-9999-9999-9999-999999999999"}', true);
+SELECT
+  set_config(
+    'request.jwt.claims',
+    '{"sub":"99999999-9999-9999-9999-999999999999"}',
+    TRUE
+  );
 
 -- Test 1: Basic function existence
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_playlist_videos_positions',
     ARRAY['bigint', 'text[]', 'smallint'],
     'Function update_playlist_videos_positions should exist'
-);
+  );
+
 
 -- Test 2: Basic functionality test (single call to avoid temp table conflicts)
 DELETE FROM public.playlist_videos WHERE playlist_id = 9999;
@@ -83,6 +100,7 @@ SELECT ok(
     'No gaps should exist in video positions after reordering'
 );
 
-SELECT finish();
+SELECT
+  finish ();
 
 ROLLBACK;
