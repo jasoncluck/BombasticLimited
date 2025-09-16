@@ -46,6 +46,14 @@ DECLARE
     test_user_id_1 uuid := gen_random_uuid();
     test_user_id_2 uuid := gen_random_uuid();
 BEGIN
+    -- Create auth.users entries first to satisfy foreign key constraints
+    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+    VALUES 
+        (test_user_id_1, 'authenticated', 'authenticated', 'testuser123@test.com', 'password', now(), now(), now(), 
+         '{"provider":"email","providers":["email"]}', '{"username": "testuser123"}'),
+        (test_user_id_2, 'authenticated', 'authenticated', 'anotheruser@test.com', 'password', now(), now(), now(), 
+         '{"provider":"email","providers":["email"]}', '{"username": "anotheruser"}');
+    
     -- Insert test profiles to test username uniqueness
     INSERT INTO public.profiles (id, username)
     VALUES 

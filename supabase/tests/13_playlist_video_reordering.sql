@@ -23,15 +23,15 @@ VALUES (
 ) ON CONFLICT (id) DO UPDATE SET email = EXCLUDED.email;
 
 -- Create test videos
-INSERT INTO public.videos (id, source, title, published_at, pending_delete) VALUES 
-  ('pl_test_1', 'giantbomb', 'Playlist Test Video 1', now(), false),
-  ('pl_test_2', 'jeffgerstmann', 'Playlist Test Video 2', now(), false),
-  ('pl_test_3', 'nextlander', 'Playlist Test Video 3', now(), false),
-  ('pl_test_4', 'remap', 'Playlist Test Video 4', now(), false),
-  ('pl_test_5', 'giantbomb', 'Playlist Test Video 5', now(), false),
-  ('pl_test_6', 'jeffgerstmann', 'Playlist Test Video 6', now(), false),
-  ('pl_test_7', 'nextlander', 'Playlist Test Video 7', now(), false),
-  ('pl_test_8', 'remap', 'Playlist Test Video 8', now(), false)
+INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, pending_delete) VALUES 
+  ('pl_test_1', 'giantbomb', 'Playlist Test Video 1', 'Test description 1', 'https://example.com/thumb1.jpg', now(), false),
+  ('pl_test_2', 'jeffgerstmann', 'Playlist Test Video 2', 'Test description 2', 'https://example.com/thumb2.jpg', now(), false),
+  ('pl_test_3', 'nextlander', 'Playlist Test Video 3', 'Test description 3', 'https://example.com/thumb3.jpg', now(), false),
+  ('pl_test_4', 'remap', 'Playlist Test Video 4', 'Test description 4', 'https://example.com/thumb4.jpg', now(), false),
+  ('pl_test_5', 'giantbomb', 'Playlist Test Video 5', 'Test description 5', 'https://example.com/thumb5.jpg', now(), false),
+  ('pl_test_6', 'jeffgerstmann', 'Playlist Test Video 6', 'Test description 6', 'https://example.com/thumb6.jpg', now(), false),
+  ('pl_test_7', 'nextlander', 'Playlist Test Video 7', 'Test description 7', 'https://example.com/thumb7.jpg', now(), false),
+  ('pl_test_8', 'remap', 'Playlist Test Video 8', 'Test description 8', 'https://example.com/thumb8.jpg', now(), false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create test playlist
