@@ -725,7 +725,7 @@ EXCEPTION
 END;
 $$;
 
--- Optimized function to update playlist video positions
+-- Optimized function to update playlist video positions  
 CREATE OR REPLACE FUNCTION "public"."update_playlist_videos_positions" (
   "p_playlist_id" int8,
   "p_video_ids" TEXT[],
@@ -741,10 +741,9 @@ SET
 DECLARE
   video_count int;
   max_position int2;
-  min_current_pos int2;
-  max_current_pos int2;
   current_user_id uuid;
   playlist_owner_id uuid;
+  selected_positions int2[];
 BEGIN
   current_user_id := auth.uid();
   IF current_user_id IS NULL THEN
@@ -767,23 +766,19 @@ BEGIN
     RAISE EXCEPTION 'Playlist with ID % does not exist', p_playlist_id;
   END IF;
 
-  -- Get all necessary data in one query
-  WITH video_data AS (
-    SELECT 
-      video_position,
-      MIN(video_position) OVER () as min_pos,
-      MAX(video_position) OVER () as max_pos,
-      (SELECT MAX(video_position) FROM public.playlist_videos WHERE playlist_id = p_playlist_id) as total_max
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids)
-  )
-  SELECT min_pos, max_pos, total_max
-  INTO min_current_pos, max_current_pos, max_position
-  FROM video_data
-  LIMIT 1;
+  -- Get max position and selected video positions
+  SELECT MAX(video_position) INTO max_position
+  FROM public.playlist_videos
+  WHERE playlist_id = p_playlist_id;
+  
+  -- Get current positions of selected videos
+  SELECT array_agg(video_position ORDER BY video_position)
+  INTO selected_positions
+  FROM public.playlist_videos pv
+  WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids);
   
   -- Validate that all videos were found
-  IF min_current_pos IS NULL THEN
+  IF array_length(selected_positions, 1) != video_count THEN
     RAISE EXCEPTION 'One or more videos not found in playlist';
   END IF;
   
@@ -791,32 +786,62 @@ BEGIN
     RAISE EXCEPTION 'New position % is out of range (1-%)', p_new_position, max_position;
   END IF;
   
-  -- Early exit if no movement needed
-  IF min_current_pos = p_new_position THEN
-    RETURN QUERY
-    SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
-    FROM public.playlist_videos pv
-    WHERE pv.playlist_id = p_playlist_id AND pv.video_id = ANY(p_video_ids)
-    ORDER BY pv.video_position;
-    RETURN;
-  END IF;
+  -- Simplified reordering approach:
+  -- 1. Assign new positions to selected videos starting at target position
+  -- 2. Compress remaining videos to fill gaps sequentially
   
-  -- Bulk position update using CASE statements
-  UPDATE public.playlist_videos 
-  SET video_position = CASE 
-    -- Videos being moved get new sequential positions
-    WHEN video_id = ANY(p_video_ids) THEN 
-      (p_new_position + array_position(p_video_ids, video_id) - 1)::int2
-    -- Shift other videos based on movement direction
-    WHEN p_new_position > max_current_pos AND video_position > max_current_pos AND video_position <= p_new_position + video_count - 1 THEN 
-      (video_position - video_count)::int2
-    WHEN p_new_position < min_current_pos AND video_position >= p_new_position AND video_position < min_current_pos THEN 
-      (video_position + video_count)::int2
-    ELSE video_position
-  END
-  WHERE playlist_id = p_playlist_id;
+  -- Create a temporary table to track new positions
+  CREATE TEMPORARY TABLE temp_positions (
+    video_id text,
+    old_position int2,
+    new_position int2
+  ) ON COMMIT DROP;
   
-  -- Return updated rows
+  -- Insert selected videos with their new positions
+  INSERT INTO temp_positions (video_id, old_position, new_position)
+  SELECT 
+    p_video_ids[i],
+    selected_positions[i],
+    (p_new_position + i - 1)::int2
+  FROM generate_series(1, video_count) i;
+  
+  -- Insert non-selected videos with compressed positions
+  WITH non_selected_videos AS (
+    SELECT video_id, video_position
+    FROM public.playlist_videos
+    WHERE playlist_id = p_playlist_id 
+    AND NOT (video_id = ANY(p_video_ids))
+    ORDER BY video_position
+  ),
+  compressed_positions AS (
+    SELECT 
+      video_id,
+      video_position as old_position,
+      row_number() OVER (ORDER BY video_position) as compressed_pos
+    FROM non_selected_videos
+  ),
+  new_positions AS (
+    SELECT 
+      video_id,
+      old_position,
+      CASE 
+        -- If compressed position would conflict with target range, shift it
+        WHEN compressed_pos >= p_new_position THEN compressed_pos + video_count
+        ELSE compressed_pos
+      END as new_position
+    FROM compressed_positions
+  )
+  INSERT INTO temp_positions (video_id, old_position, new_position)
+  SELECT video_id, old_position, new_position::int2 FROM new_positions;
+  
+  -- Apply the new positions
+  UPDATE public.playlist_videos pv
+  SET video_position = tp.new_position
+  FROM temp_positions tp
+  WHERE pv.playlist_id = p_playlist_id 
+  AND pv.video_id = tp.video_id;
+  
+  -- Return updated rows for selected videos
   RETURN QUERY
   SELECT pv.id, pv.playlist_id, pv.video_id, pv.video_position
   FROM public.playlist_videos pv
