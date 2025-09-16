@@ -62,7 +62,7 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
 
 DO $$
 BEGIN
-    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4'], 1);
+    PERFORM public.update_playlist_videos_positions(9999::int8, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4']::TEXT[], 1::int2);
 END;
 $$;
 
@@ -97,7 +97,7 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
 
 DO $$
 BEGIN
-    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4'], 3);
+    PERFORM public.update_playlist_videos_positions(9999::int8, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4']::TEXT[], 3::int2);
 END;
 $$;
 
@@ -122,7 +122,7 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
 
 DO $$
 BEGIN
-    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7'], 3);
+    PERFORM public.update_playlist_videos_positions(9999::int8, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7']::TEXT[], 3::int2);
 END;
 $$;
 
@@ -155,7 +155,7 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
 
 DO $$
 BEGIN  
-    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7'], 6);
+    PERFORM public.update_playlist_videos_positions(9999::int8, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7']::TEXT[], 6::int2);
 END;
 $$;
 
@@ -177,7 +177,7 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
 
 DO $$
 BEGIN
-    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2'], 4);
+    PERFORM public.update_playlist_videos_positions(9999::int8, ARRAY['pl_test_1', 'pl_test_2']::TEXT[], 4::int2);
 END;
 $$;
 
