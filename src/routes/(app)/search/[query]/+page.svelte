@@ -49,9 +49,8 @@
   let previousSearchString = $state<string>('');
 
   onMount(() => {
-      navigationState.syncSearchQueryFromUrl(page.url.pathname, true)
-
-  })
+    navigationState.syncSearchQueryFromUrl(page.url.pathname, true);
+  });
 
   // Reset carousel state when searchString changes
   $effect(() => {

@@ -2,43 +2,49 @@
 -- Validates user creation, username generation, and user lifecycle functions
 BEGIN;
 
-SELECT plan(18);
+SELECT
+  plan (18);
 
 -- Test that user management functions exist
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'is_unique_username',
     ARRAY['text'],
     'Function is_unique_username should exist'
-);
+  );
 
-SELECT has_function(
-    'public', 
+SELECT
+  has_function (
+    'public',
     'generate_unique_username',
     ARRAY['text', 'uuid'],
     'Function generate_unique_username should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'create_user',
     ARRAY['text', 'text', 'text'],
     'Function create_user should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
-    'confirm_user', 
+    'confirm_user',
     ARRAY['text'],
     'Function confirm_user should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'delete_user',
     ARRAY[]::TEXT[],
     'Function delete_user should exist'
-);
+  );
 
 -- Create test data for functional testing
 DO $$
@@ -65,81 +71,97 @@ END;
 $$;
 
 -- Test is_unique_username function
-SELECT ok(
-    public.is_unique_username('newunique456') = true,
+SELECT
+  ok (
+    public.is_unique_username ('newunique456') = TRUE,
     'is_unique_username should return true for unused username'
-);
+  );
 
-SELECT ok(
-    public.is_unique_username('testuser123') = false,
+SELECT
+  ok (
+    public.is_unique_username ('testuser123') = FALSE,
     'is_unique_username should return false for existing username'
-);
+  );
 
-SELECT ok(
-    public.is_unique_username('TESTUSER123') = false,
+SELECT
+  ok (
+    public.is_unique_username ('TESTUSER123') = FALSE,
     'is_unique_username should be case insensitive'
-);
+  );
 
-SELECT ok(
-    public.is_unique_username('') = false,
+SELECT
+  ok (
+    public.is_unique_username ('') = FALSE,
     'is_unique_username should return false for empty string'
-);
+  );
 
-SELECT ok(
-    public.is_unique_username(null) = false,
+SELECT
+  ok (
+    public.is_unique_username (NULL) = FALSE,
     'is_unique_username should return false for null input'
-);
+  );
 
 -- Test generate_unique_username function
-SELECT ok(
-    public.generate_unique_username('uniquebase') = 'uniquebase',
+SELECT
+  ok (
+    public.generate_unique_username ('uniquebase') = 'uniquebase',
     'generate_unique_username should return base username if unique'
-);
+  );
 
-SELECT ok(
-    public.generate_unique_username('testuser123') != 'testuser123',
+SELECT
+  ok (
+    public.generate_unique_username ('testuser123') != 'testuser123',
     'generate_unique_username should modify taken username'
-);
+  );
 
-SELECT ok(
-    length(public.generate_unique_username('verylongusernamethatexceedsthirtychars')) <= 30,
+SELECT
+  ok (
+    length(
+      public.generate_unique_username ('verylongusernamethatexceedsthirtychars')
+    ) <= 30,
     'generate_unique_username should truncate long usernames'
-);
+  );
 
-SELECT ok(
-    public.generate_unique_username('test@#$%user') ~ '^[a-z0-9]+$',
+SELECT
+  ok (
+    public.generate_unique_username ('test@#$%user') ~ '^[a-z0-9]+$',
     'generate_unique_username should clean non-alphanumeric characters'
-);
+  );
 
-SELECT ok(
-    public.generate_unique_username('') != '',
+SELECT
+  ok (
+    public.generate_unique_username ('') != '',
     'generate_unique_username should handle empty input'
-);
+  );
 
 -- Test create_user function existence (avoid calling due to confirmed_at generated column issue)
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'create_user',
     ARRAY['text', 'text', 'text'],
     'Function create_user should exist'
-);
+  );
 
 -- Test confirm_user function existence (avoid calling due to dependency on create_user)
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'confirm_user',
     ARRAY['text'],
     'Function confirm_user should exist'
-);
+  );
 
 -- Test delete_user function existence (avoid creating users due to confirmed_at issue)
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'delete_user',
     ARRAY[]::TEXT[],
     'Function delete_user should exist'
-);
+  );
 
-SELECT finish();
+SELECT
+  finish ();
 
 ROLLBACK;

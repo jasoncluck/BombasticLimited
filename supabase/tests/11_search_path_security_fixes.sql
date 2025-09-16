@@ -161,7 +161,6 @@ SELECT
 --     ARRAY['text', 'text', 'text', 'text'],
 --     'Function select_best_playlist_image_format should exist'
 --   );
-
 -- Test image processing functions
 SELECT
   has_function (
@@ -176,7 +175,6 @@ SELECT
 --     'trigger_cleanup_optimized_images',
 --     'Function trigger_cleanup_optimized_images should exist'
 --   );
-
 SELECT
   has_function (
     'public',

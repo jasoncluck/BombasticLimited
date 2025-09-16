@@ -175,7 +175,10 @@ SELECT
         pg_policies
       WHERE
         tablename = 'timestamps'
-        AND (cmd = 'SELECT' OR cmd = 'ALL')
+        AND (
+          cmd = 'SELECT'
+          OR cmd = 'ALL'
+        )
     ),
     'Timestamps should have SELECT policies'
   );
@@ -189,7 +192,10 @@ SELECT
         pg_policies
       WHERE
         tablename = 'timestamps'
-        AND (cmd = 'INSERT' OR cmd = 'ALL')
+        AND (
+          cmd = 'INSERT'
+          OR cmd = 'ALL'
+        )
     ),
     'Timestamps should have INSERT policies'
   );

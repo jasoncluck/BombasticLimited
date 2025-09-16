@@ -1,7 +1,11 @@
 import { isVideoFilter } from '$lib/components/content/content-filter';
 import { SOURCES } from '$lib/constants/source';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
-import { DEFAULT_NUM_PLAYLISTS_OVERVIEW, parseImageProperties, searchPlaylists } from '$lib/supabase/playlists';
+import {
+  DEFAULT_NUM_PLAYLISTS_OVERVIEW,
+  parseImageProperties,
+  searchPlaylists,
+} from '$lib/supabase/playlists';
 import {
   getVideos,
   type SourceVideos,

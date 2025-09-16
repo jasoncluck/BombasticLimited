@@ -175,10 +175,13 @@ SELECT
 SELECT
   ok (
     EXISTS (
-      SELECT 1
-      FROM information_schema.tables 
-      WHERE table_schema = 'auth' 
-      AND table_name = 'users'
+      SELECT
+        1
+      FROM
+        information_schema.tables
+      WHERE
+        table_schema = 'auth'
+        AND table_name = 'users'
     ),
     'auth.users table should exist'
   );
@@ -187,10 +190,13 @@ SELECT
 SELECT
   ok (
     EXISTS (
-      SELECT 1
-      FROM information_schema.tables 
-      WHERE table_schema = 'public' 
-      AND table_name = 'profiles'
+      SELECT
+        1
+      FROM
+        information_schema.tables
+      WHERE
+        table_schema = 'public'
+        AND table_name = 'profiles'
     ),
     'public.profiles table should exist'
   );

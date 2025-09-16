@@ -2,59 +2,67 @@
 -- Validates timestamp insertion, updating, deletion, and trigger functions
 BEGIN;
 
-SELECT plan(15);
+SELECT
+  plan (15);
 
 -- Test timestamp management functions
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'insert_timestamp',
     ARRAY['text', 'integer', 'text'],
     'Function insert_timestamp should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'insert_timestamps',
     ARRAY['text', 'jsonb'],
     'Function insert_timestamps should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_timestamp',
     ARRAY['uuid', 'integer', 'text'],
     'Function update_timestamp should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'delete_timestamps',
     ARRAY['text', 'integer[]'],
     'Function delete_timestamps should exist'
-);
+  );
 
 -- Test data management and cleanup functions
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'delete_pending_videos',
     ARRAY[]::TEXT[],
     'Function delete_pending_videos should exist'
-);
+  );
 
 -- Test trigger functions for updated_at management
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_updated_at_column',
     ARRAY[]::TEXT[],
     'Function update_updated_at_column should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_playlists_updated_at',
     ARRAY[]::TEXT[],
     'Function update_playlists_updated_at should exist'
-);
+  );
 
 -- Create test data for functional testing
 DO $$
@@ -91,28 +99,48 @@ END;
 $$;
 
 -- Test insert_timestamp function (requires auth context, so we test signature)
-SELECT ok(
-    has_function('public', 'insert_timestamp', ARRAY['text', 'integer', 'text']),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'insert_timestamp',
+      ARRAY['text', 'integer', 'text']
+    ),
     'insert_timestamp should have correct function signature'
-);
+  );
 
 -- Test insert_timestamps batch function (requires auth context, so we test signature)
-SELECT ok(
-    has_function('public', 'insert_timestamps', ARRAY['text', 'jsonb']),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'insert_timestamps',
+      ARRAY['text', 'jsonb']
+    ),
     'insert_timestamps should have correct function signature'
-);
+  );
 
 -- Test update_timestamp function (requires auth context, so we test signature)
-SELECT ok(
-    has_function('public', 'update_timestamp', ARRAY['uuid', 'integer', 'text']),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'update_timestamp',
+      ARRAY['uuid', 'integer', 'text']
+    ),
     'update_timestamp should have correct function signature'
-);
+  );
 
 -- Test delete_timestamps function (requires auth context, so we test signature)
-SELECT ok(
-    has_function('public', 'delete_timestamps', ARRAY['text', 'integer[]']),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'delete_timestamps',
+      ARRAY['text', 'integer[]']
+    ),
     'delete_timestamps should have correct function signature'
-);
+  );
 
 -- Test delete_pending_videos function
 DO $$
@@ -172,16 +200,27 @@ END;
 $$;
 
 -- Test that core trigger functions exist
-SELECT ok(
-    has_function('public', 'update_updated_at_column', ARRAY[]::TEXT[]),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'update_updated_at_column',
+      ARRAY[]::TEXT[]
+    ),
     'update_updated_at_column trigger function should exist'
-);
+  );
 
-SELECT ok(
-    has_function('public', 'update_playlists_updated_at', ARRAY[]::TEXT[]),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'update_playlists_updated_at',
+      ARRAY[]::TEXT[]
+    ),
     'update_playlists_updated_at trigger function should exist'
-);
+  );
 
-SELECT finish();
+SELECT
+  finish ();
 
 ROLLBACK;

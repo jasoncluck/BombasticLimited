@@ -2,82 +2,94 @@
 -- Validates notification creation, retrieval, and management functions
 BEGIN;
 
-SELECT plan(15);
+SELECT
+  plan (15);
 
 -- Test that notification system functions exist
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'create_notification',
     ARRAY['public.notification_type', 'text', 'text'],
     'Function create_notification should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'create_notification_for_all_users',
     ARRAY['public.notification_type', 'text', 'text'],
     'Function create_notification_for_all_users should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_user_notifications',
     'Function get_user_notifications should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_user_notifications_with_timing',
     'Function get_user_notifications_with_timing should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_unread_notification_count',
     ARRAY[]::TEXT[],
     'Function get_unread_notification_count should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'mark_notifications_as_read',
     ARRAY['integer[]'],
     'Function mark_notifications_as_read should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'remove_notification',
     ARRAY['integer'],
     'Function remove_notification should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'remove_user_notification',
     ARRAY['uuid'],
     'Function remove_user_notification should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'is_admin',
     ARRAY[]::TEXT[],
     'Function is_admin should exist'
-);
+  );
 
 -- Test notification cleanup functions
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'cleanup_expired_notifications',
     'Function cleanup_expired_notifications should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'cleanup_expired_notifications_cron',
     'Function cleanup_expired_notifications_cron should exist'
-);
+  );
 
 -- Create test data for functional testing
 DO $$
@@ -149,28 +161,37 @@ END;
 $$;
 
 -- Test get_unread_notification_count function structure
-SELECT ok(
-    has_function('public', 'get_unread_notification_count', ARRAY[]::TEXT[]),
+SELECT
+  ok (
+    has_function (
+      'public',
+      'get_unread_notification_count',
+      ARRAY[]::TEXT[]
+    ),
     'get_unread_notification_count should exist with no parameters'
-);
+  );
 
 -- Test notification retrieval functions exist
-SELECT ok(
-    has_function('public', 'get_user_notifications'),
+SELECT
+  ok (
+    has_function ('public', 'get_user_notifications'),
     'get_user_notifications function should exist'
-);
+  );
 
-SELECT ok(
-    has_function('public', 'get_user_notifications_with_timing'),
+SELECT
+  ok (
+    has_function ('public', 'get_user_notifications_with_timing'),
     'get_user_notifications_with_timing function should exist'
-);
+  );
 
 -- Test cleanup functions exist
-SELECT ok(
-    has_function('public', 'cleanup_expired_notifications'),
+SELECT
+  ok (
+    has_function ('public', 'cleanup_expired_notifications'),
     'cleanup_expired_notifications function should exist'
-);
+  );
 
-SELECT finish();
+SELECT
+  finish ();
 
 ROLLBACK;

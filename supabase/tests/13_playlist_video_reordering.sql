@@ -1,10 +1,10 @@
 -- Test playlist video reordering function
 -- Tests the update_playlist_videos_positions function for basic functionality
 -- Note: Limited to single call to avoid temporary table conflicts
-
 BEGIN;
 
-SELECT plan(4);
+SELECT
+  plan (4);
 
 -- Setup test data
 DO $$
@@ -23,12 +23,53 @@ BEGIN
 END;
 $$;
 
-INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, pending_delete) VALUES 
-  ('pl_test_1', 'giantbomb', 'Playlist Test Video 1', 'Test description 1', 'https://example.com/thumb1.jpg', now(), false),
-  ('pl_test_2', 'jeffgerstmann', 'Playlist Test Video 2', 'Test description 2', 'https://example.com/thumb2.jpg', now(), false),
-  ('pl_test_3', 'nextlander', 'Playlist Test Video 3', 'Test description 3', 'https://example.com/thumb3.jpg', now(), false),
-  ('pl_test_4', 'remap', 'Playlist Test Video 4', 'Test description 4', 'https://example.com/thumb4.jpg', now(), false)
-
+INSERT INTO
+  public.videos (
+    id,
+    source,
+    title,
+    description,
+    thumbnail_url,
+    published_at,
+    pending_delete
+  )
+VALUES
+  (
+    'pl_test_1',
+    'giantbomb',
+    'Playlist Test Video 1',
+    'Test description 1',
+    'https://example.com/thumb1.jpg',
+    now(),
+    FALSE
+  ),
+  (
+    'pl_test_2',
+    'jeffgerstmann',
+    'Playlist Test Video 2',
+    'Test description 2',
+    'https://example.com/thumb2.jpg',
+    now(),
+    FALSE
+  ),
+  (
+    'pl_test_3',
+    'nextlander',
+    'Playlist Test Video 3',
+    'Test description 3',
+    'https://example.com/thumb3.jpg',
+    now(),
+    FALSE
+  ),
+  (
+    'pl_test_4',
+    'remap',
+    'Playlist Test Video 4',
+    'Test description 4',
+    'https://example.com/thumb4.jpg',
+    now(),
+    FALSE
+  )
 ON CONFLICT (id) DO NOTHING;
 
 -- Create test playlist
@@ -62,10 +103,14 @@ SELECT
     'Function update_playlist_videos_positions should exist'
   );
 
-
 -- Test 2: Basic functionality test (single call to avoid temp table conflicts)
-DELETE FROM public.playlist_videos WHERE playlist_id = 9999;
-INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUES 
+DELETE FROM public.playlist_videos
+WHERE
+  playlist_id = 9999;
+
+INSERT INTO
+  public.playlist_videos (playlist_id, video_id, video_position)
+VALUES
   (9999, 'pl_test_1', 1),
   (9999, 'pl_test_2', 2),
   (9999, 'pl_test_3', 3),
@@ -77,28 +122,66 @@ BEGIN
 END;
 $$;
 
-SELECT ok(
-    (SELECT video_position FROM public.playlist_videos WHERE playlist_id = 9999 AND video_id = 'pl_test_1') IS NOT NULL AND
-    (SELECT video_position FROM public.playlist_videos WHERE playlist_id = 9999 AND video_id = 'pl_test_2') IS NOT NULL,
+SELECT
+  ok (
+    (
+      SELECT
+        video_position
+      FROM
+        public.playlist_videos
+      WHERE
+        playlist_id = 9999
+        AND video_id = 'pl_test_1'
+    ) IS NOT NULL
+    AND (
+      SELECT
+        video_position
+      FROM
+        public.playlist_videos
+      WHERE
+        playlist_id = 9999
+        AND video_id = 'pl_test_2'
+    ) IS NOT NULL,
     'update_playlist_videos_positions should execute without error'
-);
+  );
 
-SELECT ok(
-    (SELECT COUNT(*) FROM public.playlist_videos WHERE playlist_id = 9999) = 4,
+SELECT
+  ok (
+    (
+      SELECT
+        COUNT(*)
+      FROM
+        public.playlist_videos
+      WHERE
+        playlist_id = 9999
+    ) = 4,
     'All videos should remain in playlist after position update'
-);
+  );
 
-SELECT ok(
+SELECT
+  ok (
     NOT EXISTS (
-        SELECT 1 FROM (
-            SELECT video_position, LAG(video_position) OVER (ORDER BY video_position) as prev_pos
-            FROM public.playlist_videos 
-            WHERE playlist_id = 9999
-        ) t 
-        WHERE prev_pos IS NOT NULL AND video_position - prev_pos > 1
+      SELECT
+        1
+      FROM
+        (
+          SELECT
+            video_position,
+            LAG(video_position) OVER (
+              ORDER BY
+                video_position
+            ) AS prev_pos
+          FROM
+            public.playlist_videos
+          WHERE
+            playlist_id = 9999
+        ) t
+      WHERE
+        prev_pos IS NOT NULL
+        AND video_position - prev_pos > 1
     ),
     'No gaps should exist in video positions after reordering'
-);
+  );
 
 SELECT
   finish ();

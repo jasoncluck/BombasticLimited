@@ -2,75 +2,86 @@
 -- Validates playlist creation, deletion, access control, and following system
 BEGIN;
 
-SELECT plan(25);
+SELECT
+  plan (25);
 
 -- Test that playlist management functions exist
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'insert_playlist',
     'Function insert_playlist should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'delete_playlist',
     ARRAY['bigint'],
     'Function delete_playlist should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'can_user_access_playlist',
     ARRAY['bigint', 'uuid'],
     'Function can_user_access_playlist should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'follow_playlist',
     ARRAY['bigint'],
     'Function follow_playlist should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
-    'unfollow_playlist', 
+    'unfollow_playlist',
     ARRAY['bigint'],
     'Function unfollow_playlist should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_user_playlists',
     'Function get_user_playlists should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_user_accessible_playlists',
     'Function get_user_accessible_playlists should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_playlist_duration',
     ARRAY['bigint'],
     'Function update_playlist_duration should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'calculate_playlist_duration',
     ARRAY['bigint'],
     'Function calculate_playlist_duration should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_playlist_data',
     ARRAY['text', 'text', 'integer', 'integer', 'text'],
     'Function get_playlist_data should exist'
-);
+  );
 
 -- Create test users and setup data for functional testing
 DO $$
@@ -125,12 +136,23 @@ END;
 $$;
 
 -- Test calculate_playlist_duration function (this function likely converts text duration to seconds)
-SELECT ok(
-    (SELECT public.calculate_playlist_duration(
-        (SELECT id FROM public.playlists WHERE name = 'Test Public Playlist')
-    )) > 0, -- Just check that it returns a positive value since duration format conversion is complex
+SELECT
+  ok (
+    (
+      SELECT
+        public.calculate_playlist_duration (
+          (
+            SELECT
+              id
+            FROM
+              public.playlists
+            WHERE
+              name = 'Test Public Playlist'
+          )
+        )
+    ) > 0, -- Just check that it returns a positive value since duration format conversion is complex
     'calculate_playlist_duration should return positive duration'
-);
+  );
 
 -- Test update_playlist_duration function
 DO $$
@@ -201,103 +223,119 @@ END;
 $$;
 
 -- Test playlist following functionality exists
-SELECT ok(
-    has_function('public', 'follow_playlist', ARRAY['bigint']),
+SELECT
+  ok (
+    has_function ('public', 'follow_playlist', ARRAY['bigint']),
     'follow_playlist function should exist'
-);
+  );
 
-SELECT ok(
-    has_function('public', 'unfollow_playlist', ARRAY['bigint']),
+SELECT
+  ok (
+    has_function ('public', 'unfollow_playlist', ARRAY['bigint']),
     'unfollow_playlist function should exist'
-);
+  );
 
 -- Test get_user_playlists function exists
-SELECT ok(
-    has_function('public', 'get_user_playlists'),
+SELECT
+  ok (
+    has_function ('public', 'get_user_playlists'),
     'get_user_playlists function should exist and be callable'
-);
+  );
 
 -- Test get_user_accessible_playlists function exists  
-SELECT ok(
-    has_function('public', 'get_user_accessible_playlists'),
+SELECT
+  ok (
+    has_function ('public', 'get_user_accessible_playlists'),
     'get_user_accessible_playlists function should exist and be callable'
-);
+  );
 
 -- Test delete_playlist function existence and basic structure
-SELECT ok(
-    has_function('public', 'delete_playlist', ARRAY['bigint']),
+SELECT
+  ok (
+    has_function ('public', 'delete_playlist', ARRAY['bigint']),
     'delete_playlist function should exist with correct signature'
-);
+  );
 
 -- Test insert_playlist function existence
-SELECT ok(
-    has_function('public', 'insert_playlist'),
+SELECT
+  ok (
+    has_function ('public', 'insert_playlist'),
     'insert_playlist function should exist'
-);
+  );
 
 -- Test playlist cleanup functions
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'cleanup_deleted_playlists',
     'Function cleanup_deleted_playlists should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'force_cleanup_playlist',
     ARRAY['bigint'],
     'Function force_cleanup_playlist should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_playlist_cleanup_info',
     ARRAY['bigint'],
     'Function get_playlist_cleanup_info should exist'
-);
+  );
 
 -- Test playlist position management functions
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_playlist_position',
     'Function update_playlist_position should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'initialize_user_playlist_positions',
     'Function initialize_user_playlist_positions should exist'
-);
+  );
 
 -- Test playlist video management functions
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'insert_playlist_videos',
     'Function insert_playlist_videos should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'delete_playlist_videos',
     ARRAY['bigint', 'text[]'],
     'Function delete_playlist_videos should exist'
-);
+  );
 
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'update_playlist_videos_positions',
     ARRAY['bigint'],
     'Function update_playlist_videos_positions should exist'
-);
+  );
 
 -- Test playlist YouTube integration
-SELECT has_function(
+SELECT
+  has_function (
     'public',
     'get_playlist_by_youtube_id',
     ARRAY['text'],
     'Function get_playlist_by_youtube_id should exist'
-);
+  );
 
-SELECT finish();
+SELECT
+  finish ();
 
 ROLLBACK;
