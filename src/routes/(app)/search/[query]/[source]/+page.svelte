@@ -38,7 +38,7 @@
 
   // Sync navigation state with the URL search parameter using the improved method
   onMount(() => {
-    if (page.params.query) {
+    if (page.params.query && !navigationState.isSearching) {
       // Use syncSearchQueryFromUrl with force=true for initial page mount
       navigationState.syncSearchQueryFromUrl(
         `/search/${encodeURIComponent(page.params.query)}`,
