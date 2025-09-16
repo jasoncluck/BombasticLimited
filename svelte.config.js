@@ -54,6 +54,12 @@ const config = {
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
             'https://usher.ttvnw.net',
+            // Amazon advertising system (required for Twitch)
+            'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
+            // Analytics domains (required for Twitch)
+            'https://sb.scorecardresearch.com',
+            'https://scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -78,6 +84,9 @@ const config = {
             'https://www.twitch.tv',
             'https://id.twitch.tv',
             'https://passport.twitch.tv',
+            // Amazon advertising system
+            'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
           ],
           'child-src': [
             'self',
@@ -89,6 +98,7 @@ const config = {
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
             'https://googletagservices.com',
+            'https://s.amazon-adsystem.com',
           ],
           'frame-ancestors': ['self'],
           'connect-src': [
@@ -127,6 +137,16 @@ const config = {
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
+            // Amazon advertising system (required for Twitch authentication)
+            'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
+            // Analytics domains (required for Twitch)
+            'https://sb.scorecardresearch.com',
+            'https://scorecardresearch.com',
+            // Additional Twitch authentication endpoints
+            'https://irc-ws.chat.twitch.tv',
+            'https://badges.twitch.tv',
+            'https://chat.twitch.tv',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -158,6 +178,12 @@ const config = {
             'https://vod-metro.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            // Amazon advertising system
+            'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
+            // Analytics domains
+            'https://sb.scorecardresearch.com',
+            'https://scorecardresearch.com',
           ],
           'media-src': [
             'self',
