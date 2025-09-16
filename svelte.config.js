@@ -49,19 +49,29 @@ const config = {
             'https://passport.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
             'https://d2v02itv0y9u9t.cloudfront.net',
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
             'https://usher.ttvnw.net',
-            // Amazon Ad System (CRITICAL for Twitch authentication)
+            'https://irc-ws.chat.twitch.tv',
+            'https://client-event-reporter.twitch.tv',
+            // Twitch video streaming domains (CRITICAL)
+            'https://*.hls.ttvnw.net',
+            'https://*.playlist.live-video.net',
+            'https://*.playlist.ttvnw.net',
+            'https://video-weaver.*.hls.ttvnw.net',
+            // Amazon Ad System (CRITICAL for authentication)
             'https://s.amazon-adsystem.com',
             'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
-            // Analytics domains
+            // Analytics domains (required for Twitch authentication)
             'https://cdn-gl.imrworldwide.com',
+            'https://secure-sts-prod.imrworldwide.com',
+            'https://*.imrworldwide.com',
             'https://sb.scorecardresearch.com',
-            'https://client-event-reporter.twitch.tv',
+            'https://*.scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -129,7 +139,7 @@ const config = {
             'https://www.youtube.com',
             'https://www.youtube-nocookie.com',
             'https://imasdk.googleapis.com',
-            // Twitch domains
+            // Twitch domains (COMPREHENSIVE LIST)
             'https://api.twitch.tv',
             'https://gql.twitch.tv',
             'https://usher.ttvnw.net',
@@ -138,26 +148,28 @@ const config = {
             'https://passport.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
             'wss://irc-ws.chat.twitch.tv',
             'wss://pubsub-edge.twitch.tv',
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
-            // Amazon Ad System (CRITICAL)
+            'https://client-event-reporter.twitch.tv',
+            // Twitch video streaming domains (CRITICAL for video playback)
+            'https://*.hls.ttvnw.net',
+            'https://*.playlist.live-video.net',
+            'https://*.playlist.ttvnw.net',
+            'https://video-weaver.*.hls.ttvnw.net',
+            // Amazon Ad System (CRITICAL - the exact domain being blocked)
             'https://s.amazon-adsystem.com',
             'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
-            // Video streaming domains (for your video errors)
-            'https://*.hls.ttvnw.net',
-            'https://video-weaver.*.hls.ttvnw.net',
-            'https://*.playlist.live-video.net',
-            'https://*.playlist.ttvnw.net',
-            // Analytics domains
+            // Analytics domains (required for Twitch authentication)
             'https://cdn-gl.imrworldwide.com',
+            'https://secure-sts-prod.imrworldwide.com',
+            'https://*.imrworldwide.com',
             'https://sb.scorecardresearch.com',
-            'https://client-event-reporter.twitch.tv',
-            // Static CDN
-            'https://static-cdn.jtvnw.net',
+            'https://*.scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -189,13 +201,16 @@ const config = {
             'https://vod-metro.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
-            // Amazon Ad System
+            // Amazon Ad System (for tracking pixels)
             'https://s.amazon-adsystem.com',
             'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
-            // Analytics domains
+            // Analytics domains (for tracking pixels)
             'https://cdn-gl.imrworldwide.com',
+            'https://secure-sts-prod.imrworldwide.com',
+            'https://*.imrworldwide.com',
             'https://sb.scorecardresearch.com',
+            'https://*.scorecardresearch.com',
           ],
           'media-src': [
             'self',
@@ -207,14 +222,14 @@ const config = {
             'https://*.googlevideo.com',
             'https://googleads.g.doubleclick.net',
             'https://www.youtube-nocookie.com',
-            // Twitch streaming domains (CRITICAL for video playback)
+            // Twitch video streaming domains (CRITICAL for video playback)
             'https://vod-secure.twitch.tv',
             'https://vod-metro.twitch.tv',
             'https://clips-media-assets2.twitch.tv',
             'https://*.hls.ttvnw.net',
-            'https://video-weaver.*.hls.ttvnw.net',
             'https://*.playlist.live-video.net',
             'https://*.playlist.ttvnw.net',
+            'https://video-weaver.*.hls.ttvnw.net',
           ],
           'style-src': [
             'self',
@@ -229,6 +244,7 @@ const config = {
             // Twitch domains
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
           ],
           'font-src': [
             'self',
@@ -237,6 +253,7 @@ const config = {
             'https://www.gstatic.com',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
+            'https://static-cdn.jtvnw.net',
           ],
           'worker-src': ['self', 'blob:'],
           'object-src': ['none'],
