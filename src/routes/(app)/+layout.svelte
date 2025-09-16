@@ -121,9 +121,9 @@
         await invalidate('supabase:auth');
       }
 
+      invalidate('supbase:db:notifications');
       // Step 2: Refresh sidebar and navigation state concurrently
       sidebarState.refreshData();
-      console.log('refreshing navigation state');
       navigationState.refreshData();
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
