@@ -151,6 +151,7 @@ export class NavigationStateClass implements NavigationState {
   private isUserTyping: boolean = false;
   private typingTimeout: ReturnType<typeof setTimeout> | undefined;
   private lastPreloadedValue: string = '';
+  private wasInternalNavigation: boolean = false; // Track if last navigation was internal
 
   // Core data state
   data = $state<NavigationData>({
@@ -284,18 +285,24 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = urlSearchQuery;
 
     // Only sync to input value if:
-    // 1. Force is true (page load/restore), OR
+    // 1. Force is true AND it's not from internal navigation, OR
     // 2. User is not currently typing AND no recent user input
     const now = Date.now();
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
 
+    // Don't force sync if this was triggered by our own internal navigation
+    const shouldAllowForcedSync = force && !this.wasInternalNavigation;
+    
     const shouldSyncToInput =
-      force ||
+      shouldAllowForcedSync ||
       (!this.isUserTyping && !this.isSearching && timeSinceLastInput > 3000); // Longer grace period
 
     if (shouldSyncToInput) {
       this.searchInputValue = urlSearchQuery;
     }
+
+    // Reset the internal navigation flag after processing
+    this.wasInternalNavigation = false;
   };
 
   // Initialize effects (should be called when component is mounted)
@@ -595,6 +602,9 @@ export class NavigationStateClass implements NavigationState {
           return e;
         }
 
+        // Mark as internal navigation before goto
+        this.wasInternalNavigation = true;
+        
         // Only navigate to "/" if we're still in the empty state
         await goto(`/`, { keepFocus: true, replaceState: false });
       } else if (searchValue.length >= 2) {
@@ -609,6 +619,9 @@ export class NavigationStateClass implements NavigationState {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
+
+        // Mark as internal navigation before goto
+        this.wasInternalNavigation = true;
 
         // Use replaceState: true to avoid creating new history entries for search
         await goto(`/search/${encodeURIComponent(searchValue)}`, {
@@ -895,6 +908,7 @@ export class NavigationStateClass implements NavigationState {
     this.lastUserInputTimestamp = 0;
     this.isUserTyping = false;
     this.lastPreloadedValue = '';
+    this.wasInternalNavigation = false;
   }
 }
 

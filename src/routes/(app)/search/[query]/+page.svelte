@@ -49,23 +49,7 @@
   let previousSearchString = $state<string>('');
 
   onMount(() => {
-    // Only sync from URL if this is a direct navigation (not from internal app navigation)
-    // We detect this by checking if the current searchInputValue doesn't match the URL param
-    const urlSearchQuery = searchString || '';
-    const currentInputValue = navigationState.searchInputValue;
-
-    // If the input value is empty or doesn't match the URL, this is likely a direct navigation
-    // or the first load of this page, so we should populate from the URL
-    const isDirectNavigation =
-      !currentInputValue || currentInputValue !== urlSearchQuery;
-
-    if (isDirectNavigation && urlSearchQuery) {
-      // Only force sync if we have a search string from the URL and it's different from current state
-      navigationState.syncSearchQueryFromUrl(page.url.pathname, true);
-    } else if (!urlSearchQuery) {
-      // If there's no search string in URL but we're on the search page, sync without forcing
-      navigationState.syncSearchQueryFromUrl(page.url.pathname, false);
-    }
+    navigationState.syncSearchQueryFromUrl(page.url.pathname, true);
   });
 
   // Reset carousel state when searchString changes
