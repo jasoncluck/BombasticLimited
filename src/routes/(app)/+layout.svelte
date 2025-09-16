@@ -388,6 +388,11 @@
     // Set up visibility change listener for data refresh and auth state checking
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Add global context menu handler to catch events from Portal elements
+    document.addEventListener('contextmenu', handleGlobalContextMenu, {
+      capture: true, // Use capture phase to intercept before any Portal elements
+    });
+
     // Return cleanup function
     return () => {
       // Clean up Supabase auth listener
@@ -397,6 +402,11 @@
 
       // Clean up visibility change listener
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+      // Clean up global context menu listener
+      document.removeEventListener('contextmenu', handleGlobalContextMenu, {
+        capture: true,
+      });
 
       if (navigationCleanup && typeof navigationCleanup === 'function') {
         navigationCleanup();
@@ -415,9 +425,24 @@
   }
 
   /**
-   * Prevents the default browser context menu from appearing.
-   * This ensures custom context menus (like Svelte/ShadCN) work properly
-   * without interference from the browser's default right-click menu.
+   * Global context menu handler that catches all context menu events,
+   * including those from Portal elements like ShadCN context menus.
+   * This ensures the browser context menu is always blocked in production.
+   */
+  function handleGlobalContextMenu(event: MouseEvent): void {
+    if (!dev) {
+      // Always prevent the default browser context menu in production
+      event.preventDefault();
+
+      // Stop propagation to prevent conflicts with custom context menus
+      event.stopPropagation();
+    }
+  }
+
+  /**
+   * Local context menu handler for the main layout div.
+   * This is kept for backwards compatibility but the global handler
+   * above will catch most cases, including Portal elements.
    */
   function handleContextMenu(event: MouseEvent): void {
     if (!dev) {
@@ -432,38 +457,6 @@
       // we'll keep it consistently disabled for better UX
     }
   }
-
-  /**
-   * Global context menu handler that catches all right-clicks,
-   * including those from Portal-rendered elements
-   */
-  function globalContextMenuHandler(event: MouseEvent): void {
-    // Check if the target is within a custom context menu
-    const target = event.target as Element;
-    const isCustomContextMenu =
-      target?.closest('[data-radix-popper-content-wrapper]') ||
-      target?.closest('[data-radix-context-menu-content]') ||
-      target?.closest('.context-menu-content');
-
-    // If it's not a custom context menu, prevent the default
-    if (!isCustomContextMenu && !dev) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
-  }
-
-  onMount(() => {
-    // Add global context menu listener to catch Portal events
-    document.addEventListener('contextmenu', globalContextMenuHandler, true);
-
-    return () => {
-      document.removeEventListener(
-        'contextmenu',
-        globalContextMenuHandler,
-        true
-      );
-    };
-  });
 </script>
 
 <Toaster position="top-right" />
@@ -474,11 +467,8 @@
 </svelte:head>
 
 <!-- Main Application -->
-<div
-  class="flex h-full flex-col"
-  oncontextmenu={handleContextMenu}
-  role="region"
->
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div class="flex h-full flex-col" oncontextmenu={handleContextMenu}>
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
