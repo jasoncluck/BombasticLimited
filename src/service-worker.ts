@@ -26,11 +26,11 @@ const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 100,
-  batchTimeoutMs: 100,
+  batchTimeoutMs: 400,
   maxBatchSize: 100,
-  minBatchSize: 10, // Minimum batch size before timeout reduction
+  minBatchSize: 5,
   adaptiveTimeoutMs: 50, // Reduced timeout for small batches
-  immediateThreshold: 5, // Process immediately if only 1-2 requests
+  immediateThreshold: 3, // Process immediately if only 1-2 requests
   highConcurrencyThreshold: 50, // Threshold for high concurrency mode
 };
 
