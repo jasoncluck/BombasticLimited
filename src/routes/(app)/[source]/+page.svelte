@@ -104,13 +104,13 @@
       {/if}
     </div>
   </div>
-  <!-- {#if sidebarState.isSourceStreaming(source)} -->
-  {#key source}
-    <div class="mb-8 flex w-full flex-col items-start">
-      <TwitchEmbed channel={SOURCE_INFO[source].twitchUserName ?? source} />
-    </div>
-  {/key}
-  <!-- {/if} -->
+  {#if sidebarState.isSourceStreaming(source)}
+    {#key source}
+      <div class="mb-8 flex w-full flex-col items-start">
+        <TwitchEmbed channel={SOURCE_INFO[source].twitchUserName ?? source} />
+      </div>
+    {/key}
+  {/if}
 
   <div class="mt-4 mb-8 flex flex-col gap-8">
     <div data-testid="latest-videos-section">
