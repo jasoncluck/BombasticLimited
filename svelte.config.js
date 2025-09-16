@@ -54,12 +54,15 @@ const config = {
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
             'https://usher.ttvnw.net',
-            // Amazon advertising system (required for Twitch)
+            // Amazon Ad System (required for Twitch authentication)
             'https://s.amazon-adsystem.com',
-            'https://amazon-adsystem.com',
-            // Analytics domains (required for Twitch)
+            'https://*.amazon-adsystem.com',
+            // Nielsen Analytics (required for Twitch)
+            'https://secure-sts-prod.imrworldwide.com',
+            'https://*.imrworldwide.com',
+            // ComScore Analytics (required for Twitch)
             'https://sb.scorecardresearch.com',
-            'https://scorecardresearch.com',
+            'https://*.scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -84,9 +87,9 @@ const config = {
             'https://www.twitch.tv',
             'https://id.twitch.tv',
             'https://passport.twitch.tv',
-            // Amazon advertising system
+            // Amazon Ad System
             'https://s.amazon-adsystem.com',
-            'https://amazon-adsystem.com',
+            'https://*.amazon-adsystem.com',
           ],
           'child-src': [
             'self',
@@ -98,7 +101,9 @@ const config = {
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
             'https://googletagservices.com',
+            // Amazon Ad System
             'https://s.amazon-adsystem.com',
+            'https://*.amazon-adsystem.com',
           ],
           'frame-ancestors': ['self'],
           'connect-src': [
@@ -137,16 +142,15 @@ const config = {
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
-            // Amazon advertising system (required for Twitch authentication)
+            // Amazon Ad System (required for Twitch authentication)
             'https://s.amazon-adsystem.com',
-            'https://amazon-adsystem.com',
-            // Analytics domains (required for Twitch)
+            'https://*.amazon-adsystem.com',
+            // Nielsen Analytics (required for Twitch)
+            'https://secure-sts-prod.imrworldwide.com',
+            'https://*.imrworldwide.com',
+            // ComScore Analytics (required for Twitch)
             'https://sb.scorecardresearch.com',
-            'https://scorecardresearch.com',
-            // Additional Twitch authentication endpoints
-            'https://irc-ws.chat.twitch.tv',
-            'https://badges.twitch.tv',
-            'https://chat.twitch.tv',
+            'https://*.scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -178,12 +182,15 @@ const config = {
             'https://vod-metro.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
-            // Amazon advertising system
+            // Amazon Ad System (for tracking pixels)
             'https://s.amazon-adsystem.com',
-            'https://amazon-adsystem.com',
-            // Analytics domains
+            'https://*.amazon-adsystem.com',
+            // Nielsen Analytics (for tracking pixels)
+            'https://secure-sts-prod.imrworldwide.com',
+            'https://*.imrworldwide.com',
+            // ComScore Analytics (for tracking pixels)
             'https://sb.scorecardresearch.com',
-            'https://scorecardresearch.com',
+            'https://*.scorecardresearch.com',
           ],
           'media-src': [
             'self',
