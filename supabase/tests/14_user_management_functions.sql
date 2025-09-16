@@ -139,8 +139,6 @@ SELECT has_function(
     ARRAY[]::TEXT[],
     'Function delete_user should exist'
 );
-    'delete_user function should exist and be callable'
-);
 
 SELECT finish();
 
