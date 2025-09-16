@@ -78,7 +78,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.search_playlists ('Special Search', NULL, 10, 0)
+        public.search_playlists ('Special Search')
     ) >= 1,
     'search_playlists should find playlists matching description search'
   );
