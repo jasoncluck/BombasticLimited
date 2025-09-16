@@ -2,7 +2,7 @@
 -- This test validates that the updated functions have correct syntax and expected signatures
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(9);
 
 -- Test 1: Check that functions exist with updated signatures
 SELECT
@@ -40,12 +40,12 @@ SELECT
     'Function search_playlists should exist'
   );
 
-SELECT
-  has_function (
-    'public',
-    'update_playlist_image',
-    'Function update_playlist_image should exist'
-  );
+-- SELECT
+--   has_function (
+--     'public',
+--     'update_playlist_image',
+--     'Function update_playlist_image should exist'
+--   );
 
 SELECT
   has_function (

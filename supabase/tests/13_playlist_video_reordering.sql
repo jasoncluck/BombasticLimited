@@ -60,7 +60,11 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
   (9999, 'pl_test_5', 5),
   (9999, 'pl_test_6', 6);
 
-PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4'], 1);
+DO $$
+BEGIN
+    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4'], 1);
+END;
+$$;
 
 SELECT ok(
     (SELECT video_position FROM public.playlist_videos WHERE playlist_id = 9999 AND video_id = 'pl_test_1') = 1 AND
@@ -91,7 +95,11 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
   (9999, 'pl_test_5', 5),
   (9999, 'pl_test_6', 6);
 
-PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4'], 3);
+DO $$
+BEGIN
+    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2', 'pl_test_4'], 3);
+END;
+$$;
 
 SELECT ok(
     (SELECT video_position FROM public.playlist_videos WHERE playlist_id = 9999 AND video_id = 'pl_test_1') = 1 AND
@@ -112,7 +120,11 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
   (9999, 'pl_test_7', 7),  -- selected
   (9999, 'pl_test_8', 8);
 
-PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7'], 3);
+DO $$
+BEGIN
+    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7'], 3);
+END;
+$$;
 
 -- Non-contiguous: positions 6,7 are not contiguous to target 3, so use normal positioning → [3,4,5]
 SELECT ok(
@@ -141,7 +153,11 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
   (9999, 'pl_test_7', 7),  -- selected
   (9999, 'pl_test_8', 8);
 
-PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7'], 6);
+DO $$
+BEGIN  
+    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_2', 'pl_test_6', 'pl_test_7'], 6);
+END;
+$$;
 
 -- Contiguous MAX logic: target 6 has contiguous videos 6,7 after it, more videos after (2) than before (1) → use MAX logic → [5,6,7]
 SELECT ok(
@@ -159,7 +175,11 @@ INSERT INTO public.playlist_videos (playlist_id, video_id, video_position) VALUE
   (9999, 'pl_test_3', 3),
   (9999, 'pl_test_4', 4);
 
-PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2'], 4);
+DO $$
+BEGIN
+    PERFORM public.update_playlist_videos_positions(9999, ARRAY['pl_test_1', 'pl_test_2'], 4);
+END;
+$$;
 
 SELECT ok(
     (SELECT video_position FROM public.playlist_videos WHERE playlist_id = 9999 AND video_id = 'pl_test_1') = 4 AND

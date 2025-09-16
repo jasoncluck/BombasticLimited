@@ -52,13 +52,15 @@ BEGIN
         (test_user_id_1, 'authenticated', 'authenticated', 'testuser123@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "testuser123"}'),
         (test_user_id_2, 'authenticated', 'authenticated', 'anotheruser@test.com', 'password', now(), now(), now(), 
-         '{"provider":"email","providers":["email"]}', '{"username": "anotheruser"}');
+         '{"provider":"email","providers":["email"]}', '{"username": "anotheruser"}')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Insert test profiles to test username uniqueness
     INSERT INTO public.profiles (id, username)
     VALUES 
         (test_user_id_1, 'testuser123'),
-        (test_user_id_2, 'anotheruser');
+        (test_user_id_2, 'anotheruser')
+    ON CONFLICT (id) DO NOTHING;
 END;
 $$;
 
