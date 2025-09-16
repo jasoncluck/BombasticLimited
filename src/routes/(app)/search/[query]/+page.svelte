@@ -15,7 +15,6 @@
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
   import { onMount } from 'svelte';
-  import { page } from '$app/state';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -28,6 +27,8 @@
     playlistsCount,
     contentFilter,
     userProfile,
+    shouldSyncNavigation,
+    currentPath,
   } = $derived(data);
 
   const contentState = getContentState();
@@ -47,9 +48,14 @@
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
   let previousSearchString = $state<string>('');
+  let hasInitialized = $state<boolean>(false);
 
+  // Only sync navigation on the first mount when the route initially loads
   onMount(() => {
-    navigationState.syncSearchQueryFromUrl(page.url.pathname, true);
+    if (shouldSyncNavigation && currentPath && !hasInitialized) {
+      navigationState.syncSearchQueryFromUrl(currentPath, true);
+      hasInitialized = true;
+    }
   });
 
   // Reset carousel state when searchString changes
@@ -85,6 +91,7 @@
       );
       contentState.selectedVideosBySection = restored.selectedVideos;
       previousSearchString = restored.searchString;
+      hasInitialized = true; // Mark as initialized after restore
     },
   };
 
@@ -118,7 +125,7 @@
 
     {#each sources as source (source)}
       {#if sourceVideos[source] && sourceVideos[source].length > 0}
-        <div class="bg-background-lighter flex flex-col">
+        <div class="bg-background-lighter col flex flex-col">
           <a
             href={`/search/${searchString}/${source}`}
             class={getContentView(mediaQueryState, userProfile) === 'TABLE'
