@@ -59,13 +59,7 @@ export async function getPlaylistData({
   let sortKey: SortKey<PlaylistVideo> | undefined;
   let sortOrder: SortOrder | undefined;
 
-  if (
-    contentFilter &&
-    !(
-      contentFilter.sort.key === 'playlistOrder' &&
-      contentFilter.sort.order === 'ascending'
-    )
-  ) {
+  if (contentFilter && contentFilter.sort.key !== 'playlistOrder') {
     sortKey = contentFilter.sort.key;
     sortOrder = contentFilter.sort.order;
   }
@@ -75,8 +69,8 @@ export async function getPlaylistData({
     p_youtube_id: youtubeId,
     p_current_page: currentPage,
     p_limit: limit,
-    p_sort_key: sortKey,
-    p_sort_order: sortOrder,
+    p_sort_key: sortKey ?? 'playlistOrder',
+    p_sort_order: sortOrder ?? 'ascending',
     p_preferred_image_format: preferredImageFormat,
   });
 
