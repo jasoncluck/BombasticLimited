@@ -20,6 +20,7 @@
     source,
     supabase,
     title,
+    titleLinkHref,
     videos,
     videosCount,
     userProfile,
@@ -35,6 +36,7 @@
     source?: Source;
     supabase: SupabaseClient<Database>;
     title: string;
+    titleLinkHref?: string;
     videos: Video[];
     videosCount: number;
     userProfile: UserProfile | null;
@@ -60,9 +62,18 @@
         class="flex flex-col items-start border-none bg-transparent text-left"
       >
         {#if source}
-          <p class="text-muted-foreground text-sm tracking-tight">
-            {title}
-          </p>
+          {#if titleLinkHref}
+            <a
+              class="text-muted-foreground text-sm tracking-tight"
+              href={titleLinkHref}
+            >
+              {title}
+            </a>
+          {:else}
+            <p class="text-muted-foreground text-sm tracking-tight">
+              {title}
+            </p>
+          {/if}
           <h2 class="header-content">
             {SOURCE_INFO[source].displayName}
           </h2>
