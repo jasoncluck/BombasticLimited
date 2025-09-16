@@ -2,7 +2,7 @@ import type { Tables } from '../database.types';
 import type { Database } from '../database.types';
 
 export const USER_PLAYLIST_LIMIT = 25;
-export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 5;
+export const DEFAULT_NUM_PLAYLISTS_OVERVIEW = 6;
 export const DEFAULT_NUM_PLAYLISTS_PAGINATION = 15;
 export const PLAYLIST_VIDEO_LIMIT = 100;
 

@@ -1,7 +1,7 @@
 import { isVideoFilter } from '$lib/components/content/content-filter';
 import { SOURCES } from '$lib/constants/source';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
-import { parseImageProperties, searchPlaylists } from '$lib/supabase/playlists';
+import { DEFAULT_NUM_PLAYLISTS_OVERVIEW, parseImageProperties, searchPlaylists } from '$lib/supabase/playlists';
 import {
   getVideos,
   type SourceVideos,
@@ -46,7 +46,7 @@ export const load: PageServerLoad = async ({
     // Search playlists in parallel with video searches
     searchPlaylists({
       searchString,
-      limit: 6,
+      limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
       supabase,
       preferredImageFormat,
     }),
