@@ -187,7 +187,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 400,
-    preloadDebounceMs: 100,
+    preloadDebounceMs: 150,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -664,7 +664,6 @@ export class NavigationStateClass implements NavigationState {
         }
 
         this.preloadTimeout = setTimeout(() => {
-          console.log('preloading:', searchValue);
           // Double-check the search value hasn't changed
           if (
             this.searchInputValue.trim() === searchValue &&
