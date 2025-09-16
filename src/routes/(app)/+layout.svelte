@@ -432,6 +432,38 @@
       // we'll keep it consistently disabled for better UX
     }
   }
+
+  /**
+   * Global context menu handler that catches all right-clicks,
+   * including those from Portal-rendered elements
+   */
+  function globalContextMenuHandler(event: MouseEvent): void {
+    // Check if the target is within a custom context menu
+    const target = event.target as Element;
+    const isCustomContextMenu =
+      target?.closest('[data-radix-popper-content-wrapper]') ||
+      target?.closest('[data-radix-context-menu-content]') ||
+      target?.closest('.context-menu-content');
+
+    // If it's not a custom context menu, prevent the default
+    if (!isCustomContextMenu && !dev) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+  }
+
+  onMount(() => {
+    // Add global context menu listener to catch Portal events
+    document.addEventListener('contextmenu', globalContextMenuHandler, true);
+
+    return () => {
+      document.removeEventListener(
+        'contextmenu',
+        globalContextMenuHandler,
+        true
+      );
+    };
+  });
 </script>
 
 <Toaster position="top-right" />
@@ -442,8 +474,11 @@
 </svelte:head>
 
 <!-- Main Application -->
-<!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="flex h-full flex-col" oncontextmenu={handleContextMenu}>
+<div
+  class="flex h-full flex-col"
+  oncontextmenu={handleContextMenu}
+  role="region"
+>
   <!-- Main Content Area with Progressive Loading -->
   {#if !isHydrated}
     <!-- SSR/Initial Load State -->
