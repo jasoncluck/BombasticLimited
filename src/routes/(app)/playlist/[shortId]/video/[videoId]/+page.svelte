@@ -17,7 +17,7 @@
     userProfile,
   } = $derived(data);
 
-  const carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+  let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 </script>
 
 <div>
@@ -86,7 +86,7 @@
         tilesDisplay="CAROUSEL"
         {videos}
         {contentFilter}
-        {carouselState}
+        bind:carouselState
         {playlist}
         {userProfile}
         {supabase}

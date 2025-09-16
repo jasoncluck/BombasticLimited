@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
-  import { onMount, onDestroy } from 'svelte';
+  import { onMount, onDestroy, tick } from 'svelte';
   import VideoEmbed from '$lib/components/video/video-embed.svelte';
   import {
     getLatestTimestamp,
@@ -23,6 +23,8 @@
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
+  const SEEK_DETECTION_INTERVAL = 2000; // Reduced frequency
+  const SIGNIFICANT_SEEK_THRESHOLD = 3; // Increased threshold
 
   const {
     video,
@@ -40,7 +42,7 @@
     playlist?: Playlist | null;
   } = $props();
 
-  // YouTube Player types
+  // YouTube Player types (same as before)
   interface YouTubePlayer {
     seekTo: (seconds: number) => void;
     getCurrentTime: () => number;
@@ -78,411 +80,390 @@
   // Get content state for tracking pending operations
   const contentState = getContentState();
 
-  let queryParamTimestamp = $state(0);
-  let savedTimestamp = $state(0);
-  let player = $state<YouTubePlayer | null>(null);
-  let hasFirstPlayOccurred = $state(false);
-  let isPlayerReady = $state(false);
+  // Consolidated state - fewer reactive variables
+  let playerState = $state({
+    player: null as YouTubePlayer | null,
+    isReady: false,
+    hasFirstPlayOccurred: false,
+    isActuallyPlaying: false,
+    queryParamTimestamp: 0,
+    savedTimestamp: 0,
+  });
 
   // Video history tracking
   let watchTimeTracker = $state<ReturnType<
     typeof createVideoWatchTimeTracker
   > | null>(null);
 
-  // Track if the video is actually playing (not just the YouTube player state)
-  let isActuallyPlaying = $state(false);
-
-  // Watch for URL parameter changes
+  // Debounced URL parameter tracking
+  let urlParamDebouncer: ReturnType<typeof setTimeout> | null = null;
+  
+  // Single effect for URL changes with debouncing
   $effect(() => {
     const searchParamT = page.url.searchParams.get('t');
-    const newQueryParamTimestamp = searchParamT
-      ? parseInt(searchParamT, 10)
-      : 0;
+    const newQueryParamTimestamp = searchParamT ? parseInt(searchParamT, 10) : 0;
 
-    if (newQueryParamTimestamp !== queryParamTimestamp) {
-      queryParamTimestamp = newQueryParamTimestamp;
-
-      // If we have a query param timestamp and the video is playing or paused, seek immediately and play
-      if (player && isPlayerReady && newQueryParamTimestamp > 0) {
-        player.seekTo(newQueryParamTimestamp);
-        player.playVideo();
+    if (newQueryParamTimestamp !== playerState.queryParamTimestamp) {
+      // Clear existing debouncer
+      if (urlParamDebouncer) {
+        clearTimeout(urlParamDebouncer);
       }
+
+      // Debounce URL parameter changes
+      urlParamDebouncer = setTimeout(() => {
+        playerState.queryParamTimestamp = newQueryParamTimestamp;
+
+        // Only seek if player is ready and we have a valid timestamp
+        if (
+          playerState.player && 
+          playerState.isReady && 
+          newQueryParamTimestamp > 0
+        ) {
+          try {
+            playerState.player.seekTo(newQueryParamTimestamp);
+            playerState.player.playVideo();
+          } catch (error) {
+            console.error('Error seeking to URL timestamp:', error);
+          }
+        }
+      }, 100); // 100ms debounce
     }
   });
 
-  // Initialize watch time tracker when component mounts
-  onMount(() => {
+  // Optimized tracker initialization
+  function initializeWatchTimeTracker(): void {
     const userId = session?.user?.id;
     const videoId = video.id;
 
-    if (userId && videoId) {
-      // Clean up existing tracker if any
-      if (watchTimeTracker) {
-        watchTimeTracker.endSession().catch(console.error);
-        watchTimeTracker = null;
-      }
+    if (!userId || !videoId) {
+      cleanupWatchTimeTracker();
+      return;
+    }
 
-      // Create new tracker
+    // Clean up existing tracker
+    cleanupWatchTimeTracker();
+
+    // Create and start new tracker
+    try {
       watchTimeTracker = createVideoWatchTimeTracker({
         videoId,
         supabase,
         session,
       });
-
-      // Start tracking session
       watchTimeTracker.startSession().catch(console.error);
-    } else {
-      // Clean up if user is not logged in or no video
-      if (watchTimeTracker) {
-        watchTimeTracker.endSession().catch(console.error);
-        watchTimeTracker = null;
-      }
+    } catch (error) {
+      console.error('Error initializing watch time tracker:', error);
     }
-
-    // Cleanup on unmount
-    return () => {
-      if (watchTimeTracker) {
-        watchTimeTracker.endSession().catch(console.error);
-        watchTimeTracker = null;
-      }
-    };
-  });
-
-  // Function to determine which timestamp to use for initial seek
-  function getInitialSeekTimestamp(): number {
-    // Priority: query param 't' > saved timestamp > 0
-    if (queryParamTimestamp > 0) {
-      return queryParamTimestamp;
-    }
-    if (savedTimestamp > 0) {
-      return savedTimestamp;
-    }
-    return 0;
   }
 
-  // Function to seek to the appropriate timestamp on first play
+  function cleanupWatchTimeTracker(): void {
+    if (watchTimeTracker) {
+      watchTimeTracker.endSession().catch(console.error);
+      watchTimeTracker = null;
+    }
+  }
+
+  // Optimized timestamp determination
+  function getInitialSeekTimestamp(): number {
+    return playerState.queryParamTimestamp > 0 
+      ? playerState.queryParamTimestamp 
+      : playerState.savedTimestamp > 0 
+        ? playerState.savedTimestamp 
+        : 0;
+  }
+
+  // Optimized first play handler
   function handleFirstPlay(): void {
-    if (!player || !isPlayerReady || hasFirstPlayOccurred) return;
+    if (!playerState.player || !playerState.isReady || playerState.hasFirstPlayOccurred) {
+      return;
+    }
 
     const seekTo = getInitialSeekTimestamp();
     if (seekTo > 0) {
       try {
-        player.seekTo(seekTo);
+        playerState.player.seekTo(seekTo);
       } catch (error) {
         console.error('Error seeking in video:', error);
       }
     }
 
-    hasFirstPlayOccurred = true;
+    playerState.hasFirstPlayOccurred = true;
   }
 
-  // Helper function to save timestamp for a specific video with its duration (async for in-app use)
-  function saveTimestampForVideo(
+  // Consolidated timestamp saving function
+  async function saveTimestampForVideo(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist | null
-  ) {
-    if (
-      !videoDurationSeconds ||
-      currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
-    ) {
+  ): Promise<void> {
+    if (!videoDurationSeconds || currentTimeSeconds <= VIDEO_SAVE_SECONDS_START) {
       return;
     }
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
-    if (watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT) {
-      return handleAddVideoTimestamp({
-        videoTimestamp: {
-          videoId: video.id,
-          playlistId: playlist?.id,
-          watchedAt: new Date(),
-          sortedBy:
-            contentFilter && isPlaylistVideosFilter(contentFilter)
-              ? contentFilter.sort.key
-              : null,
-          sortOrder:
-            contentFilter && isPlaylistVideosFilter(contentFilter)
-              ? contentFilter.sort.order
-              : null,
-        },
-        session,
-        supabase,
-      });
-    } else {
-      return handleAddVideoTimestamp({
-        videoTimestamp: {
-          videoId: video.id,
-          playlistId: playlist?.id,
-          timestampStartSeconds: currentTimeSeconds,
-          watchedAt: null,
-          sortedBy:
-            contentFilter && isPlaylistVideosFilter(contentFilter)
-              ? contentFilter.sort.key
-              : null,
-          sortOrder:
-            contentFilter && isPlaylistVideosFilter(contentFilter)
-              ? contentFilter.sort.order
-              : null,
-        },
-        session,
-        supabase,
-      });
-    }
+    const videoTimestamp: TimestampWithVideoId = {
+      videoId: video.id,
+      playlistId: playlist?.id,
+      watchedAt: watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT ? new Date() : null,
+      timestampStartSeconds: currentTimeSeconds,
+      sortedBy: contentFilter && isPlaylistVideosFilter(contentFilter)
+        ? contentFilter.sort.key
+        : null,
+      sortOrder: contentFilter && isPlaylistVideosFilter(contentFilter)
+        ? contentFilter.sort.order
+        : null,
+    };
+
+    return handleAddVideoTimestamp({
+      videoTimestamp,
+      session,
+      supabase,
+    });
   }
 
-  // Save timestamp using sendBeacon for background/unload events
+  // Optimized beacon saving
   function saveTimestampBeacon(
     currentTimeSeconds: number,
     videoDurationSeconds: number,
     playlist?: Playlist | null,
     contentFilter?: CombinedContentFilter
   ): void {
-    if (
-      !videoDurationSeconds ||
-      currentTimeSeconds <= VIDEO_SAVE_SECONDS_START
-    ) {
+    if (!videoDurationSeconds || currentTimeSeconds <= VIDEO_SAVE_SECONDS_START) {
       return;
     }
 
     const watchedPercent = currentTimeSeconds / videoDurationSeconds;
-    const watchedAt =
-      watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT ? new Date() : null;
-
-    const payload: { videoTimestamp: TimestampWithVideoId } = {
+    const payload = {
       videoTimestamp: {
-        watchedAt,
+        watchedAt: watchedPercent >= VIDEO_DELETE_SECONDS_PERCENT ? new Date() : null,
         timestampStartSeconds: currentTimeSeconds,
         videoId: video.id,
         playlistId: playlist?.id,
-        sortedBy:
-          contentFilter && isPlaylistVideosFilter(contentFilter)
-            ? contentFilter.sort.key
-            : null,
-        sortOrder:
-          contentFilter && isPlaylistVideosFilter(contentFilter)
-            ? contentFilter.sort.order
-            : null,
+        sortedBy: contentFilter && isPlaylistVideosFilter(contentFilter)
+          ? contentFilter.sort.key
+          : null,
+        sortOrder: contentFilter && isPlaylistVideosFilter(contentFilter)
+          ? contentFilter.sort.order
+          : null,
       },
     };
 
-    // Use your real API endpoint here
     if (typeof navigator !== 'undefined' && navigator.sendBeacon) {
       navigator.sendBeacon('/api/save-timestamp', JSON.stringify(payload));
     }
   }
 
-  function saveCurrentTime({ useBeacon = false } = {}) {
-    if (player && player.getCurrentTime) {
-      try {
-        const currentTimeSeconds = player.getCurrentTime();
-        const initialSeekTimestamp = getInitialSeekTimestamp();
-
-        // Always save the current timestamp regardless of query params or initial timestamps
-        // Only skip if we're very close to the start of the video
-        if (currentTimeSeconds > VIDEO_SAVE_SECONDS_START) {
-          if (useBeacon) {
-            saveTimestampBeacon(
-              currentTimeSeconds,
-              durationSeconds,
-              playlist,
-              contentFilter
-            );
-            return;
-          } else {
-            // Return the promise for async saves and track it in content state
-            const savePromise = saveTimestampForVideo(
-              currentTimeSeconds,
-              durationSeconds,
-              playlist
-            );
-
-            // Track this promise in the content state
-            if (savePromise) {
-              contentState.addPendingVideoOperation(savePromise);
-            }
-
-            return savePromise;
-          }
-        }
-      } catch (error) {
-        console.error('Error while trying to save current video time.', error);
-      }
+  // Throttled save function
+  let saveThrottler: ReturnType<typeof setTimeout> | null = null;
+  function saveCurrentTime({ useBeacon = false, force = false } = {}): Promise<void> {
+    if (!playerState.player?.getCurrentTime) {
+      return Promise.resolve();
     }
+
+    // Throttle saves unless forced
+    if (!force && !useBeacon && saveThrottler) {
+      return Promise.resolve();
+    }
+
+    try {
+      const currentTimeSeconds = playerState.player.getCurrentTime();
+
+      if (currentTimeSeconds > VIDEO_SAVE_SECONDS_START) {
+        if (useBeacon) {
+          saveTimestampBeacon(currentTimeSeconds, durationSeconds, playlist, contentFilter);
+          return Promise.resolve();
+        } else {
+          // Throttle async saves
+          if (!force) {
+            if (saveThrottler) clearTimeout(saveThrottler);
+            saveThrottler = setTimeout(() => {
+              saveThrottler = null;
+            }, 1000);
+          }
+
+          const savePromise = saveTimestampForVideo(
+            currentTimeSeconds,
+            durationSeconds,
+            playlist
+          );
+
+          if (savePromise) {
+            contentState.addPendingVideoOperation(savePromise);
+          }
+
+          return savePromise || Promise.resolve();
+        }
+      }
+    } catch (error) {
+      console.error('Error while trying to save current video time:', error);
+    }
+
     return Promise.resolve();
   }
 
+  // Event handlers
   function handleBeforeUnload(): void {
-    saveCurrentTime({ useBeacon: true });
-
-    // End watch time tracking session before page unload
-    if (watchTimeTracker) {
-      watchTimeTracker.endSession().catch(console.error);
-      watchTimeTracker = null;
-    }
+    saveCurrentTime({ useBeacon: true, force: true });
+    cleanupWatchTimeTracker();
   }
 
   function handleVisibilityChange(): void {
     if (document.visibilityState === 'hidden') {
-      // Save current timestamp position but DON'T end the tracking session
-      saveCurrentTime({ useBeacon: true });
-
-      // Pause the video tracking if it's currently playing
-      if (isActuallyPlaying && watchTimeTracker) {
-        const currentTime = player?.getCurrentTime() || 0;
+      saveCurrentTime({ useBeacon: true, force: true });
+      
+      if (playerState.isActuallyPlaying && watchTimeTracker) {
+        const currentTime = playerState.player?.getCurrentTime() || 0;
         watchTimeTracker.onPause(currentTime);
-        isActuallyPlaying = false;
+        playerState.isActuallyPlaying = false;
       }
-    } else if (document.visibilityState === 'visible') {
-      // Resume tracking if the YouTube player is actually playing
-      if (player && watchTimeTracker) {
-        const playerState = player.getPlayerState();
-        const currentTime = player.getCurrentTime() || 0;
+    } else if (document.visibilityState === 'visible' && playerState.player && watchTimeTracker) {
+      const playerStateCode = playerState.player.getPlayerState();
+      const currentTime = playerState.player.getCurrentTime() || 0;
 
-        // YouTube player states: 1 = playing
-        if (playerState === 1) {
-          watchTimeTracker.onPlay(currentTime);
-          isActuallyPlaying = true;
-        }
+      if (playerStateCode === 1) {
+        watchTimeTracker.onPlay(currentTime);
+        playerState.isActuallyPlaying = true;
       }
     }
   }
 
   // YouTube Player Setup
   function onPlayerReady(): void {
-    isPlayerReady = true;
+    playerState.isReady = true;
   }
 
-  // Handle YouTube player state changes for video history tracking
   function onPlayerStateChange(event: YouTubeStateChangeEvent): void {
-    if (!event.target) {
-      return;
-    }
+    if (!event.target) return;
 
     const currentTime = event.target.getCurrentTime() || 0;
 
-    // YouTube player states: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (cued)
     switch (event.data) {
       case 1: // Playing
-        // Handle first play - seek to appropriate timestamp
-        if (!hasFirstPlayOccurred) {
+        if (!playerState.hasFirstPlayOccurred) {
           handleFirstPlay();
         }
-
         if (watchTimeTracker) {
           watchTimeTracker.onPlay(currentTime);
         }
-        isActuallyPlaying = true;
+        playerState.isActuallyPlaying = true;
         break;
+      
       case 2: // Paused
-        if (watchTimeTracker) {
-          watchTimeTracker.onPause(currentTime);
-        }
-        isActuallyPlaying = false;
-        break;
       case 0: // Ended
         if (watchTimeTracker) {
           watchTimeTracker.onPause(currentTime);
         }
-        isActuallyPlaying = false;
+        playerState.isActuallyPlaying = false;
         break;
-      case 3: // Buffering
-        // Don't change isActuallyPlaying state during buffering
-        break;
-      default:
+      
+      case 3: // Buffering - no state change
         break;
     }
   }
 
-  // Handle seeking events
+  // Optimized seek detection
   let lastKnownTime = 0;
+  let seekDetectionInterval: ReturnType<typeof setInterval> | null = null;
+
   function handleSeekingEvents(): void {
-    if (!player || !watchTimeTracker) return;
+    if (!playerState.player || !watchTimeTracker) return;
 
-    const currentTime = player.getCurrentTime() || 0;
-    const timeDiff = Math.abs(currentTime - lastKnownTime);
+    try {
+      const currentTime = playerState.player.getCurrentTime() || 0;
+      const timeDiff = Math.abs(currentTime - lastKnownTime);
 
-    // If time difference is significant (more than 2 seconds), it's likely a seek
-    if (timeDiff > 2) {
-      watchTimeTracker.onSeek(currentTime);
+      if (timeDiff > SIGNIFICANT_SEEK_THRESHOLD) {
+        watchTimeTracker.onSeek(currentTime);
+      }
+
+      lastKnownTime = currentTime;
+    } catch (error) {
+      // Silently handle errors to avoid console spam
     }
-
-    lastKnownTime = currentTime;
   }
 
-  // Set up periodic seeking detection
-  let seekDetectionInterval: ReturnType<typeof setInterval> | null = null;
-  $effect(() => {
-    if (player && watchTimeTracker) {
-      seekDetectionInterval = setInterval(handleSeekingEvents, 1000);
-
-      return () => {
-        if (seekDetectionInterval) {
-          clearInterval(seekDetectionInterval);
-        }
-      };
-    }
-  });
-
+  // Consolidated mount logic
   onMount(async () => {
-    // Get current search param 't'
-    const searchParamT = page.url.searchParams.get('t');
-    if (searchParamT) {
-      queryParamTimestamp = parseInt(searchParamT, 10);
-    }
-
-    // Always fetch saved timestamp from backend regardless of query param
-    if (isVideoWithTimestamp(video)) {
-      const { videoTimestamp } = await getLatestTimestamp({
-        videoId: video.id,
-        session,
-        supabase,
-      });
-      if (videoTimestamp) {
-        savedTimestamp = videoTimestamp.video_start_seconds ?? 0;
+    try {
+      // Initialize URL parameter
+      const searchParamT = page.url.searchParams.get('t');
+      if (searchParamT) {
+        playerState.queryParamTimestamp = parseInt(searchParamT, 10);
       }
-    }
-  });
 
-  onMount(() => {
-    if (typeof window !== 'undefined') {
-      const windowRef = window as unknown as WindowWithYouTube;
-
-      if (windowRef.YT) {
-        player = new windowRef.YT.Player('player', {
+      // Fetch saved timestamp if available
+      if (isVideoWithTimestamp(video)) {
+        const { videoTimestamp } = await getLatestTimestamp({
           videoId: video.id,
-          playerVars: {
-            playsinline: 1,
-            fs: 1,
-            rel: 0,
-            modestbranding: 1,
-          },
-          events: {
-            onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange,
-          },
+          session,
+          supabase,
         });
+        
+        if (videoTimestamp) {
+          playerState.savedTimestamp = videoTimestamp.video_start_seconds ?? 0;
+        }
       }
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      // Initialize watch time tracker
+      initializeWatchTimeTracker();
+
+      // Setup YouTube player if API is available
+      if (typeof window !== 'undefined') {
+        const windowRef = window as unknown as WindowWithYouTube;
+
+        if (windowRef.YT) {
+          playerState.player = new windowRef.YT.Player('player', {
+            videoId: video.id,
+            playerVars: {
+              playsinline: 1,
+              fs: 1,
+              rel: 0,
+              modestbranding: 1,
+            },
+            events: {
+              onReady: onPlayerReady,
+              onStateChange: onPlayerStateChange,
+            },
+          });
+        }
+
+        // Setup event listeners
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // Start seek detection interval only if we have a player
+        await tick();
+        if (playerState.player) {
+          seekDetectionInterval = setInterval(handleSeekingEvents, SEEK_DETECTION_INTERVAL);
+        }
+      }
+    } catch (error) {
+      console.error('Error during YouTube embed initialization:', error);
     }
+
+    // Cleanup function
+    return () => {
+      if (urlParamDebouncer) {
+        clearTimeout(urlParamDebouncer);
+      }
+      if (saveThrottler) {
+        clearTimeout(saveThrottler);
+      }
+      if (seekDetectionInterval) {
+        clearInterval(seekDetectionInterval);
+      }
+    };
   });
 
   beforeNavigate(async () => {
-    // Wait for the timestamp save to complete before navigating
-    const savePromise = saveCurrentTime();
-    if (savePromise) {
-      try {
-        await savePromise;
-      } catch (error) {
-        console.error('Error saving timestamp before navigation:', error);
-      }
+    try {
+      const savePromise = saveCurrentTime({ force: true });
+      await savePromise;
+    } catch (error) {
+      console.error('Error saving timestamp before navigation:', error);
     }
 
-    // End watch time tracking session before navigation
-    if (watchTimeTracker) {
-      watchTimeTracker.endSession().catch(console.error);
-      watchTimeTracker = null;
-    }
+    cleanupWatchTimeTracker();
   });
 
   onDestroy(async () => {
@@ -490,21 +471,20 @@
       window.removeEventListener('beforeunload', handleBeforeUnload);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
 
-      const savePromise = saveCurrentTime();
-      if (savePromise) {
-        try {
-          await savePromise;
-        } catch (error) {
-          console.error('Error saving timestamp in onDestroy:', error);
-        }
+      try {
+        const savePromise = saveCurrentTime({ force: true });
+        await savePromise;
+      } catch (error) {
+        console.error('Error saving timestamp in onDestroy:', error);
       }
     }
 
-    // Ensure watch time tracker is properly ended
-    if (watchTimeTracker) {
-      watchTimeTracker.endSession().catch(console.error);
-      watchTimeTracker = null;
+    // Cleanup intervals and trackers
+    if (seekDetectionInterval) {
+      clearInterval(seekDetectionInterval);
     }
+    
+    cleanupWatchTimeTracker();
   });
 </script>
 

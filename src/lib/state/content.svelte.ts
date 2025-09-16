@@ -30,7 +30,7 @@ export interface CarouselState {
 export const VIDEO_DROPZONE_CLASSES = [
   'border-solid',
   'border-primary',
-  'bg-primary/40',
+  'bg-primary/40'
 ];
 
 export const END_DROPZONE_CLASSES = ['border-transparent'];
@@ -118,8 +118,98 @@ export class ContentState {
     Set<Promise<{ error?: PostgrestError | null }>>
   >(new Set());
 
+  // Dropdown state validation interval
+  private dropdownValidationInterval: ReturnType<typeof setInterval> | null =
+    null;
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
+    this.startDropdownValidation();
+  }
+
+  // Start interval to validate dropdown state against DOM reality
+  private startDropdownValidation(): void {
+    if (typeof window === 'undefined') return; // Skip on server-side
+
+    this.dropdownValidationInterval = setInterval(() => {
+      this.validateDropdownState();
+    }, 250); // Check every 250ms
+  }
+
+  // Check if dropdown/context menu elements are actually visible in the DOM
+  private checkForActiveDropdowns(): boolean {
+    if (typeof document === 'undefined') return false;
+
+    try {
+      // Check for visible dropdown menus (Radix UI patterns)
+      const dropdownMenus = document.querySelectorAll(
+        '[role="menu"][data-state="open"]'
+      );
+      const contextMenus = document.querySelectorAll(
+        '[role="menu"][data-radix-context-menu-content]'
+      );
+      const dropdownContents = document.querySelectorAll(
+        '[data-testid="content-dropdown-content"]'
+      );
+      const contextMenuContents = document.querySelectorAll(
+        '[data-testid="content-context-menu-content"]'
+      );
+
+      const allMenuElements = [
+        ...Array.from(dropdownMenus),
+        ...Array.from(contextMenus),
+        ...Array.from(dropdownContents),
+        ...Array.from(contextMenuContents),
+      ];
+
+      const visibleMenus = allMenuElements.filter((el) => {
+        const style = window.getComputedStyle(el);
+        return (
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          style.opacity !== '0' &&
+          el.getBoundingClientRect().width > 0 &&
+          el.getBoundingClientRect().height > 0
+        );
+      });
+
+      return visibleMenus.length > 0;
+    } catch (error) {
+      console.warn('Error checking for active dropdowns:', error);
+      return false;
+    }
+  }
+
+  // Validate dropdown state against DOM reality and fix mismatches
+  private validateDropdownState(): void {
+    try {
+      const hasActiveDropdowns = this.checkForActiveDropdowns();
+      const stateThingsOpen =
+        this.isDropdownMenuOpen || this.openContextMenuSection !== null;
+
+      // Safety fallback, if state says dropdowns are open but none are actually visible, reset the state
+      if (stateThingsOpen && !hasActiveDropdowns) {
+        // Reset the content state to close dropdowns
+        this.isDropdownMenuOpen = false;
+        this.openDropdownId = null;
+        this.openContextMenuSection = null;
+      }
+    } catch (error) {
+      console.warn('Error validating dropdown state:', error);
+    }
+  }
+
+  // Public method to force dropdown validation (can be called externally if needed)
+  public forceDropdownValidation(): void {
+    this.validateDropdownState();
+  }
+
+  // Clean up interval when instance is destroyed
+  public destroy(): void {
+    if (this.dropdownValidationInterval) {
+      clearInterval(this.dropdownValidationInterval);
+      this.dropdownValidationInterval = null;
+    }
   }
 
   // Helper methods for tracking pending video operations
@@ -169,6 +259,9 @@ export class ContentState {
   }
 
   resetState(): void {
+    // Destroy any running intervals first
+    this.destroy();
+
     // Reset carousel state
     this.carouselState = { lastViewedIndex: 0 };
 
@@ -222,6 +315,9 @@ export class ContentState {
     if (typeof document !== 'undefined' && document.body) {
       document.body.classList.remove('dragging');
     }
+
+    // Restart dropdown validation after reset
+    this.startDropdownValidation();
   }
 
   // Reset state for a specific section

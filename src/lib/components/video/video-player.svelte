@@ -38,7 +38,7 @@
   const pageState = getPageState();
 
   // Get the base URL from the current page
-  const baseUrl = $derived(() => {
+  const baseUrl = $derived.by(() => {
     const pathSegments = page.url.pathname.split('/');
     // Remove the video ID from the end to get the base path
     pathSegments.pop();
@@ -159,7 +159,7 @@
           <div class="break-words">
             <a
               class="timestamp-link hover:text-primary inline-block w-full text-left break-words hover:underline"
-              href="{baseUrl()}/{video.id}?t={line.timestamp}"
+              href="{baseUrl}/{video.id}?t={line.timestamp}"
               onclick={() => {
                 pageState.contentScrollPosition = { scrollTop: 0 };
               }}
