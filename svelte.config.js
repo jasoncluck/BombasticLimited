@@ -54,15 +54,14 @@ const config = {
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
             'https://usher.ttvnw.net',
-            // Amazon Ad System (required for Twitch authentication)
+            // Amazon Ad System (CRITICAL for Twitch authentication)
             'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
             // Nielsen Analytics (required for Twitch)
             'https://secure-sts-prod.imrworldwide.com',
+            'https://imrworldwide.com',
             'https://*.imrworldwide.com',
-            // ComScore Analytics (required for Twitch)
-            'https://sb.scorecardresearch.com',
-            'https://*.scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -89,6 +88,7 @@ const config = {
             'https://passport.twitch.tv',
             // Amazon Ad System
             'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
           ],
           'child-src': [
@@ -103,6 +103,7 @@ const config = {
             'https://googletagservices.com',
             // Amazon Ad System
             'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
           ],
           'frame-ancestors': ['self'],
@@ -142,15 +143,14 @@ const config = {
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
-            // Amazon Ad System (required for Twitch authentication)
+            // Amazon Ad System (CRITICAL for Twitch authentication)
             'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
             // Nielsen Analytics (required for Twitch)
             'https://secure-sts-prod.imrworldwide.com',
+            'https://imrworldwide.com',
             'https://*.imrworldwide.com',
-            // ComScore Analytics (required for Twitch)
-            'https://sb.scorecardresearch.com',
-            'https://*.scorecardresearch.com',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -184,13 +184,12 @@ const config = {
             'https://assets.twitch.tv',
             // Amazon Ad System (for tracking pixels)
             'https://s.amazon-adsystem.com',
+            'https://amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
             // Nielsen Analytics (for tracking pixels)
             'https://secure-sts-prod.imrworldwide.com',
+            'https://imrworldwide.com',
             'https://*.imrworldwide.com',
-            // ComScore Analytics (for tracking pixels)
-            'https://sb.scorecardresearch.com',
-            'https://*.scorecardresearch.com',
           ],
           'media-src': [
             'self',
