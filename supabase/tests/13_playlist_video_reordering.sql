@@ -7,6 +7,22 @@ BEGIN;
 SELECT plan(4);
 
 -- Setup test data
+DO $$
+DECLARE
+    test_user_id uuid := '99999999-9999-9999-9999-999999999999'::uuid;
+BEGIN
+    -- Create test user first to satisfy foreign key constraint
+    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+    VALUES (test_user_id, 'authenticated', 'authenticated', 'playlist_test_user@test.com', 'password', now(), now(), now(), 
+            '{"provider":"email","providers":["email"]}', '{"username": "playlisttestuser"}')
+    ON CONFLICT (id) DO NOTHING;
+    
+    INSERT INTO public.profiles (id, username)
+    VALUES (test_user_id, 'playlisttestuser')
+    ON CONFLICT (id) DO NOTHING;
+END;
+$$;
+
 INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, pending_delete) VALUES 
   ('pl_test_1', 'giantbomb', 'Playlist Test Video 1', 'Test description 1', 'https://example.com/thumb1.jpg', now(), false),
   ('pl_test_2', 'jeffgerstmann', 'Playlist Test Video 2', 'Test description 2', 'https://example.com/thumb2.jpg', now(), false),

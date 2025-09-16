@@ -95,14 +95,16 @@ BEGIN
         (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser2"}'),
         (admin_user_id, 'authenticated', 'authenticated', 'jason@bombastic.ltd', 'password', now(), now(), now(), 
-         '{"provider":"email","providers":["email"]}', '{"username": "admin"}');
+         '{"provider":"email","providers":["email"]}', '{"username": "admin"}')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test profiles 
     INSERT INTO public.profiles (id, username, account_type)
     VALUES 
         (test_user_id_1, 'notificationuser1', 'default'),
         (test_user_id_2, 'notificationuser2', 'default'),
-        (admin_user_id, 'admin', 'admin');
+        (admin_user_id, 'admin', 'admin')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test notifications manually for testing retrieval functions
     INSERT INTO public.notifications (id, title, message, notification_type, expires_at, created_at)

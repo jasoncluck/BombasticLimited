@@ -66,17 +66,20 @@ BEGIN
     -- Create test user with proper metadata (without confirmed_at)
     INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     VALUES (test_user_id, 'authenticated', 'authenticated', 'timestamp_user@test.com', 'password', now(), now(), now(), 
-            '{"provider":"email","providers":["email"]}', '{"username": "timestampuser"}');
+            '{"provider":"email","providers":["email"]}', '{"username": "timestampuser"}')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test profile
     INSERT INTO public.profiles (id, username)
-    VALUES (test_user_id, 'timestampuser');
+    VALUES (test_user_id, 'timestampuser')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test videos for timestamp testing
     INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration)
     VALUES 
         (test_video_id_1, 'giantbomb', 'Timestamp Test Video 1', 'Video for timestamp testing', 'https://example.com/timestamp1.jpg', now() - interval '1 day', '1:00:00'),
-        (test_video_id_2, 'jeffgerstmann', 'Timestamp Test Video 2', 'Another video for timestamp testing', 'https://example.com/timestamp2.jpg', now() - interval '2 days', '30:00');
+        (test_video_id_2, 'jeffgerstmann', 'Timestamp Test Video 2', 'Another video for timestamp testing', 'https://example.com/timestamp2.jpg', now() - interval '2 days', '30:00')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create some test timestamps manually
     INSERT INTO public.timestamps (id, video_id, video_start_seconds, user_id, created_at)

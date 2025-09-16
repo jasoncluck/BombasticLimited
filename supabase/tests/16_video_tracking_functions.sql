@@ -69,17 +69,20 @@ BEGIN
     -- Create test user with proper metadata (without confirmed_at)
     INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     VALUES (test_user_id, 'authenticated', 'authenticated', 'analytics_user@test.com', 'password', now(), now(), now(), 
-            '{"provider":"email","providers":["email"]}', '{"username": "analyticsuser"}');
+            '{"provider":"email","providers":["email"]}', '{"username": "analyticsuser"}')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test profile
     INSERT INTO public.profiles (id, username)
-    VALUES (test_user_id, 'analyticsuser');
+    VALUES (test_user_id, 'analyticsuser')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test videos
     INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration, views)
     VALUES 
         (test_video_id_1, 'giantbomb', 'Analytics Test Video 1', 'Description for analytics testing', 'https://example.com/analytics1.jpg', now() - interval '1 day', '1:00:00', 10),
-        (test_video_id_2, 'jeffgerstmann', 'Analytics Test Video 2', 'Another test video for analytics', 'https://example.com/analytics2.jpg', now() - interval '2 days', '30:00', 5);
+        (test_video_id_2, 'jeffgerstmann', 'Analytics Test Video 2', 'Another test video for analytics', 'https://example.com/analytics2.jpg', now() - interval '2 days', '30:00', 5)
+    ON CONFLICT (id) DO NOTHING;
 END;
 $$;
 

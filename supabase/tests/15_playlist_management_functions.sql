@@ -88,19 +88,22 @@ BEGIN
         (test_user_id_1, 'authenticated', 'authenticated', 'playlist_user1@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "playlistuser1"}'),
         (test_user_id_2, 'authenticated', 'authenticated', 'playlist_user2@test.com', 'password', now(), now(), now(), 
-         '{"provider":"email","providers":["email"]}', '{"username": "playlistuser2"}');
+         '{"provider":"email","providers":["email"]}', '{"username": "playlistuser2"}')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test profiles 
     INSERT INTO public.profiles (id, username)
     VALUES 
         (test_user_id_1, 'playlistuser1'),
-        (test_user_id_2, 'playlistuser2');
+        (test_user_id_2, 'playlistuser2')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test videos
     INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration)
     VALUES 
         (test_video_id_1, 'giantbomb', 'Playlist Test Video 1', 'Description 1', 'https://example.com/thumb1.jpg', now() - interval '1 day', '1:00:00'),
-        (test_video_id_2, 'jeffgerstmann', 'Playlist Test Video 2', 'Description 2', 'https://example.com/thumb2.jpg', now() - interval '2 days', '30:00');
+        (test_video_id_2, 'jeffgerstmann', 'Playlist Test Video 2', 'Description 2', 'https://example.com/thumb2.jpg', now() - interval '2 days', '30:00')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test playlists manually to test functions
     INSERT INTO public.playlists (name, description, created_by, type, created_at)

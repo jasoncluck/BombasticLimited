@@ -2,7 +2,7 @@
 -- Validates user creation, username generation, and user lifecycle functions
 BEGIN;
 
-SELECT plan(8);
+SELECT plan(18);
 
 -- Test that user management functions exist
 SELECT has_function(
