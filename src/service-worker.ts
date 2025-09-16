@@ -26,7 +26,7 @@ const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 100,
-  batchTimeoutMs: 300, // Full timeout for large batches
+  batchTimeoutMs: 100,
   maxBatchSize: 100,
   minBatchSize: 10, // Minimum batch size before timeout reduction
   adaptiveTimeoutMs: 50, // Reduced timeout for small batches
@@ -116,53 +116,63 @@ const ESSENTIAL_HEADERS = [
 const updateRequestRate = (): void => {
   const now = Date.now();
   state.recentRequestTimes.push(now);
-  
+
   // Keep only last 10 seconds of requests
   const tenSecondsAgo = now - 10000;
-  state.recentRequestTimes = state.recentRequestTimes.filter(time => time > tenSecondsAgo);
-  
+  state.recentRequestTimes = state.recentRequestTimes.filter(
+    (time) => time > tenSecondsAgo
+  );
+
   // Calculate requests per second
   state.averageRequestRate = state.recentRequestTimes.length / 10;
 };
 
 // Determine request priority based on current conditions
-const getRequestPriority = (request: Request): 'immediate' | 'normal' | 'batched' => {
+const getRequestPriority = (
+  request: Request
+): 'immediate' | 'normal' | 'batched' => {
   const currentBatchSize = state.currentBatch.length;
   const activeFetchCount = state.activeFetches.size;
-  
+
   // Always batch if we're at high concurrency to prevent overload
   if (activeFetchCount >= CACHE_CONFIG.highConcurrencyThreshold) {
     return 'batched';
   }
-  
+
   // Process immediately for very small numbers or low concurrency
-  if (currentBatchSize <= CACHE_CONFIG.immediateThreshold && activeFetchCount < 10) {
+  if (
+    currentBatchSize <= CACHE_CONFIG.immediateThreshold &&
+    activeFetchCount < 10
+  ) {
     return 'immediate';
   }
-  
+
   // Use normal priority for moderate situations
   if (currentBatchSize < CACHE_CONFIG.minBatchSize && activeFetchCount < 25) {
     return 'normal';
   }
-  
+
   return 'batched';
 };
 
 // Get adaptive timeout based on current batch and system state
-const getAdaptiveTimeout = (batchSize: number, priority: 'immediate' | 'normal' | 'batched'): number => {
+const getAdaptiveTimeout = (
+  batchSize: number,
+  priority: 'immediate' | 'normal' | 'batched'
+): number => {
   if (priority === 'immediate') {
     return 0; // Process immediately
   }
-  
+
   if (priority === 'normal') {
     return CACHE_CONFIG.adaptiveTimeoutMs; // Short timeout
   }
-  
+
   // For batched requests, use shorter timeout for small batches
   if (batchSize < CACHE_CONFIG.minBatchSize) {
     return CACHE_CONFIG.adaptiveTimeoutMs;
   }
-  
+
   // Use full timeout for larger batches
   return CACHE_CONFIG.batchTimeoutMs;
 };
@@ -239,7 +249,7 @@ const addToBatch = (request: Request): Promise<Response> => {
 
   return new Promise<Response>((resolve, reject) => {
     const priority = getRequestPriority(request);
-    
+
     const batchRequest: BatchRequest = {
       url,
       request,
@@ -267,7 +277,7 @@ const addToBatch = (request: Request): Promise<Response> => {
 
     // Get adaptive timeout based on current conditions
     const timeout = getAdaptiveTimeout(currentBatchSize, priority);
-    
+
     if (timeout === 0) {
       // Process immediately
       processBatch();
@@ -290,7 +300,9 @@ const addToBatch = (request: Request): Promise<Response> => {
 };
 
 // Process a single request immediately (for immediate priority)
-const processImmediateRequest = async (batchRequest: BatchRequest): Promise<void> => {
+const processImmediateRequest = async (
+  batchRequest: BatchRequest
+): Promise<void> => {
   const { url, request, resolve, reject } = batchRequest;
 
   try {
@@ -327,9 +339,13 @@ const processBatch = (): void => {
   }
 
   // Determine batch priority based on the requests in it
-  const hasImmediatePriority = batchToProcess.some(req => req.priority === 'immediate');
-  const hasNormalPriority = batchToProcess.some(req => req.priority === 'normal');
-  
+  const hasImmediatePriority = batchToProcess.some(
+    (req) => req.priority === 'immediate'
+  );
+  const hasNormalPriority = batchToProcess.some(
+    (req) => req.priority === 'normal'
+  );
+
   let batchPriority: 'immediate' | 'normal' | 'batched' = 'batched';
   if (hasImmediatePriority) batchPriority = 'immediate';
   else if (hasNormalPriority) batchPriority = 'normal';
