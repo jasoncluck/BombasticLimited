@@ -995,14 +995,10 @@ COMMENT ON POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_
 
 COMMENT ON POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" IS 'Allow users to INSERT cleanup queue entries for playlists they created';
 
-
 -- Create a function that handles cleanup before user deletion
-CREATE OR REPLACE FUNCTION "public"."handle_user_deletion_cleanup"() 
-RETURNS TRIGGER 
-LANGUAGE plpgsql 
-SECURITY DEFINER
-SET search_path = '' 
-AS $$
+CREATE OR REPLACE FUNCTION "public"."handle_user_deletion_cleanup" () RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path = '' AS $$
 DECLARE
     playlist_record RECORD;
     deletion_timestamp TIMESTAMP WITH TIME ZONE;
@@ -1054,17 +1050,13 @@ $$;
 
 -- Create the trigger that fires BEFORE user deletion
 DROP TRIGGER IF EXISTS "on_auth_user_deletion" ON "auth"."users";
-CREATE TRIGGER "on_auth_user_deletion"
-    BEFORE DELETE ON "auth"."users" 
-    FOR EACH ROW
-    EXECUTE PROCEDURE "public"."handle_user_deletion_cleanup"();
 
-CREATE OR REPLACE FUNCTION "public"."delete_user"() 
-RETURNS void
-SET search_path = '' 
-LANGUAGE plpgsql 
-SECURITY DEFINER 
-AS $$
+CREATE TRIGGER "on_auth_user_deletion" BEFORE DELETE ON "auth"."users" FOR EACH ROW
+EXECUTE PROCEDURE "public"."handle_user_deletion_cleanup" ();
+
+CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
+SET
+  search_path = '' LANGUAGE plpgsql SECURITY DEFINER AS $$
 DECLARE
     user_id uuid;
     deleted_count integer;
@@ -1088,7 +1080,5 @@ BEGIN
     RAISE NOTICE 'User % successfully deleted', user_id;
 END;
 $$;
-
-
 
 COMMIT;
