@@ -30,7 +30,7 @@ export interface CarouselState {
 export const VIDEO_DROPZONE_CLASSES = [
   'border-solid',
   'border-primary',
-  'bg-primary/40'
+  'bg-primary/40',
 ];
 
 export const END_DROPZONE_CLASSES = ['border-transparent'];
