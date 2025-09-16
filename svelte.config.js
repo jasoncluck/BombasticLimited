@@ -56,7 +56,12 @@ const config = {
             'https://usher.ttvnw.net',
             // Amazon Ad System (CRITICAL for Twitch authentication)
             'https://s.amazon-adsystem.com',
+            'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
+            // Analytics domains
+            'https://cdn-gl.imrworldwide.com',
+            'https://sb.scorecardresearch.com',
+            'https://client-event-reporter.twitch.tv',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -81,8 +86,9 @@ const config = {
             'https://www.twitch.tv',
             'https://id.twitch.tv',
             'https://passport.twitch.tv',
-            // Amazon Ad System (CRITICAL for Twitch authentication)
+            // Amazon Ad System
             'https://s.amazon-adsystem.com',
+            'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
           ],
           'child-src': [
@@ -95,8 +101,9 @@ const config = {
             'https://imasdk.googleapis.com',
             'https://pubads.g.doubleclick.net',
             'https://googletagservices.com',
-            // Amazon Ad System (CRITICAL for Twitch authentication)
+            // Amazon Ad System
             'https://s.amazon-adsystem.com',
+            'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
           ],
           'frame-ancestors': ['self'],
@@ -136,9 +143,21 @@ const config = {
             'https://cvp.twitch.tv',
             'https://spade.twitch.tv',
             'https://pubsub-edge.twitch.tv',
-            // Amazon Ad System (CRITICAL - this is what's being blocked!)
+            // Amazon Ad System (CRITICAL)
             'https://s.amazon-adsystem.com',
+            'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
+            // Video streaming domains (for your video errors)
+            'https://*.hls.ttvnw.net',
+            'https://video-weaver.*.hls.ttvnw.net',
+            'https://*.playlist.live-video.net',
+            'https://*.playlist.ttvnw.net',
+            // Analytics domains
+            'https://cdn-gl.imrworldwide.com',
+            'https://sb.scorecardresearch.com',
+            'https://client-event-reporter.twitch.tv',
+            // Static CDN
+            'https://static-cdn.jtvnw.net',
             // Supabase
             'https://hguqxixjgwazwsuvhkmo.supabase.co',
           ],
@@ -170,9 +189,13 @@ const config = {
             'https://vod-metro.twitch.tv',
             'https://static.twitchcdn.net',
             'https://assets.twitch.tv',
-            // Amazon Ad System (CRITICAL for tracking pixels)
+            // Amazon Ad System
             'https://s.amazon-adsystem.com',
+            'https://c.amazon-adsystem.com',
             'https://*.amazon-adsystem.com',
+            // Analytics domains
+            'https://cdn-gl.imrworldwide.com',
+            'https://sb.scorecardresearch.com',
           ],
           'media-src': [
             'self',
@@ -184,10 +207,14 @@ const config = {
             'https://*.googlevideo.com',
             'https://googleads.g.doubleclick.net',
             'https://www.youtube-nocookie.com',
-            // Twitch domains
+            // Twitch streaming domains (CRITICAL for video playback)
             'https://vod-secure.twitch.tv',
             'https://vod-metro.twitch.tv',
             'https://clips-media-assets2.twitch.tv',
+            'https://*.hls.ttvnw.net',
+            'https://video-weaver.*.hls.ttvnw.net',
+            'https://*.playlist.live-video.net',
+            'https://*.playlist.ttvnw.net',
           ],
           'style-src': [
             'self',
