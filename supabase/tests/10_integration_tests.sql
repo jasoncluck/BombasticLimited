@@ -175,7 +175,7 @@ SELECT
       SELECT
         COUNT(DISTINCT source)
       FROM
-        public.search_videos ('Integration', 0)
+        public.search_videos ('Integration')
     ) >= 2,
     'Search should return videos from multiple sources'
   );

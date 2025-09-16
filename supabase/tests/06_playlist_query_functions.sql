@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (15);
+  plan (12);
 
 -- Test playlist query functions exist
 SELECT
