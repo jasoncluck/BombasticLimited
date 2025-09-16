@@ -108,7 +108,8 @@ BEGIN
     VALUES 
         (gen_random_uuid(), 'playlist', 'test_playlist_1', 'playlist_image', test_source_url, 'test_hash_1', 'pending', now()),
         (gen_random_uuid(), 'video', 'test_video_2', 'thumbnail', 'https://example.com/test-image-2.jpg', 'test_hash_2', 'pending', now()),
-        (gen_random_uuid(), 'playlist', 'test_playlist_stuck', 'playlist_image', 'https://example.com/stuck-job.jpg', 'test_hash_3', 'processing', now() - interval '2 hours');
+        (gen_random_uuid(), 'playlist', 'test_playlist_stuck', 'playlist_image', 'https://example.com/stuck-job.jpg', 'test_hash_3', 'processing', now() - interval '2 hours')
+    ON CONFLICT (id) DO NOTHING;
 END;
 $$;
 
@@ -166,7 +167,8 @@ DECLARE
 BEGIN
     -- Add a completed job that's old enough to be cleaned up
     INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, completed_at, created_at)
-    VALUES (gen_random_uuid(), 'video', 'old_video', 'thumbnail', 'https://example.com/old-completed.jpg', 'completed', now() - interval '8 days', now() - interval '8 days');
+    VALUES (gen_random_uuid(), 'video', 'old_video', 'thumbnail', 'https://example.com/old-completed.jpg', 'completed', now() - interval '8 days', now() - interval '8 days')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Call cleanup function
     SELECT public.cleanup_old_completed_jobs() INTO cleanup_count;

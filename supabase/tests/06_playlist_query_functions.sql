@@ -49,14 +49,16 @@ BEGIN
         (test_user_id_1, 'authenticated', 'authenticated', 'playlist_func_test1@example.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "playlistfunctest1"}'),
         (test_user_id_2, 'authenticated', 'authenticated', 'playlist_func_test2@example.com', 'password', now(), now(), now(), 
-         '{"provider":"email","providers":["email"]}', '{"username": "playlistfunctest2"}');
+         '{"provider":"email","providers":["email"]}', '{"username": "playlistfunctest2"}')
+    ON CONFLICT (id) DO NOTHING;
     
     -- Create test playlists with different types and properties
     INSERT INTO public.playlists (id, name, created_by, type, description, youtube_id) 
     VALUES 
         (9100, 'Searchable Playlist One', test_user_id_1, 'Public', 'This is a public playlist for testing search functionality', 'yt_playlist_1'),
         (9101, 'Searchable Playlist Two', test_user_id_1, 'Private', 'This is a private playlist for testing', 'yt_playlist_2'),
-        (9102, 'Special Search Playlist', test_user_id_2, 'Public', 'This playlist has special content for search testing', NULL);
+        (9102, 'Special Search Playlist', test_user_id_2, 'Public', 'This playlist has special content for search testing', NULL)
+    ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name;
 END
 $$;
 
