@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (6);
+  plan (5);
 
 -- Test that core functions exist
 SELECT

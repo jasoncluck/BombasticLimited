@@ -79,7 +79,7 @@ SELECT
       SELECT
         1
       FROM
-        public.search_videos ('Integration', 0)
+        public.search_videos ('Integration')
       WHERE
         id = 'integration_video_1'
     ),
@@ -92,7 +92,7 @@ SELECT
       SELECT
         1
       FROM
-        public.search_videos ('searchable', 0)
+        public.search_videos ('searchable')
       WHERE
         id = 'integration_video_1'
     ),
@@ -175,7 +175,7 @@ SELECT
       SELECT
         COUNT(DISTINCT source)
       FROM
-        public.search_videos ('Integration', 0)
+        public.search_videos ('Integration')
     ) >= 2,
     'Search should return videos from multiple sources'
   );
