@@ -2,6 +2,7 @@
   import { videoDurationToSeconds } from '$lib/components/video/video-service.js';
   import YoutubeEmbed from '$lib/components/video/youtube-embed.svelte';
   import { getPageState } from '$lib/state/page.svelte';
+  import { page } from '$app/state';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Video } from '$lib/supabase/videos';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
@@ -24,20 +25,25 @@
     contentFilter,
     supabase,
     session,
-    baseUrl = '/video',
   }: {
     video: Video;
     playlist?: Playlist | null;
     contentFilter: CombinedContentFilter;
     supabase: SupabaseClient;
     session: Session | null;
-    baseUrl?: string;
   } = $props();
 
   const contentState = getContentState();
   const mediaQueryState = getMediaQueryState();
-
   const pageState = getPageState();
+
+  // Get the base URL from the current page
+  const baseUrl = $derived(() => {
+    const pathSegments = page.url.pathname.split('/');
+    // Remove the video ID from the end to get the base path
+    pathSegments.pop();
+    return pathSegments.join('/');
+  });
 
   // Process the description to extract timestamp information but don't create HTML
   const processTimestamps = (description: string): ProcessedLine[] => {
@@ -153,7 +159,7 @@
           <div class="break-words">
             <a
               class="timestamp-link hover:text-primary inline-block w-full text-left break-words hover:underline"
-              href="{baseUrl}/{video.id}?t={line.timestamp}"
+              href="{baseUrl()}/{video.id}?t={line.timestamp}"
               onclick={() => {
                 pageState.contentScrollPosition = { scrollTop: 0 };
               }}

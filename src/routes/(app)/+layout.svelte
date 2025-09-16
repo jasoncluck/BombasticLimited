@@ -345,6 +345,7 @@
 
   // Progressive initialization with proper async handling
   onMount(() => {
+    document.addEventListener('contextmenu', (event) => event.preventDefault());
     // Mark as hydrated immediately
     isHydrated = true;
 
