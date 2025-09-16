@@ -24,14 +24,14 @@ VALUES (
 
 -- Create test videos
 INSERT INTO public.videos (id, source, title, published_at, pending_delete) VALUES 
-  ('pl_test_1', 'test', 'Playlist Test Video 1', now(), false),
-  ('pl_test_2', 'test', 'Playlist Test Video 2', now(), false),
-  ('pl_test_3', 'test', 'Playlist Test Video 3', now(), false),
-  ('pl_test_4', 'test', 'Playlist Test Video 4', now(), false),
-  ('pl_test_5', 'test', 'Playlist Test Video 5', now(), false),
-  ('pl_test_6', 'test', 'Playlist Test Video 6', now(), false),
-  ('pl_test_7', 'test', 'Playlist Test Video 7', now(), false),
-  ('pl_test_8', 'test', 'Playlist Test Video 8', now(), false)
+  ('pl_test_1', 'giantbomb', 'Playlist Test Video 1', now(), false),
+  ('pl_test_2', 'jeffgerstmann', 'Playlist Test Video 2', now(), false),
+  ('pl_test_3', 'nextlander', 'Playlist Test Video 3', now(), false),
+  ('pl_test_4', 'remap', 'Playlist Test Video 4', now(), false),
+  ('pl_test_5', 'giantbomb', 'Playlist Test Video 5', now(), false),
+  ('pl_test_6', 'jeffgerstmann', 'Playlist Test Video 6', now(), false),
+  ('pl_test_7', 'nextlander', 'Playlist Test Video 7', now(), false),
+  ('pl_test_8', 'remap', 'Playlist Test Video 8', now(), false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Create test playlist

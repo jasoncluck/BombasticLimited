@@ -27,7 +27,7 @@ SELECT has_function(
 SELECT has_function(
     'public',
     'get_video_analytics',
-    ARRAY['text'],
+    ARRAY['text', 'integer'],
     'Function get_video_analytics should exist'
 );
 
@@ -66,14 +66,14 @@ DECLARE
     test_video_id_1 text := 'analytics_test_video_1';
     test_video_id_2 text := 'analytics_test_video_2';
 BEGIN
-    -- Create test user with proper metadata
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
-    VALUES (test_user_id, 'authenticated', 'authenticated', 'analytics_user@test.com', 'password', now(), now(), now(), now(), 
+    -- Create test user with proper metadata (without confirmed_at)
+    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+    VALUES (test_user_id, 'authenticated', 'authenticated', 'analytics_user@test.com', 'password', now(), now(), now(), 
             '{"provider":"email","providers":["email"]}', '{"username": "analyticsuser"}');
     
     -- Create test profile
-    INSERT INTO public.profiles (id, username, created_at, updated_at)
-    VALUES (test_user_id, 'analyticsuser', now(), now());
+    INSERT INTO public.profiles (id, username)
+    VALUES (test_user_id, 'analyticsuser');
     
     -- Create test videos
     INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration_seconds, view_count)

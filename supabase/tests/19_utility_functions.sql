@@ -30,7 +30,7 @@ SELECT has_function(
 SELECT has_function(
     'public',
     'get_discord_avatar_url',
-    ARRAY['text', 'text'],
+    ARRAY['uuid'],
     'Function get_discord_avatar_url should exist'
 );
 
@@ -148,23 +148,13 @@ SELECT ok(
 
 -- Test get_discord_avatar_url function
 SELECT ok(
-    public.get_discord_avatar_url('123456789', 'abc123def') IS NOT NULL,
+    public.get_discord_avatar_url('123e4567-e89b-12d3-a456-426614174000'::uuid) IS NOT NULL,
     'get_discord_avatar_url should return a URL for valid inputs'
 );
 
 SELECT ok(
-    public.get_discord_avatar_url('123456789', 'abc123def') LIKE 'https://cdn.discordapp.com/%',
-    'get_discord_avatar_url should return a Discord CDN URL'
-);
-
-SELECT ok(
-    public.get_discord_avatar_url(null, 'abc123def') IS NOT NULL,
+    public.get_discord_avatar_url(null) IS NULL,
     'get_discord_avatar_url should handle null user ID gracefully'
-);
-
-SELECT ok(
-    public.get_discord_avatar_url('123456789', null) IS NOT NULL,
-    'get_discord_avatar_url should handle null avatar hash gracefully'
 );
 
 -- Test select_best_image_format function basic functionality

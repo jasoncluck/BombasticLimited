@@ -47,10 +47,10 @@ DECLARE
     test_user_id_2 uuid := gen_random_uuid();
 BEGIN
     -- Insert test profiles to test username uniqueness
-    INSERT INTO public.profiles (id, username, created_at, updated_at)
+    INSERT INTO public.profiles (id, username)
     VALUES 
-        (test_user_id_1, 'testuser123', now(), now()),
-        (test_user_id_2, 'anotheruser', now(), now());
+        (test_user_id_1, 'testuser123'),
+        (test_user_id_2, 'anotheruser');
 END;
 $$;
 

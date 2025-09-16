@@ -67,7 +67,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.search_playlists ('Searchable', NULL, 10, 0)
+        public.search_playlists ('Searchable')
     ) >= 1,
     'search_playlists should find playlists matching name search'
   );

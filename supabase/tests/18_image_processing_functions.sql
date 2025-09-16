@@ -8,7 +8,7 @@ SELECT plan(18);
 SELECT has_function(
     'public',
     'queue_image_processing_job',
-    ARRAY['text', 'text', 'jsonb'],
+    ARRAY['text', 'text', 'text', 'text', 'jsonb', 'integer'],
     'Function queue_image_processing_job should exist'
 );
 
@@ -29,7 +29,7 @@ SELECT has_function(
 SELECT has_function(
     'public',
     'complete_image_processing_job',
-    ARRAY['uuid', 'jsonb'],
+    ARRAY['uuid', 'text', 'text', 'text'],
     'Function complete_image_processing_job should exist'
 );
 
@@ -65,7 +65,7 @@ SELECT has_function(
 SELECT has_function(
     'public',
     'hash_image_properties',
-    ARRAY['text', 'integer', 'integer', 'text'],
+    ARRAY['jsonb'],
     'Function hash_image_properties should exist'
 );
 
@@ -104,30 +104,30 @@ DECLARE
     test_properties jsonb := '{"width": 1920, "height": 1080, "format": "jpeg"}';
 BEGIN
     -- Create test image processing job manually for testing
-    INSERT INTO public.image_processing_jobs (id, source_url, target_type, properties, status, created_at, updated_at)
+    INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, properties_hash, status, created_at)
     VALUES 
-        (gen_random_uuid(), test_source_url, 'playlist', test_properties, 'pending', now(), now()),
-        (gen_random_uuid(), 'https://example.com/test-image-2.jpg', 'video', '{"width": 1280, "height": 720, "format": "jpeg"}', 'pending', now(), now()),
-        (gen_random_uuid(), 'https://example.com/stuck-job.jpg', 'playlist', '{"width": 800, "height": 600, "format": "png"}', 'processing', now() - interval '2 hours', now() - interval '2 hours');
+        (gen_random_uuid(), 'playlist', 'test_playlist_1', 'playlist_image', test_source_url, 'test_hash_1', 'pending', now()),
+        (gen_random_uuid(), 'video', 'test_video_2', 'thumbnail', 'https://example.com/test-image-2.jpg', 'test_hash_2', 'pending', now()),
+        (gen_random_uuid(), 'playlist', 'test_playlist_stuck', 'playlist_image', 'https://example.com/stuck-job.jpg', 'test_hash_3', 'processing', now() - interval '2 hours');
 END;
 $$;
 
 -- Test hash_image_properties function
 SELECT ok(
-    public.hash_image_properties('https://example.com/image.jpg', 1920, 1080, 'jpeg') IS NOT NULL,
+    public.hash_image_properties('{"width": 1920, "height": 1080, "format": "jpeg"}'::jsonb) IS NOT NULL,
     'hash_image_properties should return a hash value'
 );
 
 SELECT ok(
-    public.hash_image_properties('https://example.com/image.jpg', 1920, 1080, 'jpeg') = 
-    public.hash_image_properties('https://example.com/image.jpg', 1920, 1080, 'jpeg'),
+    public.hash_image_properties('{"width": 1920, "height": 1080, "format": "jpeg"}'::jsonb) = 
+    public.hash_image_properties('{"width": 1920, "height": 1080, "format": "jpeg"}'::jsonb),
     'hash_image_properties should return consistent hash for same inputs'
 );
 
 SELECT ok(
-    public.hash_image_properties('https://example.com/image1.jpg', 1920, 1080, 'jpeg') != 
-    public.hash_image_properties('https://example.com/image2.jpg', 1920, 1080, 'jpeg'),
-    'hash_image_properties should return different hashes for different URLs'
+    public.hash_image_properties('{"width": 1920, "height": 1080, "format": "jpeg"}'::jsonb) != 
+    public.hash_image_properties('{"width": 1280, "height": 720, "format": "jpeg"}'::jsonb),
+    'hash_image_properties should return different hashes for different properties'
 );
 
 -- Test get_image_processing_queue_status function
@@ -165,8 +165,8 @@ DECLARE
     cleanup_count integer;
 BEGIN
     -- Add a completed job that's old enough to be cleaned up
-    INSERT INTO public.image_processing_jobs (id, source_url, target_type, properties, status, completed_at, created_at, updated_at)
-    VALUES (gen_random_uuid(), 'https://example.com/old-completed.jpg', 'video', '{}', 'completed', now() - interval '8 days', now() - interval '8 days', now() - interval '8 days');
+    INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, completed_at, created_at)
+    VALUES (gen_random_uuid(), 'video', 'old_video', 'thumbnail', 'https://example.com/old-completed.jpg', 'completed', now() - interval '8 days', now() - interval '8 days');
     
     -- Call cleanup function
     SELECT public.cleanup_old_completed_jobs() INTO cleanup_count;

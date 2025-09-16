@@ -82,19 +82,19 @@ DECLARE
     test_video_id_1 text := 'playlist_test_video_1';
     test_video_id_2 text := 'playlist_test_video_2';
 BEGIN
-    -- Create test users with proper metadata
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+    -- Create test users with proper metadata (without confirmed_at)
+    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     VALUES 
-        (test_user_id_1, 'authenticated', 'authenticated', 'playlist_user1@test.com', 'password', now(), now(), now(), now(), 
+        (test_user_id_1, 'authenticated', 'authenticated', 'playlist_user1@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "playlistuser1"}'),
-        (test_user_id_2, 'authenticated', 'authenticated', 'playlist_user2@test.com', 'password', now(), now(), now(), now(), 
+        (test_user_id_2, 'authenticated', 'authenticated', 'playlist_user2@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "playlistuser2"}');
     
     -- Create test profiles 
-    INSERT INTO public.profiles (id, username, created_at, updated_at)
+    INSERT INTO public.profiles (id, username)
     VALUES 
-        (test_user_id_1, 'playlistuser1', now(), now()),
-        (test_user_id_2, 'playlistuser2', now(), now());
+        (test_user_id_1, 'playlistuser1'),
+        (test_user_id_2, 'playlistuser2');
     
     -- Create test videos
     INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration_seconds)
@@ -103,11 +103,10 @@ BEGIN
         (test_video_id_2, 'jeffgerstmann', 'Playlist Test Video 2', 'Description 2', 'https://example.com/thumb2.jpg', now() - interval '2 days', 1800);
     
     -- Create test playlists manually to test functions
-    INSERT INTO public.playlists (name, description, created_by, type, created_at, updated_at)
+    INSERT INTO public.playlists (name, description, created_by, type, created_at)
     VALUES 
-        ('Test Public Playlist', 'A public test playlist', test_user_id_1, 'Public', now(), now()),
-        ('Test Private Playlist', 'A private test playlist', test_user_id_2, 'Private', now(), now())
-    RETURNING id INTO test_playlist_id_1;
+        ('Test Public Playlist', 'A public test playlist', test_user_id_1, 'Public', now()),
+        ('Test Private Playlist', 'A private test playlist', test_user_id_2, 'Private', now());
     
     -- Get the playlist IDs for testing
     SELECT id INTO test_playlist_id_1 FROM public.playlists WHERE name = 'Test Public Playlist';

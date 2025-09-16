@@ -8,14 +8,14 @@ SELECT plan(15);
 SELECT has_function(
     'public',
     'create_notification',
-    ARRAY['uuid', 'text', 'text', 'text'],
+    ARRAY['public.notification_type', 'text', 'text'],
     'Function create_notification should exist'
 );
 
 SELECT has_function(
     'public',
     'create_notification_for_all_users',
-    ARRAY['text', 'text', 'text'],
+    ARRAY['public.notification_type', 'text', 'text'],
     'Function create_notification_for_all_users should exist'
 );
 
@@ -41,14 +41,14 @@ SELECT has_function(
 SELECT has_function(
     'public',
     'mark_notifications_as_read',
-    ARRAY['uuid[]'],
+    ARRAY['integer[]'],
     'Function mark_notifications_as_read should exist'
 );
 
 SELECT has_function(
     'public',
     'remove_notification',
-    ARRAY['uuid'],
+    ARRAY['integer'],
     'Function remove_notification should exist'
 );
 
@@ -87,37 +87,36 @@ DECLARE
     admin_user_id uuid := gen_random_uuid();
     test_notification_id uuid;
 BEGIN
-    -- Create test users with proper metadata
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+    -- Create test users with proper metadata (without confirmed_at)
+    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     VALUES 
-        (test_user_id_1, 'authenticated', 'authenticated', 'notification_user1@test.com', 'password', now(), now(), now(), now(), 
+        (test_user_id_1, 'authenticated', 'authenticated', 'notification_user1@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser1"}'),
-        (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2@test.com', 'password', now(), now(), now(), now(), 
+        (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser2"}'),
-        (admin_user_id, 'authenticated', 'authenticated', 'jason@bombastic.ltd', 'password', now(), now(), now(), now(), 
+        (admin_user_id, 'authenticated', 'authenticated', 'jason@bombastic.ltd', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "admin"}');
     
     -- Create test profiles 
-    INSERT INTO public.profiles (id, username, account_type, created_at, updated_at)
+    INSERT INTO public.profiles (id, username, account_type)
     VALUES 
-        (test_user_id_1, 'notificationuser1', 'default', now(), now()),
-        (test_user_id_2, 'notificationuser2', 'default', now(), now()),
-        (admin_user_id, 'admin', 'admin', now(), now());
+        (test_user_id_1, 'notificationuser1', 'default'),
+        (test_user_id_2, 'notificationuser2', 'default'),
+        (admin_user_id, 'admin', 'admin');
     
     -- Create test notifications manually for testing retrieval functions
-    INSERT INTO public.notifications (id, title, message, notification_type, expires_at, created_at, updated_at)
+    INSERT INTO public.notifications (id, title, message, notification_type, expires_at, created_at)
     VALUES 
-        (gen_random_uuid(), 'Test Notification 1', 'This is a test notification', 'info', now() + interval '1 day', now(), now()),
-        (gen_random_uuid(), 'Test Notification 2', 'This is another test notification', 'warning', now() + interval '2 days', now(), now()),
-        (gen_random_uuid(), 'Expired Notification', 'This notification has expired', 'info', now() - interval '1 day', now() - interval '2 days', now() - interval '2 days');
+        (gen_random_uuid(), 'Test Notification 1', 'This is a test notification', 'info', now() + interval '1 day', now()),
+        (gen_random_uuid(), 'Test Notification 2', 'This is another test notification', 'warning', now() + interval '2 days', now()),
+        (gen_random_uuid(), 'Expired Notification', 'This notification has expired', 'info', now() - interval '1 day', now() - interval '2 days');
     
     -- Create user notifications for testing
-    INSERT INTO public.user_notifications (user_id, notification_id, is_read, created_at, updated_at)
+    INSERT INTO public.user_notifications (user_id, notification_id, is_read, created_at)
     SELECT 
         test_user_id_1, 
         n.id, 
         CASE WHEN n.title = 'Test Notification 1' THEN false ELSE true END,
-        now(), 
         now()
     FROM public.notifications n
     WHERE n.title IN ('Test Notification 1', 'Test Notification 2');

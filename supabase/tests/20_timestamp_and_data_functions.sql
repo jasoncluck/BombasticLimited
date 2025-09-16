@@ -63,14 +63,14 @@ DECLARE
     test_video_id_2 text := 'timestamp_test_video_2';
     test_user_id uuid := gen_random_uuid();
 BEGIN
-    -- Create test user with proper metadata
-    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
-    VALUES (test_user_id, 'authenticated', 'authenticated', 'timestamp_user@test.com', 'password', now(), now(), now(), now(), 
+    -- Create test user with proper metadata (without confirmed_at)
+    INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
+    VALUES (test_user_id, 'authenticated', 'authenticated', 'timestamp_user@test.com', 'password', now(), now(), now(), 
             '{"provider":"email","providers":["email"]}', '{"username": "timestampuser"}');
     
     -- Create test profile
-    INSERT INTO public.profiles (id, username, created_at, updated_at)
-    VALUES (test_user_id, 'timestampuser', now(), now());
+    INSERT INTO public.profiles (id, username)
+    VALUES (test_user_id, 'timestampuser');
     
     -- Create test videos for timestamp testing
     INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, duration_seconds)
@@ -79,11 +79,11 @@ BEGIN
         (test_video_id_2, 'jeffgerstmann', 'Timestamp Test Video 2', 'Another video for timestamp testing', 'https://example.com/timestamp2.jpg', now() - interval '2 days', 1800);
     
     -- Create some test timestamps manually
-    INSERT INTO public.timestamps (id, video_id, seconds, note, created_by, created_at, updated_at)
+    INSERT INTO public.timestamps (id, video_id, video_start_seconds, user_id, created_at)
     VALUES 
-        (gen_random_uuid(), test_video_id_1, 120, 'Test timestamp at 2 minutes', test_user_id, now(), now()),
-        (gen_random_uuid(), test_video_id_1, 300, 'Test timestamp at 5 minutes', test_user_id, now(), now()),
-        (gen_random_uuid(), test_video_id_2, 60, 'Test timestamp at 1 minute', test_user_id, now(), now());
+        (gen_random_uuid(), test_video_id_1, 120, test_user_id, now()),
+        (gen_random_uuid(), test_video_id_1, 300, test_user_id, now()),
+        (gen_random_uuid(), test_video_id_2, 60, test_user_id, now());
 END;
 $$;
 
@@ -117,18 +117,18 @@ DECLARE
     initial_count integer;
     final_count integer;
 BEGIN
-    -- Create a pending video
-    INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, status)
-    VALUES ('pending_test_video', 'giantbomb', 'Pending Test Video', 'This video is pending', 'https://example.com/pending.jpg', now(), 'pending');
+    -- Create a pending video (using pending_delete flag)
+    INSERT INTO public.videos (id, source, title, description, thumbnail_url, published_at, pending_delete)
+    VALUES ('pending_test_video', 'giantbomb', 'Pending Test Video', 'This video is pending', 'https://example.com/pending.jpg', now(), true);
     
     -- Count videos before cleanup
-    SELECT COUNT(*) INTO initial_count FROM public.videos WHERE status = 'pending';
+    SELECT COUNT(*) INTO initial_count FROM public.videos WHERE pending_delete = true;
     
     -- Run cleanup function
     PERFORM public.delete_pending_videos();
     
     -- Count videos after cleanup
-    SELECT COUNT(*) INTO final_count FROM public.videos WHERE status = 'pending';
+    SELECT COUNT(*) INTO final_count FROM public.videos WHERE pending_delete = true;
     
     PERFORM ok(
         final_count <= initial_count,
@@ -148,8 +148,8 @@ BEGIN
     SELECT id INTO test_user_id FROM public.profiles WHERE username = 'timestampuser';
     
     -- Create a test playlist
-    INSERT INTO public.playlists (name, description, created_by, type, created_at, updated_at)
-    VALUES ('Trigger Test Playlist', 'Testing updated_at trigger', test_user_id, 'Private', now(), now())
+    INSERT INTO public.playlists (name, description, created_by, type, created_at)
+    VALUES ('Trigger Test Playlist', 'Testing updated_at trigger', test_user_id, 'Private', now())
     RETURNING id, updated_at INTO test_playlist_id, initial_updated_at;
     
     -- Wait a moment to ensure timestamp difference

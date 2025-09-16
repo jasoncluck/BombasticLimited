@@ -2,6 +2,8 @@
 -- This test validates that the updated functions have correct syntax and expected signatures
 BEGIN;
 
+SELECT plan(6);
+
 -- Test 1: Check that functions exist with updated signatures
 SELECT
   has_function (
@@ -116,5 +118,7 @@ BEGIN
   END;
 END
 $$;
+
+SELECT finish();
 
 ROLLBACK;
