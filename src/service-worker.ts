@@ -22,8 +22,8 @@ const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 100, // High concurrency for fast loading
-  batchTimeoutMs: 200, // 200ms batch window as requested
-  maxBatchSize: 100, // Process up to 20 images per batch
+  batchTimeoutMs: 300, // 300ms batch window as requested
+  maxBatchSize: 100, 
 };
 
 // Cache names
