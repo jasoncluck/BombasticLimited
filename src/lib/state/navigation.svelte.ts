@@ -756,6 +756,8 @@ export class NavigationStateClass implements NavigationState {
 
   // Data loading methods
   async loadData(): Promise<void> {
+    console.log('in loadData');
+    console.log(browser);
     if (!browser) return;
 
     this.loading = true;

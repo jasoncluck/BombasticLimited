@@ -18,6 +18,7 @@
   import { getMediaQueryState } from '$lib/state/media-query.svelte.js';
   import { getSidebarState } from '$lib/state/sidebar.svelte.js';
   import { getNavigationState } from '$lib/state/navigation.svelte.js';
+  import { onMount } from 'svelte';
 
   let { data } = $props();
 
@@ -39,16 +40,18 @@
 
   // After oauth authn there is a history stack update that doesn't trigger a proper invalidation.
   // This will look for the oauth success code returned and invalidate the playlists which are the only resource effected here
-  if (isBrowser() && page.url.searchParams.get('code')) {
-    const url = new URL(page.url);
-    url.searchParams.delete('code');
-    goto(url.pathname + url.search, {
-      replaceState: true,
-      invalidate: ['supabase:db:profiles', 'supbase:db:notifications'],
-    });
-    sidebarState.refreshData();
-    navigationState.refreshData();
-  }
+  onMount(() => {
+    if (page.url.searchParams.get('code')) {
+      const url = new URL(page.url);
+      url.searchParams.delete('code');
+      goto(url.pathname + url.search, {
+        replaceState: true,
+        invalidate: ['supabase:db:profiles', 'supbase:db:notifications'],
+      });
+      sidebarState.refreshData();
+      navigationState.refreshData();
+    }
+  });
 
   let sectionIds = sourceWithContinueStateKeys;
 
