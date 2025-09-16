@@ -24,7 +24,7 @@ const CACHE_CONFIG: CacheConfig = {
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000,
   maxConcurrentRequests: 50, // Reduced for better performance
   batchTimeoutMs: 100, // Shorter timeout
-  maxBatchSize: 20, // Smaller batches
+  maxBatchSize: 50, // Smaller batches
   staleTimeout: 2000, // Consider requests stale after 2 seconds
 };
 
@@ -98,24 +98,24 @@ const ESSENTIAL_HEADERS = [
 const detectNavigation = (request: Request): void => {
   const referrer = request.referrer;
   const now = Date.now();
-  
+
   // Simple heuristic: if referrer changed or significant time passed, likely navigation
   if (referrer && now - tracker.lastNavigationTime > 1000) {
     tracker.lastNavigationTime = now;
-    
+
     // Cancel stale requests that are too old
     const staleThreshold = now - CACHE_CONFIG.staleTimeout;
     const staleCancellations: string[] = [];
-    
+
     tracker.pendingRequests.forEach((batchRequest, requestId) => {
       if (batchRequest.timestamp < staleThreshold) {
         staleCancellations.push(requestId);
         batchRequest.reject(new Error('Request cancelled due to navigation'));
       }
     });
-    
+
     // Remove cancelled requests
-    staleCancellations.forEach(id => tracker.pendingRequests.delete(id));
+    staleCancellations.forEach((id) => tracker.pendingRequests.delete(id));
   }
 };
 
@@ -235,7 +235,7 @@ const addToBatch = (request: Request): Promise<Response> => {
 // Direct fetch for high-concurrency situations
 const fetchDirectly = async (request: Request): Promise<Response> => {
   const url = request.url;
-  
+
   try {
     tracker.activeFetches.add(url);
     const corsRequest = createCorsRequest(request);
@@ -271,8 +271,8 @@ const processBatch = (): void => {
   // Filter out stale requests before processing
   const now = Date.now();
   const staleThreshold = now - CACHE_CONFIG.staleTimeout;
-  
-  const freshRequests = batchRequests.filter(req => {
+
+  const freshRequests = batchRequests.filter((req) => {
     if (req.timestamp < staleThreshold) {
       req.reject(new Error('Request cancelled due to age'));
       return false;
@@ -296,7 +296,7 @@ const processBatch = (): void => {
   const queuedRequests = freshRequests.slice(concurrencyLimit);
 
   // Process immediate requests
-  immediateRequests.forEach(batchRequest => {
+  immediateRequests.forEach((batchRequest) => {
     processRequest(batchRequest);
   });
 
@@ -410,7 +410,7 @@ const performCleanup = async (): Promise<void> => {
       for (let i = 0; i < keysToDelete.length; i += 10) {
         const batch = keysToDelete.slice(i, i + 10);
         await Promise.allSettled(batch.map((key) => cache.delete(key)));
-        
+
         // Yield to prevent blocking
         await new Promise((resolve) => setTimeout(resolve, 0));
       }
@@ -459,11 +459,13 @@ const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
 
   // Preload only the most critical assets
-  const criticalAssets = build.filter(
-    (asset) =>
-      asset.includes('app.') &&
-      (asset.endsWith('.css') || asset.endsWith('.js'))
-  ).slice(0, 5); // Limit to 5 most critical assets
+  const criticalAssets = build
+    .filter(
+      (asset) =>
+        asset.includes('app.') &&
+        (asset.endsWith('.css') || asset.endsWith('.js'))
+    )
+    .slice(0, 5); // Limit to 5 most critical assets
 
   const preloadPromises = criticalAssets.map(async (asset) => {
     const cached = await cache.match(asset);
