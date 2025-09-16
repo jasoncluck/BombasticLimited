@@ -995,4 +995,100 @@ COMMENT ON POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_
 
 COMMENT ON POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" IS 'Allow users to INSERT cleanup queue entries for playlists they created';
 
+
+-- Create a function that handles cleanup before user deletion
+CREATE OR REPLACE FUNCTION "public"."handle_user_deletion_cleanup"() 
+RETURNS TRIGGER 
+LANGUAGE plpgsql 
+SECURITY DEFINER
+SET search_path = '' 
+AS $$
+DECLARE
+    playlist_record RECORD;
+    deletion_timestamp TIMESTAMP WITH TIME ZONE;
+    cleanup_timestamp TIMESTAMP WITH TIME ZONE;
+BEGIN
+    -- Get the current timestamp for deletion
+    deletion_timestamp := NOW();
+    cleanup_timestamp := deletion_timestamp + INTERVAL '14 days';
+    
+    -- Lock operations for this user to prevent concurrent modifications
+    PERFORM pg_advisory_xact_lock(hashtext('user_lifecycle_operations_' || OLD.id::text));
+    
+    -- Log the deletion attempt
+    RAISE NOTICE 'Processing cleanup for user deletion: %', OLD.id;
+    
+    -- Process all playlists owned by this user before deletion
+    FOR playlist_record IN 
+        SELECT id, name, type, short_id, created_by, deleted_at
+        FROM public.playlists 
+        WHERE created_by = OLD.id 
+        AND deleted_at IS NULL  -- Only process non-deleted playlists
+    LOOP
+        -- Set deleted_at timestamp
+        UPDATE public.playlists 
+        SET deleted_at = deletion_timestamp 
+        WHERE id = playlist_record.id;
+        
+        -- For Public playlists, add to cleanup queue
+        IF playlist_record.type = 'Public' THEN
+            INSERT INTO public.playlist_cleanup_queue (playlist_id, cleanup_at, created_at)
+            VALUES (playlist_record.id, cleanup_timestamp, deletion_timestamp)
+            ON CONFLICT (playlist_id) DO UPDATE SET 
+              cleanup_at = EXCLUDED.cleanup_at,
+              created_at = EXCLUDED.created_at;
+              
+            RAISE NOTICE 'Added public playlist % (%) to cleanup queue for user deletion', 
+                playlist_record.name, playlist_record.id;
+        END IF;
+        
+        -- Log for debugging
+        RAISE NOTICE 'Marked playlist % (%) for deletion before user deletion', 
+            playlist_record.name, playlist_record.id;
+    END LOOP;
+    
+    -- Return OLD to allow the deletion to proceed
+    RETURN OLD;
+END;
+$$;
+
+-- Create the trigger that fires BEFORE user deletion
+DROP TRIGGER IF EXISTS "on_auth_user_deletion" ON "auth"."users";
+CREATE TRIGGER "on_auth_user_deletion"
+    BEFORE DELETE ON "auth"."users" 
+    FOR EACH ROW
+    EXECUTE PROCEDURE "public"."handle_user_deletion_cleanup"();
+
+CREATE OR REPLACE FUNCTION "public"."delete_user"() 
+RETURNS void
+SET search_path = '' 
+LANGUAGE plpgsql 
+SECURITY DEFINER 
+AS $$
+DECLARE
+    user_id uuid;
+    deleted_count integer;
+BEGIN
+    -- Get user ID once
+    user_id := auth.uid();
+    
+    IF user_id IS NULL THEN
+        RAISE EXCEPTION 'User must be authenticated to delete account';
+    END IF;
+    
+    -- The cleanup will be handled by the trigger, so we just need to delete
+    -- Delete user and check result in one operation
+    DELETE FROM auth.users WHERE id = user_id;
+    GET DIAGNOSTICS deleted_count = ROW_COUNT;
+    
+    IF deleted_count = 0 THEN
+        RAISE EXCEPTION 'User deletion failed or user not found';
+    END IF;
+    
+    RAISE NOTICE 'User % successfully deleted', user_id;
+END;
+$$;
+
+
+
 COMMIT;
