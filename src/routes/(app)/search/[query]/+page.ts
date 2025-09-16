@@ -3,13 +3,8 @@ import type { Source } from '$lib/constants/source';
 import { DEFAULT_PRELOAD_VIDEOS_CAROUSEL } from '$lib/supabase/videos';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = ({ data, url }) => {
+export const load: PageLoad = ({ data }) => {
   if (browser) {
-    // Store the URL pathname for the component to use on initialization
-    // This ensures the sync happens only once when the component initializes
-    const shouldSyncNavigation = true;
-    const currentPath = url.pathname;
-
     let source: Source;
 
     for (const playlist of data.playlistSearchResults) {
@@ -31,12 +26,6 @@ export const load: PageLoad = ({ data, url }) => {
         }
       });
     }
-
-    return {
-      ...data,
-      shouldSyncNavigation,
-      currentPath
-    };
   }
 
   return data;

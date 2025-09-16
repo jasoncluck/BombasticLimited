@@ -15,6 +15,7 @@
   import type { PageData } from './$types';
   import { getNavigationState } from '$lib/state/navigation.svelte';
   import { onMount } from 'svelte';
+  import { page } from '$app/state';
 
   let { data }: { data: PageData } = $props();
   let {
@@ -27,8 +28,6 @@
     playlistsCount,
     contentFilter,
     userProfile,
-    shouldSyncNavigation,
-    currentPath,
   } = $derived(data);
 
   const contentState = getContentState();
@@ -48,13 +47,24 @@
 
   let carouselsState = $state<SourceWithCarouselState>(initialCarouselState);
   let previousSearchString = $state<string>('');
-  let hasInitialized = $state<boolean>(false);
 
-  // Only sync navigation on the first mount when the route initially loads
   onMount(() => {
-    if (shouldSyncNavigation && currentPath && !hasInitialized) {
-      navigationState.syncSearchQueryFromUrl(currentPath, true);
-      hasInitialized = true;
+    // Only sync from URL if this is a direct navigation (not from internal app navigation)
+    // We detect this by checking if the current searchInputValue doesn't match the URL param
+    const urlSearchQuery = searchString || '';
+    const currentInputValue = navigationState.searchInputValue;
+
+    // If the input value is empty or doesn't match the URL, this is likely a direct navigation
+    // or the first load of this page, so we should populate from the URL
+    const isDirectNavigation =
+      !currentInputValue || currentInputValue !== urlSearchQuery;
+
+    if (isDirectNavigation && urlSearchQuery) {
+      // Only force sync if we have a search string from the URL and it's different from current state
+      navigationState.syncSearchQueryFromUrl(page.url.pathname, true);
+    } else if (!urlSearchQuery) {
+      // If there's no search string in URL but we're on the search page, sync without forcing
+      navigationState.syncSearchQueryFromUrl(page.url.pathname, false);
     }
   });
 
@@ -91,7 +101,6 @@
       );
       contentState.selectedVideosBySection = restored.selectedVideos;
       previousSearchString = restored.searchString;
-      hasInitialized = true; // Mark as initialized after restore
     },
   };
 
@@ -125,7 +134,7 @@
 
     {#each sources as source (source)}
       {#if sourceVideos[source] && sourceVideos[source].length > 0}
-        <div class="bg-background-lighter col flex flex-col">
+        <div class="bg-background-lighter flex flex-col">
           <a
             href={`/search/${searchString}/${source}`}
             class={getContentView(mediaQueryState, userProfile) === 'TABLE'
