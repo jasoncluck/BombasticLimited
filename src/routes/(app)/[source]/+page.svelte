@@ -15,7 +15,6 @@
     type SourceWithStateKeys,
   } from '$lib/components/content/content';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import { performanceMonitor, efficientArrayComparison } from '$lib/utils/performance-monitor.js';
 
   let { data } = $props();
   const {
@@ -62,23 +61,18 @@
   };
 
   $effect(() => {
-    performanceMonitor.trackReactiveEffect('source-page-carousel-state', () => {
-      const newSectionIds = ['latestVideos', ...highlightPlaylistShortIds];
+    const newSectionIds = ['latestVideos', ...highlightPlaylistShortIds];
 
-      // Use efficient array comparison instead of expensive JSON.stringify
-      if (!efficientArrayComparison(newSectionIds, sectionIds)) {
-        sectionIds = newSectionIds;
+    // Only update if sectionIds actually changed to prevent infinite loops
+    if (JSON.stringify(newSectionIds) !== JSON.stringify(sectionIds)) {
+      sectionIds = newSectionIds;
 
-        const newCarouselState: SourceWithCarouselState = {};
-        for (const key of sectionIds) {
-          newCarouselState[key] = { lastViewedIndex: 0 };
-        }
-        carouselsState = newCarouselState;
+      const newCarouselState: SourceWithCarouselState = {};
+      for (const key of sectionIds) {
+        newCarouselState[key] = { lastViewedIndex: 0 };
       }
-    }, {
-      sectionCount: highlightPlaylistShortIds.length,
-      operation: 'carousel-state-update'
-    });
+      carouselsState = newCarouselState;
+    }
   });
 </script>
 

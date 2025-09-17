@@ -11,7 +11,6 @@
     Table,
     CircleUser,
     TriangleAlert,
-    Shield,
   } from '@lucide/svelte';
   import NotificationBell from '$lib/components/notifications/notification-bell.svelte';
   import BugReportDialog from '$lib/components/bug-report/bug-report-dialog.svelte';
@@ -167,17 +166,6 @@
               Settings
             </div>
           </DropdownMenu.Item>
-          {#if userProfile?.account_type === 'admin'}
-            <DropdownMenu.Item
-              class="cursor-pointer"
-              onclick={() => goto('/admin/performance')}
-            >
-              <div class="flex items-center gap-2">
-                <Shield />
-                Admin - Performance
-              </div>
-            </DropdownMenu.Item>
-          {/if}
           <DropdownMenu.Item
             class="cursor-pointer"
             onclick={() => (bugReportDialogOpen = true)}
@@ -239,19 +227,6 @@
           <Cog />
           Settings
         </Button>
-        {#if userProfile?.account_type === 'admin'}
-          <Button
-            variant="ghost"
-            class="drawer-button"
-            onclick={() => {
-              goto('/admin/performance');
-              openAccountDrawer = false;
-            }}
-          >
-            <Shield />
-            Admin - Performance
-          </Button>
-        {/if}
         <Button
           variant="ghost"
           class="drawer-button"

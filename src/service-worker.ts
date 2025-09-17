@@ -95,16 +95,6 @@ interface ServiceWorkerState {
   lastNavigationTime: number;
   batchTimer?: ReturnType<typeof setTimeout>;
   cleanupTimer?: ReturnType<typeof setTimeout>;
-  // Performance monitoring
-  metrics: {
-    batchProcessingTimes: number[];
-    requestCounts: number[];
-    cacheHitRate: number;
-    totalRequests: number;
-    cachedRequests: number;
-    failedRequests: number;
-    averageBatchSize: number;
-  };
 }
 
 const state: ServiceWorkerState = {
@@ -115,15 +105,6 @@ const state: ServiceWorkerState = {
   lastNavigationTime: Date.now(),
   batchTimer: undefined,
   cleanupTimer: undefined,
-  metrics: {
-    batchProcessingTimes: [],
-    requestCounts: [],
-    cacheHitRate: 0,
-    totalRequests: 0,
-    cachedRequests: 0,
-    failedRequests: 0,
-    averageBatchSize: 0,
-  },
 };
 
 // Essential headers to preserve
@@ -136,66 +117,6 @@ const ESSENTIAL_HEADERS = [
   'etag',
   'access-control-allow-origin',
 ] as const;
-
-// Performance monitoring utilities for service worker
-const recordBatchMetric = (duration: number, batchSize: number) => {
-  state.metrics.batchProcessingTimes.push(duration);
-  state.metrics.requestCounts.push(batchSize);
-  
-  // Keep only recent metrics (last 100 batches)
-  if (state.metrics.batchProcessingTimes.length > 100) {
-    state.metrics.batchProcessingTimes = state.metrics.batchProcessingTimes.slice(-100);
-    state.metrics.requestCounts = state.metrics.requestCounts.slice(-100);
-  }
-  
-  // Update average batch size
-  state.metrics.averageBatchSize = 
-    state.metrics.requestCounts.reduce((sum, count) => sum + count, 0) / 
-    state.metrics.requestCounts.length;
-
-  // Log warning for slow batches
-  if (duration > 500) { // 500ms threshold
-    console.warn(`Slow service worker batch: ${duration.toFixed(2)}ms for ${batchSize} requests`);
-  }
-};
-
-const recordCacheMetric = (wasFromCache: boolean, success: boolean) => {
-  state.metrics.totalRequests++;
-  
-  if (wasFromCache) {
-    state.metrics.cachedRequests++;
-  }
-  
-  if (!success) {
-    state.metrics.failedRequests++;
-  }
-  
-  // Update cache hit rate
-  state.metrics.cacheHitRate = state.metrics.cachedRequests / state.metrics.totalRequests;
-};
-
-const getPerformanceMetrics = () => {
-  const avgBatchTime = state.metrics.batchProcessingTimes.length > 0
-    ? state.metrics.batchProcessingTimes.reduce((sum, time) => sum + time, 0) / state.metrics.batchProcessingTimes.length
-    : 0;
-    
-  const maxBatchTime = state.metrics.batchProcessingTimes.length > 0
-    ? Math.max(...state.metrics.batchProcessingTimes)
-    : 0;
-
-  return {
-    averageBatchTime: avgBatchTime.toFixed(2),
-    maxBatchTime: maxBatchTime.toFixed(2),
-    averageBatchSize: state.metrics.averageBatchSize.toFixed(1),
-    cacheHitRate: (state.metrics.cacheHitRate * 100).toFixed(1),
-    totalRequests: state.metrics.totalRequests,
-    failedRequests: state.metrics.failedRequests,
-    successRate: ((state.metrics.totalRequests - state.metrics.failedRequests) / state.metrics.totalRequests * 100).toFixed(1),
-    activeBatches: state.processingBatches.size,
-    pendingRequests: state.pendingRequests.size,
-    activeFetches: state.activeFetches.size,
-  };
-};
 
 // Utility functions
 const generateRequestId = (): string =>
@@ -467,8 +388,6 @@ const processBatch = (
 
   // Clean up batch when all requests complete
   Promise.allSettled(batchPromises).finally(() => {
-    const batchDuration = Date.now() - batch.startTime;
-    recordBatchMetric(batchDuration, requests.length);
     state.processingBatches.delete(batchId);
   });
 };
@@ -561,7 +480,6 @@ const cacheImage = async (request: Request): Promise<Response> => {
 
   // Serve from cache immediately if available
   if (cached) {
-    recordCacheMetric(true, true);
     return createCachedResponse(cached);
   }
 
@@ -572,12 +490,9 @@ const cacheImage = async (request: Request): Promise<Response> => {
       const response = await fetch(corsRequest);
 
       if (response.ok && response.status === 200) {
-        recordCacheMetric(false, true);
         cacheResponse(request, response.clone()).catch(() => {
           // Silent fail on cache errors
         });
-      } else {
-        recordCacheMetric(false, false);
       }
 
       return response;
@@ -596,7 +511,6 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   const cached = await cache.match(request);
 
   if (cached) {
-    recordCacheMetric(true, true);
     return createCachedResponse(cached);
   }
 
@@ -650,20 +564,6 @@ sw.addEventListener('install', (event) => {
 
 sw.addEventListener('activate', (event) => {
   event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
-});
-
-sw.addEventListener('message', (event) => {
-  if (event.data?.type === 'GET_METRICS') {
-    const metrics = getPerformanceMetrics();
-    event.ports[0]?.postMessage({ type: 'METRICS_RESPONSE', metrics });
-    
-    // Also broadcast to all clients
-    sw.clients.matchAll().then(clients => {
-      clients.forEach(client => {
-        client.postMessage({ type: 'METRICS_RESPONSE', metrics });
-      });
-    });
-  }
 });
 
 sw.addEventListener('fetch', (event) => {
