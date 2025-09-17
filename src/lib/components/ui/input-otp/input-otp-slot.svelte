@@ -29,6 +29,7 @@
     >
       <div
         class="animate-caret-blink bg-foreground h-4 w-px duration-1000"
+        style="will-change: opacity;"
       ></div>
     </div>
   {/if}

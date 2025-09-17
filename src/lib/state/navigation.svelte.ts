@@ -230,29 +230,23 @@ export class NavigationStateClass implements NavigationState {
 
   /**
    * Start the notification refresh interval
+   * No longer used - refresh is now managed by the layout component
+   * @deprecated Layout component now handles all refresh operations
    */
   private startRefreshInterval(): void {
-    if (!browser || this.refreshInterval) return;
-
-    this.refreshInterval = setInterval(() => {
-      // Only refresh if we have a session and enough time has passed
-      if (this.session && this.#hasLoadedOnce) {
-        const now = Date.now();
-        const timeSinceLastRefresh = now - this.lastRefreshTime;
-
-        // Ensure at least 4.5 minutes have passed since last refresh to avoid rapid refreshes
-        if (timeSinceLastRefresh >= 4.5 * 60 * 1000) {
-          this.loadDataInBackground();
-          this.lastRefreshTime = now;
-        }
-      }
-    }, this.config.notificationRefreshIntervalMs);
+    // Refresh interval is now managed by the layout component
+    // This method is kept for backward compatibility but does nothing
+    return;
   }
 
   /**
    * Stop the notification refresh interval
+   * No longer used - refresh is now managed by the layout component
+   * @deprecated Layout component now handles all refresh operations
    */
   private stopRefreshInterval(): void {
+    // Refresh interval is now managed by the layout component
+    // This method is kept for backward compatibility but does nothing
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
       this.refreshInterval = null;
@@ -308,21 +302,15 @@ export class NavigationStateClass implements NavigationState {
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
-      // Initialize navigation items from data when loaded
+      // Navigation items initialization from data
       $effect(() => {
         if (this.data?.navigationItems) {
           this.navigationItems = [...this.data.navigationItems];
         }
       });
 
-      // Start/stop refresh interval based on session state
-      $effect(() => {
-        if (this.session && this.#hasLoadedOnce) {
-          this.startRefreshInterval();
-        } else {
-          this.stopRefreshInterval();
-        }
-      });
+      // Refresh interval is now managed by the layout component
+      // No need for session-based refresh interval management here
     }
   }
 
@@ -343,10 +331,8 @@ export class NavigationStateClass implements NavigationState {
     await this.loadData();
     this.#initialized = true;
 
-    // Start refresh interval if we have a session
-    if (this.session) {
-      this.startRefreshInterval();
-    }
+    // Refresh interval is now managed by the layout component
+    // No need to start our own refresh interval here
 
     // Return cleanup function
     return () => {
@@ -728,18 +714,10 @@ export class NavigationStateClass implements NavigationState {
    * Update configuration
    */
   updateConfig(updates: Partial<NavigationConfig>): void {
-    const oldInterval = this.config.notificationRefreshIntervalMs;
     this.config = { ...this.config, ...updates };
 
-    // If refresh interval changed, restart the interval
-    if (
-      updates.notificationRefreshIntervalMs &&
-      updates.notificationRefreshIntervalMs !== oldInterval &&
-      this.refreshInterval
-    ) {
-      this.stopRefreshInterval();
-      this.startRefreshInterval();
-    }
+    // Refresh interval is now managed by the layout component
+    // No need to restart intervals here
   }
 
   /**

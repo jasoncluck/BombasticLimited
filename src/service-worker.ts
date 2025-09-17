@@ -27,7 +27,7 @@ const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 100,
-  batchTimeoutMs: 150,
+  batchTimeoutMs: 200, // Slightly increased for better batching efficiency
   maxBatchSize: 50,
   minBatchSize: 3,
   staleRequestTimeoutMs: 5000, // Abandon requests older than 5 seconds
@@ -630,14 +630,15 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Enhanced periodic maintenance
+// Enhanced periodic maintenance - reduce frequency during normal operation
 setInterval(() => {
   performCleanup();
-}, 10000); // Every 10 seconds for more responsive cleanup
+}, 30000); // Reduced frequency to every 30 seconds instead of 10 seconds
 
-// More frequent stale request cleanup during high activity
+// Intelligent stale request cleanup - only during high activity
 setInterval(() => {
-  if (state.pendingRequests.size > 0 || state.activeFetches.size > 5) {
+  // Only run expensive cleanup when there's actually significant activity
+  if (state.pendingRequests.size > 10 || state.activeFetches.size > 15) {
     cleanupStaleRequests();
   }
-}, 2000); // Every 2 seconds during high activity
+}, 5000); // Less frequent but more targeted cleanup
