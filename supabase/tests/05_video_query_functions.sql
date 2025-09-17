@@ -77,7 +77,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.search_videos ('Function Test', 0, 'avif')
+        public.search_videos ('Function Test', 'avif')
     ) >= 2,
     'search_videos should find videos matching title search'
   );
@@ -88,7 +88,7 @@ SELECT
       SELECT
         COUNT(*)
       FROM
-        public.search_videos ('Special Search', 0, 'avif')
+        public.search_videos ('Special Search', 'avif')
     ) >= 1,
     'search_videos should find videos matching description search'
   );

@@ -151,6 +151,7 @@ export class NavigationStateClass implements NavigationState {
   private isUserTyping: boolean = false;
   private typingTimeout: ReturnType<typeof setTimeout> | undefined;
   private lastPreloadedValue: string = '';
+  private wasInternalNavigation: boolean = false; // Track if last navigation was internal
 
   // Core data state
   data = $state<NavigationData>({
@@ -187,7 +188,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 400,
-    preloadDebounceMs: 100,
+    preloadDebounceMs: 150,
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -229,29 +230,23 @@ export class NavigationStateClass implements NavigationState {
 
   /**
    * Start the notification refresh interval
+   * No longer used - refresh is now managed by the layout component
+   * @deprecated Layout component now handles all refresh operations
    */
   private startRefreshInterval(): void {
-    if (!browser || this.refreshInterval) return;
-
-    this.refreshInterval = setInterval(() => {
-      // Only refresh if we have a session and enough time has passed
-      if (this.session && this.#hasLoadedOnce) {
-        const now = Date.now();
-        const timeSinceLastRefresh = now - this.lastRefreshTime;
-
-        // Ensure at least 4.5 minutes have passed since last refresh to avoid rapid refreshes
-        if (timeSinceLastRefresh >= 4.5 * 60 * 1000) {
-          this.loadDataInBackground();
-          this.lastRefreshTime = now;
-        }
-      }
-    }, this.config.notificationRefreshIntervalMs);
+    // Refresh interval is now managed by the layout component
+    // This method is kept for backward compatibility but does nothing
+    return;
   }
 
   /**
    * Stop the notification refresh interval
+   * No longer used - refresh is now managed by the layout component
+   * @deprecated Layout component now handles all refresh operations
    */
   private stopRefreshInterval(): void {
+    // Refresh interval is now managed by the layout component
+    // This method is kept for backward compatibility but does nothing
     if (this.refreshInterval) {
       clearInterval(this.refreshInterval);
       this.refreshInterval = null;
@@ -284,38 +279,38 @@ export class NavigationStateClass implements NavigationState {
     this.searchQuery = urlSearchQuery;
 
     // Only sync to input value if:
-    // 1. Force is true (page load/restore), OR
+    // 1. Force is true AND it's not from internal navigation, OR
     // 2. User is not currently typing AND no recent user input
     const now = Date.now();
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
 
+    // Don't force sync if this was triggered by our own internal navigation
+    const shouldAllowForcedSync = force && !this.wasInternalNavigation;
+
     const shouldSyncToInput =
-      force ||
+      shouldAllowForcedSync ||
       (!this.isUserTyping && !this.isSearching && timeSinceLastInput > 3000); // Longer grace period
 
     if (shouldSyncToInput) {
       this.searchInputValue = urlSearchQuery;
     }
+
+    // Reset the internal navigation flag after processing
+    this.wasInternalNavigation = false;
   };
 
   // Initialize effects (should be called when component is mounted)
   initializeEffects() {
     if (browser) {
-      // Initialize navigation items from data when loaded
+      // Navigation items initialization from data
       $effect(() => {
         if (this.data?.navigationItems) {
           this.navigationItems = [...this.data.navigationItems];
         }
       });
 
-      // Start/stop refresh interval based on session state
-      $effect(() => {
-        if (this.session && this.#hasLoadedOnce) {
-          this.startRefreshInterval();
-        } else {
-          this.stopRefreshInterval();
-        }
-      });
+      // Refresh interval is now managed by the layout component
+      // No need for session-based refresh interval management here
     }
   }
 
@@ -336,10 +331,8 @@ export class NavigationStateClass implements NavigationState {
     await this.loadData();
     this.#initialized = true;
 
-    // Start refresh interval if we have a session
-    if (this.session) {
-      this.startRefreshInterval();
-    }
+    // Refresh interval is now managed by the layout component
+    // No need to start our own refresh interval here
 
     // Return cleanup function
     return () => {
@@ -595,6 +588,9 @@ export class NavigationStateClass implements NavigationState {
           return e;
         }
 
+        // Mark as internal navigation before goto
+        this.wasInternalNavigation = true;
+
         // Only navigate to "/" if we're still in the empty state
         await goto(`/`, { keepFocus: true, replaceState: false });
       } else if (searchValue.length >= 2) {
@@ -609,6 +605,9 @@ export class NavigationStateClass implements NavigationState {
         // Only navigate to search if 2+ characters
         // Create new abort controller for this search
         this.searchAbortController = new AbortController();
+
+        // Mark as internal navigation before goto
+        this.wasInternalNavigation = true;
 
         // Use replaceState: true to avoid creating new history entries for search
         await goto(`/search/${encodeURIComponent(searchValue)}`, {
@@ -664,7 +663,6 @@ export class NavigationStateClass implements NavigationState {
         }
 
         this.preloadTimeout = setTimeout(() => {
-          console.log('preloading:', searchValue);
           // Double-check the search value hasn't changed
           if (
             this.searchInputValue.trim() === searchValue &&
@@ -716,18 +714,10 @@ export class NavigationStateClass implements NavigationState {
    * Update configuration
    */
   updateConfig(updates: Partial<NavigationConfig>): void {
-    const oldInterval = this.config.notificationRefreshIntervalMs;
     this.config = { ...this.config, ...updates };
 
-    // If refresh interval changed, restart the interval
-    if (
-      updates.notificationRefreshIntervalMs &&
-      updates.notificationRefreshIntervalMs !== oldInterval &&
-      this.refreshInterval
-    ) {
-      this.stopRefreshInterval();
-      this.startRefreshInterval();
-    }
+    // Refresh interval is now managed by the layout component
+    // No need to restart intervals here
   }
 
   /**
@@ -756,8 +746,6 @@ export class NavigationStateClass implements NavigationState {
 
   // Data loading methods
   async loadData(): Promise<void> {
-    console.log('in loadData');
-    console.log(browser);
     if (!browser) return;
 
     this.loading = true;
@@ -898,6 +886,7 @@ export class NavigationStateClass implements NavigationState {
     this.lastUserInputTimestamp = 0;
     this.isUserTyping = false;
     this.lastPreloadedValue = '';
+    this.wasInternalNavigation = false;
   }
 }
 

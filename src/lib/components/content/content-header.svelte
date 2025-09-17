@@ -19,7 +19,9 @@
     showFloatingBreadcrumbs = $bindable(),
     source,
     supabase,
-    title,
+    heading,
+    subHeading,
+    subHeadingHref,
     videos,
     videosCount,
     userProfile,
@@ -34,7 +36,9 @@
     showFloatingBreadcrumbs: boolean;
     source?: Source;
     supabase: SupabaseClient<Database>;
-    title: string;
+    heading: string;
+    subHeading?: string;
+    subHeadingHref?: string;
     videos: Video[];
     videosCount: number;
     userProfile: UserProfile | null;
@@ -60,15 +64,24 @@
         class="flex flex-col items-start border-none bg-transparent text-left"
       >
         {#if source}
-          <p class="text-muted-foreground text-sm tracking-tight">
-            {title}
-          </p>
+          {#if subHeadingHref}
+            <a
+              class="text-muted-foreground text-sm tracking-tight"
+              href={subHeadingHref}
+            >
+              {subHeading}
+            </a>
+          {:else}
+            <p class="text-muted-foreground text-sm tracking-tight">
+              {subHeading}
+            </p>
+          {/if}
           <h2 class="header-content">
-            {SOURCE_INFO[source].displayName}
+            {heading}
           </h2>
         {:else}
           <h2 class="header-content">
-            {title}
+            {heading}
           </h2>
         {/if}
 

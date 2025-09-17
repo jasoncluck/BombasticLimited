@@ -57,7 +57,7 @@ export const load: PageServerLoad = async ({
             const { playlist, videos } = await getPlaylistDataByYoutubeId({
               youtubeId: highlightPlaylist.youtubeId,
               contentFilter: playlistContentFilter,
-              limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
+              limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
               supabase,
               preferredImageFormat,
             });

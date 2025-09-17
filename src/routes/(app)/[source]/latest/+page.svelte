@@ -72,7 +72,9 @@
 
 <div class="relative">
   <ContentHeader
-    title="Latest Videos"
+    heading="Latest Videos"
+    subHeading={SOURCE_INFO[source].displayName}
+    subHeadingHref={`/${source}`}
     {contentFilter}
     {videos}
     videosCount={videosCount ?? 0}

@@ -9,7 +9,7 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Enhanced configuration with adaptive batching
+// Enhanced configuration with smart request management
 interface CacheConfig {
   readonly maxImageCacheSize: number;
   readonly maxCacheAgeMs: number;
@@ -17,21 +17,23 @@ interface CacheConfig {
   readonly batchTimeoutMs: number;
   readonly maxBatchSize: number;
   readonly minBatchSize: number;
-  readonly adaptiveTimeoutMs: number;
-  readonly immediateThreshold: number;
-  readonly highConcurrencyThreshold: number;
+  readonly staleRequestTimeoutMs: number;
+  readonly maxRequestAge: number;
+  readonly abandonAfterMs: number;
+  readonly maxRetries: number;
 }
 
 const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 100,
-  batchTimeoutMs: 300, // Full timeout for large batches
-  maxBatchSize: 100,
-  minBatchSize: 10, // Minimum batch size before timeout reduction
-  adaptiveTimeoutMs: 50, // Reduced timeout for small batches
-  immediateThreshold: 5, // Process immediately if only 1-2 requests
-  highConcurrencyThreshold: 50, // Threshold for high concurrency mode
+  batchTimeoutMs: 200, // Slightly increased for better batching efficiency
+  maxBatchSize: 50,
+  minBatchSize: 3,
+  staleRequestTimeoutMs: 5000, // Abandon requests older than 5 seconds
+  maxRequestAge: 3000, // Deprioritize requests older than 3 seconds
+  abandonAfterMs: 8000, // Hard timeout for any request
+  maxRetries: 2,
 };
 
 // Cache names
@@ -63,42 +65,46 @@ const SUPABASE_HOSTNAME: string | null = (() => {
   }
 })();
 
-// Enhanced batch request interface
-interface BatchRequest {
+// Enhanced request tracking
+interface TrackedRequest {
+  readonly id: string;
   readonly url: string;
   readonly request: Request;
   readonly timestamp: number;
-  readonly priority: 'immediate' | 'normal' | 'batched';
+  readonly referrer: string;
+  readonly retryCount: number;
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
+  timeoutId?: ReturnType<typeof setTimeout>;
+  aborted: boolean;
 }
 
-interface BatchGroup {
+interface ProcessingBatch {
   readonly id: string;
-  readonly requests: BatchRequest[];
   readonly startTime: number;
-  readonly priority: 'immediate' | 'normal' | 'batched';
-  timer?: ReturnType<typeof setTimeout>;
+  readonly requests: TrackedRequest[];
+  readonly priority: 'high' | 'normal' | 'low';
 }
 
 // Enhanced service worker state
 interface ServiceWorkerState {
-  activeFetches: Set<string>;
-  currentBatch: BatchRequest[];
+  activeFetches: Map<string, TrackedRequest>;
+  pendingRequests: Map<string, TrackedRequest>;
+  processingBatches: Map<string, ProcessingBatch>;
+  currentReferrer: string;
+  lastNavigationTime: number;
   batchTimer?: ReturnType<typeof setTimeout>;
-  pendingBatches: BatchGroup[];
-  requestCount: number;
-  recentRequestTimes: number[];
-  averageRequestRate: number;
+  cleanupTimer?: ReturnType<typeof setTimeout>;
 }
 
 const state: ServiceWorkerState = {
-  activeFetches: new Set<string>(),
-  currentBatch: [],
-  pendingBatches: [],
-  requestCount: 0,
-  recentRequestTimes: [],
-  averageRequestRate: 0,
+  activeFetches: new Map(),
+  pendingRequests: new Map(),
+  processingBatches: new Map(),
+  currentReferrer: '',
+  lastNavigationTime: Date.now(),
+  batchTimer: undefined,
+  cleanupTimer: undefined,
 };
 
 // Essential headers to preserve
@@ -112,62 +118,30 @@ const ESSENTIAL_HEADERS = [
   'access-control-allow-origin',
 ] as const;
 
-// Request rate tracking for adaptive behavior
-const updateRequestRate = (): void => {
-  const now = Date.now();
-  state.recentRequestTimes.push(now);
-  
-  // Keep only last 10 seconds of requests
-  const tenSecondsAgo = now - 10000;
-  state.recentRequestTimes = state.recentRequestTimes.filter(time => time > tenSecondsAgo);
-  
-  // Calculate requests per second
-  state.averageRequestRate = state.recentRequestTimes.length / 10;
-};
-
-// Determine request priority based on current conditions
-const getRequestPriority = (request: Request): 'immediate' | 'normal' | 'batched' => {
-  const currentBatchSize = state.currentBatch.length;
-  const activeFetchCount = state.activeFetches.size;
-  
-  // Always batch if we're at high concurrency to prevent overload
-  if (activeFetchCount >= CACHE_CONFIG.highConcurrencyThreshold) {
-    return 'batched';
-  }
-  
-  // Process immediately for very small numbers or low concurrency
-  if (currentBatchSize <= CACHE_CONFIG.immediateThreshold && activeFetchCount < 10) {
-    return 'immediate';
-  }
-  
-  // Use normal priority for moderate situations
-  if (currentBatchSize < CACHE_CONFIG.minBatchSize && activeFetchCount < 25) {
-    return 'normal';
-  }
-  
-  return 'batched';
-};
-
-// Get adaptive timeout based on current batch and system state
-const getAdaptiveTimeout = (batchSize: number, priority: 'immediate' | 'normal' | 'batched'): number => {
-  if (priority === 'immediate') {
-    return 0; // Process immediately
-  }
-  
-  if (priority === 'normal') {
-    return CACHE_CONFIG.adaptiveTimeoutMs; // Short timeout
-  }
-  
-  // For batched requests, use shorter timeout for small batches
-  if (batchSize < CACHE_CONFIG.minBatchSize) {
-    return CACHE_CONFIG.adaptiveTimeoutMs;
-  }
-  
-  // Use full timeout for larger batches
-  return CACHE_CONFIG.batchTimeoutMs;
-};
-
 // Utility functions
+const generateRequestId = (): string =>
+  `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+const getReferrerFromRequest = (request: Request): string => {
+  return request.referrer || sw.location.origin;
+};
+
+const hasNavigationChanged = (referrer: string): boolean => {
+  const referrerPath = new URL(referrer).pathname;
+  const currentPath = new URL(state.currentReferrer).pathname;
+  return referrerPath !== currentPath;
+};
+
+const updateNavigation = (referrer: string): void => {
+  if (hasNavigationChanged(referrer)) {
+    state.currentReferrer = referrer;
+    state.lastNavigationTime = Date.now();
+
+    // Clean up old requests when navigation changes
+    cleanupStaleRequests();
+  }
+};
+
 const isSupabaseImageUrl = (url: URL): boolean => {
   if (!SUPABASE_HOSTNAME) return false;
   return (
@@ -223,160 +197,265 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
-// Enhanced batching system with adaptive timing
-const addToBatch = (request: Request): Promise<Response> => {
-  const url = request.url;
+// Request priority calculation
+const calculatePriority = (
+  trackedRequest: TrackedRequest
+): 'high' | 'normal' | 'low' => {
   const now = Date.now();
+  const age = now - trackedRequest.timestamp;
+  const referrerAge = now - state.lastNavigationTime;
 
-  // Update request rate tracking
-  updateRequestRate();
-
-  // Check if already being fetched (avoid duplicates)
-  if (state.activeFetches.has(url)) {
-    // Fall back to direct fetch for duplicate requests
-    return fetch(createCorsRequest(request));
+  // High priority: Recent requests from current page
+  if (
+    age < 1000 &&
+    referrerAge < 2000 &&
+    !hasNavigationChanged(trackedRequest.referrer)
+  ) {
+    return 'high';
   }
 
-  return new Promise<Response>((resolve, reject) => {
-    const priority = getRequestPriority(request);
-    
-    const batchRequest: BatchRequest = {
-      url,
-      request,
-      timestamp: now,
-      priority,
-      resolve,
-      reject,
-    };
+  // Low priority: Old requests or from previous navigation
+  if (
+    age > CACHE_CONFIG.maxRequestAge ||
+    hasNavigationChanged(trackedRequest.referrer)
+  ) {
+    return 'low';
+  }
 
-    // Handle immediate priority - process right away
-    if (priority === 'immediate') {
-      processImmediateRequest(batchRequest);
-      return;
+  return 'normal';
+};
+
+// Cleanup stale and abandoned requests
+const cleanupStaleRequests = (): void => {
+  const now = Date.now();
+  const requestsToAbandon: string[] = [];
+
+  // Check pending requests
+  state.pendingRequests.forEach((trackedRequest, id) => {
+    const age = now - trackedRequest.timestamp;
+    const shouldAbandon =
+      age > CACHE_CONFIG.abandonAfterMs ||
+      (age > CACHE_CONFIG.staleRequestTimeoutMs &&
+        hasNavigationChanged(trackedRequest.referrer));
+
+    if (shouldAbandon && !trackedRequest.aborted) {
+      requestsToAbandon.push(id);
     }
+  });
 
-    // Add to current batch
-    state.currentBatch.push(batchRequest);
-    const currentBatchSize = state.currentBatch.length;
-
-    // Clear existing timer if we're changing the timeout strategy
-    if (state.batchTimer) {
-      clearTimeout(state.batchTimer);
-      state.batchTimer = undefined;
-    }
-
-    // Get adaptive timeout based on current conditions
-    const timeout = getAdaptiveTimeout(currentBatchSize, priority);
-    
-    if (timeout === 0) {
-      // Process immediately
-      processBatch();
-    } else {
-      // Set new timer with adaptive timeout
-      state.batchTimer = setTimeout(() => {
-        processBatch();
-      }, timeout);
-    }
-
-    // Process immediately if batch is full
-    if (currentBatchSize >= CACHE_CONFIG.maxBatchSize) {
-      if (state.batchTimer) {
-        clearTimeout(state.batchTimer);
-        state.batchTimer = undefined;
+  // Abandon old requests
+  requestsToAbandon.forEach((id) => {
+    const request = state.pendingRequests.get(id);
+    if (request && !request.aborted) {
+      request.aborted = true;
+      if (request.timeoutId) {
+        clearTimeout(request.timeoutId);
       }
-      processBatch();
+      request.reject(
+        new Error('Request abandoned due to navigation or timeout')
+      );
+      state.pendingRequests.delete(id);
     }
   });
 };
 
-// Process a single request immediately (for immediate priority)
-const processImmediateRequest = async (batchRequest: BatchRequest): Promise<void> => {
-  const { url, request, resolve, reject } = batchRequest;
+// Process requests in intelligent batches
+const processPendingRequests = (): void => {
+  if (state.pendingRequests.size === 0) return;
 
-  try {
-    state.activeFetches.add(url);
-    const corsRequest = createCorsRequest(request);
-    const response = await fetch(corsRequest);
-
-    // Cache successful responses
-    if (response.ok && response.status === 200) {
-      cacheResponse(request, response.clone()).catch(() => {
-        // Silent fail on cache errors
-      });
-    }
-
-    resolve(response);
-  } catch (error) {
-    reject(error instanceof Error ? error : new Error('Fetch failed'));
-  } finally {
-    state.activeFetches.delete(url);
-  }
-};
-
-// Enhanced batch processing
-const processBatch = (): void => {
-  if (state.currentBatch.length === 0) return;
-
-  // Move current batch to processing
-  const batchToProcess = [...state.currentBatch];
-  state.currentBatch = [];
-
-  if (state.batchTimer) {
-    clearTimeout(state.batchTimer);
-    state.batchTimer = undefined;
-  }
-
-  // Determine batch priority based on the requests in it
-  const hasImmediatePriority = batchToProcess.some(req => req.priority === 'immediate');
-  const hasNormalPriority = batchToProcess.some(req => req.priority === 'normal');
-  
-  let batchPriority: 'immediate' | 'normal' | 'batched' = 'batched';
-  if (hasImmediatePriority) batchPriority = 'immediate';
-  else if (hasNormalPriority) batchPriority = 'normal';
-
-  // Create batch group
-  const batchGroup: BatchGroup = {
-    id: `batch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-    requests: batchToProcess,
-    startTime: Date.now(),
-    priority: batchPriority,
+  const now = Date.now();
+  const requestsByPriority = {
+    high: [] as TrackedRequest[],
+    normal: [] as TrackedRequest[],
+    low: [] as TrackedRequest[],
   };
 
-  state.pendingBatches.push(batchGroup);
+  // Sort requests by priority
+  state.pendingRequests.forEach((request) => {
+    if (!request.aborted) {
+      const priority = calculatePriority(request);
+      requestsByPriority[priority].push(request);
+    }
+  });
 
-  // Process all requests in parallel
-  const batchPromises = batchToProcess.map(async (batchRequest) => {
-    const { url, request, resolve, reject } = batchRequest;
+  // Process high priority requests first
+  const processOrder: Array<'high' | 'normal' | 'low'> = [
+    'high',
+    'normal',
+    'low',
+  ];
+
+  processOrder.forEach((priority) => {
+    const requests = requestsByPriority[priority];
+    if (requests.length === 0) return;
+
+    // Create batches for this priority level
+    const batchSize =
+      priority === 'high'
+        ? Math.min(requests.length, CACHE_CONFIG.maxBatchSize)
+        : Math.min(requests.length, Math.floor(CACHE_CONFIG.maxBatchSize / 2));
+
+    for (let i = 0; i < requests.length; i += batchSize) {
+      const batchRequests = requests.slice(i, i + batchSize);
+      processBatch(batchRequests, priority);
+    }
+  });
+
+  // Clear processed requests from pending
+  state.pendingRequests.clear();
+};
+
+// Process a batch of requests
+const processBatch = (
+  requests: TrackedRequest[],
+  priority: 'high' | 'normal' | 'low'
+): void => {
+  const batchId = generateRequestId();
+  const batch: ProcessingBatch = {
+    id: batchId,
+    startTime: Date.now(),
+    requests,
+    priority,
+  };
+
+  state.processingBatches.set(batchId, batch);
+
+  // Process all requests in parallel within the batch
+  const batchPromises = requests.map(async (trackedRequest) => {
+    if (trackedRequest.aborted) {
+      return;
+    }
+
+    const { url, request, resolve, reject, id } = trackedRequest;
 
     try {
+      // Clear individual timeout since we're processing now
+      if (trackedRequest.timeoutId) {
+        clearTimeout(trackedRequest.timeoutId);
+      }
+
       // Mark as active
-      state.activeFetches.add(url);
+      state.activeFetches.set(id, trackedRequest);
 
       const corsRequest = createCorsRequest(request);
       const response = await fetch(corsRequest);
 
-      // Cache successful responses
-      if (response.ok && response.status === 200) {
-        cacheResponse(request, response.clone()).catch(() => {
-          // Silent fail on cache errors
-        });
-      }
+      // Only resolve if not aborted
+      if (!trackedRequest.aborted) {
+        // Cache successful responses
+        if (response.ok && response.status === 200) {
+          cacheResponse(request, response.clone()).catch(() => {
+            // Silent fail on cache errors
+          });
+        }
 
-      resolve(response);
+        resolve(response);
+      }
     } catch (error) {
-      reject(error instanceof Error ? error : new Error('Fetch failed'));
+      if (!trackedRequest.aborted) {
+        // Retry logic for high priority requests
+        if (
+          priority === 'high' &&
+          trackedRequest.retryCount < CACHE_CONFIG.maxRetries
+        ) {
+          const retryRequest: TrackedRequest = {
+            ...trackedRequest,
+            id: generateRequestId(),
+            retryCount: trackedRequest.retryCount + 1,
+            timestamp: Date.now(),
+          };
+
+          // Add back to pending for retry
+          state.pendingRequests.set(retryRequest.id, retryRequest);
+
+          // Schedule retry processing
+          setTimeout(
+            () => {
+              if (state.pendingRequests.has(retryRequest.id)) {
+                processPendingRequests();
+              }
+            },
+            100 * (trackedRequest.retryCount + 1)
+          ); // Exponential backoff
+        } else {
+          reject(error instanceof Error ? error : new Error('Fetch failed'));
+        }
+      }
     } finally {
-      state.activeFetches.delete(url);
+      state.activeFetches.delete(id);
     }
   });
 
-  // Clean up batch group when all requests complete
-  Promise.allSettled(batchPromises).then(() => {
-    const batchIndex = state.pendingBatches.findIndex(
-      (b) => b.id === batchGroup.id
+  // Clean up batch when all requests complete
+  Promise.allSettled(batchPromises).finally(() => {
+    state.processingBatches.delete(batchId);
+  });
+};
+
+// Add request to processing queue
+const queueRequest = (request: Request): Promise<Response> => {
+  const referrer = getReferrerFromRequest(request);
+  updateNavigation(referrer);
+
+  return new Promise<Response>((resolve, reject) => {
+    const id = generateRequestId();
+    const trackedRequest: TrackedRequest = {
+      id,
+      url: request.url,
+      request,
+      timestamp: Date.now(),
+      referrer,
+      retryCount: 0,
+      resolve,
+      reject,
+      aborted: false,
+    };
+
+    // Set individual request timeout
+    trackedRequest.timeoutId = setTimeout(() => {
+      if (state.pendingRequests.has(id) && !trackedRequest.aborted) {
+        trackedRequest.aborted = true;
+        state.pendingRequests.delete(id);
+        reject(new Error('Individual request timeout'));
+      }
+    }, CACHE_CONFIG.abandonAfterMs);
+
+    // Check if already being fetched (avoid duplicates)
+    const existingActive = Array.from(state.activeFetches.values()).find(
+      (req) => req.url === request.url && !req.aborted
     );
-    if (batchIndex !== -1) {
-      state.pendingBatches.splice(batchIndex, 1);
+
+    if (existingActive) {
+      // Piggyback on existing request
+      existingActive.resolve = (response: Response) => {
+        trackedRequest.resolve(response.clone());
+        existingActive.resolve(response);
+      };
+      return;
+    }
+
+    // Add to pending queue
+    state.pendingRequests.set(id, trackedRequest);
+
+    // Schedule batch processing
+    if (state.batchTimer) {
+      clearTimeout(state.batchTimer);
+    }
+
+    // Use shorter timeout for high activity periods
+    const timeout =
+      state.pendingRequests.size > 10 ? 50 : CACHE_CONFIG.batchTimeoutMs;
+
+    state.batchTimer = setTimeout(() => {
+      processPendingRequests();
+    }, timeout);
+
+    // Process immediately if batch is full or all high priority
+    if (state.pendingRequests.size >= CACHE_CONFIG.maxBatchSize) {
+      if (state.batchTimer) {
+        clearTimeout(state.batchTimer);
+      }
+      processPendingRequests();
     }
   });
 };
@@ -394,29 +473,22 @@ const cacheResponse = async (
   }
 };
 
-// Enhanced image caching function with adaptive batching
+// Enhanced image caching function
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
   const cached = await cache.match(request);
 
-  state.requestCount++;
-
-  // Serve from cache immediately if available (fastest path)
+  // Serve from cache immediately if available
   if (cached) {
     return createCachedResponse(cached);
   }
 
-  const url = request.url;
-  const activeFetchCount = state.activeFetches.size;
-
-  // For very low concurrency (like lazy loading single images), fetch immediately
-  if (activeFetchCount < 5 && !state.activeFetches.has(url)) {
+  // For very low activity, fetch immediately to avoid lag
+  if (state.activeFetches.size < 3 && state.pendingRequests.size < 2) {
     try {
-      state.activeFetches.add(url);
       const corsRequest = createCorsRequest(request);
       const response = await fetch(corsRequest);
 
-      // Cache successful responses
       if (response.ok && response.status === 200) {
         cacheResponse(request, response.clone()).catch(() => {
           // Silent fail on cache errors
@@ -426,13 +498,11 @@ const cacheImage = async (request: Request): Promise<Response> => {
       return response;
     } catch (error) {
       throw error instanceof Error ? error : new Error('Fetch failed');
-    } finally {
-      state.activeFetches.delete(url);
     }
   }
 
-  // Use adaptive batching for higher concurrency situations
-  return addToBatch(request);
+  // Use intelligent queuing for higher activity
+  return queueRequest(request);
 };
 
 // Simple static asset caching
@@ -457,9 +527,13 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Periodic cleanup (simplified)
+// Periodic cleanup
 const performCleanup = async (): Promise<void> => {
   try {
+    // Clean up stale requests
+    cleanupStaleRequests();
+
+    // Cache size management
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
 
@@ -469,12 +543,10 @@ const performCleanup = async (): Promise<void> => {
         keys.length - CACHE_CONFIG.maxImageCacheSize + 500
       );
 
-      // Remove old entries in batches
       for (let i = 0; i < keysToDelete.length; i += 20) {
         const batch = keysToDelete.slice(i, i + 20);
         await Promise.allSettled(batch.map((key) => cache.delete(key)));
 
-        // Yield to prevent blocking
         if (i + 20 < keysToDelete.length) {
           await new Promise((resolve) => setTimeout(resolve, 0));
         }
@@ -512,7 +584,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images with adaptive smart batching
+  // Handle images with intelligent batching
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;
@@ -523,7 +595,6 @@ sw.addEventListener('fetch', (event) => {
 const preloadCriticalAssets = async (): Promise<void> => {
   const cache = await caches.open(STATIC_CACHE);
 
-  // Preload the most critical assets (app CSS/JS)
   const criticalAssets = build.filter(
     (asset) =>
       asset.includes('app.') &&
@@ -559,5 +630,15 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Periodic maintenance
-setInterval(performCleanup, 15 * 60 * 1000); // Every 15 minutes
+// Enhanced periodic maintenance - reduce frequency during normal operation
+setInterval(() => {
+  performCleanup();
+}, 30000); // Reduced frequency to every 30 seconds instead of 10 seconds
+
+// Intelligent stale request cleanup - only during high activity
+setInterval(() => {
+  // Only run expensive cleanup when there's actually significant activity
+  if (state.pendingRequests.size > 10 || state.activeFetches.size > 15) {
+    cleanupStaleRequests();
+  }
+}, 5000); // Less frequent but more targeted cleanup

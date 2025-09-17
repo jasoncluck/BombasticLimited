@@ -13,6 +13,7 @@ import {
   SIDEBAR_COOKIE_MAX_AGE,
 } from '$lib/components/ui/sidebar/constants';
 import type { ImageFormat } from '$lib/utils/image-format-detection';
+import debounce from 'debounce';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -636,13 +637,20 @@ export class SidebarStateClass implements SidebarState {
     }
   }
 
-  async refreshData(): Promise<void> {
+  // Debounce data refresh to prevent excessive API calls
+  private refreshDataDebounced = debounce(async () => {
     // Only refresh if tab is visible to save resources
-    if (!tabVisibility.isVisible) {
+    // Also check if we're already refreshing to prevent duplicate calls
+    if (!tabVisibility.isVisible || this.loading) {
       return;
     }
 
     await this.loadData();
+  }, 1000); // 1 second debounce
+
+  async refreshData(): Promise<void> {
+    // Use debounced version to prevent excessive calls
+    return this.refreshDataDebounced();
   }
 
   // Data validation helpers
@@ -667,6 +675,11 @@ export class SidebarStateClass implements SidebarState {
   cleanup(): void {
     // Stop SSE connection
     this.stopSSEConnection();
+
+    // Cancel any pending debounced refresh calls
+    if (this.refreshDataDebounced?.clear) {
+      this.refreshDataDebounced.clear();
+    }
 
     // Reset all state
     this.data = null;

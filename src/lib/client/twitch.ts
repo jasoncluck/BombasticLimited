@@ -1,9 +1,10 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
-import { ApiClient, extractUserId } from '@twurple/api';
+import { ApiClient } from '@twurple/api';
 
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 
 import type { HelixStream } from '@twurple/api';
+import { browser } from '$app/environment';
 
 const clientId = TWITCH_CLIENT_ID;
 const clientSecret = TWITCH_CLIENT_SECRET;
@@ -12,7 +13,7 @@ const clientSecret = TWITCH_CLIENT_SECRET;
 const shouldInitialize =
   clientId !== 'placeholder_client_id' &&
   clientSecret !== 'placeholder_client_secret' &&
-  typeof window === 'undefined' && // Server-side only
+  !browser && // Server-side only
   process.env.NODE_ENV !== 'test';
 
 let authProvider: AppTokenAuthProvider | undefined;
@@ -35,11 +36,27 @@ interface StreamStatus {
 const streamCache = new Map<string, StreamStatus>();
 const CACHE_DURATION = 30 * 1000; // 30 seconds cache
 const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
+const API_REQUEST_TIMEOUT = 10000; // 10 second timeout for individual API requests
 
-// Development testing variables
-let testStartTime: number | null = null;
-const TEST_LIVE_START = 0; // Go live after 10 seconds
-const TEST_LIVE_END = 10000; // Go offline after 20 seconds
+/**
+ * Promise with timeout wrapper for API calls
+ */
+function withApiTimeout<T>(promise: Promise<T>): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () =>
+          reject(
+            new Error(
+              `Twitch API request timed out after ${API_REQUEST_TIMEOUT}ms`
+            )
+          ),
+        API_REQUEST_TIMEOUT
+      )
+    ),
+  ]);
+}
 
 /**
  * Get stream status for a single user
@@ -61,7 +78,11 @@ export async function getStreamStatus(
   }
 
   try {
-    const stream = await apiClient.streams.getStreamByUserId(userId);
+    // Add timeout protection to the API call
+    const stream = await withApiTimeout(
+      apiClient.streams.getStreamByUserId(userId)
+    );
+
     const status: StreamStatus = {
       userId,
       isLive: stream !== null,
@@ -91,35 +112,8 @@ export async function getStreamStatus(
 }
 
 /**
- * Helper funciton for getting a Twitch ID, only used to figure out IDs and not called at the moment
+ * Get stream status for multiple users
  */
-// export async function getTwitchUserName(userName: string) {
-//   const authProvider = new AppTokenAuthProvider(
-//     TWITCH_CLIENT_ID,
-//     TWITCH_CLIENT_SECRET
-//   );
-//   const apiClient = new ApiClient({ authProvider });
-//
-//   const user = await apiClient.users.getUserByName(userName);
-//   console.log(user);
-//   const stream = await user?.getStream();
-//   console.log(stream);
-//   console.log(stream?.userId);
-//   if (user) {
-//     console.log(extractUserId(user));
-//   }
-//
-//   if (user) {
-//     return user; // This will return the username
-//   } else {
-//     return null; // User not found
-//   }
-// }
-
-/**
- * Get stream status for multiple users with rate limiting
- */
-
 export async function getMultipleStreamStatus(
   userIds: string[]
 ): Promise<StreamStatus[]> {
@@ -130,10 +124,16 @@ export async function getMultipleStreamStatus(
 
   const results: StreamStatus[] = [];
 
+  // Process requests with timeout protection
   for (let i = 0; i < userIds.length; i++) {
-    const status = await getStreamStatus(userIds[i]);
-    if (status) {
-      results.push(status);
+    try {
+      const status = await getStreamStatus(userIds[i]);
+      if (status) {
+        results.push(status);
+      }
+    } catch (error) {
+      console.error(`Failed to get status for user ${userIds[i]}:`, error);
+      // Continue with other users even if one fails
     }
 
     // Add delay between requests to respect rate limits (except for last request)
@@ -153,25 +153,15 @@ export function clearStreamCache(): void {
 }
 
 /**
-
- * Reset test timing (useful for testing)
- */
-export function resetTestTimer(): void {
-  testStartTime = null;
-  console.log('🔄 Test timer reset - next call will restart the sequence');
-}
-
-/**
- * Get current cache stats (useful for debugging)
+ * Get cache statistics (useful for debugging)
  */
 export function getCacheStats() {
   return {
     size: streamCache.size,
-    entries: Array.from(streamCache.entries()).map(([userId, status]) => ({
-      userId,
-      isLive: status.isLive,
-      lastChecked: new Date(status.lastChecked).toISOString(),
-      cacheAge: Date.now() - status.lastChecked,
+    entries: Array.from(streamCache.entries()).map(([key, value]) => ({
+      userId: key,
+      isLive: value.isLive,
+      lastChecked: new Date(value.lastChecked).toISOString(),
     })),
   };
 }

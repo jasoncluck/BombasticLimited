@@ -79,8 +79,6 @@
   const contentState = getContentState();
 
   let cardElement = $state<HTMLElement>();
-  let imageLoaded = $state(false);
-  let imageError = $state(false);
 
   const isVideoInPlaylist = $derived(
     isContinueVideos &&
@@ -190,17 +188,6 @@
       // Silently fail if preloading doesn't work
       console.debug('Preload failed:', error);
     }
-  }
-
-  // Image event handlers
-  function handleImageLoad() {
-    imageLoaded = true;
-    imageError = false;
-  }
-
-  function handleImageError() {
-    imageLoaded = false;
-    imageError = true;
   }
 
   // Mouse event handlers
@@ -414,8 +401,6 @@
             alt={video.title}
             class="aspect-[16/9] h-auto w-full"
             {index}
-            onload={handleImageLoad}
-            onerror={handleImageError}
           />
         {:else}
           <!-- Fallback placeholder when no image is available -->

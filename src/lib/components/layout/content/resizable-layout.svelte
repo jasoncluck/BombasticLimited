@@ -12,6 +12,8 @@
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
+  import { onMount, onDestroy } from 'svelte';
+
   let {
     supabase,
     session,
@@ -34,31 +36,105 @@
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
 
-  // Effect to control scroll blocking when dropdowno or context menu is open
-  $effect(() => {
+  // Helper function to unblock scrolling
+  function unblockScrolling(): void {
     const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
     const contentViewport = pageState.viewportRefs.contentViewportRef;
 
+    if (sidebarViewport) {
+      sidebarViewport.style.overflow = 'auto';
+    }
+    if (contentViewport) {
+      contentViewport.style.overflow = 'auto';
+    }
+  }
+
+  // Helper function to block scrolling
+  function blockScrolling(): void {
+    const sidebarViewport = pageState.viewportRefs.sidebarViewportRef;
+    const contentViewport = pageState.viewportRefs.contentViewportRef;
+
+    if (sidebarViewport) {
+      sidebarViewport.style.overflow = 'hidden';
+    }
+    if (contentViewport) {
+      contentViewport.style.overflow = 'hidden';
+    }
+  }
+
+  // Additional safety: Listen for global events to detect when native context menus might interfere
+  onMount(() => {
+    const handleGlobalClick = (event: MouseEvent) => {
+      // If we think a context menu is open but user is clicking elsewhere, force validation
+      if (contentState.openContextMenuSection !== null) {
+        // Small delay to let any menu close animations complete
+        setTimeout(() => {
+          contentState.forceDropdownValidation();
+        }, 100);
+      }
+    };
+
+    const handleContextMenu = (event: MouseEvent) => {
+      // If a native context menu is about to open while we have app context menu open,
+      // force validation after a delay
+      if (contentState.openContextMenuSection !== null) {
+        setTimeout(() => {
+          contentState.forceDropdownValidation();
+        }, 200);
+      }
+    };
+
+    // Listen for Escape key to close dropdowns
+    const handleEscapeKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (
+          contentState.isDropdownMenuOpen ||
+          contentState.openContextMenuSection !== null
+        ) {
+          contentState.isDropdownMenuOpen = false;
+          contentState.openDropdownId = null;
+          contentState.openContextMenuSection = null;
+          unblockScrolling();
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick, { capture: true });
+    document.addEventListener('contextmenu', handleContextMenu, {
+      capture: true,
+    });
+    document.addEventListener('keydown', handleEscapeKey, { capture: true });
+
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, {
+        capture: true,
+      });
+      document.removeEventListener('contextmenu', handleContextMenu, {
+        capture: true,
+      });
+      document.removeEventListener('keydown', handleEscapeKey, {
+        capture: true,
+      });
+    };
+  });
+
+  // Effect to control scroll blocking when dropdown or context menu is open
+  $effect(() => {
     if (
       contentState.isDropdownMenuOpen ||
-      contentState.openContextMenuSection
+      contentState.openContextMenuSection !== null
     ) {
       // Block scrolling when dropdown is open
-      if (sidebarViewport) {
-        sidebarViewport.style.overflow = 'hidden';
-      }
-      if (contentViewport) {
-        contentViewport.style.overflow = 'hidden';
-      }
+      blockScrolling();
     } else {
       // Restore scrolling when dropdown is closed
-      if (sidebarViewport) {
-        sidebarViewport.style.overflow = 'auto';
-      }
-      if (contentViewport) {
-        contentViewport.style.overflow = 'auto';
-      }
+      unblockScrolling();
     }
+  });
+
+  // Cleanup content state on destroy
+  onDestroy(() => {
+    contentState.destroy();
   });
 </script>
 

@@ -38,7 +38,7 @@
 
   // Sync navigation state with the URL search parameter using the improved method
   onMount(() => {
-    if (page.params.query) {
+    if (page.params.query && !navigationState.isSearching) {
       // Use syncSearchQueryFromUrl with force=true for initial page mount
       navigationState.syncSearchQueryFromUrl(
         `/search/${encodeURIComponent(page.params.query)}`,
@@ -88,7 +88,11 @@
 
 <div class="relative" data-testid="search-results">
   <ContentHeader
-    title="Search Results"
+    heading={SOURCE_INFO[source].displayName}
+    subHeading="Search Results"
+    subHeadingHref={page.params.query
+      ? `/search/${encodeURIComponent(page.params.query)}`
+      : undefined}
     {videos}
     {contentFilter}
     {userProfile}

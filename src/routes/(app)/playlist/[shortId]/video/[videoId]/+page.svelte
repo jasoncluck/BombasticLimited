@@ -1,8 +1,5 @@
 <script lang="ts">
-  import {
-    getSortDisplayName,
-    type PlaylistVideosFilter,
-  } from '$lib/components/content/content-filter.js';
+  import { getSortDisplayName } from '$lib/components/content/content-filter.js';
   import Content from '$lib/components/content/content.svelte';
   import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist.js';
   import VideoPlayer from '$lib/components/video/video-player.svelte';
@@ -20,20 +17,14 @@
     userProfile,
   } = $derived(data);
 
-  const carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+  let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+  console.log(video);
 </script>
 
 <div>
   <div class="mb-10">
     {#key video.id}
-      <VideoPlayer
-        {video}
-        {contentFilter}
-        baseUrl={`/playlist/${playlist.short_id}`}
-        {playlist}
-        {supabase}
-        {session}
-      />
+      <VideoPlayer {video} {contentFilter} {playlist} {supabase} {session} />
     {/key}
   </div>
 
@@ -96,7 +87,7 @@
         tilesDisplay="CAROUSEL"
         {videos}
         {contentFilter}
-        {carouselState}
+        bind:carouselState
         {playlist}
         {userProfile}
         {supabase}

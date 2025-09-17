@@ -24,6 +24,7 @@
   } from '$lib/components/layout/index.js';
   import { dev } from '$app/environment';
   import { setSidebarState } from '$lib/state/sidebar.svelte.js';
+  import { createVisibilityAwareInterval } from '$lib/utils/tab-visibility.js';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -322,13 +323,14 @@
     }
   });
 
-  // 5-minute periodic sync interval with auth error handling
+  // Visibility-aware periodic sync interval with auth error handling
   $effect(() => {
     if (!session || !isHydrated) return;
 
-    const interval = setInterval(async () => {
-      // Only sync if tab is visible and user is authenticated
-      if (!document.hidden && session) {
+    // Use visibility-aware interval from the tab-visibility utility
+    const visibilityAwareInterval = createVisibilityAwareInterval(async () => {
+      // Double-check session is still valid when interval fires
+      if (session) {
         try {
           await performDataRefresh('5-minute interval', false);
         } catch (error) {
@@ -338,8 +340,10 @@
       }
     }, 300000); // 5 minutes = 300,000ms
 
+    visibilityAwareInterval.start();
+
     return () => {
-      clearInterval(interval);
+      visibilityAwareInterval.stop();
     };
   });
 
@@ -388,6 +392,11 @@
     // Set up visibility change listener for data refresh and auth state checking
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
+    // Add global context menu handler to catch events from Portal elements
+    // document.addEventListener('contextmenu', handleGlobalContextMenu, {
+    //   capture: true, // Use capture phase to intercept before any Portal elements
+    // });
+
     // Return cleanup function
     return () => {
       // Clean up Supabase auth listener
@@ -397,6 +406,11 @@
 
       // Clean up visibility change listener
       document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+      // Clean up global context menu listener
+      document.removeEventListener('contextmenu', handleGlobalContextMenu, {
+        capture: true,
+      });
 
       if (navigationCleanup && typeof navigationCleanup === 'function') {
         navigationCleanup();
@@ -415,9 +429,24 @@
   }
 
   /**
-   * Prevents the default browser context menu from appearing.
-   * This ensures custom context menus (like Svelte/ShadCN) work properly
-   * without interference from the browser's default right-click menu.
+   * Global context menu handler that catches all context menu events,
+   * including those from Portal elements like ShadCN context menus.
+   * This ensures the browser context menu is always blocked in production.
+   */
+  function handleGlobalContextMenu(event: MouseEvent): void {
+    if (!dev) {
+      // Always prevent the default browser context menu in production
+      event.preventDefault();
+
+      // Stop propagation to prevent conflicts with custom context menus
+      event.stopPropagation();
+    }
+  }
+
+  /**
+   * Local context menu handler for the main layout div.
+   * This is kept for backwards compatibility but the global handler
+   * above will catch most cases, including Portal elements.
    */
   function handleContextMenu(event: MouseEvent): void {
     if (!dev) {

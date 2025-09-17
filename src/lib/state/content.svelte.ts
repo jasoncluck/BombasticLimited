@@ -14,6 +14,7 @@ import type {
   ContentDisplay,
   ContentSelectVariant,
 } from '$lib/components/content/content';
+import { SvelteSet } from 'svelte/reactivity';
 
 export type DragContentType = 'video' | 'playlist' | null;
 
@@ -118,8 +119,191 @@ export class ContentState {
     Set<Promise<{ error?: PostgrestError | null }>>
   >(new Set());
 
+  // Dropdown state validation interval
+  private dropdownValidationInterval: ReturnType<typeof setInterval> | null =
+    null;
+
+  // Click outside listeners cleanup functions
+  private clickOutsideCleanup: (() => void) | null = null;
+  private contextMenuOutsideCleanup: (() => void) | null = null;
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
+    this.startDropdownValidation();
+    this.setupGlobalClickOutsideListener();
+  }
+
+  // Start interval to validate dropdown state against DOM reality
+  private startDropdownValidation(): void {
+    if (typeof window === 'undefined') return; // Skip on server-side
+
+    this.dropdownValidationInterval = setInterval(() => {
+      this.validateDropdownState();
+    }, 250); // Check every 250ms
+  }
+
+  // Check if dropdown/context menu elements are actually visible in the DOM
+  private checkForActiveDropdowns(): boolean {
+    if (typeof document === 'undefined') return false;
+
+    try {
+      // Check for visible dropdown menus (Radix UI patterns)
+      const dropdownMenus = document.querySelectorAll(
+        '[role="menu"][data-state="open"]'
+      );
+      const contextMenus = document.querySelectorAll(
+        '[role="menu"][data-radix-context-menu-content]'
+      );
+      const dropdownContents = document.querySelectorAll(
+        '[data-testid="content-dropdown-content"]'
+      );
+      const contextMenuContents = document.querySelectorAll(
+        '[data-testid="content-context-menu-content"]'
+      );
+
+      const allMenuElements = [
+        ...Array.from(dropdownMenus),
+        ...Array.from(contextMenus),
+        ...Array.from(dropdownContents),
+        ...Array.from(contextMenuContents),
+      ];
+
+      const visibleMenus = allMenuElements.filter((el) => {
+        const style = window.getComputedStyle(el);
+        return (
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          style.opacity !== '0' &&
+          el.getBoundingClientRect().width > 0 &&
+          el.getBoundingClientRect().height > 0
+        );
+      });
+
+      return visibleMenus.length > 0;
+    } catch (error) {
+      console.warn('Error checking for active dropdowns:', error);
+      return false;
+    }
+  }
+
+  // Validate dropdown state against DOM reality and fix mismatches
+  private validateDropdownState(): void {
+    try {
+      const hasActiveDropdowns = this.checkForActiveDropdowns();
+      const stateThingsOpen =
+        this.isDropdownMenuOpen || this.openContextMenuSection !== null;
+
+      // Safety fallback, if state says dropdowns are open but none are actually visible, reset the state
+      if (stateThingsOpen && !hasActiveDropdowns) {
+        // Reset the content state to close dropdowns
+        this.isDropdownMenuOpen = false;
+        this.openDropdownId = null;
+        this.openContextMenuSection = null;
+      }
+    } catch (error) {
+      console.warn('Error validating dropdown state:', error);
+    }
+  }
+
+  // Public method to force dropdown validation (can be called externally if needed)
+  public forceDropdownValidation(): void {
+    this.validateDropdownState();
+  }
+
+  // Setup global click outside listener for context menus
+  private setupGlobalClickOutsideListener(): void {
+    if (typeof document === 'undefined') return;
+
+    // Handle both left clicks and right clicks outside context menus
+    const handleGlobalClick = (event: MouseEvent): void => {
+      // Only handle if a context menu is open
+      if (!this.openContextMenuSection) return;
+
+      const target = event.target as HTMLElement;
+
+      // Check if the click is inside a context menu
+      const isClickingOnContextMenu =
+        target.closest('[data-testid="content-context-menu-content"]') ||
+        target.closest('[role="menu"][data-radix-context-menu-content]') ||
+        target.closest('[data-radix-context-menu-content]');
+
+      // If clicking outside the context menu, close it
+      if (!isClickingOnContextMenu) {
+        this.openContextMenuSection = null;
+
+        // Clear any scheduled context menu close to prevent race conditions
+        if (this.contextMenuCloseScheduled) {
+          clearTimeout(this.contextMenuCloseScheduled);
+          this.contextMenuCloseScheduled = null;
+        }
+      }
+    };
+
+    // Handle context menu events (right clicks)
+    const handleGlobalContextMenu = (event: MouseEvent): void => {
+      // Only handle if a context menu is already open
+      if (!this.openContextMenuSection) return;
+
+      const target = event.target as HTMLElement;
+
+      // Check if the right-click is inside a context menu or on a video element
+      const isClickingOnContextMenu =
+        target.closest('[data-testid="content-context-menu-content"]') ||
+        target.closest('[role="menu"][data-radix-context-menu-content]') ||
+        target.closest('[data-radix-context-menu-content]');
+
+      const isClickingOnVideo =
+        target.closest('[data-video-id]') ||
+        target.closest('[data-testid*="video"]') ||
+        target.closest('.video-item'); // Adjust selector based on your video component structure
+
+      // If right-clicking outside both context menu and video elements, close the context menu
+      if (!isClickingOnContextMenu && !isClickingOnVideo) {
+        event.preventDefault(); // Prevent default context menu from showing
+        this.openContextMenuSection = null;
+
+        // Clear any scheduled context menu close to prevent race conditions
+        if (this.contextMenuCloseScheduled) {
+          clearTimeout(this.contextMenuCloseScheduled);
+          this.contextMenuCloseScheduled = null;
+        }
+      }
+    };
+
+    // Add listeners with capture phase to ensure they run before component handlers
+    document.addEventListener('click', handleGlobalClick, { capture: true });
+    document.addEventListener('contextmenu', handleGlobalContextMenu, {
+      capture: true,
+    });
+
+    // Store cleanup functions
+    this.contextMenuOutsideCleanup = (): void => {
+      document.removeEventListener('click', handleGlobalClick, {
+        capture: true,
+      });
+      document.removeEventListener('contextmenu', handleGlobalContextMenu, {
+        capture: true,
+      });
+    };
+  }
+
+  // Clean up interval when instance is destroyed
+  public destroy(): void {
+    if (this.dropdownValidationInterval) {
+      clearInterval(this.dropdownValidationInterval);
+      this.dropdownValidationInterval = null;
+    }
+
+    // Clean up click outside listeners
+    if (this.clickOutsideCleanup) {
+      this.clickOutsideCleanup();
+      this.clickOutsideCleanup = null;
+    }
+
+    if (this.contextMenuOutsideCleanup) {
+      this.contextMenuOutsideCleanup();
+      this.contextMenuOutsideCleanup = null;
+    }
   }
 
   // Helper methods for tracking pending video operations
@@ -169,6 +353,9 @@ export class ContentState {
   }
 
   resetState(): void {
+    // Destroy any running intervals first
+    this.destroy();
+
     // Reset carousel state
     this.carouselState = { lastViewedIndex: 0 };
 
@@ -222,6 +409,10 @@ export class ContentState {
     if (typeof document !== 'undefined' && document.body) {
       document.body.classList.remove('dragging');
     }
+
+    // Restart dropdown validation and global listeners after reset
+    this.startDropdownValidation();
+    this.setupGlobalClickOutsideListener();
   }
 
   // Reset state for a specific section
@@ -475,18 +666,6 @@ export class ContentState {
         return;
       }
 
-      // If a dropdown is open just close that and don't redirect
-      if (this.isDropdownMenuOpen) {
-        // Close the context menu by clearing the open section
-        this.openContextMenuSection = null;
-
-        // Clear selections from ALL sections, not just the current one
-        this.clearAllSections();
-
-        // Set the clicked video as the new hovered video for the current section
-        this.hoveredVideosBySection[sectionId] = video;
-        return;
-      }
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
@@ -574,8 +753,6 @@ export class ContentState {
         // Get the video being dragged
         const draggedVideo = options.videos[index];
 
-        let videosForDrag: Video[];
-
         // Default behavior - manage selection state
         // Use nullish coalescing to get selected videos for this section
         const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
@@ -587,7 +764,7 @@ export class ContentState {
 
         // If the dragged video is not in selectedVideos, use just the dragged video
         // Otherwise, use the selected videos
-        videosForDrag =
+        const videosForDrag =
           isDraggedVideoSelected && selectedVideos.length > 0
             ? selectedVideos
             : [draggedVideo];
@@ -741,7 +918,7 @@ export class ContentState {
             rangeVideos.push(videos[i]);
           }
 
-          const existingIds = new Set(selectedVideos.map((v) => v.id));
+          const existingIds = new SvelteSet(selectedVideos.map((v) => v.id));
           const newVideos = rangeVideos.filter((v) => !existingIds.has(v.id));
           selectedVideos = [...selectedVideos, ...newVideos];
         }
@@ -899,11 +1076,14 @@ export class ContentState {
     // Use capture phase to ensure our listener runs first
     document.addEventListener('click', handleClickOutside, { capture: true });
 
-    return (): void => {
+    // Store cleanup function
+    this.clickOutsideCleanup = (): void => {
       document.removeEventListener('click', handleClickOutside, {
         capture: true,
       });
     };
+
+    return this.clickOutsideCleanup;
   }
 }
 
