@@ -1,5 +1,6 @@
 <script lang="ts">
   import { type Snippet } from 'svelte';
+  import { performanceMonitor } from '$lib/utils/performance-monitor.js';
 
   interface Props {
     onActive: () => void;
@@ -31,28 +32,46 @@
 
     observer = new IntersectionObserver(
       (entries) => {
-        entries.forEach((entry) => {
-          const shouldActivate =
-            entry.isIntersecting && entry.intersectionRatio >= threshold;
+        performanceMonitor.trackReactiveEffect('intersection-observer-callback', () => {
+          entries.forEach((entry) => {
+            const shouldActivate =
+              entry.isIntersecting && entry.intersectionRatio >= threshold;
 
-          if (shouldActivate && !disableObserver) {
-            if (!isIntersecting) {
-              onActive();
-              isIntersecting = true;
+            if (shouldActivate && !disableObserver) {
+              if (!isIntersecting) {
+                performanceMonitor.trackReactiveEffect('intersection-observer-on-active', () => {
+                  onActive();
+                }, {
+                  intersectionRatio: entry.intersectionRatio,
+                  threshold,
+                });
+                isIntersecting = true;
+              }
+              if (retryOnInterval && !activeInterval) {
+                // Use longer interval to reduce performance impact (increased from 2s to 5s)
+                activeInterval = setInterval(() => {
+                  performanceMonitor.trackReactiveEffect('intersection-observer-retry', () => {
+                    onActive();
+                  }, { intervalRetry: true });
+                }, 5000);
+              }
+            } else {
+              if (isIntersecting && onInactive) {
+                performanceMonitor.trackReactiveEffect('intersection-observer-on-inactive', () => {
+                  onInactive();
+                }, { intersectionRatio: entry.intersectionRatio });
+              }
+              isIntersecting = false;
+              if (activeInterval) {
+                clearInterval(activeInterval);
+                activeInterval = null;
+              }
             }
-            if (retryOnInterval && !activeInterval) {
-              activeInterval = setInterval(() => onActive(), 2000);
-            }
-          } else {
-            if (isIntersecting && onInactive) {
-              onInactive();
-            }
-            isIntersecting = false;
-            if (activeInterval) {
-              clearInterval(activeInterval);
-              activeInterval = null;
-            }
-          }
+          });
+        }, {
+          entriesCount: entries.length,
+          threshold,
+          retryOnInterval,
         });
       },
       { rootMargin: '0px', threshold }
