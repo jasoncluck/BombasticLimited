@@ -5,6 +5,23 @@ const NOTIFICATION_TYPES = [
   'system',
 ] as const satisfies readonly NotificationType[];
 
+// Custom datetime validation that handles both local datetime-local format and ISO strings
+const datetimeString = z
+  .string()
+  .optional()
+  .refine(
+    (value) => {
+      if (!value) return true; // Optional field
+
+      // Try to parse as Date - handles both datetime-local format and ISO strings
+      const date = new Date(value);
+      return !isNaN(date.getTime());
+    },
+    {
+      message: 'Invalid datetime format',
+    }
+  );
+
 export const adminNotificationSchema = z
   .object({
     type: z.enum(NOTIFICATION_TYPES, {
@@ -12,8 +29,8 @@ export const adminNotificationSchema = z
     }),
     title: z.string().min(1, 'Title is required'),
     message: z.string().min(1, 'Message is required'),
-    startDatetime: z.string().optional(),
-    endDatetime: z.string().optional(),
+    startDatetime: datetimeString,
+    endDatetime: datetimeString,
     _action: z.string().optional(),
   })
   .refine(
@@ -26,38 +43,6 @@ export const adminNotificationSchema = z
       const startDate = new Date(data.startDatetime);
       const endDate = new Date(data.endDatetime);
 
-      // Check if start date is valid
-      if (isNaN(startDate.getTime())) {
-        return false;
-      }
-
-      // Check if end date is valid
-      if (isNaN(endDate.getTime())) {
-        return false;
-      }
-
-      return true;
-    },
-    {
-      message: 'Invalid date format provided',
-      path: ['startDatetime'],
-    }
-  )
-  .refine(
-    (data) => {
-      // Only validate if both dates are provided and valid
-      if (!data.startDatetime || !data.endDatetime) {
-        return true;
-      }
-
-      const startDate = new Date(data.startDatetime);
-      const endDate = new Date(data.endDatetime);
-
-      // Skip if dates are invalid (handled by previous refine)
-      if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-        return true;
-      }
-
       // Ensure start date is before end date
       return startDate < endDate;
     },
@@ -68,25 +53,21 @@ export const adminNotificationSchema = z
   )
   .refine(
     (data) => {
-      // Additional validation: ensure start date is not in the past (optional)
+      // Optional validation: ensure start date is not too far in the past
       if (!data.startDatetime) {
         return true;
       }
 
       const startDate = new Date(data.startDatetime);
-      const now = new Date(); // Use current time instead of hardcoded date
+      const now = new Date();
 
-      // Skip if start date is invalid
-      if (isNaN(startDate.getTime())) {
-        return true;
-      }
+      // Allow start dates up to 24 hours in the past for admin flexibility
+      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
 
-      // Allow scheduling notifications in the past for testing/admin purposes
-      // Remove this refinement if you want to allow past dates
-      return startDate >= now;
+      return startDate >= twentyFourHoursAgo;
     },
     {
-      message: 'Start date cannot be in the past',
+      message: 'Start date cannot be more than 24 hours in the past',
       path: ['startDatetime'],
     }
   );

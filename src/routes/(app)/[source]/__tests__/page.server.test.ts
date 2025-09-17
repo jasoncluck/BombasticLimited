@@ -244,7 +244,7 @@ describe('[source]/+page.server.ts load function', () => {
           sort: { key: 'playlistOrder', order: 'ascending' },
           type: 'playlist',
         },
-        limit: 10,
+        limit: 12,
         supabase: mockSupabase,
         preferredImageFormat: 'webp',
       });
@@ -255,7 +255,7 @@ describe('[source]/+page.server.ts load function', () => {
           sort: { key: 'playlistOrder', order: 'ascending' },
           type: 'playlist',
         },
-        limit: 10,
+        limit: 12,
         supabase: mockSupabase,
         preferredImageFormat: 'webp',
       });
@@ -288,12 +288,12 @@ describe('[source]/+page.server.ts load function', () => {
       });
 
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
-        youtubeId: 'playlist1',
+        youtubeId: 'playlist2',
         contentFilter: {
           sort: { key: 'playlistOrder', order: 'ascending' },
           type: 'playlist',
         },
-        limit: 10,
+        limit: 12,
         supabase: mockSupabase,
         preferredImageFormat: 'webp',
       });

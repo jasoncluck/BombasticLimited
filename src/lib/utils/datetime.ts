@@ -21,9 +21,8 @@ export function getTimezoneInfo(): TimezoneInfo {
     timeZoneName: 'short',
     timeZone: timezoneName,
   });
-  const abbreviation =
-    shortFormat.formatToParts(now).find((part) => part.type === 'timeZoneName')
-      ?.value || 'UTC';
+  const abbreviation = shortFormat.formatToParts(now)
+    .find(part => part.type === 'timeZoneName')?.value || 'UTC';
 
   // Get offset
   const offsetMinutes = now.getTimezoneOffset() * -1; // getTimezoneOffset returns negative for ahead of UTC
@@ -41,72 +40,139 @@ export function getTimezoneInfo(): TimezoneInfo {
 }
 
 /**
- * Convert a local datetime string (from datetime-local input) to UTC ISO string
- * @param localDatetime - String in format "YYYY-MM-DDTHH:mm" (from datetime-local input)
- * @returns UTC ISO string suitable for database storage
+ * Format datetime for display
  */
-export function convertLocalToUTC(localDatetime: string): string {
-  if (!localDatetime) return '';
+export function formatDateTime(datetime: string | null): string {
+  if (!datetime) return 'N/A';
 
-  // Create a Date object from the local datetime string
-  // Note: new Date() interprets this as local time
-  const localDate = new Date(localDatetime);
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return 'Invalid Date';
 
-  // Return as UTC ISO string
-  return localDate.toISOString();
+    return date.toLocaleString();
+  } catch {
+    return 'Invalid Date';
+  }
 }
 
 /**
- * Convert a UTC ISO string to local datetime string for datetime-local input
+ * Format datetime for display (short format - date only)
+ */
+export function formatDateTimeShort(datetime: string | null): string {
+  if (!datetime) return 'N/A';
+
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
+    return date.toLocaleDateString();
+  } catch {
+    return 'Invalid Date';
+  }
+}
+
+/**
+ * Format datetime in readable format
+ */
+export function formatDateTimeReadable(datetime: string | null): string {
+  if (!datetime) return 'N/A';
+
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true,
+    });
+  } catch {
+    return 'Invalid Date';
+  }
+}
+
+/**
+ * Get current datetime in the format expected by datetime-local input
+ */
+export function getCurrentLocalDateTime(): string {
+  const now = new Date();
+  return utcToLocalDateTime(now.toISOString());
+}
+
+/**
+ * Convert UTC datetime string to local datetime string for datetime-local input
  * @param utcString - UTC ISO string from database
  * @returns String in format "YYYY-MM-DDTHH:mm" for datetime-local input
  */
-export function convertUTCToLocal(utcString?: string): string {
+export function utcToLocalDateTime(utcString: string | null): string {
   if (!utcString) return '';
 
-  const date = new Date(utcString);
+  try {
+    const date = new Date(utcString);
+    if (isNaN(date.getTime())) return '';
 
-  // Format for datetime-local input (YYYY-MM-DDTHH:mm)
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
+    // Format for datetime-local input (YYYY-MM-DDTHH:mm)
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
 
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Convert local datetime string (from datetime-local input) to UTC ISO string
+ * @param localDatetime - String in format "YYYY-MM-DDTHH:mm" (from datetime-local input)
+ * @returns UTC ISO string suitable for database storage
+ */
+export function localToUtcDateTime(localDatetime: string): string {
+  if (!localDatetime) return '';
+
+  try {
+    // Create a Date object from the local datetime string
+    // Note: new Date() interprets this as local time
+    const localDate = new Date(localDatetime);
+    if (isNaN(localDate.getTime())) return '';
+
+    // Return as UTC ISO string
+    return localDate.toISOString();
+  } catch {
+    return '';
+  }
 }
 
 /**
  * Format a date for display with timezone information
  */
-export function formatDateWithTimezone(
-  date: Date | string,
-  includeSeconds = false
-): string {
-  const dateObj = typeof date === 'string' ? new Date(date) : date;
+export function formatDateWithTimezone(date: Date | string, includeSeconds = false): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return 'Invalid Date';
 
-  const options: Intl.DateTimeFormatOptions = {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  };
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    };
 
-  if (includeSeconds) {
-    options.second = '2-digit';
+    if (includeSeconds) {
+      options.second = '2-digit';
+    }
+
+    return dateObj.toLocaleDateString('en-US', options);
+  } catch {
+    return 'Invalid Date';
   }
-
-  return dateObj.toLocaleDateString('en-US', options);
-}
-
-/**
- * Get the current datetime in the format expected by datetime-local input
- */
-export function getCurrentLocalDatetime(): string {
-  const now = new Date();
-  return convertUTCToLocal(now.toISOString());
 }
 
 /**
@@ -114,8 +180,14 @@ export function getCurrentLocalDatetime(): string {
  */
 export function isInPast(datetimeString: string): boolean {
   if (!datetimeString) return false;
-  const date = new Date(datetimeString);
-  return date.getTime() < Date.now();
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return false;
+    return date.getTime() < Date.now();
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -123,8 +195,14 @@ export function isInPast(datetimeString: string): boolean {
  */
 export function isInFuture(datetimeString: string): boolean {
   if (!datetimeString) return false;
-  const date = new Date(datetimeString);
-  return date.getTime() > Date.now();
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return false;
+    return date.getTime() > Date.now();
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -132,9 +210,15 @@ export function isInFuture(datetimeString: string): boolean {
  */
 export function addMinutes(datetimeString: string, minutes: number): string {
   if (!datetimeString) return '';
-  const date = new Date(datetimeString);
-  date.setMinutes(date.getMinutes() + minutes);
-  return date.toISOString();
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
+    date.setMinutes(date.getMinutes() + minutes);
+    return date.toISOString();
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -142,9 +226,15 @@ export function addMinutes(datetimeString: string, minutes: number): string {
  */
 export function addHours(datetimeString: string, hours: number): string {
   if (!datetimeString) return '';
-  const date = new Date(datetimeString);
-  date.setHours(date.getHours() + hours);
-  return date.toISOString();
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
+    date.setHours(date.getHours() + hours);
+    return date.toISOString();
+  } catch {
+    return '';
+  }
 }
 
 /**
@@ -152,7 +242,27 @@ export function addHours(datetimeString: string, hours: number): string {
  */
 export function addDays(datetimeString: string, days: number): string {
   if (!datetimeString) return '';
-  const date = new Date(datetimeString);
-  date.setDate(date.getDate() + days);
-  return date.toISOString();
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Convert a local datetime string to UTC ISO string (alias for compatibility)
+ */
+export function convertLocalToUTC(localDatetime: string): string {
+  return localToUtcDateTime(localDatetime);
+}
+
+/**
+ * Convert UTC ISO string to local datetime string (alias for compatibility)
+ */
+export function convertUTCToLocal(utcString: string): string {
+  return utcToLocalDateTime(utcString);
 }

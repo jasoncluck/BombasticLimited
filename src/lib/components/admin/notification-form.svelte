@@ -14,13 +14,12 @@
     notificationTypes,
   } from './notification-templates';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { convertUTCToLocal, getTimezoneInfo } from '$lib/utils/datetime';
+  import { getTimezoneInfo, localToUtcDateTime, utcToLocalDateTime } from '$lib/utils/datetime';
   import { showToast } from '$lib/state/notifications.svelte';
   import {
     adminNotificationSchema,
     type AdminNotificationSchema,
   } from '$lib/schema/admin-notification-schema';
-  import { localToUtcDateTime } from '$lib/utils/__tests__/datetime.test';
 
   let {
     form,
@@ -144,6 +143,33 @@
         notificationTypes[0];
     }
   });
+
+  // Local state for datetime inputs (in datetime-local format)
+  let localStartDatetime = $state('');
+  let localEndDatetime = $state('');
+
+  // Sync form data with local datetime inputs
+  $effect(() => {
+    if ($formData.startDatetime) {
+      localStartDatetime = utcToLocalDateTime($formData.startDatetime);
+    }
+    if ($formData.endDatetime) {
+      localEndDatetime = utcToLocalDateTime($formData.endDatetime);
+    }
+  });
+
+  // Update form data when local inputs change
+  function handleStartDatetimeChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    localStartDatetime = target.value;
+    $formData.startDatetime = target.value; // Store as local datetime for form validation
+  }
+
+  function handleEndDatetimeChange(event: Event) {
+    const target = event.target as HTMLInputElement;
+    localEndDatetime = target.value;
+    $formData.endDatetime = target.value; // Store as local datetime for form validation
+  }
 </script>
 
 <Card.Root>
@@ -294,11 +320,8 @@
                   id="startDatetime"
                   name="startDatetime"
                   type="datetime-local"
-                  value={convertUTCToLocal($formData.startDatetime)}
-                  onchange={(e) => {
-                    // Store the local datetime value for display, conversion happens in onSubmit
-                    $formData.startDatetime = e.currentTarget.value;
-                  }}
+                  value={localStartDatetime}
+                  onchange={handleStartDatetimeChange}
                   class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:outline-hiddden flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <p class="text-muted-foreground text-xs">
@@ -324,11 +347,8 @@
                   id="endDatetime"
                   name="endDatetime"
                   type="datetime-local"
-                  value={convertUTCToLocal($formData.endDatetime)}
-                  onchange={(e) => {
-                    // Store the local datetime value for display, conversion happens in onSubmit
-                    $formData.endDatetime = e.currentTarget.value;
-                  }}
+                  value={localEndDatetime}
+                  onchange={handleEndDatetimeChange}
                   class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:outline-hiddden flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
 
@@ -336,7 +356,7 @@
                   When notification should automatically expire ({timezoneInfo.abbreviation})
                 </p>
 
-                {#if !$formData.endDatetime}
+                {#if !localEndDatetime}
                   <p class="text-muted-foreground text-xs">
                     Leave empty for notifications that never expire
                   </p>
