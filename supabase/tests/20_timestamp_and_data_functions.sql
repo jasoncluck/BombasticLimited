@@ -89,12 +89,12 @@ BEGIN
         (test_video_id_2, 'jeffgerstmann', 'Timestamp Test Video 2', 'Another video for timestamp testing', 'https://example.com/timestamp2.jpg', now() - interval '2 days', '30:00')
     ON CONFLICT (id) DO NOTHING;
     
-    -- Create some test timestamps manually
+    -- Create some test timestamps manually with proper bigint ids
     INSERT INTO public.timestamps (id, video_id, video_start_seconds, user_id, created_at)
     VALUES 
-        (gen_random_uuid(), test_video_id_1, 120, test_user_id, now()),
-        (gen_random_uuid(), test_video_id_1, 300, test_user_id, now()),
-        (gen_random_uuid(), test_video_id_2, 60, test_user_id, now());
+        (nextval('timestamps_id_seq'::regclass), test_video_id_1, 120, test_user_id, now()),
+        (nextval('timestamps_id_seq'::regclass), test_video_id_1, 300, test_user_id, now()),
+        (nextval('timestamps_id_seq'::regclass), test_video_id_2, 60, test_user_id, now());
 END;
 $$;
 

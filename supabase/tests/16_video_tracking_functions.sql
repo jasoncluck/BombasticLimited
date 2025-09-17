@@ -40,7 +40,7 @@ SELECT
   has_function (
     'public',
     'start_video_history_session',
-    ARRAY['text'],
+    ARRAY['text', 'timestamp with time zone'],
     'Function start_video_history_session should exist'
   );
 
@@ -64,10 +64,7 @@ SELECT
   has_function (
     'public',
     'calculate_seconds_watched',
-    ARRAY[
-      'timestamp with time zone',
-      'timestamp with time zone'
-    ],
+    ARRAY[]::TEXT[],
     'Function calculate_seconds_watched should exist'
   );
 

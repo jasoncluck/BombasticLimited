@@ -181,12 +181,12 @@ $$;
 -- Test get_playlist_data function
 DO $$
 DECLARE
-    playlist_id bigint;
+    playlist_short_id text;
     playlist_data record;
 BEGIN
-    SELECT id INTO playlist_id FROM public.playlists WHERE name = 'Test Public Playlist';
+    SELECT short_id INTO playlist_short_id FROM public.playlists WHERE name = 'Test Public Playlist';
     
-    SELECT * INTO playlist_data FROM public.get_playlist_data(playlist_id);
+    SELECT * INTO playlist_data FROM public.get_playlist_data(playlist_short_id);
     
     PERFORM ok(
         playlist_data.name = 'Test Public Playlist',

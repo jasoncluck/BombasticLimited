@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (50);
+  plan (55);
 
 -- Test that all recent migration functions are covered
 -- Functions from 2025 migrations that should have test coverage
@@ -49,7 +49,7 @@ SELECT
   has_function (
     'public',
     'start_video_history_session',
-    ARRAY['text'],
+    ARRAY['text', 'timestamp with time zone'],
     'Function start_video_history_session should exist'
   );
 

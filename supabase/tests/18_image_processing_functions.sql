@@ -198,7 +198,7 @@ DECLARE
     cleanup_count integer;
 BEGIN
     -- Add a completed job that's old enough to be cleaned up
-    INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, completed_at, created_at)
+    INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, processing_completed_at, created_at)
     VALUES (gen_random_uuid(), 'video', 'old_video', 'thumbnail', 'https://example.com/old-completed.jpg', 'completed', now() - interval '8 days', now() - interval '8 days')
     ON CONFLICT (id) DO NOTHING;
     

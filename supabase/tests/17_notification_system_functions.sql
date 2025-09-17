@@ -119,14 +119,14 @@ BEGIN
     ON CONFLICT (id) DO NOTHING;
     
     -- Create test notifications manually for testing retrieval functions
-    INSERT INTO public.notifications (id, title, message, notification_type, expires_at, created_at)
+    INSERT INTO public.notifications (title, message, type, end_datetime, created_at)
     VALUES 
-        (gen_random_uuid(), 'Test Notification 1', 'This is a test notification', 'info', now() + interval '1 day', now()),
-        (gen_random_uuid(), 'Test Notification 2', 'This is another test notification', 'warning', now() + interval '2 days', now()),
-        (gen_random_uuid(), 'Expired Notification', 'This notification has expired', 'info', now() - interval '1 day', now() - interval '2 days');
+        ('Test Notification 1', 'This is a test notification', 'info', now() + interval '1 day', now()),
+        ('Test Notification 2', 'This is another test notification', 'warning', now() + interval '2 days', now()),
+        ('Expired Notification', 'This notification has expired', 'info', now() - interval '1 day', now() - interval '2 days');
     
     -- Create user notifications for testing
-    INSERT INTO public.user_notifications (user_id, notification_id, is_read, created_at)
+    INSERT INTO public.user_notifications (user_id, notification_id, read, created_at)
     SELECT 
         test_user_id_1, 
         n.id, 
