@@ -102,7 +102,6 @@
 
   // Watch for URL parameter changes
   $effect(() => {
-    console.log('in effect');
     const searchParamT = page.url.searchParams.get('t');
     const newQueryParamTimestamp = searchParamT
       ? parseInt(searchParamT, 10)

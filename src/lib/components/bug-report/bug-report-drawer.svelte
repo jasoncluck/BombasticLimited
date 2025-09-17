@@ -1,6 +1,6 @@
 <script lang="ts">
   import * as Drawer from '$lib/components/ui/drawer';
-  import { Button, buttonVariants } from '$lib/components/ui/button';
+  import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import { Textarea } from '$lib/components/ui/textarea';
   import { TriangleAlert, Loader, Upload, X, ImageIcon } from '@lucide/svelte';
@@ -26,6 +26,7 @@
   import { untrack } from 'svelte';
   import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import type { Database } from '$lib/supabase/database.types';
+  import type { ZodError } from 'zod';
 
   let {
     open = $bindable(false),
@@ -58,7 +59,7 @@
       return true;
     } catch (error) {
       if (error instanceof Error && 'issues' in error) {
-        const zodError = error as any;
+        const zodError = error as ZodError;
         const newErrors: Partial<Record<keyof BugReportSchema, string>> = {};
 
         for (const issue of zodError.issues) {
@@ -271,8 +272,9 @@
       </Drawer.Header>
     </div>
 
-    <div class="min-h-0 flex-1 overflow-y-auto p-1">
-      <div class="px-4 pb-2">
+    <!-- Scrollable content area -->
+    <div class="min-h-0 flex-1 overflow-y-auto">
+      <div class="p-4">
         <form
           onsubmit={(e) => {
             e.preventDefault();
@@ -417,34 +419,35 @@
               <p class="text-destructive text-sm">{errors.images}</p>
             {/if}
           </div>
-
-          <!-- Submit Buttons -->
-          <div class="flex flex-col gap-2 pt-4">
-            <Drawer.Footer class="drawer-footer flex gap-2">
-              <Button
-                type="submit"
-                class="drawer-button-footer"
-                disabled={isSubmitting}
-              >
-                {#if isSubmitting}
-                  <Loader class="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
-                {:else}
-                  Submit Report
-                {/if}
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                class="drawer-button-footer"
-                onclick={() => (open = false)}
-                disabled={isSubmitting}
-              >
-                Cancel
-              </Button>
-            </Drawer.Footer>
-          </div>
         </form>
+
+        <!-- Action buttons positioned below content but within scrollable area -->
+        <div class="mt-6 border-t pt-4 pb-8">
+          <div class="flex flex-col gap-2">
+            <Button
+              type="submit"
+              onclick={handleSubmit}
+              class="drawer-button-footer"
+              disabled={isSubmitting}
+            >
+              {#if isSubmitting}
+                <Loader class="mr-2 h-4 w-4 animate-spin" />
+                Submitting...
+              {:else}
+                Submit Report
+              {/if}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              class="drawer-button-footer"
+              onclick={() => (open = false)}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   </Drawer.Content>
