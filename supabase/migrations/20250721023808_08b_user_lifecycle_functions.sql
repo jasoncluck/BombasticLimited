@@ -346,7 +346,7 @@ END;
 $$;
 
 -- Updates deleted_at when created_by is set to NULL
-CREATE OR REPLACE FUNCTION public.update_deleted_at_on_created_by_null () RETURNS TRIGGER 
+CREATE OR REPLACE FUNCTION public.update_deleted_at_on_created_by_null () RETURNS TRIGGER
 SET
   search_path = '' AS $$;
 BEGIN

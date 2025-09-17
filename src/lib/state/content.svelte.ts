@@ -122,9 +122,14 @@ export class ContentState {
   private dropdownValidationInterval: ReturnType<typeof setInterval> | null =
     null;
 
+  // Click outside listeners cleanup functions
+  private clickOutsideCleanup: (() => void) | null = null;
+  private contextMenuOutsideCleanup: (() => void) | null = null;
+
   constructor(pageState: PageState) {
     this.pageState = pageState;
     this.startDropdownValidation();
+    this.setupGlobalClickOutsideListener();
   }
 
   // Start interval to validate dropdown state against DOM reality
@@ -204,11 +209,93 @@ export class ContentState {
     this.validateDropdownState();
   }
 
+  // Setup global click outside listener for context menus
+  private setupGlobalClickOutsideListener(): void {
+    if (typeof document === 'undefined') return;
+
+    // Handle both left clicks and right clicks outside context menus
+    const handleGlobalClick = (event: MouseEvent): void => {
+      // Only handle if a context menu is open
+      if (!this.openContextMenuSection) return;
+
+      const target = event.target as HTMLElement;
+      
+      // Check if the click is inside a context menu
+      const isClickingOnContextMenu = 
+        target.closest('[data-testid="content-context-menu-content"]') ||
+        target.closest('[role="menu"][data-radix-context-menu-content]') ||
+        target.closest('[data-radix-context-menu-content]');
+
+      // If clicking outside the context menu, close it
+      if (!isClickingOnContextMenu) {
+        this.openContextMenuSection = null;
+        
+        // Clear any scheduled context menu close to prevent race conditions
+        if (this.contextMenuCloseScheduled) {
+          clearTimeout(this.contextMenuCloseScheduled);
+          this.contextMenuCloseScheduled = null;
+        }
+      }
+    };
+
+    // Handle context menu events (right clicks)
+    const handleGlobalContextMenu = (event: MouseEvent): void => {
+      // Only handle if a context menu is already open
+      if (!this.openContextMenuSection) return;
+
+      const target = event.target as HTMLElement;
+      
+      // Check if the right-click is inside a context menu or on a video element
+      const isClickingOnContextMenu = 
+        target.closest('[data-testid="content-context-menu-content"]') ||
+        target.closest('[role="menu"][data-radix-context-menu-content]') ||
+        target.closest('[data-radix-context-menu-content]');
+        
+      const isClickingOnVideo = 
+        target.closest('[data-video-id]') ||
+        target.closest('[data-testid*="video"]') ||
+        target.closest('.video-item'); // Adjust selector based on your video component structure
+
+      // If right-clicking outside both context menu and video elements, close the context menu
+      if (!isClickingOnContextMenu && !isClickingOnVideo) {
+        event.preventDefault(); // Prevent default context menu from showing
+        this.openContextMenuSection = null;
+        
+        // Clear any scheduled context menu close to prevent race conditions
+        if (this.contextMenuCloseScheduled) {
+          clearTimeout(this.contextMenuCloseScheduled);
+          this.contextMenuCloseScheduled = null;
+        }
+      }
+    };
+
+    // Add listeners with capture phase to ensure they run before component handlers
+    document.addEventListener('click', handleGlobalClick, { capture: true });
+    document.addEventListener('contextmenu', handleGlobalContextMenu, { capture: true });
+
+    // Store cleanup functions
+    this.contextMenuOutsideCleanup = (): void => {
+      document.removeEventListener('click', handleGlobalClick, { capture: true });
+      document.removeEventListener('contextmenu', handleGlobalContextMenu, { capture: true });
+    };
+  }
+
   // Clean up interval when instance is destroyed
   public destroy(): void {
     if (this.dropdownValidationInterval) {
       clearInterval(this.dropdownValidationInterval);
       this.dropdownValidationInterval = null;
+    }
+
+    // Clean up click outside listeners
+    if (this.clickOutsideCleanup) {
+      this.clickOutsideCleanup();
+      this.clickOutsideCleanup = null;
+    }
+
+    if (this.contextMenuOutsideCleanup) {
+      this.contextMenuOutsideCleanup();
+      this.contextMenuOutsideCleanup = null;
     }
   }
 
@@ -316,8 +403,9 @@ export class ContentState {
       document.body.classList.remove('dragging');
     }
 
-    // Restart dropdown validation after reset
+    // Restart dropdown validation and global listeners after reset
     this.startDropdownValidation();
+    this.setupGlobalClickOutsideListener();
   }
 
   // Reset state for a specific section
@@ -995,11 +1083,14 @@ export class ContentState {
     // Use capture phase to ensure our listener runs first
     document.addEventListener('click', handleClickOutside, { capture: true });
 
-    return (): void => {
+    // Store cleanup function
+    this.clickOutsideCleanup = (): void => {
       document.removeEventListener('click', handleClickOutside, {
         capture: true,
       });
     };
+
+    return this.clickOutsideCleanup;
   }
 }
 

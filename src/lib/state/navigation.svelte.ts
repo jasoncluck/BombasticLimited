@@ -292,7 +292,7 @@ export class NavigationStateClass implements NavigationState {
 
     // Don't force sync if this was triggered by our own internal navigation
     const shouldAllowForcedSync = force && !this.wasInternalNavigation;
-    
+
     const shouldSyncToInput =
       shouldAllowForcedSync ||
       (!this.isUserTyping && !this.isSearching && timeSinceLastInput > 3000); // Longer grace period
@@ -604,7 +604,7 @@ export class NavigationStateClass implements NavigationState {
 
         // Mark as internal navigation before goto
         this.wasInternalNavigation = true;
-        
+
         // Only navigate to "/" if we're still in the empty state
         await goto(`/`, { keepFocus: true, replaceState: false });
       } else if (searchValue.length >= 2) {
