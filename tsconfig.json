@@ -7,11 +7,23 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "lib": [
+      "DOM",
+      "DOM.Iterable",
+      "ES2022"
+    ],
     "sourceMap": true,
     "strict": true,
     "moduleResolution": "bundler",
-    "types": ["youtube", "vitest/globals", "@testing-library/jest-dom"]
+    "types": [
+      "youtube",
+      "vitest/globals",
+      "@testing-library/jest-dom"
+    ]
   },
-  "exclude": ["node_modules", "dist", "build"]
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build"
+  ]
 }
