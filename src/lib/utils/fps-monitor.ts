@@ -239,7 +239,7 @@ export const fpsMonitor = new FPSMonitor();
  * Hook for Svelte components to monitor FPS
  */
 export function useFPSMonitor() {
-  let metrics = $state<FPSMetrics | null>(null);
+  let metrics: FPSMetrics | null = null;
   let unsubscribe: (() => void) | null = null;
 
   function start() {

@@ -11,6 +11,7 @@
 
   // FPS monitoring
   const fpsMonitor = useFPSMonitor();
+  let fpsMetrics = $state<any>(null);
   
   // Performance data
   let performanceSummary = $state(performanceMonitor.getSummary());
@@ -26,6 +27,13 @@
     // Start FPS monitoring
     fpsMonitor.start();
     
+    // Subscribe to FPS updates
+    const fpsUnsubscribe = performanceMonitor.subscribe((metric) => {
+      if (metric.name === 'fps-measurement') {
+        fpsMetrics = fpsMonitor.metrics;
+      }
+    });
+    
     // Setup auto-refresh
     if (autoRefresh) {
       startAutoRefresh();
@@ -36,6 +44,7 @@
 
     return () => {
       fpsMonitor.stop();
+      fpsUnsubscribe();
       if (refreshInterval) {
         clearInterval(refreshInterval);
       }
@@ -61,6 +70,7 @@
   function refreshData() {
     performanceSummary = performanceMonitor.getSummary();
     recentMetrics = performanceMonitor.getMetrics(undefined, Date.now() - 30000); // Last 30 seconds
+    fpsMetrics = fpsMonitor.metrics;
     getServiceWorkerMetrics();
   }
 
@@ -192,24 +202,24 @@
               <!-- FPS Status -->
               <div class="bg-gray-50 rounded-lg p-4">
                 <h3 class="font-medium text-gray-900 mb-2">FPS Performance</h3>
-                {#if fpsMonitor.metrics}
+                {#if fpsMetrics}
                   <div class="space-y-2 text-sm">
                     <div class="flex justify-between">
                       <span>Current FPS:</span>
                       <span class={getStatusColor(fpsMonitor.getStatus())}>
-                        {fpsMonitor.metrics.currentFPS.toFixed(1)}
+                        {fpsMetrics.currentFPS.toFixed(1)}
                       </span>
                     </div>
                     <div class="flex justify-between">
                       <span>Average FPS:</span>
                       <span class={getStatusColor(fpsMonitor.getStatus())}>
-                        {fpsMonitor.metrics.averageFPS.toFixed(1)}
+                        {fpsMetrics.averageFPS.toFixed(1)}
                       </span>
                     </div>
                     <div class="flex justify-between">
                       <span>Frame Drops:</span>
-                      <span class={fpsMonitor.metrics.frameDrops > 0 ? 'text-red-600' : 'text-green-600'}>
-                        {fpsMonitor.metrics.frameDrops}
+                      <span class={fpsMetrics.frameDrops > 0 ? 'text-red-600' : 'text-green-600'}>
+                        {fpsMetrics.frameDrops}
                       </span>
                     </div>
                     <div class="flex justify-between">
@@ -280,30 +290,30 @@
           {:else if selectedTab === 'fps'}
             <div class="space-y-4">
               <h3 class="font-medium text-gray-900">FPS Monitor Details</h3>
-              {#if fpsMonitor.metrics}
+              {#if fpsMetrics}
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   <div class="bg-gray-50 rounded-lg p-4">
                     <h4 class="font-medium text-gray-900 mb-3">Current Metrics</h4>
                     <div class="space-y-2 text-sm">
                       <div class="flex justify-between">
                         <span>Current FPS:</span>
-                        <span class="font-mono">{fpsMonitor.metrics.currentFPS.toFixed(2)}</span>
+                        <span class="font-mono">{fpsMetrics.currentFPS.toFixed(2)}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Average FPS:</span>
-                        <span class="font-mono">{fpsMonitor.metrics.averageFPS.toFixed(2)}</span>
+                        <span class="font-mono">{fpsMetrics.averageFPS.toFixed(2)}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Min FPS:</span>
-                        <span class="font-mono">{fpsMonitor.metrics.minFPS.toFixed(2)}</span>
+                        <span class="font-mono">{fpsMetrics.minFPS.toFixed(2)}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Max FPS:</span>
-                        <span class="font-mono">{fpsMonitor.metrics.maxFPS.toFixed(2)}</span>
+                        <span class="font-mono">{fpsMetrics.maxFPS.toFixed(2)}</span>
                       </div>
                       <div class="flex justify-between">
                         <span>Frame Drops:</span>
-                        <span class="font-mono">{fpsMonitor.metrics.frameDrops}</span>
+                        <span class="font-mono">{fpsMetrics.frameDrops}</span>
                       </div>
                     </div>
                   </div>
