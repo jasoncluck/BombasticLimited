@@ -30,6 +30,8 @@ safeguard your information when you visit our website and use our services.
 
 - **Playlist Data**: Playlists you create, modify, or interact with
 - **User Preferences**: UI settings such as sidebar state
+- **Video Interaction Data**: Which videos you watch, watch duration, and
+  playback preferences
 - **Technical Data**: Error reports, performance metrics (collected anonymously
   via PostHog in cookieless mode)
 
@@ -47,6 +49,7 @@ We use your information to:
 - Provide, maintain, and improve our services
 - Process your account registration and authentication
 - Store and manage your playlists and preferences
+- Track video interactions to improve recommendations and user experience
 - Analyze usage patterns to enhance user experience (anonymized)
 - Respond to customer support inquiries
 - Ensure security and prevent fraud
@@ -96,7 +99,6 @@ We use the following third-party services:
 
 - **Supabase**: Database and authentication services
 - **PostHog**: Analytics and error tracking (configured in cookieless mode)
-- **Google AdSense**: Advertising (with EU consent mechanisms)
 - **YouTube API**: Video content integration
 - **Twitch API**: Stream content integration
 
