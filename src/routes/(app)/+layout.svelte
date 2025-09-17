@@ -389,9 +389,9 @@
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Add global context menu handler to catch events from Portal elements
-    document.addEventListener('contextmenu', handleGlobalContextMenu, {
-      capture: true, // Use capture phase to intercept before any Portal elements
-    });
+    // document.addEventListener('contextmenu', handleGlobalContextMenu, {
+    //   capture: true, // Use capture phase to intercept before any Portal elements
+    // });
 
     // Return cleanup function
     return () => {
