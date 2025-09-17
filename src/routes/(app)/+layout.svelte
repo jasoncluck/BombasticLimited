@@ -4,7 +4,6 @@
   import Loader from '$lib/components/loader.svelte';
   import MainNavigation from '$lib/components/layout/navigation/main-navigation.svelte';
   import ResizableLayout from '$lib/components/layout/content/resizable-layout.svelte';
-  import PerformanceDebug from '$lib/components/debug/performance-debug.svelte';
 
   import type { Snapshot } from './$types.js';
   import type { ScrollPosition } from '$lib/state/page.svelte.js';
@@ -25,7 +24,6 @@
   } from '$lib/components/layout/index.js';
   import { dev } from '$app/environment';
   import { setSidebarState } from '$lib/state/sidebar.svelte.js';
-  import { performanceMonitor } from '$lib/utils/performance-monitor.js';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -302,74 +300,46 @@
 
   // React to session changes and trigger data refresh when user logs in/out
   $effect(() => {
-    performanceMonitor.trackReactiveEffect('layout-auth-state-change', () => {
-      if (isHydrated) {
-        const currentAuthState = !!session;
+    if (isHydrated) {
+      const currentAuthState = !!session;
 
-        // Initialize on first run
-        if (lastKnownAuthState === null) {
-          lastKnownAuthState = currentAuthState;
-          return;
-        }
-
-        // Check if auth state actually changed
-        if (lastKnownAuthState !== currentAuthState) {
-          lastKnownAuthState = currentAuthState;
-
-          // Trigger data refresh when auth state changes
-          performDataRefresh(
-            currentAuthState ? 'user logged in' : 'user logged out',
-            true // Include auth invalidation
-          );
-        }
+      // Initialize on first run
+      if (lastKnownAuthState === null) {
+        lastKnownAuthState = currentAuthState;
+        return;
       }
-    }, {
-      session: !!session,
-      isHydrated,
-      lastKnownAuthState
-    });
+
+      // Check if auth state actually changed
+      if (lastKnownAuthState !== currentAuthState) {
+        lastKnownAuthState = currentAuthState;
+
+        // Trigger data refresh when auth state changes
+        performDataRefresh(
+          currentAuthState ? 'user logged in' : 'user logged out',
+          true // Include auth invalidation
+        );
+      }
+    }
   });
 
-  // 5-minute periodic sync interval with auth error handling (optimized)
+  // 5-minute periodic sync interval with auth error handling
   $effect(() => {
     if (!session || !isHydrated) return;
 
-    // Use longer interval during low activity periods
-    const getIntervalDuration = () => {
-      return document.hidden ? 600000 : 300000; // 10 minutes when hidden, 5 minutes when visible
-    };
-
-    let interval = setInterval(async () => {
+    const interval = setInterval(async () => {
       // Only sync if tab is visible and user is authenticated
       if (!document.hidden && session) {
         try {
-          await performDataRefresh('periodic-interval', false);
+          await performDataRefresh('5-minute interval', false);
         } catch (error) {
           // Handle potential auth errors during periodic sync
-          await handleAuthError(error, 'periodic interval sync');
+          await handleAuthError(error, '5-minute interval sync');
         }
       }
-    }, getIntervalDuration());
-
-    // Adjust interval based on visibility changes
-    const handleVisibilityChange = () => {
-      clearInterval(interval);
-      interval = setInterval(async () => {
-        if (!document.hidden && session) {
-          try {
-            await performDataRefresh('periodic-interval', false);
-          } catch (error) {
-            await handleAuthError(error, 'periodic interval sync');
-          }
-        }
-      }, getIntervalDuration());
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    }, 300000); // 5 minutes = 300,000ms
 
     return () => {
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   });
 
@@ -519,7 +489,4 @@
       {@render children()}
     </ResizableLayout>
   {/if}
-
-  <!-- Performance Debug Component (only in development) -->
-  <PerformanceDebug />
 </div>
