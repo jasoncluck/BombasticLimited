@@ -54,14 +54,6 @@ These cookies enhance your experience but are not strictly necessary:
 - **Cookies**: None
 - **Data**: Only anonymous, aggregated statistics
 
-### Google AdSense
-
-- **Status**: EU consent mechanisms active
-- **Purpose**: Display relevant advertisements
-- **Cookies**: Managed by Google with EU consent dialog
-- **Control**: EU users receive consent prompts per
-  [Google's policy](https://support.google.com/adsense/answer/7666366?hl=en)
-
 ### YouTube/Twitch Embeds
 
 - **Purpose**: Video and stream content display
@@ -75,8 +67,8 @@ banner** because:
 
 1. **Essential cookies only**: Authentication and basic functionality
 2. **No tracking cookies**: PostHog operates in cookieless mode
-3. **Third-party consent**: Google AdSense handles its own EU consent
-4. **Functional cookies**: Sidebar preferences enhance user experience
+3. **Functional cookies**: Sidebar preferences enhance user experience
+4. **Third-party embeds**: Only load when you interact with content
 
 ## Managing Cookies
 

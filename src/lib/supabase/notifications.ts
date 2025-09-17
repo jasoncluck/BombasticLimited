@@ -325,14 +325,22 @@ export async function createNotification({
     end_datetime?: string;
   };
 }): Promise<{ data: number | null; error: PostgrestError | null }> {
+  // Ensure datetime strings are in UTC format
+  const startDatetime = params.start_datetime
+    ? ensureUTCFormat(params.start_datetime)
+    : undefined;
+  const endDatetime = params.end_datetime
+    ? ensureUTCFormat(params.end_datetime)
+    : undefined;
+
   const { data, error } = await supabase.rpc('create_notification', {
     target_user_ids: params.user_id ? [params.user_id] : [],
     notification_message: params.message,
     notification_title: params.title,
     notification_type: params.type,
     notification_is_test: params.is_test ?? false,
-    notification_end_datetime: params.end_datetime,
-    notification_start_datetime: params.start_datetime,
+    notification_end_datetime: endDatetime,
+    notification_start_datetime: startDatetime,
     notification_metadata: params.metadata,
     notification_action_url: params.action_url,
   });
@@ -391,6 +399,14 @@ export async function createNotificationForAllUsers({
     end_datetime?: string;
   };
 }): Promise<{ data: number | null; error: PostgrestError | null }> {
+  // Ensure datetime strings are in UTC format
+  const startDatetime = params.start_datetime
+    ? ensureUTCFormat(params.start_datetime)
+    : undefined;
+  const endDatetime = params.end_datetime
+    ? ensureUTCFormat(params.end_datetime)
+    : undefined;
+
   const { data, error } = await supabase.rpc(
     'create_notification_for_all_users',
     {
@@ -400,8 +416,8 @@ export async function createNotificationForAllUsers({
       notification_metadata: params.metadata || {},
       notification_action_url: params.action_url,
       notification_is_test: params.is_test ?? false,
-      notification_start_datetime: params.start_datetime,
-      notification_end_datetime: params.end_datetime,
+      notification_start_datetime: startDatetime,
+      notification_end_datetime: endDatetime,
     }
   );
 
@@ -413,6 +429,21 @@ export async function createNotificationForAllUsers({
   }
 
   return { data, error };
+}
+
+/**
+ * Ensure a datetime string is in proper UTC format
+ */
+function ensureUTCFormat(datetimeString: string): string {
+  if (!datetimeString) return '';
+
+  try {
+    const date = new Date(datetimeString);
+    return date.toISOString();
+  } catch (error) {
+    console.error('Invalid datetime string:', datetimeString, error);
+    return '';
+  }
 }
 
 /**

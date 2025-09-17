@@ -3,13 +3,13 @@
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
   import { Loader, Trash2, Activity } from '@lucide/svelte';
-  import { formatDateTimeShort } from '$lib/utils/datetime';
   import type { Database } from '$lib/supabase/database.types';
   import {
     isNotificationCleanupLog,
     isNotificationRemovedLog,
     isUserNotificationDismissedLog,
   } from '$lib/supabase/notifications';
+  import { formatDateWithTimezone } from '$lib/utils/datetime';
 
   type SystemLogRow = Database['public']['Tables']['system_logs']['Row'];
 
@@ -120,7 +120,7 @@
                     .replace(/\b\w/g, (l) => l.toUpperCase())}</span
                 >
                 <span class="text-muted-foreground text-xs">
-                  {formatDateTimeShort(log.created_at)}
+                  {formatDateWithTimezone(log.created_at)}
                 </span>
               </div>
               {#if log.details && typeof log.details === 'object'}

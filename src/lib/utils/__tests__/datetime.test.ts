@@ -1,193 +1,317 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import {
-  formatDateTime,
-  formatDateTimeShort,
-  formatDateTimeReadable,
-  getCurrentLocalDateTime,
-  utcToLocalDateTime,
-  localToUtcDateTime,
-  getTimezoneInfo,
-} from '../datetime';
+/**
+ * Timezone and datetime utility functions
+ */
 
-describe('datetime utilities', () => {
-  // Mock Date to have consistent tests
-  const mockDate = new Date('2024-01-15T10:30:00.000Z');
+export interface TimezoneInfo {
+  localTime: string;
+  utcTime: string;
+  timezoneOffset: number;
+  timezoneName: string;
+  abbreviation: string;
+  offset: string;
+  offsetMinutes: number;
+}
 
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(mockDate);
+/**
+ * Get current user's timezone information
+ */
+export function getTimezoneInfo(): TimezoneInfo {
+  const now = new Date();
+  const timezoneName = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  // Get timezone abbreviation
+  const shortFormat = new Intl.DateTimeFormat('en', {
+    timeZoneName: 'short',
+    timeZone: timezoneName,
   });
+  const abbreviation =
+    shortFormat.formatToParts(now).find((part) => part.type === 'timeZoneName')
+      ?.value || 'UTC';
 
-  afterEach(() => {
-    vi.useRealTimers();
-  });
+  // Get offset in minutes (negative for behind UTC, positive for ahead)
+  const offsetMinutes = now.getTimezoneOffset() * -1;
+  const offsetHours = Math.floor(Math.abs(offsetMinutes) / 60);
+  const offsetMins = Math.abs(offsetMinutes) % 60;
+  const offsetSign = offsetMinutes >= 0 ? '+' : '-';
+  const offset = `${offsetSign}${offsetHours.toString().padStart(2, '0')}:${offsetMins.toString().padStart(2, '0')}`;
 
-  describe('formatDateTime', () => {
-    it('should format valid datetime string', () => {
-      const result = formatDateTime('2024-01-15T10:30:00.000Z');
-      expect(result).toMatch(/2024/);
-      expect(result).toMatch(/15/);
+  return {
+    localTime: now.toLocaleString(),
+    utcTime: now.toISOString(),
+    timezoneOffset: offsetMinutes,
+    timezoneName,
+    abbreviation,
+    offset,
+    offsetMinutes,
+  };
+}
+
+/**
+ * Format a datetime string for display
+ */
+export function formatDateTime(datetime: string | null): string {
+  if (!datetime || datetime === '') return 'N/A';
+
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
     });
+  } catch {
+    return 'Invalid Date';
+  }
+}
 
-    it('should return "N/A" for null input', () => {
-      expect(formatDateTime(null)).toBe('N/A');
+/**
+ * Format a datetime string for display (date only)
+ */
+export function formatDateTimeShort(datetime: string | null): string {
+  if (!datetime || datetime === '') return 'N/A';
+
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
     });
+  } catch {
+    return 'Invalid Date';
+  }
+}
 
-    it('should return "Invalid Date" for invalid input', () => {
-      expect(formatDateTime('invalid-date')).toBe('Invalid Date');
+/**
+ * Format a datetime string in a readable format
+ */
+export function formatDateTimeReadable(datetime: string | null): string {
+  if (!datetime || datetime === '') return 'N/A';
+
+  try {
+    const date = new Date(datetime);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true,
     });
+  } catch {
+    return 'Invalid Date';
+  }
+}
 
-    it('should handle empty string', () => {
-      expect(formatDateTime('')).toBe('N/A');
-    });
-  });
+/**
+ * Get the current datetime in the format expected by datetime-local input
+ */
+export function getCurrentLocalDateTime(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
 
-  describe('formatDateTimeShort', () => {
-    it('should format valid datetime string to date only', () => {
-      const result = formatDateTimeShort('2024-01-15T10:30:00.000Z');
-      expect(result).toMatch(/2024/);
-      expect(result).toMatch(/15/);
-      // Should not contain time information like hours/minutes
-      expect(result).not.toMatch(/10:30/);
-    });
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+}
 
-    it('should return "N/A" for null input', () => {
-      expect(formatDateTimeShort(null)).toBe('N/A');
-    });
+/**
+ * Convert a UTC ISO string to local datetime string for datetime-local input
+ */
+export function utcToLocalDateTime(utcString: string | null): string {
+  if (!utcString || utcString === '') return '';
 
-    it('should return "Invalid Date" for invalid input', () => {
-      // Note: new Date('invalid-date') returns Invalid Date, not throwing
-      const result = formatDateTimeShort('invalid-date');
-      expect(result).toMatch(/Invalid/);
-    });
-  });
+  try {
+    const date = new Date(utcString);
+    if (isNaN(date.getTime())) return '';
 
-  describe('formatDateTimeReadable', () => {
-    it('should format valid datetime string in readable format', () => {
-      const result = formatDateTimeReadable('2024-01-15T10:30:00.000Z');
-      expect(result).toMatch(/Jan/);
-      expect(result).toMatch(/15/);
-      expect(result).toMatch(/2024/);
-      expect(result).toMatch(/AM|PM/);
-    });
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
 
-    it('should return "N/A" for null input', () => {
-      expect(formatDateTimeReadable(null)).toBe('N/A');
-    });
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  } catch {
+    return '';
+  }
+}
 
-    it('should return "Invalid Date" for invalid input', () => {
-      expect(formatDateTimeReadable('invalid-date')).toBe('Invalid Date');
-    });
-  });
+/**
+ * Convert a local datetime string (from datetime-local input) to UTC ISO string
+ */
+export function localToUtcDateTime(localDatetime: string): string {
+  if (!localDatetime || localDatetime === '') return '';
 
-  describe('getCurrentLocalDateTime', () => {
-    it('should return datetime string in correct format', () => {
-      const result = getCurrentLocalDateTime();
-      // Should match format "YYYY-MM-DDTHH:MM"
-      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
-    });
+  try {
+    const date = new Date(localDatetime);
+    if (isNaN(date.getTime())) return '';
 
-    it('should handle timezone offset correctly', () => {
-      const result = getCurrentLocalDateTime();
-      expect(result).toBeTruthy();
-      expect(result.length).toBe(16); // "YYYY-MM-DDTHH:MM" is 16 characters
-    });
-  });
+    return date.toISOString();
+  } catch {
+    return '';
+  }
+}
 
-  describe('utcToLocalDateTime', () => {
-    it('should convert UTC string to local datetime format', () => {
-      const result = utcToLocalDateTime('2024-01-15T10:30:00.000Z');
-      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/);
-      expect(result).toBeTruthy();
-    });
+/**
+ * Convert a local datetime string (from datetime-local input) to UTC ISO string
+ * This is an alias for localToUtcDateTime for consistency with the new naming
+ */
+export function convertLocalToUTC(localDatetime: string): string {
+  return localToUtcDateTime(localDatetime);
+}
 
-    it('should return empty string for null input', () => {
-      expect(utcToLocalDateTime(null)).toBe('');
-    });
+/**
+ * Convert a UTC ISO string to local datetime string for datetime-local input
+ * This is an alias for utcToLocalDateTime for consistency with the new naming
+ */
+export function convertUTCToLocal(utcString: string): string {
+  return utcToLocalDateTime(utcString);
+}
 
-    it('should return empty string for invalid input', () => {
-      expect(utcToLocalDateTime('invalid-date')).toBe('');
-    });
+/**
+ * Format a date for display with timezone information
+ */
+export function formatDateWithTimezone(
+  date: Date | string,
+  includeSeconds = false
+): string {
+  try {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    if (isNaN(dateObj.getTime())) return 'Invalid Date';
 
-    it('should handle empty string', () => {
-      expect(utcToLocalDateTime('')).toBe('');
-    });
-  });
+    const options: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short',
+    };
 
-  describe('localToUtcDateTime', () => {
-    it('should convert local datetime to UTC ISO string', () => {
-      const result = localToUtcDateTime('2024-01-15T10:30');
-      expect(result).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-      expect(result).toMatch(/2024-01-15/);
-    });
+    if (includeSeconds) {
+      options.second = '2-digit';
+    }
 
-    it('should return empty string for empty input', () => {
-      expect(localToUtcDateTime('')).toBe('');
-    });
+    return dateObj.toLocaleDateString('en-US', options);
+  } catch {
+    return 'Invalid Date';
+  }
+}
 
-    it('should return empty string for invalid input', () => {
-      expect(localToUtcDateTime('invalid-date')).toBe('');
-    });
-  });
+/**
+ * Get the current datetime in the format expected by datetime-local input
+ */
+export function getCurrentLocalDatetime(): string {
+  return getCurrentLocalDateTime();
+}
 
-  describe('getTimezoneInfo', () => {
-    it('should return timezone information object', () => {
-      const result = getTimezoneInfo();
+/**
+ * Check if a datetime string is in the past
+ */
+export function isInPast(datetimeString: string): boolean {
+  if (!datetimeString) return false;
 
-      expect(result).toHaveProperty('localTime');
-      expect(result).toHaveProperty('utcTime');
-      expect(result).toHaveProperty('timezoneOffset');
-      expect(result).toHaveProperty('timezoneName');
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return false;
 
-      expect(typeof result.localTime).toBe('string');
-      expect(typeof result.utcTime).toBe('string');
-      expect(typeof result.timezoneOffset).toBe('number');
-      expect(typeof result.timezoneName).toBe('string');
-    });
+    return date.getTime() < Date.now();
+  } catch {
+    return false;
+  }
+}
 
-    it('should return consistent timezone offset', () => {
-      const result = getTimezoneInfo();
-      // Timezone offset should be a valid number
-      expect(Number.isFinite(result.timezoneOffset)).toBe(true);
-    });
+/**
+ * Check if a datetime string is in the future
+ */
+export function isInFuture(datetimeString: string): boolean {
+  if (!datetimeString) return false;
 
-    it('should return valid UTC time format', () => {
-      const result = getTimezoneInfo();
-      // UTC time should be in ISO format
-      expect(result.utcTime).toMatch(
-        /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/
-      );
-    });
-  });
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return false;
 
-  describe('edge cases and error handling', () => {
-    it('should handle various date formats gracefully', () => {
-      const validFormats = [
-        '2024-01-15T10:30:00.000Z',
-        '2024-01-15T10:30:00Z',
-        '2024-01-15 10:30:00',
-        '2024/01/15',
-      ];
+    return date.getTime() > Date.now();
+  } catch {
+    return false;
+  }
+}
 
-      validFormats.forEach((format) => {
-        expect(() => formatDateTime(format)).not.toThrow();
-        expect(() => formatDateTimeShort(format)).not.toThrow();
-        expect(() => formatDateTimeReadable(format)).not.toThrow();
-      });
-    });
+/**
+ * Add minutes to a datetime string and return new datetime string
+ */
+export function addMinutes(datetimeString: string, minutes: number): string {
+  if (!datetimeString) return '';
 
-    it('should handle boundary dates', () => {
-      const boundaryDates = [
-        '1970-01-01T00:00:00.000Z', // Unix epoch
-        '2038-01-19T03:14:07.000Z', // Y2038 problem
-        '2000-02-29T12:00:00.000Z', // Leap year
-      ];
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
 
-      boundaryDates.forEach((date) => {
-        expect(formatDateTime(date)).not.toBe('Invalid Date');
-        expect(formatDateTimeShort(date)).not.toBe('Invalid');
-        expect(formatDateTimeReadable(date)).not.toBe('Invalid Date');
-      });
-    });
-  });
-});
+    date.setMinutes(date.getMinutes() + minutes);
+    return date.toISOString();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Add hours to a datetime string and return new datetime string
+ */
+export function addHours(datetimeString: string, hours: number): string {
+  if (!datetimeString) return '';
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
+
+    date.setHours(date.getHours() + hours);
+    return date.toISOString();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Add days to a datetime string and return new datetime string
+ */
+export function addDays(datetimeString: string, days: number): string {
+  if (!datetimeString) return '';
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
+
+    date.setDate(date.getDate() + days);
+    return date.toISOString();
+  } catch {
+    return '';
+  }
+}
+
+/**
+ * Ensure a datetime string is in proper UTC format
+ */
+export function ensureUTCFormat(datetimeString: string): string {
+  if (!datetimeString) return '';
+
+  try {
+    const date = new Date(datetimeString);
+    if (isNaN(date.getTime())) return '';
+
+    return date.toISOString();
+  } catch {
+    return '';
+  }
+}

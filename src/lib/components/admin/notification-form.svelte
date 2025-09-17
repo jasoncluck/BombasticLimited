@@ -14,12 +14,13 @@
     notificationTypes,
   } from './notification-templates';
   import { zodClient } from 'sveltekit-superforms/adapters';
-  import { getTimezoneInfo } from '$lib/utils/datetime';
+  import { convertUTCToLocal, getTimezoneInfo } from '$lib/utils/datetime';
   import { showToast } from '$lib/state/notifications.svelte';
   import {
     adminNotificationSchema,
     type AdminNotificationSchema,
   } from '$lib/schema/admin-notification-schema';
+  import { localToUtcDateTime } from '$lib/utils/__tests__/datetime.test';
 
   let {
     form,
@@ -42,6 +43,24 @@
     onSubmit({ formData }) {
       const action = formData.get('_action')?.toString() || '';
       currentAction = action;
+
+      // Convert local datetime inputs to UTC before submitting
+      const startDatetime = formData.get('startDatetime')?.toString();
+      const endDatetime = formData.get('endDatetime')?.toString();
+
+      if (startDatetime) {
+        const utcStart = localToUtcDateTime(startDatetime);
+        if (utcStart) {
+          formData.set('startDatetime', utcStart);
+        }
+      }
+
+      if (endDatetime) {
+        const utcEnd = localToUtcDateTime(endDatetime);
+        if (utcEnd) {
+          formData.set('endDatetime', utcEnd);
+        }
+      }
 
       if (action === 'sendTestNotification') {
         testSubmitting = true;
@@ -131,7 +150,7 @@
   <Card.Header>
     <Card.Title class="text-lg sm:text-xl">Create Notification</Card.Title>
     <p class="text-muted-foreground text-sm">
-      Your timezone: {timezoneInfo.timezoneName} ({timezoneInfo.timezoneName})
+      Your timezone: {timezoneInfo.timezoneName} ({timezoneInfo.abbreviation})
     </p>
   </Card.Header>
   <Card.Content>
@@ -275,9 +294,16 @@
                   id="startDatetime"
                   name="startDatetime"
                   type="datetime-local"
-                  bind:value={$formData.startDatetime}
+                  value={convertUTCToLocal($formData.startDatetime)}
+                  onchange={(e) => {
+                    // Store the local datetime value for display, conversion happens in onSubmit
+                    $formData.startDatetime = e.currentTarget.value;
+                  }}
                   class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:outline-hiddden flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
+                <p class="text-muted-foreground text-xs">
+                  Enter time in your local timezone ({timezoneInfo.abbreviation})
+                </p>
               </div>
             {/snippet}
           </Form.Control>
@@ -298,12 +324,16 @@
                   id="endDatetime"
                   name="endDatetime"
                   type="datetime-local"
-                  bind:value={$formData.endDatetime}
+                  value={convertUTCToLocal($formData.endDatetime)}
+                  onchange={(e) => {
+                    // Store the local datetime value for display, conversion happens in onSubmit
+                    $formData.endDatetime = e.currentTarget.value;
+                  }}
                   class="border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring focus-visible:outline-hiddden flex h-10 w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 />
 
                 <p class="text-muted-foreground text-xs">
-                  When notification should automatically expire ({timezoneInfo.timezoneName})
+                  When notification should automatically expire ({timezoneInfo.abbreviation})
                 </p>
 
                 {#if !$formData.endDatetime}

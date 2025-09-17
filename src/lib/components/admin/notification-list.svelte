@@ -12,7 +12,8 @@
     FlaskConical,
   } from '@lucide/svelte';
   import type { Database } from '$lib/supabase/database.types';
-  import { formatDateTimeReadable } from '$lib/utils/datetime';
+  import { formatDateWithTimezone } from '$lib/utils/datetime';
+  import { formatDateTime } from '$lib/utils/__tests__/datetime.test';
 
   type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
@@ -117,17 +118,25 @@
                     </div>
                   </div>
                   <div class="text-muted-foreground mb-3 space-y-1 text-xs">
-                    <div>
-                      Start: {formatDateTimeReadable(
-                        notification.start_datetime
-                      )}
-                    </div>
-                    <div>
-                      End: {formatDateTimeReadable(notification.end_datetime)}
-                    </div>
-                    <div>
-                      Created: {formatDateTimeReadable(notification.created_at)}
-                    </div>
+                    {#if notification.start_datetime}
+                      <div>
+                        Start: {formatDateWithTimezone(
+                          notification.start_datetime
+                        )}
+                      </div>
+                    {/if}
+                    {#if notification.end_datetime}
+                      <div>
+                        End: {formatDateWithTimezone(notification.end_datetime)}
+                      </div>
+                    {/if}
+                    {#if notification.created_at}
+                      <div>
+                        Created: {formatDateWithTimezone(
+                          notification.created_at
+                        )}
+                      </div>
+                    {/if}
                   </div>
                   <Button
                     variant="destructive"
@@ -199,17 +208,17 @@
                       </Table.Cell>
                       <Table.Cell class="hidden lg:table-cell">
                         <span class="text-xs">
-                          {formatDateTimeReadable(notification.start_datetime)}
+                          {formatDateTime(notification.start_datetime)}
                         </span>
                       </Table.Cell>
                       <Table.Cell class="hidden lg:table-cell">
                         <span class="text-xs">
-                          {formatDateTimeReadable(notification.end_datetime)}
+                          {formatDateTime(notification.end_datetime)}
                         </span>
                       </Table.Cell>
                       <Table.Cell class="hidden md:table-cell">
                         <span class="text-xs">
-                          {formatDateTimeReadable(notification.created_at)}
+                          {formatDateTime(notification.created_at)}
                         </span>
                       </Table.Cell>
                       <Table.Cell>

@@ -24,26 +24,26 @@ export default defineConfig({
   // Disable HMR during testing to prevent dev server hangs
   server: isTest
     ? {
-        hmr: false,
-        watch: {
-          // Ignore test files and other non-essential files to prevent restarts
-          ignored: [
-            '**/tests/**',
-            '**/*.test.*',
-            '**/*.spec.*',
-            '**/node_modules/**',
-            '**/.git/**',
-          ],
-        },
-        // Prevent server from restarting on file changes during tests
-        middlewareMode: false,
-      }
-    : {
-        // Normal dev mode with full HMR capabilities
-        hmr: {
-          overlay: true,
-        },
+      hmr: false,
+      watch: {
+        // Ignore test files and other non-essential files to prevent restarts
+        ignored: [
+          '**/tests/**',
+          '**/*.test.*',
+          '**/*.spec.*',
+          '**/node_modules/**',
+          '**/.git/**',
+        ],
       },
+      // Prevent server from restarting on file changes during tests
+      middlewareMode: false,
+    }
+    : {
+      // Normal dev mode with full HMR capabilities
+      hmr: {
+        overlay: true,
+      },
+    },
 
   test: {
     setupFiles: [],
@@ -53,7 +53,7 @@ export default defineConfig({
   },
   resolve: process.env.VITEST
     ? {
-        conditions: ['browser'],
-      }
+      conditions: ['browser'],
+    }
     : undefined,
 });

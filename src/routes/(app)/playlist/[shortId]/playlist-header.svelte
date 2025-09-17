@@ -18,7 +18,7 @@
   import * as Avatar from '$lib/components/ui/avatar';
   import type { PlaylistSchema } from '$lib/schema/playlist-schema';
   import { getUserInitials } from '$lib/components/profile/profile-service';
-  import { utcToLocalDateTime } from '$lib/utils/datetime';
+  import { convertUTCToLocal } from '$lib/utils/datetime';
   import { SvelteDate } from 'svelte/reactivity';
 
   interface PlaylistHeaderProps extends HTMLAttributes<HTMLDivElement> {
@@ -84,7 +84,7 @@
     if (!playlist.deleted_at) return null;
 
     // Parse the deletion timestamp and convert to UTC
-    const deletedDate = new Date(utcToLocalDateTime(playlist.deleted_at));
+    const deletedDate = new Date(convertUTCToLocal(playlist.deleted_at));
 
     // Create cleanup date: add 14 days to deletion date and set to midnight UTC
     // This matches the SQL: date_trunc('day', (deletion_timestamp AT TIME ZONE 'UTC')::date + INTERVAL '14 days') AT TIME ZONE 'UTC'
