@@ -247,8 +247,8 @@ describe('playlist queries module', () => {
         p_youtube_id: 'PLtest123',
         p_current_page: 1,
         p_limit: 100,
-        p_sort_key: undefined,
-        p_sort_order: undefined,
+        p_sort_key: 'playlistOrder',
+        p_sort_order: 'ascending',
         p_preferred_image_format: 'avif',
       });
 

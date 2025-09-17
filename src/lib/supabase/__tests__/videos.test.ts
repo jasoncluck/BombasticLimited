@@ -472,11 +472,11 @@ describe('videos module', () => {
       const mockReturnValue = (mockSupabase.rpc as any).mock.results[0].value;
       expect(mockReturnValue.gte).toHaveBeenCalledWith(
         'published_at',
-        '2023-06-01T07:00:00.000Z'
+        '2023-06-01T00:00:00.000Z'
       );
       expect(mockReturnValue.lte).toHaveBeenCalledWith(
         'published_at',
-        '2023-07-01T06:59:59.999Z'
+        '2023-06-30T23:59:59.999Z'
       );
     });
 

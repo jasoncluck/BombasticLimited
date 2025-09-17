@@ -12,8 +12,7 @@
     FlaskConical,
   } from '@lucide/svelte';
   import type { Database } from '$lib/supabase/database.types';
-  import { formatDateWithTimezone } from '$lib/utils/datetime';
-  import { formatDateTime } from '$lib/utils/__tests__/datetime.test';
+  import { formatDateWithTimezone, formatDateTime } from '$lib/utils/datetime';
 
   type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
