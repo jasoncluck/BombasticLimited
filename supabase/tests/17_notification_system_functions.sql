@@ -166,32 +166,33 @@ SELECT
 
 -- Test get_unread_notification_count function structure
 SELECT
-  ok (
-    has_function (
-      'public',
-      'get_unread_notification_count',
-      ARRAY[]::TEXT[]
-    ),
+  has_function (
+    'public',
+    'get_unread_notification_count',
+    ARRAY[]::TEXT[],
     'get_unread_notification_count should exist with no parameters'
   );
 
 -- Test notification retrieval functions exist
 SELECT
-  ok (
-    has_function ('public', 'get_user_notifications'),
+  has_function (
+    'public', 
+    'get_user_notifications',
     'get_user_notifications function should exist'
   );
 
 SELECT
-  ok (
-    has_function ('public', 'get_user_notifications_with_timing'),
+  has_function (
+    'public', 
+    'get_user_notifications_with_timing',
     'get_user_notifications_with_timing function should exist'
   );
 
 -- Test cleanup functions exist
 SELECT
-  ok (
-    has_function ('public', 'cleanup_expired_notifications'),
+  has_function (
+    'public', 
+    'cleanup_expired_notifications',
     'cleanup_expired_notifications function should exist'
   );
 
