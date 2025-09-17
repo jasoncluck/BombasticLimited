@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (18);
+  plan (17);
 
 -- Test that video tracking functions exist
 SELECT
@@ -183,14 +183,6 @@ SELECT
     'update_video_history_end_time',
     ARRAY['text', 'timestamp with time zone', 'timestamp with time zone'],
     'update_video_history_end_time function should exist with correct signature'
-  );
-
-SELECT
-  has_function (
-    'public',
-    'update_video_history_seconds_watched',
-    ARRAY['text', 'timestamp with time zone', 'numeric'],
-    'update_video_history_seconds_watched function should exist with correct signature'
   );
 
 -- Test auto_record_video_history function exists

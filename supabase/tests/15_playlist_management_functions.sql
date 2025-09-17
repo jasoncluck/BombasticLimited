@@ -79,7 +79,7 @@ SELECT
   has_function (
     'public',
     'get_playlist_data',
-    ARRAY['text', 'text', 'integer', 'integer', 'text'],
+    ARRAY['text', 'text', 'integer', 'integer', 'text', 'text', 'text'],
     'Function get_playlist_data should exist'
   );
 
@@ -340,7 +340,7 @@ SELECT
   has_function (
     'public',
     'get_playlist_by_youtube_id',
-    ARRAY['text'],
+    ARRAY['text', 'text'],
     'Function get_playlist_by_youtube_id should exist'
   );
 
