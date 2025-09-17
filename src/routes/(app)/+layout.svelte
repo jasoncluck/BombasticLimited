@@ -24,6 +24,7 @@
   } from '$lib/components/layout/index.js';
   import { dev } from '$app/environment';
   import { setSidebarState } from '$lib/state/sidebar.svelte.js';
+  import { createVisibilityAwareInterval } from '$lib/utils/tab-visibility.js';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -322,13 +323,19 @@
     }
   });
 
-  // 5-minute periodic sync interval with auth error handling
+  // Visibility-aware periodic sync interval with auth error handling
   $effect(() => {
     if (!session || !isHydrated) return;
 
-    const interval = setInterval(async () => {
-      // Only sync if tab is visible and user is authenticated
-      if (!document.hidden && session) {
+    // Signal to child states that layout is managing refresh intervals
+    if (typeof window !== 'undefined') {
+      (window as any).__LAYOUT_MANAGES_REFRESH = true;
+    }
+
+    // Use visibility-aware interval from the tab-visibility utility
+    const visibilityAwareInterval = createVisibilityAwareInterval(async () => {
+      // Double-check session is still valid when interval fires
+      if (session) {
         try {
           await performDataRefresh('5-minute interval', false);
         } catch (error) {
@@ -338,8 +345,14 @@
       }
     }, 300000); // 5 minutes = 300,000ms
 
+    visibilityAwareInterval.start();
+
     return () => {
-      clearInterval(interval);
+      visibilityAwareInterval.stop();
+      // Clean up the flag when effect cleanup runs
+      if (typeof window !== 'undefined') {
+        delete (window as any).__LAYOUT_MANAGES_REFRESH;
+      }
     };
   });
 

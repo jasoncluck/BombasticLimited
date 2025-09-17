@@ -464,6 +464,7 @@ export class VideoWatchTimeTracker {
 
   /**
    * Start the save interval (only when playing)
+   * Uses longer interval to reduce overhead
    */
   private startSaveInterval(): void {
     if (this.saveInterval) {
@@ -474,9 +475,10 @@ export class VideoWatchTimeTracker {
       if (this.sessionActive && this.isPlaying) {
         this.updateSecondsWatched();
       } else {
+        // Stop interval if video is not playing to save resources
         this.stopSaveInterval();
       }
-    }, 10000);
+    }, 15000); // Increased to 15 seconds to reduce frequency
   }
 
   /**

@@ -230,9 +230,17 @@ export class NavigationStateClass implements NavigationState {
 
   /**
    * Start the notification refresh interval
+   * Only starts if no parent layout interval is managing refreshes
    */
   private startRefreshInterval(): void {
     if (!browser || this.refreshInterval) return;
+
+    // Skip starting our own interval if there's a parent layout managing refreshes
+    // This prevents duplicate intervals running simultaneously
+    if (typeof window !== 'undefined' && (window as any).__LAYOUT_MANAGES_REFRESH) {
+      console.log('Navigation: Skipping refresh interval - managed by layout');
+      return;
+    }
 
     this.refreshInterval = setInterval(() => {
       // Only refresh if we have a session and enough time has passed

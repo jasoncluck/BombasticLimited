@@ -30,9 +30,10 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 // Track currently live streams
 const streamingSources = new Set<string>();
 let lastStreamCheck = 0;
-const STREAM_CHECK_INTERVAL = 45000; // 45 seconds between API checks
+const STREAM_CHECK_INTERVAL = 60000; // Increased to 60 seconds to reduce API load
 const API_TIMEOUT = 15000; // 15 second timeout for API calls
 const MAX_SSE_DURATION = 5000; // 5 seconds
+const SSE_ITERATION_DELAY = 15000; // Increased to 15 seconds to reduce CPU usage
 
 /**
  * Check Twitch stream status for all sources
@@ -136,8 +137,8 @@ export async function POST() {
             }
           }
 
-          // Wait before next iteration (shorter than API check interval for responsive SSE)
-          await delay(10000);
+          // Wait before next iteration with longer delay to reduce CPU usage
+          await delay(SSE_ITERATION_DELAY);
         } catch (loopError) {
           console.error('Error in SSE loop:', loopError);
 
