@@ -8,6 +8,16 @@ describe('ContentCard Robust Mount Hover Detection Logic', () => {
   let contentState: ContentState;
 
   beforeEach(() => {
+    // Mock DOM APIs first, before ContentState constructor is called
+    Object.defineProperty(global, 'document', {
+      value: {
+        elementFromPoint: vi.fn(),
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+      },
+      writable: true,
+    });
+
     mockPageState = {
       contentScrollPosition: null,
       sidebarScrollPosition: null,
@@ -37,14 +47,6 @@ describe('ContentCard Robust Mount Hover Detection Logic', () => {
     };
 
     contentState = new ContentState(mockPageState as PageState);
-
-    // Mock DOM APIs
-    Object.defineProperty(global, 'document', {
-      value: {
-        elementFromPoint: vi.fn(),
-      },
-      writable: true,
-    });
 
     // Mock setTimeout
     vi.useFakeTimers();

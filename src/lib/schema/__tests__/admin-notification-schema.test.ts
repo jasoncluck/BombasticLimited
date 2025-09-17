@@ -313,9 +313,15 @@ describe('adminNotificationSchema', () => {
         endDatetime: '2024-01-17T12:00:00Z',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
-        'Invalid date format provided'
-      );
+      const result = adminNotificationSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+      
+      if (!result.success) {
+        const startDatetimeIssue = result.error.issues.find(
+          issue => issue.path.includes('startDatetime')
+        );
+        expect(startDatetimeIssue?.message).toBe('Invalid datetime format');
+      }
     });
 
     it('should reject invalid end date format', () => {
@@ -327,9 +333,15 @@ describe('adminNotificationSchema', () => {
         endDatetime: 'invalid-date',
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
-        'Invalid date format provided'
-      );
+      const result = adminNotificationSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+      
+      if (!result.success) {
+        const endDatetimeIssue = result.error.issues.find(
+          issue => issue.path.includes('endDatetime')
+        );
+        expect(endDatetimeIssue?.message).toBe('Invalid datetime format');
+      }
     });
 
     it('should reject end date before start date', () => {
@@ -351,12 +363,18 @@ describe('adminNotificationSchema', () => {
         type: 'system' as const,
         title: 'Past Date',
         message: 'Message',
-        startDatetime: '2024-01-14T12:00:00Z', // before mock current time
+        startDatetime: '2024-01-13T11:59:00Z', // more than 24 hours before mock current time
       };
 
-      expect(() => adminNotificationSchema.parse(invalidData)).toThrow(
-        'Start date cannot be in the past'
-      );
+      const result = adminNotificationSchema.safeParse(invalidData);
+      expect(result.success).toBe(false);
+      
+      if (!result.success) {
+        const startDatetimeIssue = result.error.issues.find(
+          issue => issue.path.includes('startDatetime')
+        );
+        expect(startDatetimeIssue?.message).toBe('Start date cannot be more than 24 hours in the past');
+      }
     });
 
     it('should accept start date exactly at current time', () => {
