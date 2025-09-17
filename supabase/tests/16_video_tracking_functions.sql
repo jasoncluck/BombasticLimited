@@ -151,8 +151,9 @@ $$;
 
 -- Test get_user_video_history function exists and structure
 SELECT
-  ok (
-    has_function ('public', 'get_user_video_history'),
+  has_function (
+    'public',
+    'get_user_video_history',
     'get_user_video_history function should exist'
   );
 
@@ -174,29 +175,26 @@ $$;
 
 -- Test video history update functions exist with correct signatures
 SELECT
-  ok (
-    has_function (
-      'public',
-      'update_video_history_end_time',
-      ARRAY['uuid']
-    ),
+  has_function (
+    'public',
+    'update_video_history_end_time',
+    ARRAY['text', 'timestamp with time zone', 'timestamp with time zone'],
     'update_video_history_end_time function should exist with correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'update_video_history_seconds_watched',
-      ARRAY['uuid', 'integer']
-    ),
+  has_function (
+    'public',
+    'update_video_history_seconds_watched',
+    ARRAY['text', 'timestamp with time zone', 'numeric'],
     'update_video_history_seconds_watched function should exist with correct signature'
   );
 
 -- Test auto_record_video_history function exists
 SELECT
-  ok (
-    has_function ('public', 'auto_record_video_history'),
+  has_function (
+    'public',
+    'auto_record_video_history',
     'auto_record_video_history function should exist'
   );
 

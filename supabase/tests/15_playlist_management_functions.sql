@@ -224,42 +224,51 @@ $$;
 
 -- Test playlist following functionality exists
 SELECT
-  ok (
-    has_function ('public', 'follow_playlist', ARRAY['bigint']),
+  has_function (
+    'public',
+    'follow_playlist',
+    ARRAY['bigint'],
     'follow_playlist function should exist'
   );
 
 SELECT
-  ok (
-    has_function ('public', 'unfollow_playlist', ARRAY['bigint']),
+  has_function (
+    'public',
+    'unfollow_playlist',
+    ARRAY['bigint'],
     'unfollow_playlist function should exist'
   );
 
 -- Test get_user_playlists function exists
 SELECT
-  ok (
-    has_function ('public', 'get_user_playlists'),
+  has_function (
+    'public',
+    'get_user_playlists',
     'get_user_playlists function should exist and be callable'
   );
 
 -- Test get_user_accessible_playlists function exists  
 SELECT
-  ok (
-    has_function ('public', 'get_user_accessible_playlists'),
+  has_function (
+    'public',
+    'get_user_accessible_playlists',
     'get_user_accessible_playlists function should exist and be callable'
   );
 
 -- Test delete_playlist function existence and basic structure
 SELECT
-  ok (
-    has_function ('public', 'delete_playlist', ARRAY['bigint']),
+  has_function (
+    'public',
+    'delete_playlist',
+    ARRAY['bigint'],
     'delete_playlist function should exist with correct signature'
   );
 
 -- Test insert_playlist function existence
 SELECT
-  ok (
-    has_function ('public', 'insert_playlist'),
+  has_function (
+    'public',
+    'insert_playlist',
     'insert_playlist function should exist'
   );
 
