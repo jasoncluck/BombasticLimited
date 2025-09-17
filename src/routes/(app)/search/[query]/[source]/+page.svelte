@@ -88,8 +88,9 @@
 
 <div class="relative" data-testid="search-results">
   <ContentHeader
-    title="Search Results"
-    titleLinkHref={page.params.query
+    heading={SOURCE_INFO[source].displayName}
+    subHeading="Search Results"
+    subHeadingHref={page.params.query
       ? `/search/${encodeURIComponent(page.params.query)}`
       : undefined}
     {videos}

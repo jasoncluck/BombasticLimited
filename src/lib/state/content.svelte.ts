@@ -14,6 +14,7 @@ import type {
   ContentDisplay,
   ContentSelectVariant,
 } from '$lib/components/content/content';
+import { SvelteSet } from 'svelte/reactivity';
 
 export type DragContentType = 'video' | 'playlist' | null;
 
@@ -219,9 +220,9 @@ export class ContentState {
       if (!this.openContextMenuSection) return;
 
       const target = event.target as HTMLElement;
-      
+
       // Check if the click is inside a context menu
-      const isClickingOnContextMenu = 
+      const isClickingOnContextMenu =
         target.closest('[data-testid="content-context-menu-content"]') ||
         target.closest('[role="menu"][data-radix-context-menu-content]') ||
         target.closest('[data-radix-context-menu-content]');
@@ -229,7 +230,7 @@ export class ContentState {
       // If clicking outside the context menu, close it
       if (!isClickingOnContextMenu) {
         this.openContextMenuSection = null;
-        
+
         // Clear any scheduled context menu close to prevent race conditions
         if (this.contextMenuCloseScheduled) {
           clearTimeout(this.contextMenuCloseScheduled);
@@ -244,14 +245,14 @@ export class ContentState {
       if (!this.openContextMenuSection) return;
 
       const target = event.target as HTMLElement;
-      
+
       // Check if the right-click is inside a context menu or on a video element
-      const isClickingOnContextMenu = 
+      const isClickingOnContextMenu =
         target.closest('[data-testid="content-context-menu-content"]') ||
         target.closest('[role="menu"][data-radix-context-menu-content]') ||
         target.closest('[data-radix-context-menu-content]');
-        
-      const isClickingOnVideo = 
+
+      const isClickingOnVideo =
         target.closest('[data-video-id]') ||
         target.closest('[data-testid*="video"]') ||
         target.closest('.video-item'); // Adjust selector based on your video component structure
@@ -260,7 +261,7 @@ export class ContentState {
       if (!isClickingOnContextMenu && !isClickingOnVideo) {
         event.preventDefault(); // Prevent default context menu from showing
         this.openContextMenuSection = null;
-        
+
         // Clear any scheduled context menu close to prevent race conditions
         if (this.contextMenuCloseScheduled) {
           clearTimeout(this.contextMenuCloseScheduled);
@@ -271,12 +272,18 @@ export class ContentState {
 
     // Add listeners with capture phase to ensure they run before component handlers
     document.addEventListener('click', handleGlobalClick, { capture: true });
-    document.addEventListener('contextmenu', handleGlobalContextMenu, { capture: true });
+    document.addEventListener('contextmenu', handleGlobalContextMenu, {
+      capture: true,
+    });
 
     // Store cleanup functions
     this.contextMenuOutsideCleanup = (): void => {
-      document.removeEventListener('click', handleGlobalClick, { capture: true });
-      document.removeEventListener('contextmenu', handleGlobalContextMenu, { capture: true });
+      document.removeEventListener('click', handleGlobalClick, {
+        capture: true,
+      });
+      document.removeEventListener('contextmenu', handleGlobalContextMenu, {
+        capture: true,
+      });
     };
   }
 
@@ -659,18 +666,6 @@ export class ContentState {
         return;
       }
 
-      // If a dropdown is open just close that and don't redirect
-      if (this.isDropdownMenuOpen) {
-        // Close the context menu by clearing the open section
-        this.openContextMenuSection = null;
-
-        // Clear selections from ALL sections, not just the current one
-        this.clearAllSections();
-
-        // Set the clicked video as the new hovered video for the current section
-        this.hoveredVideosBySection[sectionId] = video;
-        return;
-      }
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
@@ -758,8 +753,6 @@ export class ContentState {
         // Get the video being dragged
         const draggedVideo = options.videos[index];
 
-        let videosForDrag: Video[];
-
         // Default behavior - manage selection state
         // Use nullish coalescing to get selected videos for this section
         const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
@@ -771,7 +764,7 @@ export class ContentState {
 
         // If the dragged video is not in selectedVideos, use just the dragged video
         // Otherwise, use the selected videos
-        videosForDrag =
+        const videosForDrag =
           isDraggedVideoSelected && selectedVideos.length > 0
             ? selectedVideos
             : [draggedVideo];
@@ -925,7 +918,7 @@ export class ContentState {
             rangeVideos.push(videos[i]);
           }
 
-          const existingIds = new Set(selectedVideos.map((v) => v.id));
+          const existingIds = new SvelteSet(selectedVideos.map((v) => v.id));
           const newVideos = rangeVideos.filter((v) => !existingIds.has(v.id));
           selectedVideos = [...selectedVideos, ...newVideos];
         }

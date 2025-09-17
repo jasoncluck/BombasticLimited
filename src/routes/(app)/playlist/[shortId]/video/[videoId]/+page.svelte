@@ -18,6 +18,7 @@
   } = $derived(data);
 
   let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
+  console.log(video);
 </script>
 
 <div>

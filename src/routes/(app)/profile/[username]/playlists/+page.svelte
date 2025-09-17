@@ -45,10 +45,14 @@
     >
       <p class="text-muted-foreground text-sm tracking-tight"></p>
 
-      <p class="text-muted-foreground text-sm tracking-tight">Playlists</p>
-      <h2 class="header-primary text-left">
+      <!-- If we ever wanted to link to an actual profile this needs updated to check for isSource -->
+      <a
+        class="text-muted-foreground text-sm tracking-tight"
+        href="/{username}"
+      >
         {isSource(username) ? SOURCE_INFO[username].displayName : username}
-      </h2>
+      </a>
+      <h2 class="header-primary text-left">Playlists</h2>
     </div>
 
     <p class="text-muted-foreground text-sm tracking-tight">
@@ -71,5 +75,5 @@
     />
   {/if}
 
-  <PlaylistTiles {playlists} {supabase} {session} />
+  <PlaylistTiles {playlists} {supabase} {session} showUsername={false} />
 </div>

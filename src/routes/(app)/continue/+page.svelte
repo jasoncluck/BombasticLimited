@@ -61,7 +61,7 @@
 
 <div>
   <ContentHeader
-    title="Continue Watching"
+    heading="Continue Watching"
     {videos}
     {contentFilter}
     view="continueWatching"
