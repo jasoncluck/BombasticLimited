@@ -346,7 +346,9 @@ END;
 $$;
 
 -- Updates deleted_at when created_by is set to NULL
-CREATE OR REPLACE FUNCTION public.update_deleted_at_on_created_by_null () RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION public.update_deleted_at_on_created_by_null () RETURNS TRIGGER 
+SET
+  search_path = '' AS $$;
 BEGIN
   -- Check if created_by was changed from a non-NULL value to NULL
   IF OLD.created_by IS NOT NULL AND NEW.created_by IS NULL THEN

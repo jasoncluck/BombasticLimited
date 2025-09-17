@@ -12,15 +12,32 @@ function delay(milliseconds: number) {
   });
 }
 
+/**
+ * Promise with timeout wrapper
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error(`Operation timed out after ${timeoutMs}ms`)),
+        timeoutMs
+      )
+    ),
+  ]);
+}
+
 // Track currently live streams
 const streamingSources = new Set<string>();
 let lastStreamCheck = 0;
 const STREAM_CHECK_INTERVAL = 45000; // 45 seconds between API checks
+const API_TIMEOUT = 15000; // 15 second timeout for API calls
+const MAX_SSE_DURATION = 5000; // 5 seconds
 
 /**
  * Check Twitch stream status for all sources
  */
-async function updateStreamStatus() {
+async function updateStreamStatus(): Promise<void> {
   const now = Date.now();
 
   // Skip if we've checked recently to avoid excessive API calls
@@ -34,8 +51,11 @@ async function updateStreamStatus() {
     // Get all Twitch user IDs from sources
     const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
 
-    // Fetch stream status for all sources
-    const streamStatuses = await getMultipleStreamStatus(twitchIds);
+    // Fetch stream status for all sources with timeout
+    const streamStatuses = await withTimeout(
+      getMultipleStreamStatus(twitchIds),
+      API_TIMEOUT
+    );
 
     // Update the streaming sources set
     const previouslyLive = new Set(streamingSources);
@@ -60,19 +80,35 @@ async function updateStreamStatus() {
     }
   } catch (error) {
     console.error('Failed to update Twitch stream status:', error);
+    // Don't throw - let the SSE continue with cached data
   }
 }
 
 export async function POST() {
   return produce(
     async function start({ emit }) {
-      // Initial stream status check
-      await updateStreamStatus();
+      const startTime = Date.now();
+
+      try {
+        // Initial stream status check with timeout
+        await withTimeout(updateStreamStatus(), API_TIMEOUT);
+      } catch (error) {
+        console.error('Initial stream check failed:', error);
+      }
 
       while (true) {
         try {
-          // Check for stream updates
-          await updateStreamStatus();
+          // Check if we're approaching Vercel's timeout limit
+          const elapsed = Date.now() - startTime;
+          if (elapsed > MAX_SSE_DURATION) {
+            console.log(
+              'Approaching timeout limit, closing SSE connection gracefully'
+            );
+            break;
+          }
+
+          // Check for stream updates with timeout
+          await withTimeout(updateStreamStatus(), API_TIMEOUT);
 
           // Prepare the data to send
           const streamingData = Array.from(streamingSources.values());
@@ -91,11 +127,12 @@ export async function POST() {
 
             if (isClientDisconnection) {
               // This is normal - client closed the connection
-              return;
+              console.log('Client disconnected from SSE stream');
+              break;
             } else {
               // This is an actual error we should log
               console.error('SSE emit error:', error);
-              return;
+              break;
             }
           }
 
@@ -103,14 +140,24 @@ export async function POST() {
           await delay(10000);
         } catch (loopError) {
           console.error('Error in SSE loop:', loopError);
-          // Break the loop on unexpected errors to prevent infinite error loops
-          return;
+
+          // If it's a timeout error, break gracefully
+          if (
+            loopError instanceof Error &&
+            loopError.message.includes('timed out')
+          ) {
+            console.log('Breaking SSE loop due to timeout');
+            break;
+          }
+
+          // For other errors, also break to prevent infinite error loops
+          break;
         }
       }
     },
     {
       stop() {
-        // console.log('Stopping Twitch stream monitoring');
+        console.log('Stopping Twitch stream monitoring');
       },
     }
   );
