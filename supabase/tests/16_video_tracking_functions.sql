@@ -56,7 +56,7 @@ SELECT
   has_function (
     'public',
     'update_video_history_seconds_watched',
-    ARRAY['text', 'timestamp with time zone', 'numeric'],
+    ARRAY['text', 'timestamp with time zone', 'numeric', 'timestamp with time zone'],
     'Function update_video_history_seconds_watched should exist'
   );
 

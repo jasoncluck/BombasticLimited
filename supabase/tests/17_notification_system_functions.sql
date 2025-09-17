@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (15);
+  plan (16);
 
 -- Test that notification system functions exist
 SELECT
@@ -152,12 +152,17 @@ BEGIN
     WHERE user_id = test_user_id;
     
     -- Create notification (this would normally require proper auth context)
-    -- For now, we test that the function exists and has correct signature
-    PERFORM ok(
-        has_function('public', 'create_notification', ARRAY['uuid', 'text', 'text', 'text']),
-        'create_notification should have correct function signature'
-    );
 END;
+$$;
+
+-- Test create_notification function signature
+SELECT
+  has_function (
+    'public',
+    'create_notification',
+    ARRAY['public.notification_type', 'text', 'text', 'jsonb', 'text', 'boolean', 'timestamp with time zone', 'timestamp with time zone', 'uuid[]'],
+    'create_notification should have correct function signature'
+  );
 $$;
 
 -- Test get_unread_notification_count function structure
