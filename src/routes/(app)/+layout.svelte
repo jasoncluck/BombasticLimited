@@ -327,11 +327,6 @@
   $effect(() => {
     if (!session || !isHydrated) return;
 
-    // Signal to child states that layout is managing refresh intervals
-    if (typeof window !== 'undefined') {
-      (window as any).__LAYOUT_MANAGES_REFRESH = true;
-    }
-
     // Use visibility-aware interval from the tab-visibility utility
     const visibilityAwareInterval = createVisibilityAwareInterval(async () => {
       // Double-check session is still valid when interval fires
@@ -349,10 +344,6 @@
 
     return () => {
       visibilityAwareInterval.stop();
-      // Clean up the flag when effect cleanup runs
-      if (typeof window !== 'undefined') {
-        delete (window as any).__LAYOUT_MANAGES_REFRESH;
-      }
     };
   });
 
