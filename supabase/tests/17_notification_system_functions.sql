@@ -163,7 +163,6 @@ SELECT
     ARRAY['public.notification_type', 'text', 'text', 'jsonb', 'text', 'boolean', 'timestamp with time zone', 'timestamp with time zone', 'uuid[]'],
     'create_notification should have correct function signature'
   );
-$$;
 
 -- Test get_unread_notification_count function structure
 SELECT
