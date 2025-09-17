@@ -200,7 +200,7 @@ $$;
 -- Test format_cleanup_time_for_user function
 SELECT
   ok (
-    public.format_cleanup_time_for_user (now() + interval '1 day') IS NOT NULL,
+    public.format_cleanup_time_for_user (gen_random_uuid(), now() + interval '1 day') IS NOT NULL,
     'format_cleanup_time_for_user should return formatted time string'
   );
 

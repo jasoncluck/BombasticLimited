@@ -102,11 +102,11 @@ BEGIN
     -- Create test users with proper metadata (without confirmed_at)
     INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     VALUES 
-        (test_user_id_1, 'authenticated', 'authenticated', 'notification_user1@test.com', 'password', now(), now(), now(), 
+        (test_user_id_1, 'authenticated', 'authenticated', 'notification_user1_' || test_user_id_1 || '@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser1"}'),
-        (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2@test.com', 'password', now(), now(), now(), 
+        (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2_' || test_user_id_2 || '@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser2"}'),
-        (admin_user_id, 'authenticated', 'authenticated', 'jason@bombastic.ltd', 'password', now(), now(), now(), 
+        (admin_user_id, 'authenticated', 'authenticated', 'admin_' || admin_user_id || '@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "admin"}')
     ON CONFLICT (id) DO NOTHING;
     

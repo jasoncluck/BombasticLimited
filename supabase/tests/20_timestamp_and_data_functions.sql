@@ -92,9 +92,9 @@ BEGIN
     -- Create some test timestamps manually with proper bigint ids
     INSERT INTO public.timestamps (id, video_id, video_start_seconds, user_id, created_at)
     VALUES 
-        (nextval('timestamps_id_seq'::regclass), test_video_id_1, 120, test_user_id, now()),
-        (nextval('timestamps_id_seq'::regclass), test_video_id_1, 300, test_user_id, now()),
-        (nextval('timestamps_id_seq'::regclass), test_video_id_2, 60, test_user_id, now());
+        (nextval('user_video_timestamps_id_seq'::regclass), test_video_id_1, 120, test_user_id, now()),
+        (nextval('user_video_timestamps_id_seq'::regclass), test_video_id_1, 300, test_user_id, now()),
+        (nextval('user_video_timestamps_id_seq'::regclass), test_video_id_2, 60, test_user_id, now());
 END;
 $$;
 

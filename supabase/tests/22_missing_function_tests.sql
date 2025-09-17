@@ -303,8 +303,8 @@ BEGIN
     VALUES (test_user_id, 'authenticated', 'authenticated', 'test_unique@example.com', 'password', now(), now(), now(), 
            '{"provider": "email", "providers": ["email"]}', '{}');
     
-    INSERT INTO public.profiles (id, username, created_at, updated_at)
-    VALUES (test_user_id, 'testuser123', now(), now());
+    INSERT INTO public.profiles (id, username)
+    VALUES (test_user_id, 'testuser123');
     
     -- Test that taken username is not unique
     PERFORM ok(
@@ -372,7 +372,7 @@ $$;
 -- Test format_cleanup_time_for_user function
 SELECT
   ok (
-    public.format_cleanup_time_for_user (now() + interval '1 day') IS NOT NULL,
+    public.format_cleanup_time_for_user (gen_random_uuid(), now() + interval '1 day') IS NOT NULL,
     'format_cleanup_time_for_user should return formatted time string'
   );
 

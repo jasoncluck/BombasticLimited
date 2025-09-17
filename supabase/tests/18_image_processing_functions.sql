@@ -195,18 +195,18 @@ $$;
 -- Test cleanup_old_completed_jobs function
 DO $$
 DECLARE
-    cleanup_count integer;
+    cleanup_result record;
 BEGIN
     -- Add a completed job that's old enough to be cleaned up
     INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, processing_completed_at, created_at)
     VALUES (gen_random_uuid(), 'video', 'old_video', 'thumbnail', 'https://example.com/old-completed.jpg', 'completed', now() - interval '8 days', now() - interval '8 days')
     ON CONFLICT (id) DO NOTHING;
     
-    -- Call cleanup function
-    SELECT public.cleanup_old_completed_jobs() INTO cleanup_count;
+    -- Call cleanup function and get the result
+    SELECT * INTO cleanup_result FROM public.cleanup_old_completed_jobs(7);
     
     PERFORM ok(
-        cleanup_count >= 0,
+        cleanup_result.deleted_count >= 0,
         'cleanup_old_completed_jobs should return count of cleaned up jobs'
     );
 END;

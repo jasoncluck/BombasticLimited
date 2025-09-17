@@ -189,12 +189,12 @@ BEGIN
     SELECT * INTO playlist_data FROM public.get_playlist_data(playlist_short_id);
     
     PERFORM ok(
-        playlist_data.name = 'Test Public Playlist',
+        playlist_data.playlist_name = 'Test Public Playlist',
         'get_playlist_data should return correct playlist name'
     );
     
     PERFORM ok(
-        playlist_data.type = 'Public',
+        playlist_data.playlist_type = 'Public',
         'get_playlist_data should return correct playlist type'
     );
 END;
