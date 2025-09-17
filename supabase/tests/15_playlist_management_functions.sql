@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (25);
+  plan (30);
 
 -- Test that playlist management functions exist
 SELECT
@@ -292,7 +292,7 @@ SELECT
   has_function (
     'public',
     'get_playlist_cleanup_info',
-    ARRAY['bigint'],
+    ARRAY['bigint', 'uuid'],
     'Function get_playlist_cleanup_info should exist'
   );
 
@@ -331,7 +331,7 @@ SELECT
   has_function (
     'public',
     'update_playlist_videos_positions',
-    ARRAY['bigint'],
+    ARRAY['bigint', 'text[]', 'smallint'],
     'Function update_playlist_videos_positions should exist'
   );
 

@@ -140,14 +140,17 @@ DECLARE
 BEGIN
     SELECT id INTO test_user_id FROM public.profiles WHERE username = 'analyticsuser';
     
-    -- Note: start_video_history_session requires auth context
-    -- We'll test that the function exists and can be referenced
-    PERFORM ok(
-        has_function('public', 'start_video_history_session', ARRAY['text']),
-        'start_video_history_session function should exist with correct signature'
-    );
 END;
 $$;
+
+-- Test start_video_history_session function exists with correct signature
+SELECT
+  has_function (
+    'public',
+    'start_video_history_session',
+    ARRAY['text', 'timestamp with time zone'],
+    'start_video_history_session function should exist with correct signature'
+  );
 
 -- Test get_user_video_history function exists and structure
 SELECT
