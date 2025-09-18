@@ -136,7 +136,7 @@ function syncWithWebhookState(): void {
   }
   
   // Remove streams that are not live according to webhooks but are in local state
-  for (const source of Array.from(streamingSources)) {
+  for (const source of Array.from(streamingSources) as Source[]) {
     if (!webhookSet.has(source)) {
       streamingSources.delete(source);
       hasChanges = true;

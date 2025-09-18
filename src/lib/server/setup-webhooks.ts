@@ -42,34 +42,30 @@ export async function setupTwitchWebhooks(): Promise<void> {
       console.log(`\n🔧 Setting up webhooks for ${displayName} (${twitchId})...`);
 
       // Create stream.online subscription
-      const onlineSubscription = await apiClient.eventSub.createSubscription({
-        type: 'stream.online',
-        version: '1',
-        condition: {
-          broadcaster_user_id: twitchId,
-        },
-        transport: {
+      const onlineSubscription = await apiClient.eventSub.createSubscription(
+        'stream.online',
+        '1',
+        { broadcaster_user_id: twitchId },
+        {
           method: 'webhook',
           callback: `${WEBHOOK_BASE_URL}/api/twitch/webhook`,
           secret: TWITCH_WEBHOOK_SECRET,
-        },
-      });
+        }
+      );
 
       console.log(`✅ Created stream.online subscription for ${displayName}: ${onlineSubscription.id}`);
 
       // Create stream.offline subscription
-      const offlineSubscription = await apiClient.eventSub.createSubscription({
-        type: 'stream.offline',
-        version: '1',
-        condition: {
-          broadcaster_user_id: twitchId,
-        },
-        transport: {
+      const offlineSubscription = await apiClient.eventSub.createSubscription(
+        'stream.offline',
+        '1',
+        { broadcaster_user_id: twitchId },
+        {
           method: 'webhook',
           callback: `${WEBHOOK_BASE_URL}/api/twitch/webhook`,
           secret: TWITCH_WEBHOOK_SECRET,
-        },
-      });
+        }
+      );
 
       console.log(`✅ Created stream.offline subscription for ${displayName}: ${offlineSubscription.id}`);
 
@@ -130,7 +126,8 @@ export async function listWebhookSubscriptions(): Promise<void> {
   try {
     console.log('📋 Listing existing EventSub subscriptions...');
     
-    const subscriptions = await apiClient.eventSub.getSubscriptionsForUser();
+    const subscriptionsResult = await apiClient.eventSub.getSubscriptions();
+    const subscriptions = subscriptionsResult.data;
     
     if (subscriptions.length === 0) {
       console.log('📭 No existing subscriptions found');
@@ -166,7 +163,8 @@ export async function cleanupWebhookSubscriptions(): Promise<void> {
   try {
     console.log('🧹 Cleaning up existing EventSub subscriptions...');
     
-    const subscriptions = await apiClient.eventSub.getSubscriptionsForUser();
+    const subscriptionsResult = await apiClient.eventSub.getSubscriptions();
+    const subscriptions = subscriptionsResult.data;
     
     if (subscriptions.length === 0) {
       console.log('📭 No subscriptions to clean up');
