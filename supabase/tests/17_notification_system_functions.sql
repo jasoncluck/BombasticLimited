@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (15);
+  plan (16);
 
 -- Test that notification system functions exist
 SELECT
@@ -102,11 +102,11 @@ BEGIN
     -- Create test users with proper metadata (without confirmed_at)
     INSERT INTO auth.users (id, aud, role, email, encrypted_password, email_confirmed_at, created_at, updated_at, raw_app_meta_data, raw_user_meta_data)
     VALUES 
-        (test_user_id_1, 'authenticated', 'authenticated', 'notification_user1@test.com', 'password', now(), now(), now(), 
+        (test_user_id_1, 'authenticated', 'authenticated', 'notification_user1_' || test_user_id_1 || '@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser1"}'),
-        (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2@test.com', 'password', now(), now(), now(), 
+        (test_user_id_2, 'authenticated', 'authenticated', 'notification_user2_' || test_user_id_2 || '@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "notificationuser2"}'),
-        (admin_user_id, 'authenticated', 'authenticated', 'jason@bombastic.ltd', 'password', now(), now(), now(), 
+        (admin_user_id, 'authenticated', 'authenticated', 'admin_' || admin_user_id || '@test.com', 'password', now(), now(), now(), 
          '{"provider":"email","providers":["email"]}', '{"username": "admin"}')
     ON CONFLICT (id) DO NOTHING;
     
@@ -119,14 +119,14 @@ BEGIN
     ON CONFLICT (id) DO NOTHING;
     
     -- Create test notifications manually for testing retrieval functions
-    INSERT INTO public.notifications (id, title, message, notification_type, expires_at, created_at)
+    INSERT INTO public.notifications (title, message, type, end_datetime, created_at)
     VALUES 
-        (gen_random_uuid(), 'Test Notification 1', 'This is a test notification', 'info', now() + interval '1 day', now()),
-        (gen_random_uuid(), 'Test Notification 2', 'This is another test notification', 'warning', now() + interval '2 days', now()),
-        (gen_random_uuid(), 'Expired Notification', 'This notification has expired', 'info', now() - interval '1 day', now() - interval '2 days');
+        ('Test Notification 1', 'This is a test notification', 'system', now() + interval '1 day', now()),
+        ('Test Notification 2', 'This is another test notification', 'system', now() + interval '2 days', now()),
+        ('Expired Notification', 'This notification has expired', 'system', now() - interval '1 day', now() - interval '2 days');
     
     -- Create user notifications for testing
-    INSERT INTO public.user_notifications (user_id, notification_id, is_read, created_at)
+    INSERT INTO public.user_notifications (user_id, notification_id, read, created_at)
     SELECT 
         test_user_id_1, 
         n.id, 
@@ -152,42 +152,47 @@ BEGIN
     WHERE user_id = test_user_id;
     
     -- Create notification (this would normally require proper auth context)
-    -- For now, we test that the function exists and has correct signature
-    PERFORM ok(
-        has_function('public', 'create_notification', ARRAY['uuid', 'text', 'text', 'text']),
-        'create_notification should have correct function signature'
-    );
 END;
 $$;
 
+-- Test create_notification function signature
+SELECT
+  has_function (
+    'public',
+    'create_notification',
+    ARRAY['public.notification_type', 'text', 'text', 'jsonb', 'text', 'boolean', 'timestamp with time zone', 'timestamp with time zone', 'uuid[]'],
+    'create_notification should have correct function signature'
+  );
+
 -- Test get_unread_notification_count function structure
 SELECT
-  ok (
-    has_function (
-      'public',
-      'get_unread_notification_count',
-      ARRAY[]::TEXT[]
-    ),
+  has_function (
+    'public',
+    'get_unread_notification_count',
+    ARRAY[]::TEXT[],
     'get_unread_notification_count should exist with no parameters'
   );
 
 -- Test notification retrieval functions exist
 SELECT
-  ok (
-    has_function ('public', 'get_user_notifications'),
+  has_function (
+    'public', 
+    'get_user_notifications',
     'get_user_notifications function should exist'
   );
 
 SELECT
-  ok (
-    has_function ('public', 'get_user_notifications_with_timing'),
+  has_function (
+    'public', 
+    'get_user_notifications_with_timing',
     'get_user_notifications_with_timing function should exist'
   );
 
 -- Test cleanup functions exist
 SELECT
-  ok (
-    has_function ('public', 'cleanup_expired_notifications'),
+  has_function (
+    'public', 
+    'cleanup_expired_notifications',
     'cleanup_expired_notifications function should exist'
   );
 

@@ -5,8 +5,8 @@ Bombastic application's Supabase backend.
 
 ## Overview
 
-The test suite validates the functionality of 65+ RPC functions across 7 new
-test files, providing over 113 individual test assertions covering:
+The test suite validates the functionality of 66+ RPC functions across 10 
+test files, providing over 218 individual test assertions covering:
 
 - Function existence and signature validation
 - Functional testing with realistic data
@@ -45,6 +45,9 @@ test files, providing over 113 individual test assertions covering:
 - `18_image_processing_functions.sql` - Image processing pipeline (18 tests)
 - `19_utility_functions.sql` - Helper and utility functions (22 tests)
 - `20_timestamp_and_data_functions.sql` - Data management and cleanup (15 tests)
+- `21_comprehensive_function_coverage.sql` - Complete coverage validation (50 tests)
+- `22_missing_function_tests.sql` - Additional function tests and edge cases (45 tests)
+- `run_all_tests.sql` - Test infrastructure validation (10 tests)
 
 ## Running Tests
 
@@ -57,8 +60,13 @@ supabase start
 # Run all tests
 supabase db test
 
-# Run specific test file
-supabase db test --file tests/14_user_management_functions.sql
+# Run all tests in sequence with comprehensive reporting
+supabase db test --file tests/run_all_tests.sql
+supabase db test --file tests/21_comprehensive_function_coverage.sql
+supabase db test --file tests/22_missing_function_tests.sql
+
+# Run complete test suite (all files)
+find tests/ -name "*.sql" -type f | sort | xargs -I {} supabase db test --file {}
 ```
 
 ### Manual PostgreSQL Testing
@@ -184,6 +192,37 @@ sudo -u postgres psql -d testdb -f tests/14_user_management_functions.sql
 - Batch timestamp operations
 - Trigger function validation
 - Data cleanup effectiveness
+
+### New Comprehensive Coverage Tests (21_comprehensive_function_coverage.sql)
+
+- ✅ All functions from recent migrations (August-September 2025)
+- ✅ Complete validation of 50+ core RPC functions
+- ✅ Signature verification for all major function categories
+- ✅ Coverage of newest playlist soft-delete functionality
+- ✅ Image processing pipeline validation
+- ✅ Notification system completeness check
+
+**Key Test Scenarios:**
+
+- Complete migration function coverage
+- Signature validation for all recent functions
+- Systematic validation of all major functional areas
+
+### Missing Function Tests (22_missing_function_tests.sql)
+
+- ✅ Edge case testing for utility functions
+- ✅ Functional behavior validation with realistic data
+- ✅ Performance and error handling tests
+- ✅ Integration tests for cross-system functionality
+- ✅ Comprehensive validation of search and normalization
+
+**Key Test Scenarios:**
+
+- Text normalization edge cases (empty, null, special characters)
+- Time format parsing accuracy with multiple formats
+- Username uniqueness validation
+- Video view counting accuracy
+- URL generation consistency
 
 ## Test Patterns
 

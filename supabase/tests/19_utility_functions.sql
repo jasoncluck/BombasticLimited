@@ -18,6 +18,7 @@ SELECT
   has_function (
     'public',
     'select_best_image_format',
+    ARRAY['text', 'text', 'text'],
     'Function select_best_image_format should exist'
   );
 
@@ -185,9 +186,9 @@ SELECT
 -- Test select_best_image_format function basic functionality
 DO $$
 DECLARE
-    best_format record;
+    best_format text;
 BEGIN
-    SELECT * INTO best_format FROM public.select_best_image_format();
+    SELECT public.select_best_image_format('https://example.com/image.avif', 'https://example.com/image.webp', 'avif') INTO best_format;
     
     PERFORM ok(
         best_format IS NOT NULL,
@@ -199,7 +200,7 @@ $$;
 -- Test format_cleanup_time_for_user function
 SELECT
   ok (
-    public.format_cleanup_time_for_user (now() + interval '1 day') IS NOT NULL,
+    public.format_cleanup_time_for_user (gen_random_uuid(), now() + interval '1 day') IS NOT NULL,
     'format_cleanup_time_for_user should return formatted time string'
   );
 
