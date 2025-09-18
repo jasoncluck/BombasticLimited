@@ -529,7 +529,6 @@ export class SidebarStateClass implements SidebarState {
 
       this.#sseConnection.select('open').subscribe(() => {
         this.#sseConnected = true;
-        console.log('🔗 SSE connected');
         
         // Only reset counters after the connection has been stable for 10 seconds
         // This prevents immediate reset if the connection fails right after opening
@@ -543,12 +542,10 @@ export class SidebarStateClass implements SidebarState {
           this.#consecutiveFailures = 0;
           this.#reconnectDelay = 2000;
           this.#connectionStabilityTimeoutId = null;
-          console.log('🟢 SSE connection stable - reset reconnection counters');
         }, 10000); // 10 second stability period
       });
 
       this.#sseConnection.select('error').subscribe((event) => {
-        console.log('❌ SSE error, will attempt reconnection:', event);
         this.#sseConnected = false;
         this.#consecutiveFailures++;
 
@@ -567,19 +564,12 @@ export class SidebarStateClass implements SidebarState {
           this.#reconnectAttempts++;
           const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
           
-          if (isStructuralProblem) {
-            console.warn(`⚠️ Multiple consecutive SSE failures detected. Using extended delay: ${delay/1000}s`);
-          }
-          
           this.#reconnectTimeoutId = window.setTimeout(() => {
             this.#reconnectTimeoutId = null; // Clear timeout ID
             if (browser && !this.#sseConnection) {
-              console.log(`🔄 Attempting SSE reconnection (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
               this.connectSSE();
             }
           }, delay);
-        } else {
-          console.warn('⚠️ Max SSE reconnection attempts reached. Stopping automatic reconnection.');
         }
       });
 
@@ -591,7 +581,6 @@ export class SidebarStateClass implements SidebarState {
 
         // Only schedule reconnection if there isn't already timeout pending from error event
         if (this.#reconnectTimeoutId !== null) {
-          console.log('🔌 SSE connection closed, but reconnection already scheduled from error event');
           return;
         }
 
