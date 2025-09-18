@@ -532,6 +532,10 @@ BEGIN
     RAISE EXCEPTION 'Video IDs array cannot be empty';
   END IF;
 
+  IF array_length(p_video_ids, 1) > 100 THEN
+    RAISE EXCEPTION 'Unable to add videos to playlist. Playlists have a limit of 100 videos.';
+  END IF;
+
   -- Lock operations for the current user to prevent concurrent modifications
   PERFORM pg_advisory_xact_lock(hashtext('user_playlist_operations_' || current_user_id::text));
 
