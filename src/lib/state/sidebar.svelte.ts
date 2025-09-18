@@ -212,6 +212,7 @@ export class SidebarStateClass implements SidebarState {
   #maxReconnectAttempts = 5;
   #reconnectDelay = 2000; // Start with 2 second delay
   #consecutiveFailures = 0; // Track consecutive failures to detect structural issues
+  #reconnectTimeoutId: number | null = null; // Track pending reconnection timeout
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
@@ -538,6 +539,12 @@ export class SidebarStateClass implements SidebarState {
         this.#sseConnected = false;
         this.#consecutiveFailures++;
 
+        // Clear any existing timeout to avoid double scheduling
+        if (this.#reconnectTimeoutId !== null) {
+          clearTimeout(this.#reconnectTimeoutId);
+          this.#reconnectTimeoutId = null;
+        }
+
         // If we have too many consecutive failures, increase delays significantly
         const isStructuralProblem = this.#consecutiveFailures > 3;
         const baseDelay = isStructuralProblem ? 10000 : this.#reconnectDelay; // 10s for structural issues
@@ -551,7 +558,8 @@ export class SidebarStateClass implements SidebarState {
             console.warn(`⚠️ Multiple consecutive SSE failures detected. Using extended delay: ${delay/1000}s`);
           }
           
-          setTimeout(() => {
+          this.#reconnectTimeoutId = window.setTimeout(() => {
+            this.#reconnectTimeoutId = null; // Clear timeout ID
             if (browser && !this.#sseConnection) {
               console.log(`🔄 Attempting SSE reconnection (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
               this.connectSSE();
@@ -568,6 +576,12 @@ export class SidebarStateClass implements SidebarState {
         this.#sseConnection = null;
         this.#consecutiveFailures++;
 
+        // Only schedule reconnection if there isn't already timeout pending from error event
+        if (this.#reconnectTimeoutId !== null) {
+          console.log('🔌 SSE connection closed, but reconnection already scheduled from error event');
+          return;
+        }
+
         // If we have too many consecutive failures, increase delays significantly
         const isStructuralProblem = this.#consecutiveFailures > 3;
         const baseDelay = isStructuralProblem ? 10000 : this.#reconnectDelay; // 10s for structural issues
@@ -583,7 +597,8 @@ export class SidebarStateClass implements SidebarState {
             console.log(`🔌 SSE connection closed, attempting reconnection in ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
           }
           
-          setTimeout(() => {
+          this.#reconnectTimeoutId = window.setTimeout(() => {
+            this.#reconnectTimeoutId = null; // Clear timeout ID
             if (browser) {
               this.connectSSE();
             }
@@ -617,6 +632,12 @@ export class SidebarStateClass implements SidebarState {
    * Stop SSE connection
    */
   stopSSEConnection(): void {
+    // Clear any pending reconnection timeout
+    if (this.#reconnectTimeoutId !== null) {
+      clearTimeout(this.#reconnectTimeoutId);
+      this.#reconnectTimeoutId = null;
+    }
+    
     if (this.#sseConnection) {
       this.#sseConnection.close();
       this.#sseConnection = null;

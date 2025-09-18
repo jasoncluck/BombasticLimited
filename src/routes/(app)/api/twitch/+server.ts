@@ -1,6 +1,5 @@
 import { getMultipleStreamStatus } from '$lib/client/twitch.js';
 import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
-import { subscribeToStreamUpdates, getCurrentLiveStreams } from '$lib/server/twitch-webhooks.js';
 import { produce } from 'sveltekit-sse';
 import { dev } from '$app/environment';
 import type { Source } from '$lib/constants/source.js';
@@ -114,41 +113,42 @@ async function updateStreamStatus(): Promise<void> {
 }
 
 /**
- * Sync local state with webhook state
+ * Safely sync local state with webhook state (production only)
  */
-function syncWithWebhookState(): void {
-  const webhookStreams = getCurrentLiveStreams();
-  const webhookSet = new Set(webhookStreams);
+async function syncWithWebhookState(): Promise<void> {
+  if (dev) return; // Skip in development
   
-  // Check if there are differences between local state and webhook state
-  const localSet = new Set(Array.from(streamingSources));
-  
-  let hasChanges = false;
-  
-  // Add streams that are live according to webhooks but not in local state
-  for (const source of webhookStreams) {
-    if (!localSet.has(source)) {
-      streamingSources.add(source);
-      hasChanges = true;
-      if (dev) {
-        console.log(`🔄 SSE: Added ${source} from webhook state`);
+  try {
+    const { getCurrentLiveStreams } = await import('$lib/server/twitch-webhooks.js');
+    const webhookStreams = getCurrentLiveStreams();
+    const webhookSet = new Set(webhookStreams);
+    
+    // Check if there are differences between local state and webhook state
+    const localSet = new Set(Array.from(streamingSources));
+    
+    let hasChanges = false;
+    
+    // Add streams that are live according to webhooks but not in local state
+    for (const source of webhookStreams) {
+      if (!localSet.has(source)) {
+        streamingSources.add(source);
+        hasChanges = true;
       }
     }
-  }
-  
-  // Remove streams that are not live according to webhooks but are in local state
-  for (const source of Array.from(streamingSources) as Source[]) {
-    if (!webhookSet.has(source)) {
-      streamingSources.delete(source);
-      hasChanges = true;
-      if (dev) {
-        console.log(`🔄 SSE: Removed ${source} from webhook state`);
+    
+    // Remove streams that are not live according to webhooks but are in local state
+    for (const source of Array.from(streamingSources) as Source[]) {
+      if (!webhookSet.has(source)) {
+        streamingSources.delete(source);
+        hasChanges = true;
       }
     }
-  }
-  
-  if (hasChanges && dev) {
-    console.log('📊 SSE: Synced with webhook state:', Array.from(streamingSources));
+    
+    if (hasChanges && dev) {
+      console.log('📊 SSE: Synced with webhook state:', Array.from(streamingSources));
+    }
+  } catch (error) {
+    console.warn('Failed to sync with webhook state:', error);
   }
 }
 
@@ -167,30 +167,37 @@ export async function POST() {
       try {
         // In development, webhooks may not be available, so make this optional
         if (!dev) {
-          // Set up webhook subscription for real-time updates in production
-          webhookUnsubscribe = subscribeToStreamUpdates((liveStreams: Source[]) => {
-            // Update local state with webhook data
-            streamingSources.clear();
-            liveStreams.forEach(source => streamingSources.add(source));
+          try {
+            // Dynamically import webhook functions to avoid initialization issues
+            const { subscribeToStreamUpdates } = await import('$lib/server/twitch-webhooks.js');
             
-            // Emit updated data immediately
-            const jsonData = JSON.stringify(liveStreams);
-            const { error } = emit('streamingSubscriptions', jsonData);
-            
-            if (error) {
-              const isClientDisconnection =
-                error.message?.includes('Client disconnected') ||
-                error.message?.includes('Connection closed') ||
-                error.message?.includes('stream closed');
-                
-              if (!isClientDisconnection) {
-                console.error('SSE webhook emit error:', error);
+            // Set up webhook subscription for real-time updates in production
+            webhookUnsubscribe = subscribeToStreamUpdates((liveStreams: Source[]) => {
+              // Update local state with webhook data
+              streamingSources.clear();
+              liveStreams.forEach(source => streamingSources.add(source));
+              
+              // Emit updated data immediately
+              const jsonData = JSON.stringify(liveStreams);
+              const { error } = emit('streamingSubscriptions', jsonData);
+              
+              if (error) {
+                const isClientDisconnection =
+                  error.message?.includes('Client disconnected') ||
+                  error.message?.includes('Connection closed') ||
+                  error.message?.includes('stream closed');
+                  
+                if (!isClientDisconnection) {
+                  console.error('SSE webhook emit error:', error);
+                }
               }
-            }
-          });
-          
-          // Initial sync with webhook state in production
-          syncWithWebhookState();
+            });
+            
+            // Initial sync with webhook state in production
+            await syncWithWebhookState();
+          } catch (error) {
+            console.warn('Failed to setup webhook integration (falling back to polling only):', error);
+          }
         } else {
           if (dev) {
             console.log('🔧 SSE: Development mode - using polling only (webhooks disabled)');
@@ -230,7 +237,7 @@ export async function POST() {
 
           // Sync with webhook state (primary source of truth) in production
           if (!dev) {
-            syncWithWebhookState();
+            await syncWithWebhookState();
           }
           
           // Prepare the data to send
