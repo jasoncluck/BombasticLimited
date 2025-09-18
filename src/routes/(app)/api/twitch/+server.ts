@@ -45,9 +45,15 @@ if (dev || process.env.NODE_ENV !== 'production') {
   console.log('🔧 SSE Configuration (Webhook-Enhanced Mode):');
   console.log(`  - Stream check interval (backup): ${STREAM_CHECK_INTERVAL}ms`);
   console.log(`  - SSE iteration delay: ${SSE_ITERATION_DELAY}ms`);
-  console.log(`  - Max SSE duration: ${MAX_SSE_DURATION}ms ${!dev ? '(Vercel 60s timeout limit)' : ''}`);
-  console.log(`  - Primary updates via webhooks: ${!dev ? 'YES' : 'MIXED (dev)'}`);
-  console.log(`  - Estimated iterations per connection: ~${Math.floor(MAX_SSE_DURATION / SSE_ITERATION_DELAY)}`);
+  console.log(
+    `  - Max SSE duration: ${MAX_SSE_DURATION}ms ${!dev ? '(Vercel 60s timeout limit)' : ''}`
+  );
+  console.log(
+    `  - Primary updates via webhooks: ${!dev ? 'YES' : 'MIXED (dev)'}`
+  );
+  console.log(
+    `  - Estimated iterations per connection: ~${Math.floor(MAX_SSE_DURATION / SSE_ITERATION_DELAY)}`
+  );
 }
 
 /**
@@ -92,7 +98,9 @@ async function updateStreamStatus(): Promise<void> {
 
         // Log new streams in dev mode
         if (dev && !previouslyLive.has(sourceName)) {
-          console.log(`🔴 SSE: ${sourceName} started streaming (backup detection)`);
+          console.log(
+            `🔴 SSE: ${sourceName} started streaming (backup detection)`
+          );
         }
       }
     }
@@ -100,12 +108,17 @@ async function updateStreamStatus(): Promise<void> {
     // Log when streams go offline
     for (const prevSource of previouslyLive) {
       if (!streamingSources.has(prevSource)) {
-        console.log(`⚫ SSE: ${prevSource} ended the Twitch stream (backup detection)`);
+        console.log(
+          `⚫ SSE: ${prevSource} ended the Twitch stream (backup detection)`
+        );
       }
     }
 
     if (dev) {
-      console.log('📊 SSE: Current streaming sources (backup):', Array.from(streamingSources));
+      console.log(
+        '📊 SSE: Current streaming sources (backup):',
+        Array.from(streamingSources)
+      );
     }
   } catch (error) {
     console.error('Failed to update Twitch stream status (backup):', error);
@@ -118,9 +131,11 @@ async function updateStreamStatus(): Promise<void> {
  */
 async function initializeWebhooksIfNeeded(): Promise<void> {
   if (dev) return; // Skip in development
-  
+
   try {
-    const { initializeWebhookState } = await import('$lib/server/twitch-webhooks.js');
+    const { initializeWebhookState } = await import(
+      '$lib/server/twitch-webhooks.js'
+    );
     await initializeWebhookState();
   } catch (error) {
     console.warn('Failed to initialize webhook state:', error);
@@ -132,17 +147,19 @@ async function initializeWebhooksIfNeeded(): Promise<void> {
  */
 async function syncWithWebhookState(): Promise<void> {
   if (dev) return; // Skip in development
-  
+
   try {
-    const { getCurrentLiveStreams } = await import('$lib/server/twitch-webhooks.js');
+    const { getCurrentLiveStreams } = await import(
+      '$lib/server/twitch-webhooks.js'
+    );
     const webhookStreams = getCurrentLiveStreams();
     const webhookSet = new Set(webhookStreams);
-    
+
     // Check if there are differences between local state and webhook state
     const localSet = new Set(Array.from(streamingSources));
-    
+
     let hasChanges = false;
-    
+
     // Add streams that are live according to webhooks but not in local state
     for (const source of webhookStreams) {
       if (!localSet.has(source)) {
@@ -150,7 +167,7 @@ async function syncWithWebhookState(): Promise<void> {
         hasChanges = true;
       }
     }
-    
+
     // Remove streams that are not live according to webhooks but are in local state
     for (const source of Array.from(streamingSources) as Source[]) {
       if (!webhookSet.has(source)) {
@@ -158,9 +175,12 @@ async function syncWithWebhookState(): Promise<void> {
         hasChanges = true;
       }
     }
-    
+
     if (hasChanges && dev) {
-      console.log('📊 SSE: Synced with webhook state:', Array.from(streamingSources));
+      console.log(
+        '📊 SSE: Synced with webhook state:',
+        Array.from(streamingSources)
+      );
     }
   } catch (error) {
     console.warn('Failed to sync with webhook state:', error);
@@ -169,7 +189,7 @@ async function syncWithWebhookState(): Promise<void> {
 
 // Initialize webhooks on module load (production only)
 if (!dev) {
-  initializeWebhooksIfNeeded().catch(error => {
+  initializeWebhooksIfNeeded().catch((error) => {
     console.warn('Failed to initialize webhooks on startup:', error);
   });
 }
@@ -180,67 +200,87 @@ export async function POST() {
       const startTime = Date.now();
 
       if (dev) {
-        console.log('🚀 SSE: Connection started, will run for up to', MAX_SSE_DURATION / 1000, 'seconds');
+        console.log(
+          '🚀 SSE: Connection started, will run for up to',
+          MAX_SSE_DURATION / 1000,
+          'seconds'
+        );
       }
 
       // Subscribe to webhook updates for real-time stream changes (production only)
       let webhookUnsubscribe: (() => void) | null = null;
-      
+
       try {
         // In development, webhooks may not be available, so make this optional
         if (!dev) {
           try {
             // Dynamically import webhook functions to avoid initialization issues
-            const { subscribeToStreamUpdates } = await import('$lib/server/twitch-webhooks.js');
-            
+            const { subscribeToStreamUpdates } = await import(
+              '$lib/server/twitch-webhooks.js'
+            );
+
             if (dev) {
-              console.log('🔧 SSE: Setting up webhook subscription in production mode');
+              console.log(
+                '🔧 SSE: Setting up webhook subscription in production mode'
+              );
             }
-            
+
             // Set up webhook subscription for real-time updates in production
-            webhookUnsubscribe = subscribeToStreamUpdates((liveStreams: Source[]) => {
-              // Update local state with webhook data
-              streamingSources.clear();
-              liveStreams.forEach(source => streamingSources.add(source));
-              
-              // Emit updated data immediately
-              const jsonData = JSON.stringify(liveStreams);
-              const { error } = emit('streamingSubscriptions', jsonData);
-              
-              if (error) {
-                const isClientDisconnection =
-                  error.message?.includes('Client disconnected') ||
-                  error.message?.includes('Connection closed') ||
-                  error.message?.includes('stream closed');
-                  
-                if (!isClientDisconnection) {
-                  console.error('SSE webhook emit error:', error);
+            webhookUnsubscribe = subscribeToStreamUpdates(
+              (liveStreams: Source[]) => {
+                // Update local state with webhook data
+                streamingSources.clear();
+                liveStreams.forEach((source) => streamingSources.add(source));
+
+                // Emit updated data immediately
+                const jsonData = JSON.stringify(liveStreams);
+                const { error } = emit('streamingSubscriptions', jsonData);
+
+                if (error) {
+                  const isClientDisconnection =
+                    error.message?.includes('Client disconnected') ||
+                    error.message?.includes('Connection closed') ||
+                    error.message?.includes('stream closed');
+
+                  if (!isClientDisconnection) {
+                    console.error('SSE webhook emit error:', error);
+                  }
                 }
               }
-            });
-            
+            );
+
             // Initial sync with webhook state in production
             await syncWithWebhookState();
-            
+
             if (dev) {
-              console.log('🟢 SSE: Webhook integration setup completed successfully'); 
+              console.log(
+                '🟢 SSE: Webhook integration setup completed successfully'
+              );
             }
           } catch (error) {
-            console.warn('Failed to setup webhook integration (falling back to polling only):', error);
+            console.warn(
+              'Failed to setup webhook integration (falling back to polling only):',
+              error
+            );
             // This should not break the SSE connection - just fall back to polling
           }
         } else {
           if (dev) {
-            console.log('🔧 SSE: Development mode - using polling only (webhooks disabled)');
+            console.log(
+              '🔧 SSE: Development mode - using polling only (webhooks disabled)'
+            );
           }
         }
-        
+
         // Send initial data immediately
         const initialData = Array.from(streamingSources.values());
         const initialJsonData = JSON.stringify(initialData);
-        
+
         try {
-          const { error: initialEmitError } = emit('streamingSubscriptions', initialJsonData);
+          const { error: initialEmitError } = emit(
+            'streamingSubscriptions',
+            initialJsonData
+          );
           if (initialEmitError) {
             console.warn('Initial SSE emit error:', initialEmitError);
             // Don't break the connection for initial emit errors
@@ -253,13 +293,16 @@ export async function POST() {
           console.warn('Failed to send initial SSE data:', emitError);
           // Don't break the connection
         }
-        
+
         // Initial backup stream status check with timeout
         try {
           await withTimeout(updateStreamStatus(), API_TIMEOUT);
         } catch (error) {
           if (dev) {
-            console.log('Initial polling attempt:', error instanceof Error ? error.message : 'Unknown error');
+            console.log(
+              'Initial polling attempt:',
+              error instanceof Error ? error.message : 'Unknown error'
+            );
           }
         }
       } catch (error) {
@@ -284,7 +327,7 @@ export async function POST() {
           if (!dev) {
             await syncWithWebhookState();
           }
-          
+
           // Prepare the data to send
           const streamingData = Array.from(streamingSources.values());
           const jsonData = JSON.stringify(streamingData);
@@ -314,15 +357,21 @@ export async function POST() {
           }
 
           // Run backup polling (more frequent in dev since no webhooks)
-          const pollingInterval = dev ? SSE_ITERATION_DELAY : STREAM_CHECK_INTERVAL;
-          const shouldRunPolling = dev || (elapsed % pollingInterval < SSE_ITERATION_DELAY);
-          
+          const pollingInterval = dev
+            ? SSE_ITERATION_DELAY
+            : STREAM_CHECK_INTERVAL;
+          const shouldRunPolling =
+            dev || elapsed % pollingInterval < SSE_ITERATION_DELAY;
+
           if (shouldRunPolling) {
             try {
               await withTimeout(updateStreamStatus(), API_TIMEOUT);
             } catch (error) {
               if (dev) {
-                console.log('Polling failed:', error instanceof Error ? error.message : 'Unknown error');
+                console.log(
+                  'Polling failed:',
+                  error instanceof Error ? error.message : 'Unknown error'
+                );
               }
               // Don't break on polling failures
             }
@@ -346,7 +395,7 @@ export async function POST() {
           break;
         }
       }
-      
+
       // Clean up webhook subscription
       if (webhookUnsubscribe) {
         webhookUnsubscribe();

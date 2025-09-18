@@ -24,8 +24,10 @@ describe('/api/twitch/webhook endpoint', () => {
     mockHandleWebhookEvent.mockResolvedValue(mockResponse);
 
     const { GET } = await import('../+server.js');
-    
-    const mockRequest = new Request('http://localhost:5173/api/twitch/webhook?hub.challenge=test');
+
+    const mockRequest = new Request(
+      'http://localhost:5173/api/twitch/webhook?hub.challenge=test'
+    );
     const mockEvent = { request: mockRequest } as any; // Type assertion for test
 
     const response = await GET(mockEvent);
@@ -39,11 +41,14 @@ describe('/api/twitch/webhook endpoint', () => {
     mockHandleWebhookEvent.mockResolvedValue(mockResponse);
 
     const { POST } = await import('../+server.js');
-    
-    const mockRequest = new Request('http://localhost:5173/api/twitch/webhook', {
-      method: 'POST',
-      body: JSON.stringify({ test: 'event' }),
-    });
+
+    const mockRequest = new Request(
+      'http://localhost:5173/api/twitch/webhook',
+      {
+        method: 'POST',
+        body: JSON.stringify({ test: 'event' }),
+      }
+    );
     const mockEvent = { request: mockRequest } as any; // Type assertion for test
 
     const response = await POST(mockEvent);
@@ -57,11 +62,14 @@ describe('/api/twitch/webhook endpoint', () => {
     mockHandleWebhookEvent.mockRejectedValue(mockError);
 
     const { POST } = await import('../+server.js');
-    
-    const mockRequest = new Request('http://localhost:5173/api/twitch/webhook', {
-      method: 'POST',
-      body: JSON.stringify({ test: 'event' }),
-    });
+
+    const mockRequest = new Request(
+      'http://localhost:5173/api/twitch/webhook',
+      {
+        method: 'POST',
+        body: JSON.stringify({ test: 'event' }),
+      }
+    );
     const mockEvent = { request: mockRequest } as any; // Type assertion for test
 
     // Should not throw, error should be handled by the webhook handler

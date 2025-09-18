@@ -1,10 +1,13 @@
 # Twitch EventSub Webhooks Implementation
 
-This document describes the implementation of Twitch EventSub webhooks to replace the expensive polling mechanism for stream monitoring.
+This document describes the implementation of Twitch EventSub webhooks to
+replace the expensive polling mechanism for stream monitoring.
 
 ## Overview
 
-The webhook system provides real-time notifications when Twitch streams go online or offline, eliminating the need for continuous API polling and significantly reducing Vercel compute costs.
+The webhook system provides real-time notifications when Twitch streams go
+online or offline, eliminating the need for continuous API polling and
+significantly reducing Vercel compute costs.
 
 ## Architecture
 
@@ -47,24 +50,32 @@ VERCEL_URL=your-domain.vercel.app
 ```
 
 **Note about TWITCH_WEBHOOK_SECRET:**
-- **Optional but recommended**: If provided, Twitch will sign webhook payloads and your application will verify signatures for security
-- **If omitted**: Webhook signature verification is skipped (less secure but simpler setup)
-- **Production recommendation**: Always use a webhook secret in production for security
+
+- **Optional but recommended**: If provided, Twitch will sign webhook payloads
+  and your application will verify signatures for security
+- **If omitted**: Webhook signature verification is skipped (less secure but
+  simpler setup)
+- **Production recommendation**: Always use a webhook secret in production for
+  security
 
 ## Webhook URL Configuration
 
-The system uses **Vercel rewrites** for optimal webhook handling as recommended by Twurple documentation:
+The system uses **Vercel rewrites** for optimal webhook handling as recommended
+by Twurple documentation:
 
 - **Development**: `https://localhost:5173/api/twitch/webhook` (direct endpoint)
-- **Production**: `https://your-domain.com/webhooks/twitch` (via Vercel rewrite to `/api/twitch/webhook`)
+- **Production**: `https://your-domain.com/webhooks/twitch` (via Vercel rewrite
+  to `/api/twitch/webhook`)
 
 ### Benefits of Vercel Rewrites
 
-1. **Clean URLs**: `/webhooks/twitch` is more semantic than `/api/twitch/webhook`
+1. **Clean URLs**: `/webhooks/twitch` is more semantic than
+   `/api/twitch/webhook`
 2. **Load Balancing**: Vercel handles traffic distribution across regions
 3. **SSL Termination**: Automatic HTTPS handling
 4. **Route Optimization**: Better performance for webhook endpoints
-5. **URL Stability**: Consistent webhook URLs regardless of internal routing changes
+5. **URL Stability**: Consistent webhook URLs regardless of internal routing
+   changes
 
 The rewrite is configured in `vercel.json`:
 
@@ -86,11 +97,14 @@ The rewrite is configured in `vercel.json`:
 Ensure required environment variables are set in your deployment environment:
 
 **Required:**
+
 - `TWITCH_CLIENT_ID` - Your Twitch application client ID
 - `TWITCH_CLIENT_SECRET` - Your Twitch application client secret
 
 **Optional:**
-- `TWITCH_WEBHOOK_SECRET` - Secret for webhook signature verification (recommended for production)
+
+- `TWITCH_WEBHOOK_SECRET` - Secret for webhook signature verification
+  (recommended for production)
 - `VERCEL_URL` - Webhook domain (auto-detected in Vercel deployments)
 
 ### 2. Set Up Webhook Subscriptions
@@ -109,18 +123,22 @@ npm run twitch:webhook:cleanup
 ```
 
 **Note**: The setup script will automatically use the correct webhook URL:
+
 - Development: `http://localhost:5173/api/twitch/webhook`
 - Production: `https://your-domain.com/webhooks/twitch` (via Vercel rewrite)
 
 ### 3. Deploy
 
 Deploy your application with the webhook endpoint available at:
-- **Direct endpoint**: `/api/twitch/webhook` 
-- **Public webhook URL**: `/webhooks/twitch` (recommended for Twitch EventSub registration)
+
+- **Direct endpoint**: `/api/twitch/webhook`
+- **Public webhook URL**: `/webhooks/twitch` (recommended for Twitch EventSub
+  registration)
 
 ## Cost Optimization Benefits
 
 ### Before (Polling)
+
 - **Polling Frequency**: Every 60 seconds
 - **Concurrent Connections**: Each SSE client = separate polling instance
 - **API Calls**: ~1,440 calls/day per source (4 sources = 5,760 calls/day)
@@ -128,6 +146,7 @@ Deploy your application with the webhook endpoint available at:
 - **Estimated Cost**: $5-15/month on Vercel
 
 ### After (Webhooks)
+
 - **Real-time Updates**: Only when streams change status
 - **Shared State**: All SSE clients use same webhook-driven state
 - **API Calls**: Only for webhook registration/management
@@ -137,9 +156,12 @@ Deploy your application with the webhook endpoint available at:
 
 ## Security
 
-- **Signature Verification**: If `TWITCH_WEBHOOK_SECRET` is configured, all webhook events are verified using HMAC-SHA256
-- **Optional Security**: Webhook secret is optional - if omitted, signature verification is skipped
-- **Message Validation**: Proper header and payload validation regardless of signature verification
+- **Signature Verification**: If `TWITCH_WEBHOOK_SECRET` is configured, all
+  webhook events are verified using HMAC-SHA256
+- **Optional Security**: Webhook secret is optional - if omitted, signature
+  verification is skipped
+- **Message Validation**: Proper header and payload validation regardless of
+  signature verification
 - **Error Handling**: Graceful handling of malformed requests
 
 ## Monitoring
@@ -176,7 +198,8 @@ npm run test "src/routes/(app)/api/twitch/__tests__/server.test.ts"
 
 ## Deployment Checklist
 
-- [ ] Environment variables configured (TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET required)
+- [ ] Environment variables configured (TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET
+      required)
 - [ ] Optional TWITCH_WEBHOOK_SECRET configured for enhanced security
 - [ ] Webhook subscriptions created (`npm run twitch:webhook:setup`)
 - [ ] Webhook endpoint accessible at `/webhooks/twitch` (via Vercel rewrite)
@@ -195,7 +218,8 @@ npm run test "src/routes/(app)/api/twitch/__tests__/server.test.ts"
 
 ### Signature Verification Failures
 
-1. Verify `TWITCH_WEBHOOK_SECRET` matches the value used during subscription setup
+1. Verify `TWITCH_WEBHOOK_SECRET` matches the value used during subscription
+   setup
 2. Check that webhook URL is correct (HTTPS required for production)
 3. Ensure message headers are properly forwarded by your hosting provider
 

@@ -433,7 +433,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Load initial data
@@ -455,7 +455,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Mark as initialized immediately for UI purposes
@@ -496,15 +496,15 @@ export class SidebarStateClass implements SidebarState {
     if (!browser) {
       return;
     }
-    
+
     // Stop existing connection
     this.stopSSEConnection();
-    
+
     // Reset counters and start fresh
     this.#reconnectAttempts = 0;
     this.#consecutiveFailures = 0;
     this.#reconnectDelay = 2000;
-    
+
     console.log('🔄 Manually retrying SSE connection...');
     this.connectSSE();
   }
@@ -520,7 +520,10 @@ export class SidebarStateClass implements SidebarState {
           const streamingSources: Source[] = JSON.parse(data);
           this.updateStreamingState(streamingSources);
         } catch (error) {
-          if (error instanceof SyntaxError && error.message.includes('Unexpected end of JSON input')) {
+          if (
+            error instanceof SyntaxError &&
+            error.message.includes('Unexpected end of JSON input')
+          ) {
             return; // Ignore incomplete JSON during reconnection
           }
           console.error('Failed to parse streaming update:', error);
@@ -529,13 +532,13 @@ export class SidebarStateClass implements SidebarState {
 
       this.#sseConnection.select('open').subscribe(() => {
         this.#sseConnected = true;
-        
+
         // Only reset counters after the connection has been stable for 10 seconds
         // This prevents immediate reset if the connection fails right after opening
         if (this.#connectionStabilityTimeoutId !== null) {
           clearTimeout(this.#connectionStabilityTimeoutId);
         }
-        
+
         this.#connectionStabilityTimeoutId = window.setTimeout(() => {
           // Connection has been stable for 10 seconds, safe to reset counters
           this.#reconnectAttempts = 0;
@@ -562,8 +565,11 @@ export class SidebarStateClass implements SidebarState {
         // Attempt reconnection with backoff if within retry limit
         if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
           this.#reconnectAttempts++;
-          const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
-          
+          const delay = Math.min(
+            baseDelay * Math.pow(2, this.#reconnectAttempts - 1),
+            60000
+          ); // Cap at 60 seconds for structural issues
+
           this.#reconnectTimeoutId = window.setTimeout(() => {
             this.#reconnectTimeoutId = null; // Clear timeout ID
             if (browser && !this.#sseConnection) {
@@ -591,14 +597,21 @@ export class SidebarStateClass implements SidebarState {
         // Only attempt reconnection if within retry limit
         if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
           this.#reconnectAttempts++;
-          const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
-          
+          const delay = Math.min(
+            baseDelay * Math.pow(2, this.#reconnectAttempts - 1),
+            60000
+          ); // Cap at 60 seconds for structural issues
+
           if (isStructuralProblem) {
-            console.warn(`🔌 SSE connection closed after multiple failures. Using extended delay: ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+            console.warn(
+              `🔌 SSE connection closed after multiple failures. Using extended delay: ${delay / 1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`
+            );
           } else {
-            console.log(`🔌 SSE connection closed, attempting reconnection in ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+            console.log(
+              `🔌 SSE connection closed, attempting reconnection in ${delay / 1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`
+            );
           }
-          
+
           this.#reconnectTimeoutId = window.setTimeout(() => {
             this.#reconnectTimeoutId = null; // Clear timeout ID
             if (browser) {
@@ -606,26 +619,34 @@ export class SidebarStateClass implements SidebarState {
             }
           }, delay);
         } else {
-          console.warn('⚠️ Max SSE reconnection attempts reached after connection close. Use manual refresh if needed.');
+          console.warn(
+            '⚠️ Max SSE reconnection attempts reached after connection close. Use manual refresh if needed.'
+          );
         }
       });
-
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
 
       // Retry after a delay with backoff if within retry limit
       if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
         this.#reconnectAttempts++;
-        const delay = Math.min(this.#reconnectDelay * Math.pow(2, this.#reconnectAttempts - 1), 30000); // Cap at 30 seconds
-        
+        const delay = Math.min(
+          this.#reconnectDelay * Math.pow(2, this.#reconnectAttempts - 1),
+          30000
+        ); // Cap at 30 seconds
+
         setTimeout(() => {
           if (browser) {
-            console.log(`🔄 Retrying SSE connection (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+            console.log(
+              `🔄 Retrying SSE connection (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`
+            );
             this.connectSSE();
           }
         }, delay);
       } else {
-        console.warn('⚠️ Max SSE connection attempts reached. Manual refresh may be needed.');
+        console.warn(
+          '⚠️ Max SSE connection attempts reached. Manual refresh may be needed.'
+        );
       }
     }
   }
@@ -639,13 +660,13 @@ export class SidebarStateClass implements SidebarState {
       clearTimeout(this.#reconnectTimeoutId);
       this.#reconnectTimeoutId = null;
     }
-    
+
     // Clear any pending stability timeout
     if (this.#connectionStabilityTimeoutId !== null) {
       clearTimeout(this.#connectionStabilityTimeoutId);
       this.#connectionStabilityTimeoutId = null;
     }
-    
+
     if (this.#sseConnection) {
       this.#sseConnection.close();
       this.#sseConnection = null;

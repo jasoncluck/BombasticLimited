@@ -23,16 +23,16 @@ describe('/api/twitch endpoint', () => {
     expect(typeof module.POST).toBe('function');
   });
 
-  it('should export GET function', async () => {
+  it('should export POST function', async () => {
     const module = await import('../+server.js');
 
-    expect(typeof module.GET).toBe('function');
+    expect(typeof module.POST).toBe('function');
   });
 
   it('should return SSE response with correct headers', async () => {
-    const { GET } = await import('../+server.js');
+    const { POST } = await import('../+server.js');
 
-    const response = await GET();
+    const response = await POST();
 
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('text/event-stream');
@@ -42,18 +42,18 @@ describe('/api/twitch endpoint', () => {
   });
 
   it('should return a ReadableStream', async () => {
-    const { GET } = await import('../+server.js');
+    const { POST } = await import('../+server.js');
 
-    const response = await GET();
+    const response = await POST();
 
     expect(response.body).toBeDefined();
     expect(response.body).toBeInstanceOf(ReadableStream);
   });
 
   it('should use the twitch poller for stream state', async () => {
-    const { GET } = await import('../+server.js');
+    const { POST } = await import('../+server.js');
 
-    await GET();
+    await POST();
 
     expect(mockGetActiveStreams).toHaveBeenCalled();
     expect(mockAddStreamChangeListener).toHaveBeenCalledWith(
@@ -64,8 +64,8 @@ describe('/api/twitch endpoint', () => {
   it('should send initial stream state', async () => {
     mockGetActiveStreams.mockReturnValue(['nextlander', 'remap']);
 
-    const { GET } = await import('../+server.js');
-    const response = await GET();
+    const { POST } = await import('../+server.js');
+    const response = await POST();
 
     // Read the initial chunk from the stream
     const reader = response.body!.getReader();
@@ -88,8 +88,8 @@ describe('/api/twitch endpoint', () => {
       return vi.fn(); // cleanup function
     });
 
-    const { GET } = await import('../+server.js');
-    const response = await GET();
+    const { POST } = await import('../+server.js');
+    const response = await POST();
 
     expect(changeCallback).toBeDefined();
 
@@ -110,8 +110,8 @@ describe('/api/twitch endpoint', () => {
 
     mockAddStreamChangeListener.mockReturnValue(mockCleanup);
 
-    const { GET } = await import('../+server.js');
-    const response = await GET();
+    const { POST } = await import('../+server.js');
+    const response = await POST();
 
     const reader = response.body!.getReader();
 
@@ -136,8 +136,8 @@ describe('/api/twitch endpoint', () => {
       dev: false,
     }));
 
-    const { GET } = await import('../+server.js');
-    const response = await GET();
+    const { POST } = await import('../+server.js');
+    const response = await POST();
 
     expect(response).toBeInstanceOf(Response);
     expect(response.body).toBeInstanceOf(ReadableStream);

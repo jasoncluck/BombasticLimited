@@ -6,9 +6,11 @@ import { dev } from '$app/environment';
 
 // Environment configuration
 const TWITCH_WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET;
-const WEBHOOK_BASE_URL = dev 
-  ? 'https://localhost:5173' 
-  : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://your-domain.com');
+const WEBHOOK_BASE_URL = dev
+  ? 'https://localhost:5173'
+  : process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : 'https://your-domain.com';
 
 // Use Vercel rewrite path for production webhook URL
 const WEBHOOK_CALLBACK_URL = dev
@@ -21,21 +23,31 @@ const WEBHOOK_CALLBACK_URL = dev
  */
 export async function setupTwitchWebhooks(): Promise<void> {
   // Validate environment variables
-  if (TWITCH_CLIENT_ID === 'placeholder_client_id' || TWITCH_CLIENT_SECRET === 'placeholder_client_secret') {
+  if (
+    TWITCH_CLIENT_ID === 'placeholder_client_id' ||
+    TWITCH_CLIENT_SECRET === 'placeholder_client_secret'
+  ) {
     throw new Error('Twitch credentials not configured');
   }
 
   // Initialize Twitch API client
-  const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
+  const authProvider = new AppTokenAuthProvider(
+    TWITCH_CLIENT_ID,
+    TWITCH_CLIENT_SECRET
+  );
   const apiClient = new ApiClient({ authProvider });
 
   console.log('🎣 Setting up Twitch EventSub webhook subscriptions...');
   console.log(`📍 Webhook callback URL: ${WEBHOOK_CALLBACK_URL}`);
-  
+
   if (TWITCH_WEBHOOK_SECRET) {
-    console.log(`🔒 Using webhook secret for signature verification: ${TWITCH_WEBHOOK_SECRET.substring(0, 8)}...`);
+    console.log(
+      `🔒 Using webhook secret for signature verification: ${TWITCH_WEBHOOK_SECRET.substring(0, 8)}...`
+    );
   } else {
-    console.log('⚠️  No webhook secret configured - webhooks will not be signature verified');
+    console.log(
+      '⚠️  No webhook secret configured - webhooks will not be signature verified'
+    );
   }
 
   const results = [];
@@ -45,7 +57,9 @@ export async function setupTwitchWebhooks(): Promise<void> {
     const displayName = SOURCE_INFO[source].displayName;
 
     try {
-      console.log(`\n🔧 Setting up webhooks for ${displayName} (${twitchId})...`);
+      console.log(
+        `\n🔧 Setting up webhooks for ${displayName} (${twitchId})...`
+      );
 
       // Create stream.online subscription
       const onlineSubscription = await apiClient.eventSub.createSubscription(
@@ -59,7 +73,9 @@ export async function setupTwitchWebhooks(): Promise<void> {
         }
       );
 
-      console.log(`✅ Created stream.online subscription for ${displayName}: ${onlineSubscription.id}`);
+      console.log(
+        `✅ Created stream.online subscription for ${displayName}: ${onlineSubscription.id}`
+      );
 
       // Create stream.offline subscription
       const offlineSubscription = await apiClient.eventSub.createSubscription(
@@ -73,7 +89,9 @@ export async function setupTwitchWebhooks(): Promise<void> {
         }
       );
 
-      console.log(`✅ Created stream.offline subscription for ${displayName}: ${offlineSubscription.id}`);
+      console.log(
+        `✅ Created stream.offline subscription for ${displayName}: ${offlineSubscription.id}`
+      );
 
       results.push({
         source,
@@ -83,7 +101,6 @@ export async function setupTwitchWebhooks(): Promise<void> {
         offlineSubscriptionId: offlineSubscription.id,
         status: 'success',
       });
-
     } catch (error) {
       console.error(`❌ Failed to setup webhooks for ${displayName}:`, error);
       results.push({
@@ -98,24 +115,28 @@ export async function setupTwitchWebhooks(): Promise<void> {
 
   // Summary
   console.log('\n📊 Webhook Setup Summary:');
-  const successful = results.filter(r => r.status === 'success').length;
-  const failed = results.filter(r => r.status === 'error').length;
-  
+  const successful = results.filter((r) => r.status === 'success').length;
+  const failed = results.filter((r) => r.status === 'error').length;
+
   console.log(`✅ Successful: ${successful}`);
   console.log(`❌ Failed: ${failed}`);
 
   if (failed > 0) {
     console.log('\n❌ Failed setups:');
     results
-      .filter(r => r.status === 'error')
-      .forEach(r => console.log(`   - ${r.displayName}: ${r.error}`));
+      .filter((r) => r.status === 'error')
+      .forEach((r) => console.log(`   - ${r.displayName}: ${r.error}`));
   }
 
   if (successful > 0) {
     console.log('\n✅ Successful setups:');
     results
-      .filter(r => r.status === 'success')
-      .forEach(r => console.log(`   - ${r.displayName}: Online(${r.onlineSubscriptionId}) + Offline(${r.offlineSubscriptionId})`));
+      .filter((r) => r.status === 'success')
+      .forEach((r) =>
+        console.log(
+          `   - ${r.displayName}: Online(${r.onlineSubscriptionId}) + Offline(${r.offlineSubscriptionId})`
+        )
+      );
   }
 
   console.log('\n🎯 Webhook setup complete!');
@@ -126,34 +147,40 @@ export async function setupTwitchWebhooks(): Promise<void> {
  * List existing EventSub subscriptions
  */
 export async function listWebhookSubscriptions(): Promise<void> {
-  const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
+  const authProvider = new AppTokenAuthProvider(
+    TWITCH_CLIENT_ID,
+    TWITCH_CLIENT_SECRET
+  );
   const apiClient = new ApiClient({ authProvider });
 
   try {
     console.log('📋 Listing existing EventSub subscriptions...');
-    
+
     const subscriptionsResult = await apiClient.eventSub.getSubscriptions();
     const subscriptions = subscriptionsResult.data;
-    
+
     if (subscriptions.length === 0) {
       console.log('📭 No existing subscriptions found');
       return;
     }
 
     console.log(`📊 Found ${subscriptions.length} subscriptions:\n`);
-    
+
     subscriptions.forEach((sub, index) => {
       console.log(`${index + 1}. ${sub.type}`);
       console.log(`   ID: ${sub.id}`);
       console.log(`   Status: ${sub.status}`);
       console.log(`   Created: ${sub.creationDate}`);
       if (sub.condition && 'broadcaster_user_id' in sub.condition) {
-        const source = SOURCES.find(s => SOURCE_INFO[s].twitchId === sub.condition.broadcaster_user_id);
-        console.log(`   Source: ${source ? SOURCE_INFO[source].displayName : 'Unknown'} (${sub.condition.broadcaster_user_id})`);
+        const source = SOURCES.find(
+          (s) => SOURCE_INFO[s].twitchId === sub.condition.broadcaster_user_id
+        );
+        console.log(
+          `   Source: ${source ? SOURCE_INFO[source].displayName : 'Unknown'} (${sub.condition.broadcaster_user_id})`
+        );
       }
       console.log('');
     });
-    
   } catch (error) {
     console.error('❌ Failed to list subscriptions:', error);
   }
@@ -163,22 +190,25 @@ export async function listWebhookSubscriptions(): Promise<void> {
  * Clean up all existing EventSub subscriptions
  */
 export async function cleanupWebhookSubscriptions(): Promise<void> {
-  const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
+  const authProvider = new AppTokenAuthProvider(
+    TWITCH_CLIENT_ID,
+    TWITCH_CLIENT_SECRET
+  );
   const apiClient = new ApiClient({ authProvider });
 
   try {
     console.log('🧹 Cleaning up existing EventSub subscriptions...');
-    
+
     const subscriptionsResult = await apiClient.eventSub.getSubscriptions();
     const subscriptions = subscriptionsResult.data;
-    
+
     if (subscriptions.length === 0) {
       console.log('📭 No subscriptions to clean up');
       return;
     }
 
     console.log(`🗑️  Deleting ${subscriptions.length} subscriptions...`);
-    
+
     for (const sub of subscriptions) {
       try {
         await apiClient.eventSub.deleteSubscription(sub.id);
@@ -187,9 +217,8 @@ export async function cleanupWebhookSubscriptions(): Promise<void> {
         console.error(`❌ Failed to delete subscription ${sub.id}:`, error);
       }
     }
-    
+
     console.log('🧹 Cleanup complete!');
-    
   } catch (error) {
     console.error('❌ Failed to cleanup subscriptions:', error);
   }
@@ -216,7 +245,11 @@ export async function runWebhookCommand(command: string): Promise<void> {
 }
 
 // If running as a script, execute the command
-if (typeof process !== 'undefined' && process.argv && import.meta.url.endsWith(process.argv[1])) {
+if (
+  typeof process !== 'undefined' &&
+  process.argv &&
+  import.meta.url.endsWith(process.argv[1])
+) {
   const command = process.argv[2] || 'setup';
   runWebhookCommand(command).catch(console.error);
 }
