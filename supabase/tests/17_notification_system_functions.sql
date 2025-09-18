@@ -160,7 +160,17 @@ SELECT
   has_function (
     'public',
     'create_notification',
-    ARRAY['public.notification_type', 'text', 'text', 'jsonb', 'text', 'boolean', 'timestamp with time zone', 'timestamp with time zone', 'uuid[]'],
+    ARRAY[
+      'public.notification_type',
+      'text',
+      'text',
+      'jsonb',
+      'text',
+      'boolean',
+      'timestamp with time zone',
+      'timestamp with time zone',
+      'uuid[]'
+    ],
     'create_notification should have correct function signature'
   );
 
@@ -176,14 +186,14 @@ SELECT
 -- Test notification retrieval functions exist
 SELECT
   has_function (
-    'public', 
+    'public',
     'get_user_notifications',
     'get_user_notifications function should exist'
   );
 
 SELECT
   has_function (
-    'public', 
+    'public',
     'get_user_notifications_with_timing',
     'get_user_notifications_with_timing function should exist'
   );
@@ -191,7 +201,7 @@ SELECT
 -- Test cleanup functions exist
 SELECT
   has_function (
-    'public', 
+    'public',
     'cleanup_expired_notifications',
     'cleanup_expired_notifications function should exist'
   );

@@ -8,7 +8,6 @@ SELECT
 -- ========================================
 -- Test missing core functions
 -- ========================================
-
 -- Test older core functions that might not be covered
 SELECT
   has_function (
@@ -50,7 +49,6 @@ SELECT
 -- ========================================
 -- Test playlist management functions
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -151,7 +149,6 @@ SELECT
 -- ========================================
 -- Test user management functions
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -184,7 +181,6 @@ SELECT
 -- ========================================
 -- Test timestamp and data functions
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -223,7 +219,6 @@ SELECT
 -- ========================================
 -- Test utility functions
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -242,7 +237,6 @@ SELECT
 -- ========================================
 -- Test functional behavior with realistic data
 -- ========================================
-
 -- Test normalize_search_term functionality
 SELECT
   ok (

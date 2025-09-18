@@ -25,14 +25,16 @@ const changeListeners = new Set<StreamChangeListener>();
 /**
  * Add a listener for stream changes
  */
-export function addStreamChangeListener(listener: StreamChangeListener): () => void {
+export function addStreamChangeListener(
+  listener: StreamChangeListener
+): () => void {
   changeListeners.add(listener);
-  
+
   // Trigger immediate poll when first listener is added
   if (changeListeners.size === 1) {
     triggerPollIfNeeded();
   }
-  
+
   // Return cleanup function
   return () => {
     changeListeners.delete(listener);
@@ -53,7 +55,7 @@ export function getActiveStreams(): Source[] {
  */
 function notifyListeners() {
   const currentStreams = Array.from(activeStreams);
-  changeListeners.forEach(listener => {
+  changeListeners.forEach((listener) => {
     try {
       listener(currentStreams);
     } catch (error) {
@@ -68,12 +70,12 @@ function notifyListeners() {
 function triggerPollIfNeeded() {
   const now = Date.now();
   const timeSinceLastPoll = now - lastPollTime;
-  
+
   // If we have listeners and data is stale, poll immediately
   if (changeListeners.size > 0 && timeSinceLastPoll > POLL_INTERVAL) {
     pollStreamStatus();
   }
-  
+
   // Set up next poll if we have listeners and aren't already polling
   if (changeListeners.size > 0 && !isPolling) {
     scheduleNextPoll();
@@ -88,9 +90,9 @@ function scheduleNextPoll() {
   if (pollingTimeout) {
     clearTimeout(pollingTimeout);
   }
-  
+
   const interval = dev ? POLL_INTERVAL : SERVERLESS_POLL_INTERVAL;
-  
+
   pollingTimeout = setTimeout(() => {
     pollingTimeout = null;
     if (changeListeners.size > 0) {
@@ -105,25 +107,25 @@ function scheduleNextPoll() {
  */
 async function pollStreamStatus(): Promise<void> {
   const now = Date.now();
-  
+
   // Prevent excessive polling
   if (now - lastPollTime < MIN_POLL_INTERVAL) {
     return;
   }
-  
+
   lastPollTime = now;
-  
+
   try {
     // Get all Twitch user IDs from sources
     const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
-    
+
     if (dev) {
       console.log('🔍 Poller: Checking stream status for:', twitchIds);
     }
-    
+
     // Fetch stream status for all sources
     const streamStatuses = await getMultipleStreamStatus(twitchIds);
-    
+
     // Handle case where API returns undefined/null
     if (!streamStatuses || !Array.isArray(streamStatuses)) {
       if (dev) {
@@ -131,27 +133,27 @@ async function pollStreamStatus(): Promise<void> {
       }
       return;
     }
-    
+
     // Track previous state for change detection
     const previouslyActive = new Set(activeStreams);
     activeStreams.clear();
-    
+
     // Update active streams
     for (const status of streamStatuses) {
       const sourceName = SOURCES.find(
         (source) => SOURCE_INFO[source].twitchId === status.userId
       );
-      
+
       if (sourceName && status.isLive) {
         activeStreams.add(sourceName);
-        
+
         // Log new streams
         if (dev && !previouslyActive.has(sourceName)) {
           console.log(`🔴 Poller: ${sourceName} started streaming`);
         }
       }
     }
-    
+
     // Log streams that went offline
     if (dev) {
       for (const prevSource of previouslyActive) {
@@ -159,19 +161,22 @@ async function pollStreamStatus(): Promise<void> {
           console.log(`⚫ Poller: ${prevSource} ended streaming`);
         }
       }
-      
-      console.log('📊 Poller: Current active streams:', Array.from(activeStreams));
+
+      console.log(
+        '📊 Poller: Current active streams:',
+        Array.from(activeStreams)
+      );
     }
-    
+
     // Only notify if there were changes
-    const hasChanges = activeStreams.size !== previouslyActive.size || 
-                       [...activeStreams].some(s => !previouslyActive.has(s)) ||
-                       [...previouslyActive].some(s => !activeStreams.has(s));
-    
+    const hasChanges =
+      activeStreams.size !== previouslyActive.size ||
+      [...activeStreams].some((s) => !previouslyActive.has(s)) ||
+      [...previouslyActive].some((s) => !activeStreams.has(s));
+
     if (hasChanges) {
       notifyListeners();
     }
-    
   } catch (error) {
     console.error('Failed to poll Twitch stream status:', error);
   }
@@ -184,10 +189,10 @@ export function startPolling(): void {
   if (dev) {
     console.log(`🚀 Twitch poller started - serverless mode`);
   }
-  
+
   // Initial poll
   pollStreamStatus();
-  
+
   // Start scheduling polls
   scheduleNextPoll();
 }
@@ -200,7 +205,7 @@ export function stopPolling(): void {
     clearTimeout(pollingTimeout);
     pollingTimeout = null;
   }
-  
+
   if (dev) {
     console.log('⏹️ Twitch poller stopped');
   }
@@ -214,7 +219,8 @@ export function getPollerStatus() {
     activeStreamsCount: activeStreams.size,
     activeStreams: Array.from(activeStreams),
     listenersCount: changeListeners.size,
-    lastPollTime: lastPollTime > 0 ? new Date(lastPollTime).toISOString() : null,
+    lastPollTime:
+      lastPollTime > 0 ? new Date(lastPollTime).toISOString() : null,
     isStale: Date.now() - lastPollTime > POLL_INTERVAL,
   };
 }
@@ -242,7 +248,11 @@ if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test' && !dev) {
   // For serverless (like Vercel), we don't auto-start polling
   // Instead, polling is triggered when listeners are added
   console.log('🚀 Twitch poller initialized for serverless environment');
-} else if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test' && dev) {
+} else if (
+  typeof window === 'undefined' &&
+  process.env.NODE_ENV !== 'test' &&
+  dev
+) {
   // In development, keep the old behavior
   startPolling();
 }

@@ -427,7 +427,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Load initial data
@@ -449,7 +449,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Mark as initialized immediately for UI purposes
@@ -486,38 +486,46 @@ export class SidebarStateClass implements SidebarState {
     try {
       // Create native EventSource connection
       this.#sseConnection = new EventSource('/api/twitch', {
-        withCredentials: false
+        withCredentials: false,
       });
 
       // Handle streaming subscriptions events
-      this.#sseConnection.addEventListener('streamingSubscriptions', (event) => {
-        try {
-          if (!event.data || event.data.trim() === '') return;
+      this.#sseConnection.addEventListener(
+        'streamingSubscriptions',
+        (event) => {
+          try {
+            if (!event.data || event.data.trim() === '') return;
 
-          const streamingSources: Source[] = JSON.parse(event.data);
-          this.updateStreamingState(streamingSources);
-        } catch (error) {
-          if (error instanceof SyntaxError && error.message.includes('Unexpected end of JSON input')) {
-            return; // Ignore incomplete JSON during reconnection
+            const streamingSources: Source[] = JSON.parse(event.data);
+            this.updateStreamingState(streamingSources);
+          } catch (error) {
+            if (
+              error instanceof SyntaxError &&
+              error.message.includes('Unexpected end of JSON input')
+            ) {
+              return; // Ignore incomplete JSON during reconnection
+            }
+            console.error('Failed to parse streaming update:', error);
           }
-          console.error('Failed to parse streaming update:', error);
         }
-      });
+      );
 
       // Handle server-initiated connection close (for Vercel timeout management)
       this.#sseConnection.addEventListener('connection-close', (event) => {
         try {
           const data = JSON.parse(event.data);
           if (data.reconnect) {
-            console.log('🔄 Server requested reconnection (timeout prevention)');
+            console.log(
+              '🔄 Server requested reconnection (timeout prevention)'
+            );
             this.#sseConnected = false;
-            
+
             // Clean up current connection
             if (this.#sseConnection) {
               this.#sseConnection.close();
               this.#sseConnection = null;
             }
-            
+
             // Reconnect immediately since this is expected
             setTimeout(() => {
               if (browser && !this.#sseConnection) {
@@ -554,7 +562,6 @@ export class SidebarStateClass implements SidebarState {
           }
         }, 5000); // 5 second delay before reconnection
       });
-
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
 

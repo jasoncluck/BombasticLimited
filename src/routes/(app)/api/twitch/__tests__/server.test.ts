@@ -45,7 +45,7 @@ describe('/api/twitch endpoint', () => {
     const { GET } = await import('../+server.js');
 
     const response = await GET();
-    
+
     expect(response.body).toBeDefined();
     expect(response.body).toBeInstanceOf(ReadableStream);
   });
@@ -56,7 +56,9 @@ describe('/api/twitch endpoint', () => {
     await GET();
 
     expect(mockGetActiveStreams).toHaveBeenCalled();
-    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
+    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(
+      expect.any(Function)
+    );
   });
 
   it('should send initial stream state', async () => {
@@ -68,13 +70,13 @@ describe('/api/twitch endpoint', () => {
     // Read the initial chunk from the stream
     const reader = response.body!.getReader();
     const decoder = new TextDecoder();
-    
+
     const { value } = await reader.read();
     const text = decoder.decode(value);
 
     expect(text).toContain('event: streamingSubscriptions');
     expect(text).toContain('data: ["nextlander","remap"]');
-    
+
     reader.releaseLock();
   });
 
@@ -98,7 +100,9 @@ describe('/api/twitch endpoint', () => {
 
     // The stream should have been updated (we can't easily test the output here
     // without more complex stream mocking, but we can verify the callback was set up)
-    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
+    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(
+      expect.any(Function)
+    );
   });
 
   it('should have proper cleanup when stream is cancelled', async () => {
@@ -110,7 +114,7 @@ describe('/api/twitch endpoint', () => {
     const response = await GET();
 
     const reader = response.body!.getReader();
-    
+
     // Cancel the stream to trigger cleanup
     await reader.cancel('test cancellation');
 
@@ -137,7 +141,7 @@ describe('/api/twitch endpoint', () => {
 
     expect(response).toBeInstanceOf(Response);
     expect(response.body).toBeInstanceOf(ReadableStream);
-    
+
     // The connection should have timeout management built-in
     // This is difficult to test without advancing timers, but we verify the structure
   });

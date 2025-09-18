@@ -60,7 +60,9 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   // Initialize test timer on first call
   if (testStartTime === null) {
     testStartTime = now;
-    console.log('🧪 Dev mode: Test timer started - nextlander will go "live" in 10 seconds, then offline after 1 minute 10 seconds');
+    console.log(
+      '🧪 Dev mode: Test timer started - nextlander will go "live" in 10 seconds, then offline after 1 minute 10 seconds'
+    );
   }
 
   const elapsed = now - testStartTime;
@@ -68,9 +70,17 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   // Determine if should be live based on timing
   const shouldBeLive = elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_END;
 
-  if (shouldBeLive && elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_START + 1000) {
+  if (
+    shouldBeLive &&
+    elapsed >= TEST_LIVE_START &&
+    elapsed < TEST_LIVE_START + 1000
+  ) {
     console.log('🔴 Dev mode: nextlander is now "live" (test simulation)');
-  } else if (!shouldBeLive && elapsed >= TEST_LIVE_END && elapsed < TEST_LIVE_END + 1000) {
+  } else if (
+    !shouldBeLive &&
+    elapsed >= TEST_LIVE_END &&
+    elapsed < TEST_LIVE_END + 1000
+  ) {
     console.log('⚫ Dev mode: nextlander is now "offline" (test simulation)');
   }
 
@@ -79,7 +89,7 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
     isLive: shouldBeLive,
     lastChecked: now,
     // Don't create a full stream object, just indicate live status
-    stream: shouldBeLive ? ({} as HelixStream) : undefined
+    stream: shouldBeLive ? ({} as HelixStream) : undefined,
   };
 
   // Cache the result but with shorter duration in dev mode

@@ -1,4 +1,7 @@
-import { addStreamChangeListener, getActiveStreams } from '$lib/server/twitch-poller.js';
+import {
+  addStreamChangeListener,
+  getActiveStreams,
+} from '$lib/server/twitch-poller.js';
 import { dev } from '$app/environment';
 import type { Source } from '$lib/constants/source.js';
 
@@ -11,7 +14,7 @@ function createSSEResponse(stream: ReadableStream<Uint8Array>): Response {
     headers: {
       'Content-Type': 'text/event-stream',
       'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
+      Connection: 'keep-alive',
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Cache-Control',
     },
@@ -40,7 +43,7 @@ function createSSEHandler() {
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
       controllerRef = controller;
-      
+
       if (dev) {
         console.log('🚀 SSE: Connection started with background poller');
       }
@@ -48,9 +51,12 @@ function createSSEHandler() {
       // Send initial stream state immediately
       try {
         const initialStreams = getActiveStreams();
-        const initialData = createSSEData('streamingSubscriptions', JSON.stringify(initialStreams));
+        const initialData = createSSEData(
+          'streamingSubscriptions',
+          JSON.stringify(initialStreams)
+        );
         controller.enqueue(encoder.encode(initialData));
-        
+
         if (dev) {
           console.log('📤 SSE: Sent initial streams:', initialStreams);
         }
@@ -65,10 +71,13 @@ function createSSEHandler() {
             // Stream is closed
             return;
           }
-          
-          const sseData = createSSEData('streamingSubscriptions', JSON.stringify(activeStreams));
+
+          const sseData = createSSEData(
+            'streamingSubscriptions',
+            JSON.stringify(activeStreams)
+          );
           controller.enqueue(encoder.encode(sseData));
-          
+
           if (dev) {
             console.log('📤 SSE: Sent stream update:', activeStreams);
           }
@@ -94,10 +103,10 @@ function createSSEHandler() {
             }
             return;
           }
-          
+
           // Send a comment as heartbeat (ignored by EventSource)
           controller.enqueue(encoder.encode(': heartbeat\n\n'));
-          
+
           if (dev) {
             console.log('💓 SSE: Heartbeat sent');
           }
@@ -115,13 +124,18 @@ function createSSEHandler() {
         try {
           if (controller.desiredSize !== null) {
             // Send a close event to notify client to reconnect
-            const closeData = createSSEData('connection-close', JSON.stringify({ reason: 'timeout', reconnect: true }));
+            const closeData = createSSEData(
+              'connection-close',
+              JSON.stringify({ reason: 'timeout', reconnect: true })
+            );
             controller.enqueue(encoder.encode(closeData));
-            
+
             if (dev) {
-              console.log('⏰ SSE: Closing connection before timeout, client should reconnect');
+              console.log(
+                '⏰ SSE: Closing connection before timeout, client should reconnect'
+              );
             }
-            
+
             // Close the connection gracefully
             controller.close();
           }
@@ -130,29 +144,29 @@ function createSSEHandler() {
         }
       }, MAX_CONNECTION_TIME);
     },
-    
+
     cancel(reason) {
       if (dev) {
         console.log('🔌 SSE: Connection cancelled:', reason);
       }
-      
+
       // Clean up listener
       if (cleanupListener) {
         cleanupListener();
         cleanupListener = null;
       }
-      
+
       // Clean up intervals and timeouts
       if (heartbeatInterval) {
         clearInterval(heartbeatInterval);
         heartbeatInterval = null;
       }
-      
+
       if (connectionTimeout) {
         clearTimeout(connectionTimeout);
         connectionTimeout = null;
       }
-    }
+    },
   });
 
   return createSSEResponse(stream);
