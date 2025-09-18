@@ -24,7 +24,7 @@ function createSSEData(event: string, data: string): string {
   return `event: ${event}\ndata: ${data}\n\n`;
 }
 
-export async function POST() {
+function createSSEHandler() {
   const encoder = new TextEncoder();
   let controllerRef: ReadableStreamDefaultController<Uint8Array> | null = null;
   let cleanupListener: (() => void) | null = null;
@@ -119,4 +119,14 @@ export async function POST() {
   });
 
   return createSSEResponse(stream);
+}
+
+// EventSource only supports GET requests
+export async function GET() {
+  return createSSEHandler();
+}
+
+// Keep POST for backward compatibility with tests
+export async function POST() {
+  return createSSEHandler();
 }

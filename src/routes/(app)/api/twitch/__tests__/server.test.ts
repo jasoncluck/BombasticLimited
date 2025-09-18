@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import type { Source } from '$lib/constants/source.js';
 
-// Mock the twitch poller with actual functions
-const mockAddStreamChangeListener = vi.fn(() => vi.fn()); // Return cleanup function
-const mockGetActiveStreams = vi.fn(() => []);
+// Mock the twitch poller
+const mockAddStreamChangeListener = vi.fn();
+const mockGetActiveStreams = vi.fn();
 
 vi.mock('$lib/server/twitch-poller.js', () => ({
   addStreamChangeListener: mockAddStreamChangeListener,
@@ -22,10 +23,16 @@ describe('/api/twitch endpoint', () => {
     expect(typeof module.POST).toBe('function');
   });
 
-  it('should return SSE response with correct headers', async () => {
-    const { POST } = await import('../+server.js');
+  it('should export GET function', async () => {
+    const module = await import('../+server.js');
 
-    const response = await POST();
+    expect(typeof module.GET).toBe('function');
+  });
+
+  it('should return SSE response with correct headers', async () => {
+    const { GET } = await import('../+server.js');
+
+    const response = await GET();
 
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('text/event-stream');
@@ -35,18 +42,18 @@ describe('/api/twitch endpoint', () => {
   });
 
   it('should return a ReadableStream', async () => {
-    const { POST } = await import('../+server.js');
+    const { GET } = await import('../+server.js');
 
-    const response = await POST();
+    const response = await GET();
     
     expect(response.body).toBeDefined();
     expect(response.body).toBeInstanceOf(ReadableStream);
   });
 
   it('should use the twitch poller for stream state', async () => {
-    const { POST } = await import('../+server.js');
+    const { GET } = await import('../+server.js');
 
-    await POST();
+    await GET();
 
     expect(mockGetActiveStreams).toHaveBeenCalled();
     expect(mockAddStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
@@ -55,8 +62,8 @@ describe('/api/twitch endpoint', () => {
   it('should send initial stream state', async () => {
     mockGetActiveStreams.mockReturnValue(['nextlander', 'remap']);
 
-    const { POST } = await import('../+server.js');
-    const response = await POST();
+    const { GET } = await import('../+server.js');
+    const response = await GET();
 
     // Read the initial chunk from the stream
     const reader = response.body!.getReader();
@@ -72,15 +79,15 @@ describe('/api/twitch endpoint', () => {
   });
 
   it('should handle stream changes from poller', async () => {
-    let changeCallback: ((streams: string[]) => void) | null = null;
+    let changeCallback: any = null;
 
-    mockAddStreamChangeListener.mockImplementation((callback) => {
+    mockAddStreamChangeListener.mockImplementation((callback: any) => {
       changeCallback = callback;
       return vi.fn(); // cleanup function
     });
 
-    const { POST } = await import('../+server.js');
-    const response = await POST();
+    const { GET } = await import('../+server.js');
+    const response = await GET();
 
     expect(changeCallback).toBeDefined();
 
@@ -99,8 +106,8 @@ describe('/api/twitch endpoint', () => {
 
     mockAddStreamChangeListener.mockReturnValue(mockCleanup);
 
-    const { POST } = await import('../+server.js');
-    const response = await POST();
+    const { GET } = await import('../+server.js');
+    const response = await GET();
 
     const reader = response.body!.getReader();
     
@@ -108,5 +115,14 @@ describe('/api/twitch endpoint', () => {
     await reader.cancel('test cancellation');
 
     expect(mockCleanup).toHaveBeenCalled();
+  });
+
+  it('should support POST for backward compatibility', async () => {
+    const { POST } = await import('../+server.js');
+
+    const response = await POST();
+
+    expect(response).toBeInstanceOf(Response);
+    expect(response.headers.get('content-type')).toBe('text/event-stream');
   });
 });
