@@ -8,11 +8,6 @@
     "iad1",
     "dub1"
   ],
-  "functions": {
-    "src/routes/(app)/api/twitch/+server.ts": {
-      "maxDuration": 60
-    }
-  },
   "git": {
     "deploymentEnabled": {
       "copilot*": false
