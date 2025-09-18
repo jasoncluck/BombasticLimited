@@ -35,11 +35,11 @@ const streamingSources = new Set<string>();
 let lastStreamCheck = 0;
 
 // Configuration that adapts to dev vs production
-// Reduced polling frequency since webhooks handle real-time updates
+// Optimized for webhook-enhanced mode with less frequent backup polling
 const STREAM_CHECK_INTERVAL = dev ? 30000 : 600000; // 30 seconds in dev, 10 minutes in production (backup only)
 const API_TIMEOUT = 15000; // 15 second timeout for API calls
-const MAX_SSE_DURATION = dev ? 120000 : 300000; // 2 minutes in dev, 5 minutes in production
-const SSE_ITERATION_DELAY = dev ? 5000 : 30000; // 5 seconds in dev, 30 seconds in production (less frequent updates)
+const MAX_SSE_DURATION = dev ? 120000 : 900000; // 2 minutes in dev, 15 minutes in production (longer since webhooks handle real-time)
+const SSE_ITERATION_DELAY = dev ? 5000 : 20000; // 5 seconds in dev, 20 seconds in production (reasonable for webhook-enhanced mode)
 
 if (dev) {
   console.log('🔧 SSE Configuration (Webhook-Enhanced Mode):');
@@ -47,6 +47,7 @@ if (dev) {
   console.log(`  - SSE iteration delay: ${SSE_ITERATION_DELAY}ms`);
   console.log(`  - Max SSE duration: ${MAX_SSE_DURATION}ms`);
   console.log(`  - Primary updates via webhooks: ${!dev ? 'YES' : 'MIXED (dev)'}`);
+  console.log(`  - Estimated iterations per connection: ~${Math.floor(MAX_SSE_DURATION / SSE_ITERATION_DELAY)}`);
 }
 
 /**
@@ -193,10 +194,21 @@ export async function POST() {
         // Initial sync with webhook state
         syncWithWebhookState();
         
-        // Initial backup stream status check with timeout
-        await withTimeout(updateStreamStatus(), API_TIMEOUT);
+        // Send initial data immediately
+        const initialData = Array.from(streamingSources.values());
+        const initialJsonData = JSON.stringify(initialData);
+        emit('streamingSubscriptions', initialJsonData);
+        
+        // Initial backup stream status check with timeout (less critical now)
+        try {
+          await withTimeout(updateStreamStatus(), API_TIMEOUT);
+        } catch (error) {
+          if (dev) {
+            console.log('Initial backup polling failed (OK with webhooks):', error);
+          }
+        }
       } catch (error) {
-        console.error('Initial stream check failed:', error);
+        console.error('Initial SSE setup failed:', error);
       }
 
       while (true) {
@@ -204,18 +216,17 @@ export async function POST() {
           // Check if we're approaching the timeout limit
           const elapsed = Date.now() - startTime;
           if (elapsed > MAX_SSE_DURATION) {
-            console.log(
-              `SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully`
-            );
+            if (dev) {
+              console.log(
+                `SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully`
+              );
+            }
             break;
           }
 
-          // Sync with webhook state (primary source of truth)
+          // Sync with webhook state (primary source of truth) - lightweight operation
           syncWithWebhookState();
           
-          // Periodically run backup polling (much less frequent now)
-          await withTimeout(updateStreamStatus(), API_TIMEOUT);
-
           // Prepare the data to send
           const streamingData = Array.from(streamingSources.values());
           const jsonData = JSON.stringify(streamingData);
@@ -233,12 +244,27 @@ export async function POST() {
 
             if (isClientDisconnection) {
               // This is normal - client closed the connection
-              console.log('SSE: Client disconnected from stream');
+              if (dev) {
+                console.log('SSE: Client disconnected from stream');
+              }
               break;
             } else {
               // This is an actual error we should log
               console.error('SSE emit error:', error);
               break;
+            }
+          }
+
+          // Run backup polling much less frequently (only occasionally)
+          const shouldRunBackupPolling = elapsed % STREAM_CHECK_INTERVAL < SSE_ITERATION_DELAY;
+          if (shouldRunBackupPolling) {
+            try {
+              await withTimeout(updateStreamStatus(), API_TIMEOUT);
+            } catch (error) {
+              if (dev) {
+                console.log('Backup polling failed (OK with webhooks):', error);
+              }
+              // Don't break on backup polling failures since webhooks are primary
             }
           }
 
@@ -268,7 +294,9 @@ export async function POST() {
     },
     {
       stop() {
-        console.log('Stopping Twitch stream monitoring');
+        if (dev) {
+          console.log('Stopping Twitch stream monitoring');
+        }
       },
     }
   );
