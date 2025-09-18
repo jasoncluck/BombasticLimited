@@ -97,9 +97,9 @@ describe('Twitch API Client', () => {
   describe('getStreamStatus', () => {
     it('should return null when stream is offline', async () => {
       const { getStreamStatus } = await import('../twitch.js');
-      
+
       const result = await getStreamStatus('123456');
-      
+
       // Since mock returns null, we expect null
       expect(result).toBeNull();
     });
@@ -111,26 +111,26 @@ describe('Twitch API Client', () => {
           getStreamByUserId: vi.fn().mockRejectedValue(new Error('API Error')),
         },
       };
-      
+
       vi.doMock('@twurple/api', () => ({
         ApiClient: vi.fn(() => mockApiClient),
         extractUserId: vi.fn().mockReturnValue('123456'),
       }));
 
       const { getStreamStatus } = await import('../twitch.js');
-      
+
       const result = await getStreamStatus('123456');
-      
+
       expect(result).toBeNull();
     });
 
     it('should use cache for repeated requests when API client is available', async () => {
-      // This test just verifies the cache API works, since the implementation 
+      // This test just verifies the cache API works, since the implementation
       // returns early when no API client is available in test environment
       const { clearStreamCache, getCacheStats } = await import('../twitch.js');
-      
+
       clearStreamCache();
-      
+
       // Since API client is not available in test, we expect cache to remain empty
       // This still tests the cache functionality exists and can be called
       const stats = getCacheStats();
@@ -142,17 +142,17 @@ describe('Twitch API Client', () => {
   describe('getMultipleStreamStatus', () => {
     it('should handle empty array', async () => {
       const { getMultipleStreamStatus } = await import('../twitch.js');
-      
+
       const result = await getMultipleStreamStatus([]);
-      
+
       expect(result).toEqual([]);
     });
 
     it('should handle multiple user IDs', async () => {
       const { getMultipleStreamStatus } = await import('../twitch.js');
-      
+
       const result = await getMultipleStreamStatus(['123456', '789012']);
-      
+
       expect(Array.isArray(result)).toBe(true);
     });
 
@@ -160,21 +160,25 @@ describe('Twitch API Client', () => {
       // Mock API to fail for first user but succeed for second
       const mockApiClient = {
         streams: {
-          getStreamByUserId: vi.fn()
+          getStreamByUserId: vi
+            .fn()
             .mockRejectedValueOnce(new Error('API Error'))
             .mockResolvedValueOnce(null),
         },
       };
-      
+
       vi.doMock('@twurple/api', () => ({
         ApiClient: vi.fn(() => mockApiClient),
         extractUserId: vi.fn().mockReturnValue('123456'),
       }));
 
       const { getMultipleStreamStatus } = await import('../twitch.js');
-      
-      const result = await getMultipleStreamStatus(['fail-user', 'success-user']);
-      
+
+      const result = await getMultipleStreamStatus([
+        'fail-user',
+        'success-user',
+      ]);
+
       expect(Array.isArray(result)).toBe(true);
     });
 
@@ -186,9 +190,9 @@ describe('Twitch API Client', () => {
       }));
 
       const { getMultipleStreamStatus } = await import('../twitch.js');
-      
+
       const result = await getMultipleStreamStatus(['123456']);
-      
+
       expect(result).toEqual([]);
     });
   });

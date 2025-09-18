@@ -37,7 +37,12 @@ describe('NotificationStateClass', () => {
   describe('state mutations', () => {
     it('should allow updating notifications array', () => {
       const mockNotifications = [
-        { id: 1, title: 'Test', message: 'Test message', created_at: new Date().toISOString() },
+        {
+          id: 1,
+          title: 'Test',
+          message: 'Test message',
+          created_at: new Date().toISOString(),
+        },
       ] as any;
 
       notificationState.notifications = mockNotifications;
@@ -71,7 +76,10 @@ describe('NotificationStateClass', () => {
     });
 
     it('should allow updating preferences', () => {
-      const mockPreferences = { email_enabled: true, push_enabled: false } as any;
+      const mockPreferences = {
+        email_enabled: true,
+        push_enabled: false,
+      } as any;
       notificationState.preferences = mockPreferences;
       expect(notificationState.preferences).toEqual(mockPreferences);
     });
@@ -96,37 +104,49 @@ describe('showToast', () => {
 
   it('should call toast.success for success type', () => {
     showToast('Success message', 'success');
-    
-    expect(toast.success).toHaveBeenCalledWith('Success message', { class: 'toast-success' });
+
+    expect(toast.success).toHaveBeenCalledWith('Success message', {
+      class: 'toast-success',
+    });
   });
 
   it('should call toast.error for error type', () => {
     showToast('Error message', 'error');
-    
-    expect(toast.error).toHaveBeenCalledWith('Error message', { class: 'toast-error' });
+
+    expect(toast.error).toHaveBeenCalledWith('Error message', {
+      class: 'toast-error',
+    });
   });
 
   it('should call toast.warning for warning type', () => {
     showToast('Warning message', 'warning');
-    
-    expect(toast.warning).toHaveBeenCalledWith('Warning message', { class: 'toast-warning' });
+
+    expect(toast.warning).toHaveBeenCalledWith('Warning message', {
+      class: 'toast-warning',
+    });
   });
 
   it('should call toast.info for info type', () => {
     showToast('Info message', 'info');
-    
-    expect(toast.info).toHaveBeenCalledWith('Info message', { class: 'toast-info' });
+
+    expect(toast.info).toHaveBeenCalledWith('Info message', {
+      class: 'toast-info',
+    });
   });
 
   it('should call default toast for undefined type', () => {
     showToast('Default message');
-    
-    expect(toast).toHaveBeenCalledWith('Default message', { class: 'toast-default' });
+
+    expect(toast).toHaveBeenCalledWith('Default message', {
+      class: 'toast-default',
+    });
   });
 
   it('should call default toast for unknown type', () => {
     showToast('Unknown message', 'unknown' as any);
-    
-    expect(toast).toHaveBeenCalledWith('Unknown message', { class: 'toast-default' });
+
+    expect(toast).toHaveBeenCalledWith('Unknown message', {
+      class: 'toast-default',
+    });
   });
 });

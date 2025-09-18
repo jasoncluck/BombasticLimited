@@ -60,63 +60,28 @@ describe('PlaylistStateClass', () => {
     });
   });
 
-  describe('getAllSelectedVideos', () => {
-    it('should return empty array when no videos selected', () => {
-      const result = playlistState.getAllSelectedVideos();
-      expect(result).toEqual([]);
-    });
-
-    it('should return selected videos by section', () => {
-      mockContentState.selectedVideosBySection = {
-        'section1': [{ id: 1 }, { id: 2 }],
-        'section2': [{ id: 3 }],
-        'section3': [], // Empty should be filtered out
-      };
-
-      const result = playlistState.getAllSelectedVideos();
-      
-      expect(result).toEqual([
-        { sectionId: 'section1', videos: [{ id: 1 }, { id: 2 }] },
-        { sectionId: 'section2', videos: [{ id: 3 }] },
-      ]);
-    });
-
-    it('should filter out sections with null or empty video arrays', () => {
-      mockContentState.selectedVideosBySection = {
-        'section1': [{ id: 1 }],
-        'section2': [],
-        'section3': null as any,
-      };
-
-      const result = playlistState.getAllSelectedVideos();
-      
-      expect(result).toEqual([
-        { sectionId: 'section1', videos: [{ id: 1 }] },
-      ]);
-    });
-  });
 
   describe('mouse hover methods', () => {
     describe('handleMouseEnter', () => {
       it('should set hovered index when conditions are met', () => {
         playlistState.handleMouseEnter(2);
-        
+
         expect(playlistState.hoveredPlaylistIndex).toBe(2);
       });
 
       it('should not set hovered index when sidebar is scrolling', () => {
         mockPageState.sidebarScrollState!.scrolling = true;
-        
+
         playlistState.handleMouseEnter(2);
-        
+
         expect(playlistState.hoveredPlaylistIndex).toBeNull();
       });
 
       it('should not set hovered index when dragging', () => {
         playlistState.draggedIndex = 1;
-        
+
         playlistState.handleMouseEnter(2);
-        
+
         expect(playlistState.hoveredPlaylistIndex).toBeNull();
       });
     });
@@ -124,17 +89,17 @@ describe('PlaylistStateClass', () => {
     describe('handleMouseLeave', () => {
       it('should clear hovered index when leaving hovered item', () => {
         playlistState.hoveredPlaylistIndex = 2;
-        
+
         playlistState.handleMouseLeave(2);
-        
+
         expect(playlistState.hoveredPlaylistIndex).toBeNull();
       });
 
       it('should not clear hovered index when leaving different item', () => {
         playlistState.hoveredPlaylistIndex = 2;
-        
+
         playlistState.handleMouseLeave(1);
-        
+
         expect(playlistState.hoveredPlaylistIndex).toBe(2);
       });
     });
@@ -143,24 +108,24 @@ describe('PlaylistStateClass', () => {
   describe('getPlaylistDragClasses', () => {
     it('should return base classes', () => {
       const classes = playlistState.getPlaylistDragClasses(0);
-      
+
       expect(classes).toBe('relative');
     });
 
     it('should add opacity when item is being dragged', () => {
       playlistState.draggedIndex = 1;
-      
+
       const classes = playlistState.getPlaylistDragClasses(1);
-      
+
       expect(classes).toContain('opacity-60');
     });
 
     it('should add bottom indicator when target index is higher than dragged', () => {
       playlistState.draggedIndex = 1;
       playlistState.targetIndex = 2;
-      
+
       const classes = playlistState.getPlaylistDragClasses(2);
-      
+
       expect(classes).toContain('after:absolute');
       expect(classes).toContain('after:bottom-0');
     });
@@ -168,9 +133,9 @@ describe('PlaylistStateClass', () => {
     it('should add top indicator when target index is lower than dragged', () => {
       playlistState.draggedIndex = 2;
       playlistState.targetIndex = 1;
-      
+
       const classes = playlistState.getPlaylistDragClasses(1);
-      
+
       expect(classes).toContain('before:absolute');
       expect(classes).toContain('before:-top-0');
     });
@@ -186,34 +151,34 @@ describe('PlaylistStateClass', () => {
 
     it('should return base button classes', () => {
       const classes = playlistState.getButtonClasses(baseOptions);
-      
+
       expect(classes).toContain('sidebar-full-button');
       expect(classes).toContain('transition-all');
     });
 
     it('should add active state classes when not dragging', () => {
       const classes = playlistState.getButtonClasses(baseOptions);
-      
+
       expect(classes).toContain('active:bg-secondary/70');
       expect(classes).toContain('active:scale-95');
     });
 
     it('should add drag classes for playlist items', () => {
       playlistState.draggedIndex = 1;
-      
+
       const classes = playlistState.getButtonClasses({
         ...baseOptions,
         index: 1,
       });
-      
+
       expect(classes).toContain('opacity-60');
     });
 
     it('should add hover classes when item is hovered', () => {
       playlistState.hoveredPlaylistIndex = 0;
-      
+
       const classes = playlistState.getButtonClasses(baseOptions);
-      
+
       expect(classes).toContain('bg-secondary/50');
       expect(classes).toContain('brightness-110');
     });
@@ -223,7 +188,7 @@ describe('PlaylistStateClass', () => {
         ...baseOptions,
         isSelected: true,
       });
-      
+
       expect(classes).toContain('bg-secondary/65');
       expect(classes).toContain('text-secondary-foreground');
     });
@@ -234,7 +199,7 @@ describe('PlaylistStateClass', () => {
         itemType: 'source',
         isSelected: true,
       });
-      
+
       expect(classes).toContain('bg-secondary');
       expect(classes).toContain('text-secondary-foreground');
     });
@@ -244,7 +209,7 @@ describe('PlaylistStateClass', () => {
         ...baseOptions,
         isSidebarCollapsed: true,
       });
-      
+
       expect(classes).toContain('align-middle');
     });
 
@@ -253,25 +218,25 @@ describe('PlaylistStateClass', () => {
         ...baseOptions,
         isSidebarCollapsed: false,
       });
-      
+
       expect(classes).toContain('min-w-[150px]');
       expect(classes).toContain('justify-normal');
     });
 
     it('should apply disabled styling for non-owned playlists during video drag', () => {
       mockContentState.dragContentType = 'video';
-      
+
       const mockPlaylists: Partial<Playlist>[] = [
         { created_by: 'other-user', short_id: 'other-playlist' },
       ];
-      
+
       const classes = playlistState.getButtonClasses({
         ...baseOptions,
         playlists: mockPlaylists as Playlist[],
         session: { user: { id: 'current-user' } } as any,
         selectedPlaylistIdParam: 'current-playlist',
       });
-      
+
       expect(classes).toContain('opacity-50');
       expect(classes).toContain('border-transparent');
     });

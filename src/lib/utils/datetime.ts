@@ -21,8 +21,9 @@ export function getTimezoneInfo(): TimezoneInfo {
     timeZoneName: 'short',
     timeZone: timezoneName,
   });
-  const abbreviation = shortFormat.formatToParts(now)
-    .find(part => part.type === 'timeZoneName')?.value || 'UTC';
+  const abbreviation =
+    shortFormat.formatToParts(now).find((part) => part.type === 'timeZoneName')
+      ?.value || 'UTC';
 
   // Get offset
   const offsetMinutes = now.getTimezoneOffset() * -1; // getTimezoneOffset returns negative for ahead of UTC
@@ -151,7 +152,10 @@ export function localToUtcDateTime(localDatetime: string): string {
 /**
  * Format a date for display with timezone information
  */
-export function formatDateWithTimezone(date: Date | string, includeSeconds = false): string {
+export function formatDateWithTimezone(
+  date: Date | string,
+  includeSeconds = false
+): string {
   try {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     if (isNaN(dateObj.getTime())) return 'Invalid Date';
