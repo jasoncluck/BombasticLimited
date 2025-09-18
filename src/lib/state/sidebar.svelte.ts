@@ -213,6 +213,7 @@ export class SidebarStateClass implements SidebarState {
   #reconnectDelay = 2000; // Start with 2 second delay
   #consecutiveFailures = 0; // Track consecutive failures to detect structural issues
   #reconnectTimeoutId: number | null = null; // Track pending reconnection timeout
+  #connectionStabilityTimeoutId: number | null = null; // Track connection stability
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
@@ -528,10 +529,22 @@ export class SidebarStateClass implements SidebarState {
 
       this.#sseConnection.select('open').subscribe(() => {
         this.#sseConnected = true;
-        this.#reconnectAttempts = 0; // Reset attempts on successful connection
-        this.#consecutiveFailures = 0; // Reset consecutive failures
-        this.#reconnectDelay = 2000; // Reset delay
         console.log('🔗 SSE connected');
+        
+        // Only reset counters after the connection has been stable for 10 seconds
+        // This prevents immediate reset if the connection fails right after opening
+        if (this.#connectionStabilityTimeoutId !== null) {
+          clearTimeout(this.#connectionStabilityTimeoutId);
+        }
+        
+        this.#connectionStabilityTimeoutId = window.setTimeout(() => {
+          // Connection has been stable for 10 seconds, safe to reset counters
+          this.#reconnectAttempts = 0;
+          this.#consecutiveFailures = 0;
+          this.#reconnectDelay = 2000;
+          this.#connectionStabilityTimeoutId = null;
+          console.log('🟢 SSE connection stable - reset reconnection counters');
+        }, 10000); // 10 second stability period
       });
 
       this.#sseConnection.select('error').subscribe((event) => {
@@ -636,6 +649,12 @@ export class SidebarStateClass implements SidebarState {
     if (this.#reconnectTimeoutId !== null) {
       clearTimeout(this.#reconnectTimeoutId);
       this.#reconnectTimeoutId = null;
+    }
+    
+    // Clear any pending stability timeout
+    if (this.#connectionStabilityTimeoutId !== null) {
+      clearTimeout(this.#connectionStabilityTimeoutId);
+      this.#connectionStabilityTimeoutId = null;
     }
     
     if (this.#sseConnection) {

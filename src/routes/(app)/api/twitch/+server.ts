@@ -171,6 +171,10 @@ export async function POST() {
             // Dynamically import webhook functions to avoid initialization issues
             const { subscribeToStreamUpdates } = await import('$lib/server/twitch-webhooks.js');
             
+            if (dev) {
+              console.log('🔧 SSE: Setting up webhook subscription in production mode');
+            }
+            
             // Set up webhook subscription for real-time updates in production
             webhookUnsubscribe = subscribeToStreamUpdates((liveStreams: Source[]) => {
               // Update local state with webhook data
@@ -195,8 +199,13 @@ export async function POST() {
             
             // Initial sync with webhook state in production
             await syncWithWebhookState();
+            
+            if (dev) {
+              console.log('🟢 SSE: Webhook integration setup completed successfully'); 
+            }
           } catch (error) {
             console.warn('Failed to setup webhook integration (falling back to polling only):', error);
+            // This should not break the SSE connection - just fall back to polling
           }
         } else {
           if (dev) {
@@ -207,7 +216,21 @@ export async function POST() {
         // Send initial data immediately
         const initialData = Array.from(streamingSources.values());
         const initialJsonData = JSON.stringify(initialData);
-        emit('streamingSubscriptions', initialJsonData);
+        
+        try {
+          const { error: initialEmitError } = emit('streamingSubscriptions', initialJsonData);
+          if (initialEmitError) {
+            console.warn('Initial SSE emit error:', initialEmitError);
+            // Don't break the connection for initial emit errors
+          } else {
+            if (dev) {
+              console.log('📡 SSE: Initial data sent successfully');
+            }
+          }
+        } catch (emitError) {
+          console.warn('Failed to send initial SSE data:', emitError);
+          // Don't break the connection
+        }
         
         // Initial backup stream status check with timeout
         try {
