@@ -161,54 +161,58 @@ export async function POST() {
         console.log('🚀 SSE: Connection started, will run for up to', MAX_SSE_DURATION / 1000, 'seconds');
       }
 
-      // Subscribe to webhook updates for real-time stream changes
+      // Subscribe to webhook updates for real-time stream changes (production only)
       let webhookUnsubscribe: (() => void) | null = null;
       
       try {
-        // Set up webhook subscription for real-time updates
-        webhookUnsubscribe = subscribeToStreamUpdates((liveStreams: Source[]) => {
-          // Update local state with webhook data
-          streamingSources.clear();
-          liveStreams.forEach(source => streamingSources.add(source));
-          
-          if (dev) {
-            console.log('🔄 SSE: Received webhook update:', liveStreams);
-          }
-          
-          // Emit updated data immediately
-          const jsonData = JSON.stringify(liveStreams);
-          const { error } = emit('streamingSubscriptions', jsonData);
-          
-          if (error) {
-            const isClientDisconnection =
-              error.message?.includes('Client disconnected') ||
-              error.message?.includes('Connection closed') ||
-              error.message?.includes('stream closed');
-              
-            if (!isClientDisconnection) {
-              console.error('SSE webhook emit error:', error);
+        // In development, webhooks may not be available, so make this optional
+        if (!dev) {
+          // Set up webhook subscription for real-time updates in production
+          webhookUnsubscribe = subscribeToStreamUpdates((liveStreams: Source[]) => {
+            // Update local state with webhook data
+            streamingSources.clear();
+            liveStreams.forEach(source => streamingSources.add(source));
+            
+            // Emit updated data immediately
+            const jsonData = JSON.stringify(liveStreams);
+            const { error } = emit('streamingSubscriptions', jsonData);
+            
+            if (error) {
+              const isClientDisconnection =
+                error.message?.includes('Client disconnected') ||
+                error.message?.includes('Connection closed') ||
+                error.message?.includes('stream closed');
+                
+              if (!isClientDisconnection) {
+                console.error('SSE webhook emit error:', error);
+              }
             }
+          });
+          
+          // Initial sync with webhook state in production
+          syncWithWebhookState();
+        } else {
+          if (dev) {
+            console.log('🔧 SSE: Development mode - using polling only (webhooks disabled)');
           }
-        });
-
-        // Initial sync with webhook state
-        syncWithWebhookState();
+        }
         
         // Send initial data immediately
         const initialData = Array.from(streamingSources.values());
         const initialJsonData = JSON.stringify(initialData);
         emit('streamingSubscriptions', initialJsonData);
         
-        // Initial backup stream status check with timeout (less critical now)
+        // Initial backup stream status check with timeout
         try {
           await withTimeout(updateStreamStatus(), API_TIMEOUT);
         } catch (error) {
           if (dev) {
-            console.log('Initial backup polling failed (OK with webhooks):', error);
+            console.log('Initial polling attempt:', error instanceof Error ? error.message : 'Unknown error');
           }
         }
       } catch (error) {
         console.error('Initial SSE setup failed:', error);
+        // Don't let setup errors break the SSE connection
       }
 
       while (true) {
@@ -224,8 +228,10 @@ export async function POST() {
             break;
           }
 
-          // Sync with webhook state (primary source of truth) - lightweight operation
-          syncWithWebhookState();
+          // Sync with webhook state (primary source of truth) in production
+          if (!dev) {
+            syncWithWebhookState();
+          }
           
           // Prepare the data to send
           const streamingData = Array.from(streamingSources.values());
@@ -255,16 +261,18 @@ export async function POST() {
             }
           }
 
-          // Run backup polling much less frequently (only occasionally)
-          const shouldRunBackupPolling = elapsed % STREAM_CHECK_INTERVAL < SSE_ITERATION_DELAY;
-          if (shouldRunBackupPolling) {
+          // Run backup polling (more frequent in dev since no webhooks)
+          const pollingInterval = dev ? SSE_ITERATION_DELAY : STREAM_CHECK_INTERVAL;
+          const shouldRunPolling = dev || (elapsed % pollingInterval < SSE_ITERATION_DELAY);
+          
+          if (shouldRunPolling) {
             try {
               await withTimeout(updateStreamStatus(), API_TIMEOUT);
             } catch (error) {
               if (dev) {
-                console.log('Backup polling failed (OK with webhooks):', error);
+                console.log('Polling failed:', error instanceof Error ? error.message : 'Unknown error');
               }
-              // Don't break on backup polling failures since webhooks are primary
+              // Don't break on polling failures
             }
           }
 
