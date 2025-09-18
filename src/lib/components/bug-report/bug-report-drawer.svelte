@@ -269,17 +269,19 @@
 
     <!-- Scrollable content area -->
     <div class="min-h-0 flex-1 overflow-y-auto">
-      <Drawer.Description class="text-start">
-        Thanks for taking the time to help improve the site. If there are any
-        issues with this form please reach out using the contact link at the
-        bottom of the page.
-      </Drawer.Description>
       <div class="p-4">
+        <Drawer.Description class="mb-4 text-start">
+          Thanks for taking the time to help improve the site. If there are any
+          issues with this form please reach out using the contact link at the
+          bottom of the page.
+        </Drawer.Description>
+
         <form
           onsubmit={(e) => {
             e.preventDefault();
             handleSubmit();
           }}
+          id="bug-report-form"
           class="space-y-4"
         >
           <!-- Title -->
@@ -422,11 +424,11 @@
         </form>
 
         <!-- Action buttons positioned below content but within scrollable area -->
-        <div class="mt-6 border-t pt-4 pb-8">
+        <div class="border-t pt-4 pb-8">
           <div class="flex flex-col gap-2">
             <Button
               type="submit"
-              onclick={handleSubmit}
+              form="bug-report-form"
               class="drawer-button-footer"
               disabled={isSubmitting}
             >
