@@ -7,13 +7,14 @@ import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility';
 import { showToast } from '$lib/state/notifications.svelte';
-import { source, type Source as SSESource } from 'sveltekit-sse';
+// Removed sveltekit-sse dependency - using native EventSource
 import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
 } from '$lib/components/ui/sidebar/constants';
 import type { ImageFormat } from '$lib/utils/image-format-detection';
 import debounce from 'debounce';
+import { SvelteSet } from 'svelte/reactivity';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -204,7 +205,7 @@ export class SidebarStateClass implements SidebarState {
   streamingSources = $state<Source[]>([]);
 
   // SSE connection state
-  #sseConnection = $state<SSESource | null>(null);
+  #sseConnection = $state<EventSource | null>(null);
   #sseConnected = $state(false);
   #isInitialStreamLoad = $state(true);
 
@@ -426,7 +427,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Load initial data
@@ -448,7 +449,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Mark as initialized immediately for UI purposes
@@ -470,7 +471,7 @@ export class SidebarStateClass implements SidebarState {
   };
 
   /**
-   * Start SSE connection for streaming updates using sveltekit-sse
+   * Start SSE connection for streaming updates using native EventSource
    */
   startSSEConnection(): void {
     if (!browser || this.#sseConnection) {
@@ -479,38 +480,82 @@ export class SidebarStateClass implements SidebarState {
 
     // Reset initial load flag when starting
     this.#isInitialStreamLoad = true;
+    this.connectSSE();
+  }
 
+  private connectSSE(): void {
     try {
-      this.#sseConnection = source('/api/twitch');
+      // Create native EventSource connection
+      this.#sseConnection = new EventSource('/api/twitch', {
+        withCredentials: false,
+      });
 
-      this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
+      // Handle streaming subscriptions events
+      this.#sseConnection.addEventListener(
+        'streamingSubscriptions',
+        (event) => {
+          try {
+            if (!event.data || event.data.trim() === '') return;
+
+            const streamingSources: Source[] = JSON.parse(event.data);
+            this.updateStreamingState(streamingSources);
+          } catch (error) {
+            if (
+              error instanceof SyntaxError &&
+              error.message.includes('Unexpected end of JSON input')
+            ) {
+              return; // Ignore incomplete JSON during reconnection
+            }
+            console.error('Failed to parse streaming update:', error);
+          }
+        }
+      );
+
+      // Handle server-initiated connection close (for Vercel timeout management)
+      this.#sseConnection.addEventListener('connection-close', (event) => {
         try {
-          // Check if we received complete data
-          if (!data || data.trim() === '') {
-            return;
-          }
+          const data = JSON.parse(event.data);
+          if (data.reconnect) {
+            this.#sseConnected = false;
 
-          const streamingSources: Source[] = JSON.parse(data);
-          this.updateStreamingState(streamingSources);
-        } catch (error) {
-          if (
-            error instanceof SyntaxError &&
-            error.message.includes('Unexpected end of JSON input')
-          ) {
-            // This is likely due to server disconnection - ignore and let reconnection handle it
-            return;
+            // Clean up current connection
+            if (this.#sseConnection) {
+              this.#sseConnection.close();
+              this.#sseConnection = null;
+            }
+
+            // Reconnect immediately since this is expected
+            setTimeout(() => {
+              if (browser && !this.#sseConnection) {
+                this.connectSSE();
+              }
+            }, 1000); // 1 second delay for immediate reconnection
           }
-          // Log other JSON parsing errors as they might be genuine issues
-          console.error('Failed to parse streaming update:', error);
+        } catch (error) {
+          console.error('Failed to parse connection-close event:', error);
         }
       });
 
-      this.#sseConnection.select('open').subscribe(() => {
+      // Handle connection open
+      this.#sseConnection.addEventListener('open', () => {
         this.#sseConnected = true;
       });
 
-      this.#sseConnection.select('error').subscribe((event) => {
+      // Handle connection errors
+      this.#sseConnection.addEventListener('error', (event) => {
         this.#sseConnected = false;
+
+        // Attempt reconnection after cleanup
+        if (this.#sseConnection) {
+          this.#sseConnection.close();
+          this.#sseConnection = null;
+        }
+
+        setTimeout(() => {
+          if (browser && !this.#sseConnection) {
+            this.connectSSE();
+          }
+        }, 5000); // 5 second delay before reconnection
       });
     } catch (error) {
       console.error('Failed to create SSE connection:', error);

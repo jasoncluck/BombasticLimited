@@ -7,11 +7,9 @@ SELECT
 
 -- Test that all recent migration functions are covered
 -- Functions from 2025 migrations that should have test coverage
-
 -- ========================================
 -- Functions from 10_add_avatar_and_providers_to_profiles.sql
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -30,7 +28,6 @@ SELECT
 -- ========================================
 -- Functions from 11_video_history_system.sql
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -65,7 +62,11 @@ SELECT
   has_function (
     'public',
     'update_video_history_end_time',
-    ARRAY['text', 'timestamp with time zone', 'timestamp with time zone'],
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'timestamp with time zone'
+    ],
     'Function update_video_history_end_time should exist'
   );
 
@@ -94,7 +95,6 @@ SELECT
 -- ========================================
 -- Functions from 12_notifications_system.sql
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -196,7 +196,6 @@ SELECT
 -- ========================================
 -- Functions from 13_playlist_duration.sql
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -238,7 +237,6 @@ SELECT
 -- ========================================
 -- Functions from 14_image-processing.sql
 -- ========================================
-
 SELECT
   has_function (
     'public',
@@ -351,7 +349,6 @@ SELECT
 -- ========================================
 -- Functions from 16_playlist_soft_delete.sql (September 2025)
 -- ========================================
-
 SELECT
   has_function (
     'public',

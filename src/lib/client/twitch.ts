@@ -5,6 +5,7 @@ import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 
 import type { HelixStream } from '@twurple/api';
 import { browser } from '$app/environment';
+import { dev } from '$app/environment';
 
 const clientId = TWITCH_CLIENT_ID;
 const clientSecret = TWITCH_CLIENT_SECRET;
@@ -34,28 +35,85 @@ interface StreamStatus {
 }
 
 const streamCache = new Map<string, StreamStatus>();
-const CACHE_DURATION = 30 * 1000; // 30 seconds cache
+const CACHE_DURATION = dev ? 5 * 1000 : 30 * 1000; // 5 seconds in dev, 30 seconds in production
 const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 const API_REQUEST_TIMEOUT = 10000; // 10 second timeout for individual API requests
 
+// Development testing variables
+let testStartTime: number | null = null;
+const TEST_LIVE_START = 10000; // Go live after 10 seconds
+const TEST_LIVE_END = 70000; // Go offline after 1 minute 10 seconds (70 seconds total)
+
+// Known user IDs for testing
+const NEXTLANDER_USER_ID = '689331234'; // You may need to adjust this ID
+
 /**
- * Promise with timeout wrapper for API calls
+ * Promise with timeout wrapper
  */
 function withApiTimeout<T>(promise: Promise<T>): Promise<T> {
   return Promise.race([
     promise,
     new Promise<never>((_, reject) =>
       setTimeout(
-        () =>
-          reject(
-            new Error(
-              `Twitch API request timed out after ${API_REQUEST_TIMEOUT}ms`
-            )
-          ),
+        () => reject(new Error('API request timeout')),
         API_REQUEST_TIMEOUT
       )
     ),
   ]);
+}
+
+/**
+ * Check if we're in test scenario for nextlander (now works in all environments)
+ */
+function getTestStreamStatus(userId: string): StreamStatus | null {
+  // Enable test in all environments for now (as requested)
+  // if (!dev) return null;
+
+  // Check if this is the nextlander user (you can check by userId or get the ID first)
+  const isNextlander = userId === NEXTLANDER_USER_ID || userId === 'nextlander';
+  if (!isNextlander) return null;
+
+  const now = Date.now();
+
+  // Initialize test timer on first call
+  if (testStartTime === null) {
+    testStartTime = now;
+    console.log(
+      '🧪 Test timer started - nextlander will go "live" in 10 seconds, then offline after 1 minute 10 seconds'
+    );
+  }
+
+  const elapsed = now - testStartTime;
+
+  // Determine if should be live based on timing
+  const shouldBeLive = elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_END;
+
+  if (
+    shouldBeLive &&
+    elapsed >= TEST_LIVE_START &&
+    elapsed < TEST_LIVE_START + 1000
+  ) {
+    console.log('🔴 nextlander is now "live" (test simulation)');
+  } else if (
+    !shouldBeLive &&
+    elapsed >= TEST_LIVE_END &&
+    elapsed < TEST_LIVE_END + 1000
+  ) {
+    console.log('⚫ nextlander is now "offline" (test simulation)');
+  }
+
+  const status: StreamStatus = {
+    userId,
+    isLive: shouldBeLive,
+    lastChecked: now,
+    // Don't create a full stream object, just indicate live status
+    stream: shouldBeLive ? ({} as HelixStream) : undefined,
+  };
+
+  // Cache the result but with shorter duration in dev mode
+  streamCache.set(userId, status);
+
+  return status;
 }
 
 /**
@@ -165,17 +223,3 @@ export function getCacheStats() {
     })),
   };
 }
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 

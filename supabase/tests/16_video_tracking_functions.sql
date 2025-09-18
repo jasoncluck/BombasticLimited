@@ -48,7 +48,11 @@ SELECT
   has_function (
     'public',
     'update_video_history_end_time',
-    ARRAY['text', 'timestamp with time zone', 'timestamp with time zone'],
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'timestamp with time zone'
+    ],
     'Function update_video_history_end_time should exist'
   );
 
@@ -56,7 +60,12 @@ SELECT
   has_function (
     'public',
     'update_video_history_seconds_watched',
-    ARRAY['text', 'timestamp with time zone', 'numeric', 'timestamp with time zone'],
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'numeric',
+      'timestamp with time zone'
+    ],
     'Function update_video_history_seconds_watched should exist'
   );
 
@@ -129,7 +138,6 @@ END;
 $$;
 
 -- calculate_seconds_watched is a trigger function, so we only test its existence, not functionality
-
 -- Test video history session management
 DO $$
 DECLARE
@@ -181,7 +189,11 @@ SELECT
   has_function (
     'public',
     'update_video_history_end_time',
-    ARRAY['text', 'timestamp with time zone', 'timestamp with time zone'],
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'timestamp with time zone'
+    ],
     'update_video_history_end_time function should exist with correct signature'
   );
 

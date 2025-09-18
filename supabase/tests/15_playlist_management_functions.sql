@@ -79,7 +79,15 @@ SELECT
   has_function (
     'public',
     'get_playlist_data',
-    ARRAY['text', 'text', 'integer', 'integer', 'text', 'text', 'text'],
+    ARRAY[
+      'text',
+      'text',
+      'integer',
+      'integer',
+      'text',
+      'text',
+      'text'
+    ],
     'Function get_playlist_data should exist'
   );
 

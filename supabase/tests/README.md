@@ -5,8 +5,8 @@ Bombastic application's Supabase backend.
 
 ## Overview
 
-The test suite validates the functionality of 66+ RPC functions across 10 
-test files, providing over 218 individual test assertions covering:
+The test suite validates the functionality of 66+ RPC functions across 10 test
+files, providing over 218 individual test assertions covering:
 
 - Function existence and signature validation
 - Functional testing with realistic data
@@ -45,8 +45,10 @@ test files, providing over 218 individual test assertions covering:
 - `18_image_processing_functions.sql` - Image processing pipeline (18 tests)
 - `19_utility_functions.sql` - Helper and utility functions (22 tests)
 - `20_timestamp_and_data_functions.sql` - Data management and cleanup (15 tests)
-- `21_comprehensive_function_coverage.sql` - Complete coverage validation (50 tests)
-- `22_missing_function_tests.sql` - Additional function tests and edge cases (45 tests)
+- `21_comprehensive_function_coverage.sql` - Complete coverage validation (50
+  tests)
+- `22_missing_function_tests.sql` - Additional function tests and edge cases (45
+  tests)
 - `run_all_tests.sql` - Test infrastructure validation (10 tests)
 
 ## Running Tests
