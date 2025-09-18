@@ -264,18 +264,17 @@
           <TriangleAlert class="h-5 w-5" />
           Report Issue
         </Drawer.Title>
+        <Drawer.Description class="text-start">
+          Thanks for taking the time to help improve the site. If there are any
+          issues with this form please reach out using the contact link at the
+          bottom of the page.
+        </Drawer.Description>
       </Drawer.Header>
     </div>
 
     <!-- Scrollable content area -->
     <div class="min-h-0 flex-1 overflow-y-auto">
       <div class="p-4">
-        <Drawer.Description class="mb-4 text-start">
-          Thanks for taking the time to help improve the site. If there are any
-          issues with this form please reach out using the contact link at the
-          bottom of the page.
-        </Drawer.Description>
-
         <form
           onsubmit={(e) => {
             e.preventDefault();
