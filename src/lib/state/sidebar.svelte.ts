@@ -14,6 +14,7 @@ import {
 } from '$lib/components/ui/sidebar/constants';
 import type { ImageFormat } from '$lib/utils/image-format-detection';
 import debounce from 'debounce';
+import { SvelteSet } from 'svelte/reactivity';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -426,7 +427,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Load initial data
@@ -448,7 +449,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Mark as initialized immediately for UI purposes
@@ -474,46 +475,72 @@ export class SidebarStateClass implements SidebarState {
    */
   startSSEConnection(): void {
     if (!browser || this.#sseConnection) {
-      return; // Already connected or not in browser
+      return;
     }
 
-    // Reset initial load flag when starting
     this.#isInitialStreamLoad = true;
+    this.connectSSE();
+  }
 
+  private connectSSE(): void {
     try {
       this.#sseConnection = source('/api/twitch');
 
       this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
         try {
-          // Check if we received complete data
-          if (!data || data.trim() === '') {
-            return;
-          }
+          if (!data || data.trim() === '') return;
 
           const streamingSources: Source[] = JSON.parse(data);
           this.updateStreamingState(streamingSources);
         } catch (error) {
-          if (
-            error instanceof SyntaxError &&
-            error.message.includes('Unexpected end of JSON input')
-          ) {
-            // This is likely due to server disconnection - ignore and let reconnection handle it
-            return;
+          if (error instanceof SyntaxError && error.message.includes('Unexpected end of JSON input')) {
+            return; // Ignore incomplete JSON during reconnection
           }
-          // Log other JSON parsing errors as they might be genuine issues
           console.error('Failed to parse streaming update:', error);
         }
       });
 
       this.#sseConnection.select('open').subscribe(() => {
         this.#sseConnected = true;
+        console.log('🔗 SSE connected');
       });
 
       this.#sseConnection.select('error').subscribe((event) => {
+        console.log('❌ SSE error, will attempt reconnection:', event);
         this.#sseConnected = false;
+
+        // Attempt reconnection after a delay
+        setTimeout(() => {
+          if (browser && !this.#sseConnection) {
+            console.log('🔄 Attempting SSE reconnection...');
+            this.connectSSE();
+          }
+        }, 5000); // 5 second delay before reconnection
       });
+
+      // Handle connection close and auto-reconnect
+      this.#sseConnection.select('close').subscribe(() => {
+        console.log('🔌 SSE connection closed, attempting reconnection...');
+        this.#sseConnected = false;
+        this.#sseConnection = null;
+
+        // Reconnect after a short delay
+        setTimeout(() => {
+          if (browser) {
+            this.connectSSE();
+          }
+        }, 2000); // 2 second delay before reconnection
+      });
+
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
+
+      // Retry after a delay
+      setTimeout(() => {
+        if (browser) {
+          this.connectSSE();
+        }
+      }, 10000); // 10 second delay before retry
     }
   }
 
@@ -532,8 +559,8 @@ export class SidebarStateClass implements SidebarState {
    * Update the local streaming state and send notifications
    */
   private updateStreamingState(newStreamingSources: Source[]): void {
-    const previousStreams = new Set(this.streamingSources);
-    const currentStreams = new Set(newStreamingSources);
+    const previousStreams = new SvelteSet(this.streamingSources);
+    const currentStreams = new SvelteSet(newStreamingSources);
 
     // Find sources that just started streaming
     const startedStreaming = newStreamingSources.filter(
