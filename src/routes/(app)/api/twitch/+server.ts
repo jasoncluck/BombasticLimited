@@ -95,8 +95,9 @@ function createSSEHandler() {
       // Send periodic heartbeat to keep connection alive
       heartbeatInterval = setInterval(() => {
         try {
-          if (controller.desiredSize === null) {
-            // Stream is closed
+          // Check if stream is closed or controller is not available
+          if (!controllerRef || controller.desiredSize === null) {
+            // Stream is closed, clean up interval
             if (heartbeatInterval) {
               clearInterval(heartbeatInterval);
               heartbeatInterval = null;
@@ -112,6 +113,7 @@ function createSSEHandler() {
           }
         } catch (error) {
           console.error('Failed to send heartbeat:', error);
+          // Clean up interval on any error
           if (heartbeatInterval) {
             clearInterval(heartbeatInterval);
             heartbeatInterval = null;
@@ -122,6 +124,12 @@ function createSSEHandler() {
       // Auto-close connection before Vercel timeout
       connectionTimeout = setTimeout(() => {
         try {
+          // Clean up heartbeat interval first to prevent the error
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+          }
+          
           if (controller.desiredSize !== null) {
             // Send a close event to notify client to reconnect
             const closeData = createSSEData(

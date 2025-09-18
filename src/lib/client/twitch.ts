@@ -46,10 +46,11 @@ const TEST_LIVE_END = 70000; // Go offline after 1 minute 10 seconds (70 seconds
 const NEXTLANDER_USER_ID = '689331234'; // You may need to adjust this ID
 
 /**
- * Check if we're in dev mode test scenario for nextlander
+ * Check if we're in test scenario for nextlander (now works in all environments)
  */
 function getTestStreamStatus(userId: string): StreamStatus | null {
-  if (!dev) return null;
+  // Enable test in all environments for now (as requested)
+  // if (!dev) return null;
 
   // Check if this is the nextlander user (you can check by userId or get the ID first)
   const isNextlander = userId === NEXTLANDER_USER_ID || userId === 'nextlander';
@@ -61,7 +62,7 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   if (testStartTime === null) {
     testStartTime = now;
     console.log(
-      '🧪 Dev mode: Test timer started - nextlander will go "live" in 10 seconds, then offline after 1 minute 10 seconds'
+      '🧪 Test timer started - nextlander will go "live" in 10 seconds, then offline after 1 minute 10 seconds'
     );
   }
 
@@ -75,13 +76,13 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
     elapsed >= TEST_LIVE_START &&
     elapsed < TEST_LIVE_START + 1000
   ) {
-    console.log('🔴 Dev mode: nextlander is now "live" (test simulation)');
+    console.log('🔴 nextlander is now "live" (test simulation)');
   } else if (
     !shouldBeLive &&
     elapsed >= TEST_LIVE_END &&
     elapsed < TEST_LIVE_END + 1000
   ) {
-    console.log('⚫ Dev mode: nextlander is now "offline" (test simulation)');
+    console.log('⚫ nextlander is now "offline" (test simulation)');
   }
 
   const status: StreamStatus = {
