@@ -280,7 +280,6 @@
             e.preventDefault();
             handleSubmit();
           }}
-          id="bug-report-form"
           class="space-y-4"
         >
           <!-- Title -->
@@ -427,7 +426,7 @@
           <div class="flex flex-col gap-2">
             <Button
               type="submit"
-              form="bug-report-form"
+              onclick={handleSubmit}
               class="drawer-button-footer"
               disabled={isSubmitting}
             >
