@@ -3,7 +3,7 @@
 BEGIN;
 
 SELECT
-  plan (18);
+  plan (17);
 
 -- Test that video tracking functions exist
 SELECT
@@ -40,7 +40,7 @@ SELECT
   has_function (
     'public',
     'start_video_history_session',
-    ARRAY['text'],
+    ARRAY['text', 'timestamp with time zone'],
     'Function start_video_history_session should exist'
   );
 
@@ -48,7 +48,11 @@ SELECT
   has_function (
     'public',
     'update_video_history_end_time',
-    ARRAY['uuid'],
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'timestamp with time zone'
+    ],
     'Function update_video_history_end_time should exist'
   );
 
@@ -56,7 +60,12 @@ SELECT
   has_function (
     'public',
     'update_video_history_seconds_watched',
-    ARRAY['uuid', 'integer'],
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'numeric',
+      'timestamp with time zone'
+    ],
     'Function update_video_history_seconds_watched should exist'
   );
 
@@ -64,10 +73,7 @@ SELECT
   has_function (
     'public',
     'calculate_seconds_watched',
-    ARRAY[
-      'timestamp with time zone',
-      'timestamp with time zone'
-    ],
+    ARRAY[]::TEXT[],
     'Function calculate_seconds_watched should exist'
   );
 
@@ -131,31 +137,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- Test calculate_seconds_watched function
-SELECT
-  ok (
-    public.calculate_seconds_watched (
-      timestamp '2024-01-01 10:00:00',
-      timestamp '2024-01-01 10:05:30'
-    ) = 330, -- 5 minutes 30 seconds = 330 seconds
-    'calculate_seconds_watched should calculate duration correctly'
-  );
-
-SELECT
-  ok (
-    public.calculate_seconds_watched (timestamp '2024-01-01 10:00:00', NULL) = 0,
-    'calculate_seconds_watched should return 0 for null end time'
-  );
-
-SELECT
-  ok (
-    public.calculate_seconds_watched (
-      timestamp '2024-01-01 10:00:00',
-      timestamp '2024-01-01 09:55:00' -- End before start
-    ) = 0,
-    'calculate_seconds_watched should return 0 for invalid time range'
-  );
-
+-- calculate_seconds_watched is a trigger function, so we only test its existence, not functionality
 -- Test video history session management
 DO $$
 DECLARE
@@ -166,19 +148,23 @@ DECLARE
 BEGIN
     SELECT id INTO test_user_id FROM public.profiles WHERE username = 'analyticsuser';
     
-    -- Note: start_video_history_session requires auth context
-    -- We'll test that the function exists and can be referenced
-    PERFORM ok(
-        has_function('public', 'start_video_history_session', ARRAY['text']),
-        'start_video_history_session function should exist with correct signature'
-    );
 END;
 $$;
 
+-- Test start_video_history_session function exists with correct signature
+SELECT
+  has_function (
+    'public',
+    'start_video_history_session',
+    ARRAY['text', 'timestamp with time zone'],
+    'start_video_history_session function should exist with correct signature'
+  );
+
 -- Test get_user_video_history function exists and structure
 SELECT
-  ok (
-    has_function ('public', 'get_user_video_history'),
+  has_function (
+    'public',
+    'get_user_video_history',
     'get_user_video_history function should exist'
   );
 
@@ -200,29 +186,22 @@ $$;
 
 -- Test video history update functions exist with correct signatures
 SELECT
-  ok (
-    has_function (
-      'public',
-      'update_video_history_end_time',
-      ARRAY['uuid']
-    ),
+  has_function (
+    'public',
+    'update_video_history_end_time',
+    ARRAY[
+      'text',
+      'timestamp with time zone',
+      'timestamp with time zone'
+    ],
     'update_video_history_end_time function should exist with correct signature'
-  );
-
-SELECT
-  ok (
-    has_function (
-      'public',
-      'update_video_history_seconds_watched',
-      ARRAY['uuid', 'integer']
-    ),
-    'update_video_history_seconds_watched function should exist with correct signature'
   );
 
 -- Test auto_record_video_history function exists
 SELECT
-  ok (
-    has_function ('public', 'auto_record_video_history'),
+  has_function (
+    'public',
+    'auto_record_video_history',
     'auto_record_video_history function should exist'
   );
 

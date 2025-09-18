@@ -195,18 +195,18 @@ $$;
 -- Test cleanup_old_completed_jobs function
 DO $$
 DECLARE
-    cleanup_count integer;
+    cleanup_result record;
 BEGIN
     -- Add a completed job that's old enough to be cleaned up
-    INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, completed_at, created_at)
+    INSERT INTO public.image_processing_jobs (id, entity_type, entity_id, image_type, source_url, status, processing_completed_at, created_at)
     VALUES (gen_random_uuid(), 'video', 'old_video', 'thumbnail', 'https://example.com/old-completed.jpg', 'completed', now() - interval '8 days', now() - interval '8 days')
     ON CONFLICT (id) DO NOTHING;
     
-    -- Call cleanup function
-    SELECT public.cleanup_old_completed_jobs() INTO cleanup_count;
+    -- Call cleanup function and get the result
+    SELECT * INTO cleanup_result FROM public.cleanup_old_completed_jobs(7);
     
     PERFORM ok(
-        cleanup_count >= 0,
+        cleanup_result.deleted_count >= 0,
         'cleanup_old_completed_jobs should return count of cleaned up jobs'
     );
 END;
@@ -214,52 +214,42 @@ $$;
 
 -- Test image processing job workflow functions exist with correct signatures
 SELECT
-  ok (
-    has_function (
-      'public',
-      'queue_image_processing_job',
-      ARRAY['text', 'text', 'jsonb']
-    ),
+  has_function (
+    'public',
+    'queue_image_processing_job',
+    ARRAY['text', 'text', 'jsonb'],
     'queue_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'get_next_image_processing_job',
-      ARRAY[]::TEXT[]
-    ),
+  has_function (
+    'public',
+    'get_next_image_processing_job',
+    ARRAY[]::TEXT[],
     'get_next_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'start_image_processing_job',
-      ARRAY['uuid']
-    ),
+  has_function (
+    'public',
+    'start_image_processing_job',
+    ARRAY['uuid'],
     'start_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'complete_image_processing_job',
-      ARRAY['uuid', 'jsonb']
-    ),
+  has_function (
+    'public',
+    'complete_image_processing_job',
+    ARRAY['uuid', 'jsonb'],
     'complete_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'fail_image_processing_job',
-      ARRAY['uuid', 'text']
-    ),
+  has_function (
+    'public',
+    'fail_image_processing_job',
+    ARRAY['uuid', 'text'],
     'fail_image_processing_job should have correct signature'
   );
 

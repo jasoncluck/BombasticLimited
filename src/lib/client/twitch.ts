@@ -72,7 +72,7 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
     isLive: shouldBeLive,
     lastChecked: now,
     // Don't create a full stream object, just indicate live status
-    stream: shouldBeLive ? ({} as HelixStream) : undefined
+    stream: shouldBeLive ? ({} as HelixStream) : undefined,
   };
 
   // Cache the result but with shorter duration in dev mode

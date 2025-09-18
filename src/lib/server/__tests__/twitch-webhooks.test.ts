@@ -49,39 +49,49 @@ describe('twitch-webhooks', () => {
       process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
       vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
-      
+
       const body = '{"test": "data"}';
       const messageId = 'test-message-id';
       const timestamp = '2023-01-01T00:00:00Z';
       const secret = 'test-secret';
-      
+
       // Create expected signature
       const message = messageId + timestamp + body;
       const expectedSignature = crypto
         .createHmac('sha256', secret)
         .update(message, 'utf8')
         .digest('hex');
-      
+
       const signature = `sha256=${expectedSignature}`;
-      
-      const result = verifyWebhookSignature(body, signature, messageId, timestamp);
+
+      const result = verifyWebhookSignature(
+        body,
+        signature,
+        messageId,
+        timestamp
+      );
       expect(result).toBe(true);
     });
 
     it('should skip verification and return true when no secret is configured', async () => {
       // Remove the webhook secret
       delete process.env.TWITCH_WEBHOOK_SECRET;
-      
+
       // Re-import to get the updated module with no secret
       vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
-      
+
       const body = '{"test": "data"}';
       const messageId = 'test-message-id';
       const timestamp = '2023-01-01T00:00:00Z';
       const signature = 'sha256=invalid-signature';
-      
-      const result = verifyWebhookSignature(body, signature, messageId, timestamp);
+
+      const result = verifyWebhookSignature(
+        body,
+        signature,
+        messageId,
+        timestamp
+      );
       expect(result).toBe(true); // Should return true when no secret configured
     });
 
@@ -90,13 +100,18 @@ describe('twitch-webhooks', () => {
       process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
       vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
-      
+
       const body = '{"test": "data"}';
       const messageId = 'test-message-id';
       const timestamp = '2023-01-01T00:00:00Z';
       const signature = 'sha256=invalid-signature';
-      
-      const result = verifyWebhookSignature(body, signature, messageId, timestamp);
+
+      const result = verifyWebhookSignature(
+        body,
+        signature,
+        messageId,
+        timestamp
+      );
       expect(result).toBe(false);
     });
 
@@ -105,35 +120,42 @@ describe('twitch-webhooks', () => {
       process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
       vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
-      
+
       const body = '{"test": "data"}';
       const messageId = 'test-message-id';
       const timestamp = '2023-01-01T00:00:00Z';
       const signature = 'invalid-format';
-      
-      const result = verifyWebhookSignature(body, signature, messageId, timestamp);
+
+      const result = verifyWebhookSignature(
+        body,
+        signature,
+        messageId,
+        timestamp
+      );
       expect(result).toBe(false);
     });
   });
 
   describe('subscribeToStreamUpdates', () => {
     it('should allow subscribing to stream updates', async () => {
-      const { subscribeToStreamUpdates } = await import('../twitch-webhooks.js');
-      
+      const { subscribeToStreamUpdates } = await import(
+        '../twitch-webhooks.js'
+      );
+
       const callback = vi.fn();
       const unsubscribe = subscribeToStreamUpdates(callback);
-      
+
       // Should call callback immediately with current state (empty initially)
       expect(callback).toHaveBeenCalledWith([]);
       expect(typeof unsubscribe).toBe('function');
-      
+
       // Clean up
       unsubscribe();
     });
 
     it('should return current live streams', async () => {
       const { getCurrentLiveStreams } = await import('../twitch-webhooks.js');
-      
+
       const streams = getCurrentLiveStreams();
       expect(Array.isArray(streams)).toBe(true);
     });
@@ -142,16 +164,20 @@ describe('twitch-webhooks', () => {
   describe('handleWebhookEvent', () => {
     it('should handle webhook challenge', async () => {
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
-      
+
       const body = JSON.stringify({
         challenge: 'test-challenge',
         subscription: {
           type: 'stream.online',
         },
       });
-      
-      const signature = createTestSignature(body, 'test-message-id', '2023-01-01T00:00:00Z');
-      
+
+      const signature = createTestSignature(
+        body,
+        'test-message-id',
+        '2023-01-01T00:00:00Z'
+      );
+
       const request = new Request('http://localhost:5173/api/twitch/webhook', {
         method: 'POST',
         headers: {
@@ -162,17 +188,17 @@ describe('twitch-webhooks', () => {
         },
         body,
       });
-      
+
       const response = await handleWebhookEvent(request);
       expect(response.status).toBe(200);
-      
+
       const responseText = await response.text();
       expect(responseText).toBe('test-challenge');
     });
 
     it('should handle stream online notifications', async () => {
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
-      
+
       const body = JSON.stringify({
         subscription: {
           type: 'stream.online',
@@ -182,9 +208,13 @@ describe('twitch-webhooks', () => {
           broadcaster_user_name: 'Nextlander',
         },
       });
-      
-      const signature = createTestSignature(body, 'test-message-id', '2023-01-01T00:00:00Z');
-      
+
+      const signature = createTestSignature(
+        body,
+        'test-message-id',
+        '2023-01-01T00:00:00Z'
+      );
+
       const request = new Request('http://localhost:5173/api/twitch/webhook', {
         method: 'POST',
         headers: {
@@ -195,19 +225,19 @@ describe('twitch-webhooks', () => {
         },
         body,
       });
-      
+
       const response = await handleWebhookEvent(request);
       expect(response.status).toBe(200);
     });
 
     it('should reject requests with invalid signatures when secret is configured', async () => {
-      // Ensure secret is set  
+      // Ensure secret is set
       process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
       vi.resetModules();
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
-      
+
       const body = JSON.stringify({ test: 'data' });
-      
+
       const request = new Request('http://localhost:5173/api/twitch/webhook', {
         method: 'POST',
         headers: {
@@ -218,7 +248,7 @@ describe('twitch-webhooks', () => {
         },
         body,
       });
-      
+
       const response = await handleWebhookEvent(request);
       expect(response.status).toBe(401);
     });
@@ -228,9 +258,9 @@ describe('twitch-webhooks', () => {
       delete process.env.TWITCH_WEBHOOK_SECRET;
       vi.resetModules();
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
-      
+
       const body = JSON.stringify({ test: 'data' });
-      
+
       const request = new Request('http://localhost:5173/api/twitch/webhook', {
         method: 'POST',
         headers: {
@@ -241,7 +271,7 @@ describe('twitch-webhooks', () => {
         },
         body,
       });
-      
+
       const response = await handleWebhookEvent(request);
       expect(response.status).toBe(200); // Should succeed when no secret configured
     });
@@ -251,9 +281,9 @@ describe('twitch-webhooks', () => {
       delete process.env.TWITCH_WEBHOOK_SECRET;
       vi.resetModules();
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
-      
+
       const body = JSON.stringify({ test: 'data' });
-      
+
       const request = new Request('http://localhost:5173/api/twitch/webhook', {
         method: 'POST',
         headers: {
@@ -262,7 +292,7 @@ describe('twitch-webhooks', () => {
         },
         body,
       });
-      
+
       const response = await handleWebhookEvent(request);
       expect(response.status).toBe(200); // Should succeed when no secret configured
     });
@@ -270,7 +300,11 @@ describe('twitch-webhooks', () => {
 });
 
 // Helper function to create test signatures
-function createTestSignature(body: string, messageId: string, timestamp: string): string {
+function createTestSignature(
+  body: string,
+  messageId: string,
+  timestamp: string
+): string {
   const secret = 'test-secret';
   const message = messageId + timestamp + body;
   const signature = crypto

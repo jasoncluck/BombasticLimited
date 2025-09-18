@@ -60,7 +60,6 @@ describe('PlaylistStateClass', () => {
     });
   });
 
-
   describe('mouse hover methods', () => {
     describe('handleMouseEnter', () => {
       it('should set hovered index when conditions are met', () => {
