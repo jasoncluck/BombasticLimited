@@ -14,7 +14,7 @@ import { join } from 'path';
 // Load source constants
 const SOURCE_INFO = {
   giantbomb: { twitchId: '504350', displayName: 'Giant Bomb' },
-  jeffgerstmann: { twitchId: '504350', displayName: 'Jeff Gerstmann' },
+  jeffgerstmann: { twitchId: '13831039', displayName: 'Jeff Gerstmann' },
   nextlander: { twitchId: '689331234', displayName: 'Nextlander' },
   remap: { twitchId: '913491352', displayName: 'Remap' },
 } as const;
@@ -28,9 +28,9 @@ const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const TWITCH_WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET;
 
 const isDev = process.env.NODE_ENV === 'development';
-const WEBHOOK_BASE_URL = isDev 
-  ? 'https://localhost:5173' 
-  : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://your-domain.com');
+const WEBHOOK_BASE_URL = isDev
+  ? 'https://localhost:5173'
+  : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://bombastic.ltd');
 
 // Use Vercel rewrite path for production webhook URL
 const WEBHOOK_CALLBACK_URL = isDev
@@ -56,7 +56,7 @@ async function setupTwitchWebhooks(): Promise<void> {
 
   console.log('🎣 Setting up Twitch EventSub webhook subscriptions...');
   console.log(`📍 Webhook callback URL: ${WEBHOOK_CALLBACK_URL}`);
-  
+
   if (TWITCH_WEBHOOK_SECRET) {
     console.log(`🔒 Using webhook secret for signature verification: ${TWITCH_WEBHOOK_SECRET.substring(0, 8)}...`);
   } else {
@@ -125,7 +125,7 @@ async function setupTwitchWebhooks(): Promise<void> {
   console.log('\n📊 Webhook Setup Summary:');
   const successful = results.filter(r => r.status === 'success').length;
   const failed = results.filter(r => r.status === 'error').length;
-  
+
   console.log(`✅ Successful: ${successful}`);
   console.log(`❌ Failed: ${failed}`);
 
@@ -151,7 +151,7 @@ async function setupTwitchWebhooks(): Promise<void> {
  */
 async function listWebhookSubscriptions(): Promise<void> {
   if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
-    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET environment variables are required');  
+    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET environment variables are required');
   }
 
   const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
@@ -159,17 +159,17 @@ async function listWebhookSubscriptions(): Promise<void> {
 
   try {
     console.log('📋 Listing existing EventSub subscriptions...');
-    
+
     const subscriptionsResult = await apiClient.eventSub.getSubscriptions();
     const subscriptions = subscriptionsResult.data;
-    
+
     if (subscriptions.length === 0) {
       console.log('📭 No existing subscriptions found');
       return;
     }
 
     console.log(`📊 Found ${subscriptions.length} subscriptions:\n`);
-    
+
     subscriptions.forEach((sub, index) => {
       console.log(`${index + 1}. ${sub.type}`);
       console.log(`   ID: ${sub.id}`);
@@ -181,7 +181,7 @@ async function listWebhookSubscriptions(): Promise<void> {
       }
       console.log('');
     });
-    
+
   } catch (error) {
     console.error('❌ Failed to list subscriptions:', error);
   }
@@ -200,17 +200,17 @@ async function cleanupWebhookSubscriptions(): Promise<void> {
 
   try {
     console.log('🧹 Cleaning up existing EventSub subscriptions...');
-    
+
     const subscriptionsResult = await apiClient.eventSub.getSubscriptions();
     const subscriptions = subscriptionsResult.data;
-    
+
     if (subscriptions.length === 0) {
       console.log('📭 No subscriptions to clean up');
       return;
     }
 
     console.log(`🗑️  Deleting ${subscriptions.length} subscriptions...`);
-    
+
     for (const sub of subscriptions) {
       try {
         await apiClient.eventSub.deleteSubscription(sub.id);
@@ -219,9 +219,9 @@ async function cleanupWebhookSubscriptions(): Promise<void> {
         console.error(`❌ Failed to delete subscription ${sub.id}:`, error);
       }
     }
-    
+
     console.log('🧹 Cleanup complete!');
-    
+
   } catch (error) {
     console.error('❌ Failed to cleanup subscriptions:', error);
   }
