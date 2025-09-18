@@ -255,36 +255,41 @@
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Drawer.Content
-    class="bg-background drawer flex flex-col"
+    class="bg-background drawer flex h-[100vh] max-h-[100vh] flex-col"
     onInteractOutside={(e) => e.preventDefault()}
   >
-    <div class="flex-shrink-0 p-4 pb-0">
-      <Drawer.Header class="px-0">
-        <Drawer.Title class="flex items-center gap-2">
+    <!-- Fixed header - minimal content only -->
+    <div class="flex-shrink-0 border-b p-4">
+      <Drawer.Header class="px-0 pb-0">
+        <Drawer.Title class="flex items-center gap-2 text-xl">
           <TriangleAlert class="h-5 w-5" />
           Report Issue
         </Drawer.Title>
-        <Drawer.Description class="text-start">
-          Thanks for taking the time to help improve the site. If there are any
-          issues with this form please reach out using the contact link at the
-          bottom of the page.
-        </Drawer.Description>
       </Drawer.Header>
     </div>
 
     <!-- Scrollable content area -->
-    <div class="flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-y-auto">
       <div class="p-4">
+        <!-- Description moved into scrollable area -->
+        <div class="mb-6">
+          <p class="text-muted-foreground text-sm">
+            Thanks for taking the time to help improve the site. If there are
+            any issues with this form please reach out using the contact link at
+            the bottom of the page.
+          </p>
+        </div>
+
         <form
           onsubmit={(e) => {
             e.preventDefault();
             handleSubmit();
           }}
-          class="space-y-4"
+          class="space-y-6"
         >
           <!-- Title -->
           <div class="flex flex-col gap-2">
-            <label for="drawer-title" class="text-sm">Title</label>
+            <label for="drawer-title" class="text-sm font-medium">Title</label>
             <Input
               id="drawer-title"
               bind:value={formData.title}
@@ -302,12 +307,14 @@
 
           <!-- Description -->
           <div class="flex flex-col gap-2">
-            <label for="drawer-description" class="text-sm">Description</label>
+            <label for="drawer-description" class="text-sm font-medium"
+              >Description</label
+            >
             <Textarea
               id="drawer-description"
               bind:value={formData.description}
               placeholder="Detailed description of what happened"
-              class="min-h-20 {errors.description ? 'border-destructive' : ''}"
+              class="min-h-24 {errors.description ? 'border-destructive' : ''}"
               inputmode="text"
               autocomplete="off"
               autocapitalize="sentences"
@@ -320,14 +327,16 @@
 
           <!-- Steps to Reproduce -->
           <div class="flex flex-col gap-2">
-            <label for="drawer-steps" class="text-sm">Steps to Reproduce</label>
+            <label for="drawer-steps" class="text-sm font-medium"
+              >Steps to Reproduce</label
+            >
             <Textarea
               id="drawer-steps"
               bind:value={formData.steps_to_reproduce}
               placeholder="1. Go to...
 2. Click on...
 3. See error"
-              class="min-h-16"
+              class="min-h-20"
               inputmode="text"
               autocomplete="off"
               autocapitalize="sentences"
@@ -342,7 +351,10 @@
 
           <!-- Screenshots/Images -->
           <div class="flex flex-col gap-2">
-            <label for="drawer-images" class="flex items-center gap-2 text-sm">
+            <label
+              for="drawer-images"
+              class="flex items-center gap-2 text-sm font-medium"
+            >
               <ImageIcon class="h-4 w-4" />
               Screenshots (Optional)
             </label>
@@ -421,13 +433,13 @@
           </div>
         </form>
 
-        <!-- Action buttons positioned below content but within scrollable area -->
-        <div class="border-t pt-4 pb-8 mt-6">
-          <div class="flex flex-col gap-2">
+        <!-- Action buttons - within scrollable area but with bottom padding -->
+        <div class="mt-8 border-t pt-6 pb-8">
+          <div class="flex flex-col gap-3">
             <Button
               type="submit"
               onclick={handleSubmit}
-              class="drawer-button-footer"
+              class="drawer-button-footer w-full"
               disabled={isSubmitting}
             >
               {#if isSubmitting}
@@ -440,7 +452,7 @@
             <Button
               type="button"
               variant="outline"
-              class="drawer-button-footer"
+              class="drawer-button-footer w-full"
               onclick={() => (open = false)}
               disabled={isSubmitting}
             >

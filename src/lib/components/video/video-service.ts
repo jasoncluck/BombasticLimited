@@ -178,9 +178,8 @@ export async function startSimpleVideoHistory({
     };
   }
 
-  console.log('🎬 Starting simple video history for:', videoId);
 
-  const { history, error } = await startVideoHistorySession({
+  const { error } = await startVideoHistorySession({
     videoId,
     sessionStartTime,
     supabase,
@@ -189,13 +188,9 @@ export async function startSimpleVideoHistory({
 
   if (error) {
     console.error('❌ Failed to start video history:', error);
-    showNotification('Unable to start video history tracking', 'error');
     return { success: false, error };
   }
 
-  if (history) {
-    console.log('✅ Video history session started:', history.id);
-  }
 
   return { success: true };
 }
@@ -228,10 +223,8 @@ export async function endSimpleVideoHistory({
     };
   }
 
-  console.log('🏁 Ending simple video history for:', videoId);
-  console.log('🔑 Using session start time:', sessionStartTime.toISOString());
 
-  const { history, error } = await updateVideoHistoryEndTime({
+  const { error } = await updateVideoHistoryEndTime({
     videoId,
     sessionStartTime, // Pass the required start time
     sessionEndTime,
@@ -241,15 +234,9 @@ export async function endSimpleVideoHistory({
 
   if (error) {
     console.error('❌ Failed to end video history:', error);
-    showNotification('Unable to save video history', 'error');
     return { success: false, error };
   }
 
-  if (history) {
-    console.log(
-      `✅ Video history session ended. Duration: ${history.seconds_watched}s`
-    );
-  }
 
   return { success: true };
 }
@@ -287,7 +274,6 @@ export async function recordCompleteVideoHistory({
     };
   }
 
-  console.log('📊 Recording complete video history for:', videoId);
 
   // Use provided start time or create a new one
   const actualStartTime = sessionStartTime || new Date();
