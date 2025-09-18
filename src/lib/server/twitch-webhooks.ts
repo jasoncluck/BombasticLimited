@@ -180,6 +180,55 @@ function processStreamEvent(event: any): void {
 }
 
 /**
+ * Initialize webhook state with current stream status
+ * This prevents missing live streams when server restarts
+ */
+export async function initializeWebhookState(): Promise<void> {
+  if (!apiClient) {
+    console.warn('Cannot initialize webhook state - API client not available');
+    return;
+  }
+
+  console.log('🔄 Initializing webhook state with current stream status...');
+  
+  try {
+    // Get current live streams for all sources
+    const userIds = SOURCES.map(source => SOURCE_INFO[source].twitchId);
+    const streams = await apiClient.streams.getStreams({ userId: userIds });
+    
+    // Update state for each live stream found
+    streams.data.forEach(stream => {
+      const source = findSourceByTwitchId(stream.userId);
+      if (source) {
+        const wasLive = liveStreams.has(source);
+        if (!wasLive) {
+          liveStreams.add(source);
+          console.log(`🔴 Init: ${source} is currently live`);
+        }
+      }
+    });
+    
+    // Notify subscribers of initial state
+    const currentStreams = Array.from(liveStreams);
+    if (currentStreams.length > 0) {
+      console.log(`🎯 Initialized with ${currentStreams.length} live streams: ${currentStreams.join(', ')}`);
+      subscribers.forEach(callback => {
+        try {
+          callback(currentStreams);
+        } catch (error) {
+          console.error('Error notifying subscriber during initialization:', error);
+        }
+      });
+    } else {
+      console.log('📭 No streams currently live');
+    }
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize webhook state:', error);
+  }
+}
+
+/**
  * Handle webhook event (called by the webhook endpoint)
  */
 export async function handleWebhookEvent(request: Request): Promise<Response> {

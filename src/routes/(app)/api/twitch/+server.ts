@@ -114,6 +114,20 @@ async function updateStreamStatus(): Promise<void> {
 }
 
 /**
+ * Initialize webhook state on server start (production only)
+ */
+async function initializeWebhooksIfNeeded(): Promise<void> {
+  if (dev) return; // Skip in development
+  
+  try {
+    const { initializeWebhookState } = await import('$lib/server/twitch-webhooks.js');
+    await initializeWebhookState();
+  } catch (error) {
+    console.warn('Failed to initialize webhook state:', error);
+  }
+}
+
+/**
  * Safely sync local state with webhook state (production only)
  */
 async function syncWithWebhookState(): Promise<void> {
@@ -151,6 +165,13 @@ async function syncWithWebhookState(): Promise<void> {
   } catch (error) {
     console.warn('Failed to sync with webhook state:', error);
   }
+}
+
+// Initialize webhooks on module load (production only)
+if (!dev) {
+  initializeWebhooksIfNeeded().catch(error => {
+    console.warn('Failed to initialize webhooks on startup:', error);
+  });
 }
 
 export async function POST() {
