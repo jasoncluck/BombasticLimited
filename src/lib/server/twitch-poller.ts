@@ -119,18 +119,11 @@ async function pollStreamStatus(): Promise<void> {
     // Get all Twitch user IDs from sources
     const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
 
-    if (dev) {
-      console.log('🔍 Poller: Checking stream status for:', twitchIds);
-    }
-
     // Fetch stream status for all sources
     const streamStatuses = await getMultipleStreamStatus(twitchIds);
 
     // Handle case where API returns undefined/null
     if (!streamStatuses || !Array.isArray(streamStatuses)) {
-      if (dev) {
-        console.log('⚠️ Poller: No stream status data received');
-      }
       return;
     }
 
@@ -146,26 +139,7 @@ async function pollStreamStatus(): Promise<void> {
 
       if (sourceName && status.isLive) {
         activeStreams.add(sourceName);
-
-        // Log new streams
-        if (dev && !previouslyActive.has(sourceName)) {
-          console.log(`🔴 Poller: ${sourceName} started streaming`);
-        }
       }
-    }
-
-    // Log streams that went offline
-    if (dev) {
-      for (const prevSource of previouslyActive) {
-        if (!activeStreams.has(prevSource)) {
-          console.log(`⚫ Poller: ${prevSource} ended streaming`);
-        }
-      }
-
-      console.log(
-        '📊 Poller: Current active streams:',
-        Array.from(activeStreams)
-      );
     }
 
     // Only notify if there were changes
@@ -186,10 +160,6 @@ async function pollStreamStatus(): Promise<void> {
  * Start the background polling service
  */
 export function startPolling(): void {
-  if (dev) {
-    console.log(`🚀 Twitch poller started - serverless mode`);
-  }
-
   // Initial poll
   pollStreamStatus();
 
@@ -204,10 +174,6 @@ export function stopPolling(): void {
   if (pollingTimeout) {
     clearTimeout(pollingTimeout);
     pollingTimeout = null;
-  }
-
-  if (dev) {
-    console.log('⏹️ Twitch poller stopped');
   }
 }
 
@@ -247,7 +213,6 @@ export async function forcePoll(): Promise<void> {
 if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test' && !dev) {
   // For serverless (like Vercel), we don't auto-start polling
   // Instead, polling is triggered when listeners are added
-  console.log('🚀 Twitch poller initialized for serverless environment');
 } else if (
   typeof window === 'undefined' &&
   process.env.NODE_ENV !== 'test' &&

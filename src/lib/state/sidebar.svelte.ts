@@ -512,9 +512,6 @@ export class SidebarStateClass implements SidebarState {
         try {
           const data = JSON.parse(event.data);
           if (data.reconnect) {
-            console.log(
-              '🔄 Server requested reconnection (timeout prevention)'
-            );
             this.#sseConnected = false;
 
             // Clean up current connection
@@ -542,7 +539,6 @@ export class SidebarStateClass implements SidebarState {
 
       // Handle connection errors
       this.#sseConnection.addEventListener('error', (event) => {
-        console.log('❌ SSE error, will attempt reconnection:', event);
         this.#sseConnected = false;
 
         // Attempt reconnection after cleanup
@@ -553,7 +549,6 @@ export class SidebarStateClass implements SidebarState {
 
         setTimeout(() => {
           if (browser && !this.#sseConnection) {
-            console.log('🔄 Attempting SSE reconnection...');
             this.connectSSE();
           }
         }, 5000); // 5 second delay before reconnection

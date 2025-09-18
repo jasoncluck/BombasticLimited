@@ -46,10 +46,6 @@ function createSSEHandler() {
     start(controller) {
       controllerRef = controller;
 
-      if (dev) {
-        console.log('🚀 SSE: Connection started with background poller');
-      }
-
       // Send initial stream state immediately
       try {
         const initialStreams = getActiveStreams();
@@ -58,10 +54,6 @@ function createSSEHandler() {
           JSON.stringify(initialStreams)
         );
         controller.enqueue(encoder.encode(initialData));
-
-        if (dev) {
-          console.log('📤 SSE: Sent initial streams:', initialStreams);
-        }
       } catch (error) {
         console.error('Failed to send initial stream state:', error);
       }
@@ -79,10 +71,6 @@ function createSSEHandler() {
             JSON.stringify(activeStreams)
           );
           controller.enqueue(encoder.encode(sseData));
-
-          if (dev) {
-            console.log('📤 SSE: Sent stream update:', activeStreams);
-          }
         } catch (error) {
           console.error('Failed to send stream update:', error);
           // Close the stream on error
@@ -109,10 +97,6 @@ function createSSEHandler() {
 
           // Send a comment as heartbeat (ignored by EventSource)
           controller.enqueue(encoder.encode(': heartbeat\n\n'));
-
-          if (dev) {
-            console.log('💓 SSE: Heartbeat sent');
-          }
         } catch (error) {
           console.error('Failed to send heartbeat:', error);
           // Clean up interval on any error
@@ -140,12 +124,6 @@ function createSSEHandler() {
             );
             controller.enqueue(encoder.encode(closeData));
 
-            if (dev) {
-              console.log(
-                '⏰ SSE: Closing connection before timeout, client should reconnect'
-              );
-            }
-
             // Close the connection gracefully
             controller.close();
           }
@@ -156,10 +134,6 @@ function createSSEHandler() {
     },
 
     cancel(reason) {
-      if (dev) {
-        console.log('🔌 SSE: Connection cancelled:', reason);
-      }
-
       // Clean up listener
       if (cleanupListener) {
         cleanupListener();
