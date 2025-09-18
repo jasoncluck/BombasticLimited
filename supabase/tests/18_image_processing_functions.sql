@@ -214,52 +214,42 @@ $$;
 
 -- Test image processing job workflow functions exist with correct signatures
 SELECT
-  ok (
-    has_function (
-      'public',
-      'queue_image_processing_job',
-      ARRAY['text', 'text', 'jsonb']
-    ),
+  has_function (
+    'public',
+    'queue_image_processing_job',
+    ARRAY['text', 'text', 'jsonb'],
     'queue_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'get_next_image_processing_job',
-      ARRAY[]::TEXT[]
-    ),
+  has_function (
+    'public',
+    'get_next_image_processing_job',
+    ARRAY[]::TEXT[],
     'get_next_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'start_image_processing_job',
-      ARRAY['uuid']
-    ),
+  has_function (
+    'public',
+    'start_image_processing_job',
+    ARRAY['uuid'],
     'start_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'complete_image_processing_job',
-      ARRAY['uuid', 'jsonb']
-    ),
+  has_function (
+    'public',
+    'complete_image_processing_job',
+    ARRAY['uuid', 'jsonb'],
     'complete_image_processing_job should have correct signature'
   );
 
 SELECT
-  ok (
-    has_function (
-      'public',
-      'fail_image_processing_job',
-      ARRAY['uuid', 'text']
-    ),
+  has_function (
+    'public',
+    'fail_image_processing_job',
+    ARRAY['uuid', 'text'],
     'fail_image_processing_job should have correct signature'
   );
 
