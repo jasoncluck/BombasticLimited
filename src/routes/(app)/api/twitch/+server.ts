@@ -5,6 +5,7 @@ import {
 import { dev } from '$app/environment';
 import type { Source } from '$lib/constants/source.js';
 
+
 /**
  * Create SSE response following Vercel streaming patterns
  * With timeout management for serverless environments
@@ -27,6 +28,7 @@ function createSSEResponse(stream: ReadableStream<Uint8Array>): Response {
 function createSSEData(event: string, data: string): string {
   return `event: ${event}\ndata: ${data}\n\n`;
 }
+
 
 function createSSEHandler() {
   const encoder = new TextEncoder();

@@ -14,7 +14,6 @@ import {
 } from '$lib/components/ui/sidebar/constants';
 import type { ImageFormat } from '$lib/utils/image-format-detection';
 import debounce from 'debounce';
-import { SvelteSet } from 'svelte/reactivity';
 
 export interface SidebarData {
   playlists: Playlist[];
@@ -475,14 +474,12 @@ export class SidebarStateClass implements SidebarState {
    */
   startSSEConnection(): void {
     if (!browser || this.#sseConnection) {
-      return;
+      return; // Already connected or not in browser
     }
 
+    // Reset initial load flag when starting
     this.#isInitialStreamLoad = true;
-    this.connectSSE();
-  }
 
-  private connectSSE(): void {
     try {
       // Create native EventSource connection
       this.#sseConnection = new EventSource('/api/twitch', {
@@ -541,7 +538,6 @@ export class SidebarStateClass implements SidebarState {
       // Handle connection open
       this.#sseConnection.addEventListener('open', () => {
         this.#sseConnected = true;
-        console.log('🔗 SSE connected');
       });
 
       // Handle connection errors
@@ -561,16 +557,10 @@ export class SidebarStateClass implements SidebarState {
             this.connectSSE();
           }
         }, 5000); // 5 second delay before reconnection
+
       });
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
-
-      // Retry after a delay
-      setTimeout(() => {
-        if (browser) {
-          this.connectSSE();
-        }
-      }, 10000); // 10 second delay before retry
     }
   }
 
