@@ -1,6 +1,7 @@
 import { getMultipleStreamStatus } from '$lib/client/twitch.js';
 import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
 import { produce } from 'sveltekit-sse';
+import { dev } from '$app/environment';
 
 /**
  * @param {number} milliseconds
@@ -30,10 +31,19 @@ function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
 // Track currently live streams
 const streamingSources = new Set<string>();
 let lastStreamCheck = 0;
-const STREAM_CHECK_INTERVAL = 60000; // Increased to 60 seconds to reduce API load
+
+// Configuration that adapts to dev vs production
+const STREAM_CHECK_INTERVAL = dev ? 2000 : 60000; // 2 seconds in dev, 60 seconds in production
 const API_TIMEOUT = 15000; // 15 second timeout for API calls
-const MAX_SSE_DURATION = 5000; // 5 seconds
-const SSE_ITERATION_DELAY = 15000; // Increased to 15 seconds to reduce CPU usage
+const MAX_SSE_DURATION = dev ? 120000 : 300000; // 2 minutes in dev, 5 minutes in production
+const SSE_ITERATION_DELAY = dev ? 1000 : 15000; // 1 second in dev, 15 seconds in production
+
+if (dev) {
+  console.log('🔧 SSE Configuration (Dev Mode):');
+  console.log(`  - Stream check interval: ${STREAM_CHECK_INTERVAL}ms`);
+  console.log(`  - SSE iteration delay: ${SSE_ITERATION_DELAY}ms`);
+  console.log(`  - Max SSE duration: ${MAX_SSE_DURATION}ms`);
+}
 
 /**
  * Check Twitch stream status for all sources
@@ -41,7 +51,7 @@ const SSE_ITERATION_DELAY = 15000; // Increased to 15 seconds to reduce CPU usag
 async function updateStreamStatus(): Promise<void> {
   const now = Date.now();
 
-  // Skip if we've checked recently to avoid excessive API calls
+  // Skip if we've checked recently to avoid excessive API calls (but allow more frequent checks in dev)
   if (now - lastStreamCheck < STREAM_CHECK_INTERVAL) {
     return;
   }
@@ -51,6 +61,10 @@ async function updateStreamStatus(): Promise<void> {
   try {
     // Get all Twitch user IDs from sources
     const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
+
+    if (dev) {
+      console.log('🔍 SSE: Checking stream status for:', twitchIds);
+    }
 
     // Fetch stream status for all sources with timeout
     const streamStatuses = await withTimeout(
@@ -70,14 +84,23 @@ async function updateStreamStatus(): Promise<void> {
 
       if (sourceName && status.isLive) {
         streamingSources.add(sourceName);
+
+        // Log new streams in dev mode
+        if (dev && !previouslyLive.has(sourceName)) {
+          console.log(`🔴 SSE: ${sourceName} started streaming (detected)`);
+        }
       }
     }
 
     // Log when streams go offline
     for (const prevSource of previouslyLive) {
       if (!streamingSources.has(prevSource)) {
-        console.log(`${prevSource} has ended the Twitch stream.`);
+        console.log(`⚫ SSE: ${prevSource} ended the Twitch stream`);
       }
+    }
+
+    if (dev) {
+      console.log('📊 SSE: Current streaming sources:', Array.from(streamingSources));
     }
   } catch (error) {
     console.error('Failed to update Twitch stream status:', error);
@@ -90,6 +113,10 @@ export async function POST() {
     async function start({ emit }) {
       const startTime = Date.now();
 
+      if (dev) {
+        console.log('🚀 SSE: Connection started, will run for up to', MAX_SSE_DURATION / 1000, 'seconds');
+      }
+
       try {
         // Initial stream status check with timeout
         await withTimeout(updateStreamStatus(), API_TIMEOUT);
@@ -99,11 +126,11 @@ export async function POST() {
 
       while (true) {
         try {
-          // Check if we're approaching Vercel's timeout limit
+          // Check if we're approaching the timeout limit
           const elapsed = Date.now() - startTime;
           if (elapsed > MAX_SSE_DURATION) {
             console.log(
-              'Approaching timeout limit, closing SSE connection gracefully'
+              `SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully`
             );
             break;
           }
@@ -128,7 +155,7 @@ export async function POST() {
 
             if (isClientDisconnection) {
               // This is normal - client closed the connection
-              console.log('Client disconnected from SSE stream');
+              console.log('SSE: Client disconnected from stream');
               break;
             } else {
               // This is an actual error we should log
@@ -137,7 +164,7 @@ export async function POST() {
             }
           }
 
-          // Wait before next iteration with longer delay to reduce CPU usage
+          // Wait before next iteration with appropriate delay
           await delay(SSE_ITERATION_DELAY);
         } catch (loopError) {
           console.error('Error in SSE loop:', loopError);

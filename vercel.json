@@ -3,7 +3,16 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "framework": "sveltekit",
-  "regions": ["sfo1", "iad1", "dub1"],
+  "regions": [
+    "sfo1",
+    "iad1",
+    "dub1"
+  ],
+  "functions": {
+    "src/routes/(app)/api/twitch/+server.ts": {
+      "maxDuration": 60
+    }
+  },
   "git": {
     "deploymentEnabled": {
       "copilot*": false

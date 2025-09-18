@@ -501,7 +501,6 @@ $$;
 
 COMMENT ON FUNCTION public.update_playlist_thumbnail (bigint, text, jsonb) IS 'Update playlist thumbnail with video thumbnail URL reference (optimized and reliable)';
 
--- Optimized function to insert videos into a playlist
 CREATE OR REPLACE FUNCTION "public"."insert_playlist_videos" ("p_playlist_id" int8, "p_video_ids" TEXT[]) RETURNS TABLE (
   result_id int8,
   result_playlist_id int8,
@@ -520,6 +519,7 @@ DECLARE
   new_videos_added boolean := false;
   valid_video_count int;
   new_videos_to_insert TEXT[];
+  current_video_count int;
 BEGIN
   -- Get the current authenticated user
   current_user_id := auth.uid();
@@ -577,6 +577,12 @@ BEGIN
     RAISE EXCEPTION 'One or more video IDs are invalid or do not exist in the videos table';
   END IF;
   
+  -- Get current video count in playlist
+  SELECT COUNT(*)
+  INTO current_video_count
+  FROM public.playlist_videos pv
+  WHERE pv.playlist_id = p_playlist_id;
+  
   -- Get max position and existing videos in one query
   WITH playlist_data AS (
     SELECT 
@@ -597,6 +603,14 @@ BEGIN
   INTO new_videos_to_insert
   FROM unnest(p_video_ids) AS vid
   WHERE NOT (existing_video_positions ? vid);
+  
+  -- **NEW CHECK**: Validate that adding these new videos won't exceed 100 total videos
+  IF new_videos_to_insert IS NOT NULL AND 
+     (current_video_count + array_length(new_videos_to_insert, 1)) > 100 THEN
+    RAISE EXCEPTION 'Unable to add videos to playlist. Playlists have a limit of 100 videos. Current count: %, attempting to add: % new videos', 
+      current_video_count, 
+      array_length(new_videos_to_insert, 1);
+  END IF;
   
   first_video_id := p_video_ids[1];
   
