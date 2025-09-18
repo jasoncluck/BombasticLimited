@@ -111,13 +111,9 @@ describe('Twitch Poller', () => {
 
   describe('stream detection', () => {
     it('should detect new streams', async () => {
-      // Mock no streams initially, then nextlander goes live
-      mockGetMultipleStreamStatus
-        .mockResolvedValueOnce([])
-        .mockResolvedValueOnce([
-          { userId: '689331234', isLive: true, lastChecked: Date.now() }
-        ]);
-
+      // First poll - no streams
+      mockGetMultipleStreamStatus.mockResolvedValue([]);
+      
       const changeListener = vi.fn();
       addStreamChangeListener(changeListener);
 
@@ -125,18 +121,23 @@ describe('Twitch Poller', () => {
       expect(getActiveStreams()).toEqual([]);
       expect(changeListener).not.toHaveBeenCalled();
 
+      // Reset mock for second call
+      mockGetMultipleStreamStatus.mockClear();
+      mockGetMultipleStreamStatus.mockResolvedValue([
+        { userId: '689331234', isLive: true, lastChecked: Date.now() }
+      ]);
+      vi.advanceTimersByTime(6000); // Advance past rate limit
+
       await forcePoll(); // Second poll - nextlander goes live
       expect(getActiveStreams()).toEqual(['nextlander']);
       expect(changeListener).toHaveBeenCalledWith(['nextlander']);
     });
 
     it('should detect streams going offline', async () => {
-      // Mock nextlander live initially, then offline
-      mockGetMultipleStreamStatus
-        .mockResolvedValueOnce([
-          { userId: '689331234', isLive: true, lastChecked: Date.now() }
-        ])
-        .mockResolvedValueOnce([]);
+      // First poll - nextlander live
+      mockGetMultipleStreamStatus.mockResolvedValue([
+        { userId: '689331234', isLive: true, lastChecked: Date.now() }
+      ]);
 
       const changeListener = vi.fn();
       addStreamChangeListener(changeListener);
@@ -146,6 +147,11 @@ describe('Twitch Poller', () => {
       expect(changeListener).toHaveBeenCalledWith(['nextlander']);
 
       changeListener.mockClear();
+
+      // Reset mock for second call
+      mockGetMultipleStreamStatus.mockClear();
+      mockGetMultipleStreamStatus.mockResolvedValue([]);
+      vi.advanceTimersByTime(6000); // Advance past rate limit
 
       await forcePoll(); // Second poll - nextlander offline
       expect(getActiveStreams()).toEqual([]);
@@ -182,6 +188,7 @@ describe('Twitch Poller', () => {
       expect(changeListener).toHaveBeenCalledTimes(1);
 
       changeListener.mockClear();
+      vi.advanceTimersByTime(6000); // Advance past rate limit
 
       await forcePoll(); // Second poll with same data
       expect(changeListener).not.toHaveBeenCalled(); // No change, so no notification

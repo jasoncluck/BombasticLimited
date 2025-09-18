@@ -1,14 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Mock the twitch poller
+// Mock the twitch poller with actual functions
+const mockAddStreamChangeListener = vi.fn(() => vi.fn()); // Return cleanup function
+const mockGetActiveStreams = vi.fn(() => []);
+
 vi.mock('$lib/server/twitch-poller.js', () => ({
-  addStreamChangeListener: vi.fn(() => vi.fn()), // Return cleanup function
-  getActiveStreams: vi.fn(() => []),
+  addStreamChangeListener: mockAddStreamChangeListener,
+  getActiveStreams: mockGetActiveStreams,
 }));
 
 describe('/api/twitch endpoint', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockAddStreamChangeListener.mockClear().mockReturnValue(vi.fn());
+    mockGetActiveStreams.mockClear().mockReturnValue([]);
   });
 
   it('should export POST function', async () => {
@@ -39,18 +44,16 @@ describe('/api/twitch endpoint', () => {
   });
 
   it('should use the twitch poller for stream state', async () => {
-    const { addStreamChangeListener, getActiveStreams } = await import('$lib/server/twitch-poller.js');
     const { POST } = await import('../+server.js');
 
     await POST();
 
-    expect(getActiveStreams).toHaveBeenCalled();
-    expect(addStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
+    expect(mockGetActiveStreams).toHaveBeenCalled();
+    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('should send initial stream state', async () => {
-    const { getActiveStreams } = vi.importMock('$lib/server/twitch-poller.js');
-    getActiveStreams.mockReturnValue(['nextlander', 'remap']);
+    mockGetActiveStreams.mockReturnValue(['nextlander', 'remap']);
 
     const { POST } = await import('../+server.js');
     const response = await POST();
@@ -69,10 +72,9 @@ describe('/api/twitch endpoint', () => {
   });
 
   it('should handle stream changes from poller', async () => {
-    const { addStreamChangeListener } = vi.importMock('$lib/server/twitch-poller.js');
     let changeCallback: ((streams: string[]) => void) | null = null;
 
-    addStreamChangeListener.mockImplementation((callback) => {
+    mockAddStreamChangeListener.mockImplementation((callback) => {
       changeCallback = callback;
       return vi.fn(); // cleanup function
     });
@@ -89,14 +91,13 @@ describe('/api/twitch endpoint', () => {
 
     // The stream should have been updated (we can't easily test the output here
     // without more complex stream mocking, but we can verify the callback was set up)
-    expect(addStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
+    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(expect.any(Function));
   });
 
   it('should have proper cleanup when stream is cancelled', async () => {
-    const { addStreamChangeListener } = vi.importMock('$lib/server/twitch-poller.js');
     const mockCleanup = vi.fn();
 
-    addStreamChangeListener.mockReturnValue(mockCleanup);
+    mockAddStreamChangeListener.mockReturnValue(mockCleanup);
 
     const { POST } = await import('../+server.js');
     const response = await POST();
