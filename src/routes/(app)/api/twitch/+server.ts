@@ -1,192 +1,122 @@
-import { getMultipleStreamStatus } from '$lib/client/twitch.js';
-import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
-import { produce } from 'sveltekit-sse';
+import { addStreamChangeListener, getActiveStreams } from '$lib/server/twitch-poller.js';
 import { dev } from '$app/environment';
+import type { Source } from '$lib/constants/source.js';
 
 /**
- * @param {number} milliseconds
- * @returns
+ * Create SSE response following Vercel streaming patterns
  */
-function delay(milliseconds: number) {
-  return new Promise(function run(resolve) {
-    setTimeout(resolve, milliseconds);
+function createSSEResponse(stream: ReadableStream<Uint8Array>): Response {
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      'Connection': 'keep-alive',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Cache-Control',
+    },
   });
 }
 
 /**
- * Promise with timeout wrapper
+ * Create SSE data string
  */
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(
-        () => reject(new Error(`Operation timed out after ${timeoutMs}ms`)),
-        timeoutMs
-      )
-    ),
-  ]);
-}
-
-// Track currently live streams
-const streamingSources = new Set<string>();
-let lastStreamCheck = 0;
-
-// Configuration that adapts to dev vs production
-const STREAM_CHECK_INTERVAL = dev ? 2000 : 60000; // 2 seconds in dev, 60 seconds in production
-const API_TIMEOUT = 15000; // 15 second timeout for API calls
-const MAX_SSE_DURATION = dev ? 120000 : 300000; // 2 minutes in dev, 5 minutes in production
-const SSE_ITERATION_DELAY = dev ? 1000 : 15000; // 1 second in dev, 15 seconds in production
-
-if (dev) {
-  console.log('🔧 SSE Configuration (Dev Mode):');
-  console.log(`  - Stream check interval: ${STREAM_CHECK_INTERVAL}ms`);
-  console.log(`  - SSE iteration delay: ${SSE_ITERATION_DELAY}ms`);
-  console.log(`  - Max SSE duration: ${MAX_SSE_DURATION}ms`);
-}
-
-/**
- * Check Twitch stream status for all sources
- */
-async function updateStreamStatus(): Promise<void> {
-  const now = Date.now();
-
-  // Skip if we've checked recently to avoid excessive API calls (but allow more frequent checks in dev)
-  if (now - lastStreamCheck < STREAM_CHECK_INTERVAL) {
-    return;
-  }
-
-  lastStreamCheck = now;
-
-  try {
-    // Get all Twitch user IDs from sources
-    const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
-
-    if (dev) {
-      console.log('🔍 SSE: Checking stream status for:', twitchIds);
-    }
-
-    // Fetch stream status for all sources with timeout
-    const streamStatuses = await withTimeout(
-      getMultipleStreamStatus(twitchIds),
-      API_TIMEOUT
-    );
-
-    // Update the streaming sources set
-    const previouslyLive = new Set(streamingSources);
-    streamingSources.clear();
-
-    for (const status of streamStatuses) {
-      // Find the source name by matching twitchId
-      const sourceName = SOURCES.find(
-        (source) => SOURCE_INFO[source].twitchId === status.userId
-      );
-
-      if (sourceName && status.isLive) {
-        streamingSources.add(sourceName);
-
-        // Log new streams in dev mode
-        if (dev && !previouslyLive.has(sourceName)) {
-          console.log(`🔴 SSE: ${sourceName} started streaming (detected)`);
-        }
-      }
-    }
-
-    // Log when streams go offline
-    for (const prevSource of previouslyLive) {
-      if (!streamingSources.has(prevSource)) {
-        console.log(`⚫ SSE: ${prevSource} ended the Twitch stream`);
-      }
-    }
-
-    if (dev) {
-      console.log('📊 SSE: Current streaming sources:', Array.from(streamingSources));
-    }
-  } catch (error) {
-    console.error('Failed to update Twitch stream status:', error);
-    // Don't throw - let the SSE continue with cached data
-  }
+function createSSEData(event: string, data: string): string {
+  return `event: ${event}\ndata: ${data}\n\n`;
 }
 
 export async function POST() {
-  return produce(
-    async function start({ emit }) {
-      const startTime = Date.now();
+  const encoder = new TextEncoder();
+  let controllerRef: ReadableStreamDefaultController<Uint8Array> | null = null;
+  let cleanupListener: (() => void) | null = null;
 
+  const stream = new ReadableStream<Uint8Array>({
+    start(controller) {
+      controllerRef = controller;
+      
       if (dev) {
-        console.log('🚀 SSE: Connection started, will run for up to', MAX_SSE_DURATION / 1000, 'seconds');
+        console.log('🚀 SSE: Connection started with background poller');
       }
 
+      // Send initial stream state immediately
       try {
-        // Initial stream status check with timeout
-        await withTimeout(updateStreamStatus(), API_TIMEOUT);
-      } catch (error) {
-        console.error('Initial stream check failed:', error);
-      }
-
-      while (true) {
-        try {
-          // Check if we're approaching the timeout limit
-          const elapsed = Date.now() - startTime;
-          if (elapsed > MAX_SSE_DURATION) {
-            console.log(
-              `SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully`
-            );
-            break;
-          }
-
-          // Check for stream updates with timeout
-          await withTimeout(updateStreamStatus(), API_TIMEOUT);
-
-          // Prepare the data to send
-          const streamingData = Array.from(streamingSources.values());
-          const jsonData = JSON.stringify(streamingData);
-
-          // Emit current streaming sources with error handling
-          const { error } = emit('streamingSubscriptions', jsonData);
-
-          if (error) {
-            // Check if it's a client disconnection (normal) vs actual error
-            const isClientDisconnection =
-              error.message?.includes('Client disconnected') ||
-              error.message?.includes('Connection closed') ||
-              error.message?.includes('stream closed') ||
-              error.message?.includes('Client disconnected from the stream');
-
-            if (isClientDisconnection) {
-              // This is normal - client closed the connection
-              console.log('SSE: Client disconnected from stream');
-              break;
-            } else {
-              // This is an actual error we should log
-              console.error('SSE emit error:', error);
-              break;
-            }
-          }
-
-          // Wait before next iteration with appropriate delay
-          await delay(SSE_ITERATION_DELAY);
-        } catch (loopError) {
-          console.error('Error in SSE loop:', loopError);
-
-          // If it's a timeout error, break gracefully
-          if (
-            loopError instanceof Error &&
-            loopError.message.includes('timed out')
-          ) {
-            console.log('Breaking SSE loop due to timeout');
-            break;
-          }
-
-          // For other errors, also break to prevent infinite error loops
-          break;
+        const initialStreams = getActiveStreams();
+        const initialData = createSSEData('streamingSubscriptions', JSON.stringify(initialStreams));
+        controller.enqueue(encoder.encode(initialData));
+        
+        if (dev) {
+          console.log('📤 SSE: Sent initial streams:', initialStreams);
         }
+      } catch (error) {
+        console.error('Failed to send initial stream state:', error);
       }
+
+      // Set up listener for stream changes
+      cleanupListener = addStreamChangeListener((activeStreams: Source[]) => {
+        try {
+          if (controller.desiredSize === null) {
+            // Stream is closed
+            return;
+          }
+          
+          const sseData = createSSEData('streamingSubscriptions', JSON.stringify(activeStreams));
+          controller.enqueue(encoder.encode(sseData));
+          
+          if (dev) {
+            console.log('📤 SSE: Sent stream update:', activeStreams);
+          }
+        } catch (error) {
+          console.error('Failed to send stream update:', error);
+          // Close the stream on error
+          try {
+            controller.close();
+          } catch (closeError) {
+            // Ignore close errors
+          }
+        }
+      });
+
+      // Send periodic heartbeat to keep connection alive
+      const heartbeatInterval = setInterval(() => {
+        try {
+          if (controller.desiredSize === null) {
+            // Stream is closed
+            clearInterval(heartbeatInterval);
+            return;
+          }
+          
+          // Send a comment as heartbeat (ignored by EventSource)
+          controller.enqueue(encoder.encode(': heartbeat\n\n'));
+          
+          if (dev) {
+            console.log('💓 SSE: Heartbeat sent');
+          }
+        } catch (error) {
+          console.error('Failed to send heartbeat:', error);
+          clearInterval(heartbeatInterval);
+        }
+      }, 30000); // 30 second heartbeat
+
+      // Store interval for cleanup
+      (controller as any).__heartbeatInterval = heartbeatInterval;
     },
-    {
-      stop() {
-        console.log('Stopping Twitch stream monitoring');
-      },
+    
+    cancel(reason) {
+      if (dev) {
+        console.log('🔌 SSE: Connection cancelled:', reason);
+      }
+      
+      // Clean up listener
+      if (cleanupListener) {
+        cleanupListener();
+        cleanupListener = null;
+      }
+      
+      // Clean up heartbeat interval
+      if (controllerRef && (controllerRef as any).__heartbeatInterval) {
+        clearInterval((controllerRef as any).__heartbeatInterval);
+      }
     }
-  );
+  });
+
+  return createSSEResponse(stream);
 }

@@ -7,7 +7,7 @@ import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility';
 import { showToast } from '$lib/state/notifications.svelte';
-import { source, type Source as SSESource } from 'sveltekit-sse';
+// Removed sveltekit-sse dependency - using native EventSource
 import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
@@ -205,7 +205,7 @@ export class SidebarStateClass implements SidebarState {
   streamingSources = $state<Source[]>([]);
 
   // SSE connection state
-  #sseConnection = $state<SSESource | null>(null);
+  #sseConnection = $state<EventSource | null>(null);
   #sseConnected = $state(false);
   #isInitialStreamLoad = $state(true);
 
@@ -484,13 +484,17 @@ export class SidebarStateClass implements SidebarState {
 
   private connectSSE(): void {
     try {
-      this.#sseConnection = source('/api/twitch');
+      // Create native EventSource connection
+      this.#sseConnection = new EventSource('/api/twitch', {
+        withCredentials: false
+      });
 
-      this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
+      // Handle streaming subscriptions events
+      this.#sseConnection.addEventListener('streamingSubscriptions', (event) => {
         try {
-          if (!data || data.trim() === '') return;
+          if (!event.data || event.data.trim() === '') return;
 
-          const streamingSources: Source[] = JSON.parse(data);
+          const streamingSources: Source[] = JSON.parse(event.data);
           this.updateStreamingState(streamingSources);
         } catch (error) {
           if (error instanceof SyntaxError && error.message.includes('Unexpected end of JSON input')) {
@@ -500,36 +504,29 @@ export class SidebarStateClass implements SidebarState {
         }
       });
 
-      this.#sseConnection.select('open').subscribe(() => {
+      // Handle connection open
+      this.#sseConnection.addEventListener('open', () => {
         this.#sseConnected = true;
         console.log('🔗 SSE connected');
       });
 
-      this.#sseConnection.select('error').subscribe((event) => {
+      // Handle connection errors
+      this.#sseConnection.addEventListener('error', (event) => {
         console.log('❌ SSE error, will attempt reconnection:', event);
         this.#sseConnected = false;
 
-        // Attempt reconnection after a delay
+        // Attempt reconnection after cleanup
+        if (this.#sseConnection) {
+          this.#sseConnection.close();
+          this.#sseConnection = null;
+        }
+
         setTimeout(() => {
           if (browser && !this.#sseConnection) {
             console.log('🔄 Attempting SSE reconnection...');
             this.connectSSE();
           }
         }, 5000); // 5 second delay before reconnection
-      });
-
-      // Handle connection close and auto-reconnect
-      this.#sseConnection.select('close').subscribe(() => {
-        console.log('🔌 SSE connection closed, attempting reconnection...');
-        this.#sseConnected = false;
-        this.#sseConnection = null;
-
-        // Reconnect after a short delay
-        setTimeout(() => {
-          if (browser) {
-            this.connectSSE();
-          }
-        }, 2000); // 2 second delay before reconnection
       });
 
     } catch (error) {
