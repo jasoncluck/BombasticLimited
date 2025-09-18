@@ -35,16 +35,17 @@ let lastStreamCheck = 0;
 
 // Configuration that adapts to dev vs production
 // Optimized for webhook-enhanced mode with less frequent backup polling
+// Production timeout is constrained by Vercel's 60-second function timeout limit
 const STREAM_CHECK_INTERVAL = dev ? 30000 : 600000; // 30 seconds in dev, 10 minutes in production (backup only)
 const API_TIMEOUT = 15000; // 15 second timeout for API calls
-const MAX_SSE_DURATION = dev ? 120000 : 900000; // 2 minutes in dev, 15 minutes in production (longer since webhooks handle real-time)
-const SSE_ITERATION_DELAY = dev ? 5000 : 20000; // 5 seconds in dev, 20 seconds in production (reasonable for webhook-enhanced mode)
+const MAX_SSE_DURATION = dev ? 120000 : 50000; // 2 minutes in dev, 50 seconds in production (under Vercel's 60s timeout)
+const SSE_ITERATION_DELAY = dev ? 5000 : 10000; // 5 seconds in dev, 10 seconds in production (fit more iterations in 50s)
 
-if (dev) {
+if (dev || process.env.NODE_ENV !== 'production') {
   console.log('🔧 SSE Configuration (Webhook-Enhanced Mode):');
   console.log(`  - Stream check interval (backup): ${STREAM_CHECK_INTERVAL}ms`);
   console.log(`  - SSE iteration delay: ${SSE_ITERATION_DELAY}ms`);
-  console.log(`  - Max SSE duration: ${MAX_SSE_DURATION}ms`);
+  console.log(`  - Max SSE duration: ${MAX_SSE_DURATION}ms ${!dev ? '(Vercel 60s timeout limit)' : ''}`);
   console.log(`  - Primary updates via webhooks: ${!dev ? 'YES' : 'MIXED (dev)'}`);
   console.log(`  - Estimated iterations per connection: ~${Math.floor(MAX_SSE_DURATION / SSE_ITERATION_DELAY)}`);
 }
