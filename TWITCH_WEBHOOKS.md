@@ -46,6 +46,34 @@ TWITCH_WEBHOOK_SECRET=your_secure_random_secret
 VERCEL_URL=your-domain.vercel.app
 ```
 
+## Webhook URL Configuration
+
+The system uses **Vercel rewrites** for optimal webhook handling as recommended by Twurple documentation:
+
+- **Development**: `https://localhost:5173/api/twitch/webhook` (direct endpoint)
+- **Production**: `https://your-domain.com/webhooks/twitch` (via Vercel rewrite to `/api/twitch/webhook`)
+
+### Benefits of Vercel Rewrites
+
+1. **Clean URLs**: `/webhooks/twitch` is more semantic than `/api/twitch/webhook`
+2. **Load Balancing**: Vercel handles traffic distribution across regions
+3. **SSL Termination**: Automatic HTTPS handling
+4. **Route Optimization**: Better performance for webhook endpoints
+5. **URL Stability**: Consistent webhook URLs regardless of internal routing changes
+
+The rewrite is configured in `vercel.json`:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/webhooks/twitch",
+      "destination": "/api/twitch/webhook"
+    }
+  ]
+}
+```
+
 ## Setup Instructions
 
 ### 1. Configure Environment Variables
@@ -67,9 +95,15 @@ npm run twitch:webhook:list
 npm run twitch:webhook:cleanup
 ```
 
+**Note**: The setup script will automatically use the correct webhook URL:
+- Development: `http://localhost:5173/api/twitch/webhook`
+- Production: `https://your-domain.com/webhooks/twitch` (via Vercel rewrite)
+
 ### 3. Deploy
 
-Deploy your application with the webhook endpoint available at `/api/twitch/webhook`.
+Deploy your application with the webhook endpoint available at:
+- **Direct endpoint**: `/api/twitch/webhook` 
+- **Public webhook URL**: `/webhooks/twitch` (recommended for Twitch EventSub registration)
 
 ## Cost Optimization Benefits
 
@@ -130,7 +164,7 @@ npm run test "src/routes/(app)/api/twitch/__tests__/server.test.ts"
 
 - [ ] Environment variables configured
 - [ ] Webhook subscriptions created (`npm run twitch:webhook:setup`)
-- [ ] Webhook endpoint accessible at `/api/twitch/webhook`
+- [ ] Webhook endpoint accessible at `/webhooks/twitch` (via Vercel rewrite)
 - [ ] Test webhook functionality
 - [ ] Monitor logs for webhook events
 - [ ] Verify cost reduction in Vercel dashboard

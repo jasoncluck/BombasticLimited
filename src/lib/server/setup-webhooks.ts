@@ -10,6 +10,11 @@ const WEBHOOK_BASE_URL = dev
   ? 'https://localhost:5173' 
   : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://your-domain.com');
 
+// Use Vercel rewrite path for production webhook URL
+const WEBHOOK_CALLBACK_URL = dev
+  ? `${WEBHOOK_BASE_URL}/api/twitch/webhook`
+  : `${WEBHOOK_BASE_URL}/webhooks/twitch`;
+
 /**
  * Setup webhook subscriptions with Twitch EventSub
  * This should be run once to register webhooks with Twitch
@@ -29,7 +34,7 @@ export async function setupTwitchWebhooks(): Promise<void> {
   const apiClient = new ApiClient({ authProvider });
 
   console.log('🎣 Setting up Twitch EventSub webhook subscriptions...');
-  console.log(`📍 Webhook base URL: ${WEBHOOK_BASE_URL}`);
+  console.log(`📍 Webhook callback URL: ${WEBHOOK_CALLBACK_URL}`);
   console.log(`🔒 Using webhook secret: ${TWITCH_WEBHOOK_SECRET.substring(0, 8)}...`);
 
   const results = [];
@@ -48,7 +53,7 @@ export async function setupTwitchWebhooks(): Promise<void> {
         { broadcaster_user_id: twitchId },
         {
           method: 'webhook',
-          callback: `${WEBHOOK_BASE_URL}/api/twitch/webhook`,
+          callback: WEBHOOK_CALLBACK_URL,
           secret: TWITCH_WEBHOOK_SECRET,
         }
       );
@@ -62,7 +67,7 @@ export async function setupTwitchWebhooks(): Promise<void> {
         { broadcaster_user_id: twitchId },
         {
           method: 'webhook',
-          callback: `${WEBHOOK_BASE_URL}/api/twitch/webhook`,
+          callback: WEBHOOK_CALLBACK_URL,
           secret: TWITCH_WEBHOOK_SECRET,
         }
       );
