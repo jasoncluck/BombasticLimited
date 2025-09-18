@@ -255,7 +255,7 @@
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Drawer.Content
-    class="bg-background drawer flex min-h-[100%] flex-col"
+    class="bg-background drawer flex flex-col"
     onInteractOutside={(e) => e.preventDefault()}
   >
     <div class="flex-shrink-0 p-4 pb-0">
@@ -273,7 +273,7 @@
     </div>
 
     <!-- Scrollable content area -->
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="flex-1 overflow-y-auto">
       <div class="p-4">
         <form
           onsubmit={(e) => {
@@ -422,7 +422,7 @@
         </form>
 
         <!-- Action buttons positioned below content but within scrollable area -->
-        <div class="border-t pt-4 pb-8">
+        <div class="border-t pt-4 pb-8 mt-6">
           <div class="flex flex-col gap-2">
             <Button
               type="submit"
