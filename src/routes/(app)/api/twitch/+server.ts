@@ -4,6 +4,7 @@ import type { Source } from '$lib/constants/source.js';
 
 /**
  * Create SSE response following Vercel streaming patterns
+ * With timeout management for serverless environments
  */
 function createSSEResponse(stream: ReadableStream<Uint8Array>): Response {
   return new Response(stream, {
@@ -28,6 +29,13 @@ function createSSEHandler() {
   const encoder = new TextEncoder();
   let controllerRef: ReadableStreamDefaultController<Uint8Array> | null = null;
   let cleanupListener: (() => void) | null = null;
+  let heartbeatInterval: NodeJS.Timeout | null = null;
+  let connectionTimeout: NodeJS.Timeout | null = null;
+
+  // Vercel has a 60-second timeout, so we'll close connections after 50 seconds
+  // to allow for graceful cleanup before the timeout
+  const MAX_CONNECTION_TIME = dev ? 300000 : 50000; // 5 min in dev, 50 sec in production
+  const HEARTBEAT_INTERVAL = 25000; // 25 seconds
 
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
@@ -76,11 +84,14 @@ function createSSEHandler() {
       });
 
       // Send periodic heartbeat to keep connection alive
-      const heartbeatInterval = setInterval(() => {
+      heartbeatInterval = setInterval(() => {
         try {
           if (controller.desiredSize === null) {
             // Stream is closed
-            clearInterval(heartbeatInterval);
+            if (heartbeatInterval) {
+              clearInterval(heartbeatInterval);
+              heartbeatInterval = null;
+            }
             return;
           }
           
@@ -92,12 +103,32 @@ function createSSEHandler() {
           }
         } catch (error) {
           console.error('Failed to send heartbeat:', error);
-          clearInterval(heartbeatInterval);
+          if (heartbeatInterval) {
+            clearInterval(heartbeatInterval);
+            heartbeatInterval = null;
+          }
         }
-      }, 30000); // 30 second heartbeat
+      }, HEARTBEAT_INTERVAL);
 
-      // Store interval for cleanup
-      (controller as any).__heartbeatInterval = heartbeatInterval;
+      // Auto-close connection before Vercel timeout
+      connectionTimeout = setTimeout(() => {
+        try {
+          if (controller.desiredSize !== null) {
+            // Send a close event to notify client to reconnect
+            const closeData = createSSEData('connection-close', JSON.stringify({ reason: 'timeout', reconnect: true }));
+            controller.enqueue(encoder.encode(closeData));
+            
+            if (dev) {
+              console.log('⏰ SSE: Closing connection before timeout, client should reconnect');
+            }
+            
+            // Close the connection gracefully
+            controller.close();
+          }
+        } catch (error) {
+          console.error('Failed to close connection gracefully:', error);
+        }
+      }, MAX_CONNECTION_TIME);
     },
     
     cancel(reason) {
@@ -111,9 +142,15 @@ function createSSEHandler() {
         cleanupListener = null;
       }
       
-      // Clean up heartbeat interval
-      if (controllerRef && (controllerRef as any).__heartbeatInterval) {
-        clearInterval((controllerRef as any).__heartbeatInterval);
+      // Clean up intervals and timeouts
+      if (heartbeatInterval) {
+        clearInterval(heartbeatInterval);
+        heartbeatInterval = null;
+      }
+      
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+        connectionTimeout = null;
       }
     }
   });

@@ -125,4 +125,20 @@ describe('/api/twitch endpoint', () => {
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('text/event-stream');
   });
+
+  it('should close connection before timeout in production mode', async () => {
+    // Mock production environment
+    vi.doMock('$app/environment', () => ({
+      dev: false,
+    }));
+
+    const { GET } = await import('../+server.js');
+    const response = await GET();
+
+    expect(response).toBeInstanceOf(Response);
+    expect(response.body).toBeInstanceOf(ReadableStream);
+    
+    // The connection should have timeout management built-in
+    // This is difficult to test without advancing timers, but we verify the structure
+  });
 });

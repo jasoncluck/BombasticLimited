@@ -504,6 +504,32 @@ export class SidebarStateClass implements SidebarState {
         }
       });
 
+      // Handle server-initiated connection close (for Vercel timeout management)
+      this.#sseConnection.addEventListener('connection-close', (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.reconnect) {
+            console.log('🔄 Server requested reconnection (timeout prevention)');
+            this.#sseConnected = false;
+            
+            // Clean up current connection
+            if (this.#sseConnection) {
+              this.#sseConnection.close();
+              this.#sseConnection = null;
+            }
+            
+            // Reconnect immediately since this is expected
+            setTimeout(() => {
+              if (browser && !this.#sseConnection) {
+                this.connectSSE();
+              }
+            }, 1000); // 1 second delay for immediate reconnection
+          }
+        } catch (error) {
+          console.error('Failed to parse connection-close event:', error);
+        }
+      });
+
       // Handle connection open
       this.#sseConnection.addEventListener('open', () => {
         this.#sseConnected = true;
