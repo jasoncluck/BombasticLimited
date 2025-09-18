@@ -7,7 +7,7 @@ import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility';
 import { showToast } from '$lib/state/notifications.svelte';
-// Removed sveltekit-sse dependency - using native EventSource
+import { source, type Source as SSESource } from 'sveltekit-sse';
 import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
@@ -205,9 +205,15 @@ export class SidebarStateClass implements SidebarState {
   streamingSources = $state<Source[]>([]);
 
   // SSE connection state
-  #sseConnection = $state<EventSource | null>(null);
+  #sseConnection = $state<SSESource | null>(null);
   #sseConnected = $state(false);
   #isInitialStreamLoad = $state(true);
+  #reconnectAttempts = 0;
+  #maxReconnectAttempts = 5;
+  #reconnectDelay = 2000; // Start with 2 second delay
+  #consecutiveFailures = 0; // Track consecutive failures to detect structural issues
+  #reconnectTimeoutId: number | null = null; // Track pending reconnection timeout
+  #connectionStabilityTimeoutId: number | null = null; // Track connection stability
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
@@ -427,7 +433,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Load initial data
@@ -449,7 +455,7 @@ export class SidebarStateClass implements SidebarState {
    */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Mark as initialized immediately for UI purposes
@@ -471,94 +477,156 @@ export class SidebarStateClass implements SidebarState {
   };
 
   /**
-   * Start SSE connection for streaming updates using native EventSource
+   * Start SSE connection for streaming updates using sveltekit-sse
    */
   startSSEConnection(): void {
     if (!browser || this.#sseConnection) {
-      return; // Already connected or not in browser
+      return;
     }
 
-    // Reset initial load flag when starting
     this.#isInitialStreamLoad = true;
+    this.#reconnectAttempts = 0; // Reset attempts when manually starting
+    this.connectSSE();
+  }
+
+  /**
+   * Manually retry SSE connection (resets attempt counter)
+   */
+  retrySSEConnection(): void {
+    if (!browser) {
+      return;
+    }
+    
+    // Stop existing connection
+    this.stopSSEConnection();
+    
+    // Reset counters and start fresh
+    this.#reconnectAttempts = 0;
+    this.#consecutiveFailures = 0;
+    this.#reconnectDelay = 2000;
+    
+    console.log('🔄 Manually retrying SSE connection...');
     this.connectSSE();
   }
 
   private connectSSE(): void {
     try {
-      // Create native EventSource connection
-      this.#sseConnection = new EventSource('/api/twitch', {
-        withCredentials: false,
-      });
+      this.#sseConnection = source('/api/twitch');
 
-      // Handle streaming subscriptions events
-      this.#sseConnection.addEventListener(
-        'streamingSubscriptions',
-        (event) => {
-          try {
-            if (!event.data || event.data.trim() === '') return;
-
-            const streamingSources: Source[] = JSON.parse(event.data);
-            this.updateStreamingState(streamingSources);
-          } catch (error) {
-            if (
-              error instanceof SyntaxError &&
-              error.message.includes('Unexpected end of JSON input')
-            ) {
-              return; // Ignore incomplete JSON during reconnection
-            }
-            console.error('Failed to parse streaming update:', error);
-          }
-        }
-      );
-
-      // Handle server-initiated connection close (for Vercel timeout management)
-      this.#sseConnection.addEventListener('connection-close', (event) => {
+      this.#sseConnection.select('streamingSubscriptions').subscribe((data) => {
         try {
-          const data = JSON.parse(event.data);
-          if (data.reconnect) {
-            this.#sseConnected = false;
+          if (!data || data.trim() === '') return;
 
-            // Clean up current connection
-            if (this.#sseConnection) {
-              this.#sseConnection.close();
-              this.#sseConnection = null;
-            }
-
-            // Reconnect immediately since this is expected
-            setTimeout(() => {
-              if (browser && !this.#sseConnection) {
-                this.connectSSE();
-              }
-            }, 1000); // 1 second delay for immediate reconnection
-          }
+          const streamingSources: Source[] = JSON.parse(data);
+          this.updateStreamingState(streamingSources);
         } catch (error) {
-          console.error('Failed to parse connection-close event:', error);
-        }
-      });
-
-      // Handle connection open
-      this.#sseConnection.addEventListener('open', () => {
-        this.#sseConnected = true;
-      });
-
-      // Handle connection errors
-      this.#sseConnection.addEventListener('error', (event) => {
-        this.#sseConnected = false;
-
-        // Attempt reconnection after cleanup
-        if (this.#sseConnection) {
-          this.#sseConnection.close();
-          this.#sseConnection = null;
-        }
-
-        setTimeout(() => {
-          if (browser && !this.#sseConnection) {
-            this.connectSSE();
+          if (error instanceof SyntaxError && error.message.includes('Unexpected end of JSON input')) {
+            return; // Ignore incomplete JSON during reconnection
           }
-        }, 5000); // 5 second delay before reconnection
+          console.error('Failed to parse streaming update:', error);
+        }
       });
+
+      this.#sseConnection.select('open').subscribe(() => {
+        this.#sseConnected = true;
+        
+        // Only reset counters after the connection has been stable for 10 seconds
+        // This prevents immediate reset if the connection fails right after opening
+        if (this.#connectionStabilityTimeoutId !== null) {
+          clearTimeout(this.#connectionStabilityTimeoutId);
+        }
+        
+        this.#connectionStabilityTimeoutId = window.setTimeout(() => {
+          // Connection has been stable for 10 seconds, safe to reset counters
+          this.#reconnectAttempts = 0;
+          this.#consecutiveFailures = 0;
+          this.#reconnectDelay = 2000;
+          this.#connectionStabilityTimeoutId = null;
+        }, 10000); // 10 second stability period
+      });
+
+      this.#sseConnection.select('error').subscribe((event) => {
+        this.#sseConnected = false;
+        this.#consecutiveFailures++;
+
+        // Clear any existing timeout to avoid double scheduling
+        if (this.#reconnectTimeoutId !== null) {
+          clearTimeout(this.#reconnectTimeoutId);
+          this.#reconnectTimeoutId = null;
+        }
+
+        // If we have too many consecutive failures, increase delays significantly
+        const isStructuralProblem = this.#consecutiveFailures > 3;
+        const baseDelay = isStructuralProblem ? 10000 : this.#reconnectDelay; // 10s for structural issues
+
+        // Attempt reconnection with backoff if within retry limit
+        if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
+          this.#reconnectAttempts++;
+          const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
+          
+          this.#reconnectTimeoutId = window.setTimeout(() => {
+            this.#reconnectTimeoutId = null; // Clear timeout ID
+            if (browser && !this.#sseConnection) {
+              this.connectSSE();
+            }
+          }, delay);
+        }
+      });
+
+      // Handle connection close and auto-reconnect
+      this.#sseConnection.select('close').subscribe(() => {
+        this.#sseConnected = false;
+        this.#sseConnection = null;
+        this.#consecutiveFailures++;
+
+        // Only schedule reconnection if there isn't already timeout pending from error event
+        if (this.#reconnectTimeoutId !== null) {
+          return;
+        }
+
+        // If we have too many consecutive failures, increase delays significantly
+        const isStructuralProblem = this.#consecutiveFailures > 3;
+        const baseDelay = isStructuralProblem ? 10000 : this.#reconnectDelay; // 10s for structural issues
+
+        // Only attempt reconnection if within retry limit
+        if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
+          this.#reconnectAttempts++;
+          const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
+          
+          if (isStructuralProblem) {
+            console.warn(`🔌 SSE connection closed after multiple failures. Using extended delay: ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+          } else {
+            console.log(`🔌 SSE connection closed, attempting reconnection in ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+          }
+          
+          this.#reconnectTimeoutId = window.setTimeout(() => {
+            this.#reconnectTimeoutId = null; // Clear timeout ID
+            if (browser) {
+              this.connectSSE();
+            }
+          }, delay);
+        } else {
+          console.warn('⚠️ Max SSE reconnection attempts reached after connection close. Use manual refresh if needed.');
+        }
+      });
+
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
+
+      // Retry after a delay with backoff if within retry limit
+      if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
+        this.#reconnectAttempts++;
+        const delay = Math.min(this.#reconnectDelay * Math.pow(2, this.#reconnectAttempts - 1), 30000); // Cap at 30 seconds
+        
+        setTimeout(() => {
+          if (browser) {
+            console.log(`🔄 Retrying SSE connection (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+            this.connectSSE();
+          }
+        }, delay);
+      } else {
+        console.warn('⚠️ Max SSE connection attempts reached. Manual refresh may be needed.');
+      }
     }
   }
 
@@ -566,6 +634,18 @@ export class SidebarStateClass implements SidebarState {
    * Stop SSE connection
    */
   stopSSEConnection(): void {
+    // Clear any pending reconnection timeout
+    if (this.#reconnectTimeoutId !== null) {
+      clearTimeout(this.#reconnectTimeoutId);
+      this.#reconnectTimeoutId = null;
+    }
+    
+    // Clear any pending stability timeout
+    if (this.#connectionStabilityTimeoutId !== null) {
+      clearTimeout(this.#connectionStabilityTimeoutId);
+      this.#connectionStabilityTimeoutId = null;
+    }
+    
     if (this.#sseConnection) {
       this.#sseConnection.close();
       this.#sseConnection = null;

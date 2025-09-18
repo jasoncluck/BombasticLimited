@@ -55,7 +55,7 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     displayName: 'Jeff Gerstmann',
     urlParam: 'jeffgerstmann',
     image: jeffgerstmannImage,
-    twitchId: '504350',
+    twitchId: '13831039',
     youtubeId: 'UCR9R2ARN74dCebn1kv06UhA',
     youtubeUrl: 'https://www.youtube.com/@JeffGerstmannShow',
     highlightedPlaylists: [

@@ -8,5 +8,11 @@
     "deploymentEnabled": {
       "copilot*": false
     }
-  }
+  },
+  "rewrites": [
+    {
+      "source": "/webhooks/twitch",
+      "destination": "/api/twitch/webhook"
+    }
+  ]
 }
