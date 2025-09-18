@@ -46,6 +46,9 @@
     "test:teardown": "supabase stop",
     "test:unit": "vitest run src/lib/",
     "test:watch": "vitest --ui",
+    "twitch:webhook:setup": "tsx scripts/setup-twitch-webhooks.ts setup",
+    "twitch:webhook:list": "tsx scripts/setup-twitch-webhooks.ts list",
+    "twitch:webhook:cleanup": "tsx scripts/setup-twitch-webhooks.ts cleanup",
     "vercel-build": "npm run build:vercel"
   },
   "devDependencies": {
@@ -128,6 +131,7 @@
     "@trigger.dev/sdk": "^4.0.1",
     "@twurple/api": "^7.4.0",
     "@twurple/auth": "^7.4.0",
+    "@twurple/eventsub-http": "^7.4.0",
     "@types/marked": "^5.0.2",
     "@vercel/speed-insights": "^1.2.0",
     "amazon-cognito-identity-js": "^6.3.15",

@@ -208,6 +208,12 @@ export class SidebarStateClass implements SidebarState {
   #sseConnection = $state<SSESource | null>(null);
   #sseConnected = $state(false);
   #isInitialStreamLoad = $state(true);
+  #reconnectAttempts = 0;
+  #maxReconnectAttempts = 5;
+  #reconnectDelay = 2000; // Start with 2 second delay
+  #consecutiveFailures = 0; // Track consecutive failures to detect structural issues
+  #reconnectTimeoutId: number | null = null; // Track pending reconnection timeout
+  #connectionStabilityTimeoutId: number | null = null; // Track connection stability
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
@@ -479,6 +485,27 @@ export class SidebarStateClass implements SidebarState {
     }
 
     this.#isInitialStreamLoad = true;
+    this.#reconnectAttempts = 0; // Reset attempts when manually starting
+    this.connectSSE();
+  }
+
+  /**
+   * Manually retry SSE connection (resets attempt counter)
+   */
+  retrySSEConnection(): void {
+    if (!browser) {
+      return;
+    }
+    
+    // Stop existing connection
+    this.stopSSEConnection();
+    
+    // Reset counters and start fresh
+    this.#reconnectAttempts = 0;
+    this.#consecutiveFailures = 0;
+    this.#reconnectDelay = 2000;
+    
+    console.log('🔄 Manually retrying SSE connection...');
     this.connectSSE();
   }
 
@@ -502,45 +529,104 @@ export class SidebarStateClass implements SidebarState {
 
       this.#sseConnection.select('open').subscribe(() => {
         this.#sseConnected = true;
-        console.log('🔗 SSE connected');
+        
+        // Only reset counters after the connection has been stable for 10 seconds
+        // This prevents immediate reset if the connection fails right after opening
+        if (this.#connectionStabilityTimeoutId !== null) {
+          clearTimeout(this.#connectionStabilityTimeoutId);
+        }
+        
+        this.#connectionStabilityTimeoutId = window.setTimeout(() => {
+          // Connection has been stable for 10 seconds, safe to reset counters
+          this.#reconnectAttempts = 0;
+          this.#consecutiveFailures = 0;
+          this.#reconnectDelay = 2000;
+          this.#connectionStabilityTimeoutId = null;
+        }, 10000); // 10 second stability period
       });
 
       this.#sseConnection.select('error').subscribe((event) => {
-        console.log('❌ SSE error, will attempt reconnection:', event);
         this.#sseConnected = false;
+        this.#consecutiveFailures++;
 
-        // Attempt reconnection after a delay
-        setTimeout(() => {
-          if (browser && !this.#sseConnection) {
-            console.log('🔄 Attempting SSE reconnection...');
-            this.connectSSE();
-          }
-        }, 5000); // 5 second delay before reconnection
+        // Clear any existing timeout to avoid double scheduling
+        if (this.#reconnectTimeoutId !== null) {
+          clearTimeout(this.#reconnectTimeoutId);
+          this.#reconnectTimeoutId = null;
+        }
+
+        // If we have too many consecutive failures, increase delays significantly
+        const isStructuralProblem = this.#consecutiveFailures > 3;
+        const baseDelay = isStructuralProblem ? 10000 : this.#reconnectDelay; // 10s for structural issues
+
+        // Attempt reconnection with backoff if within retry limit
+        if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
+          this.#reconnectAttempts++;
+          const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
+          
+          this.#reconnectTimeoutId = window.setTimeout(() => {
+            this.#reconnectTimeoutId = null; // Clear timeout ID
+            if (browser && !this.#sseConnection) {
+              this.connectSSE();
+            }
+          }, delay);
+        }
       });
 
       // Handle connection close and auto-reconnect
       this.#sseConnection.select('close').subscribe(() => {
-        console.log('🔌 SSE connection closed, attempting reconnection...');
         this.#sseConnected = false;
         this.#sseConnection = null;
+        this.#consecutiveFailures++;
 
-        // Reconnect after a short delay
-        setTimeout(() => {
-          if (browser) {
-            this.connectSSE();
+        // Only schedule reconnection if there isn't already timeout pending from error event
+        if (this.#reconnectTimeoutId !== null) {
+          return;
+        }
+
+        // If we have too many consecutive failures, increase delays significantly
+        const isStructuralProblem = this.#consecutiveFailures > 3;
+        const baseDelay = isStructuralProblem ? 10000 : this.#reconnectDelay; // 10s for structural issues
+
+        // Only attempt reconnection if within retry limit
+        if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
+          this.#reconnectAttempts++;
+          const delay = Math.min(baseDelay * Math.pow(2, this.#reconnectAttempts - 1), 60000); // Cap at 60 seconds for structural issues
+          
+          if (isStructuralProblem) {
+            console.warn(`🔌 SSE connection closed after multiple failures. Using extended delay: ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+          } else {
+            console.log(`🔌 SSE connection closed, attempting reconnection in ${delay/1000}s (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
           }
-        }, 2000); // 2 second delay before reconnection
+          
+          this.#reconnectTimeoutId = window.setTimeout(() => {
+            this.#reconnectTimeoutId = null; // Clear timeout ID
+            if (browser) {
+              this.connectSSE();
+            }
+          }, delay);
+        } else {
+          console.warn('⚠️ Max SSE reconnection attempts reached after connection close. Use manual refresh if needed.');
+        }
       });
 
     } catch (error) {
       console.error('Failed to create SSE connection:', error);
 
-      // Retry after a delay
-      setTimeout(() => {
-        if (browser) {
-          this.connectSSE();
-        }
-      }, 10000); // 10 second delay before retry
+      // Retry after a delay with backoff if within retry limit
+      if (this.#reconnectAttempts < this.#maxReconnectAttempts) {
+        this.#reconnectAttempts++;
+        const delay = Math.min(this.#reconnectDelay * Math.pow(2, this.#reconnectAttempts - 1), 30000); // Cap at 30 seconds
+        
+        setTimeout(() => {
+          if (browser) {
+            console.log(`🔄 Retrying SSE connection (${this.#reconnectAttempts}/${this.#maxReconnectAttempts})...`);
+            this.connectSSE();
+          }
+        }, delay);
+      } else {
+        console.warn('⚠️ Max SSE connection attempts reached. Manual refresh may be needed.');
+      }
     }
   }
 
@@ -548,6 +634,18 @@ export class SidebarStateClass implements SidebarState {
    * Stop SSE connection
    */
   stopSSEConnection(): void {
+    // Clear any pending reconnection timeout
+    if (this.#reconnectTimeoutId !== null) {
+      clearTimeout(this.#reconnectTimeoutId);
+      this.#reconnectTimeoutId = null;
+    }
+    
+    // Clear any pending stability timeout
+    if (this.#connectionStabilityTimeoutId !== null) {
+      clearTimeout(this.#connectionStabilityTimeoutId);
+      this.#connectionStabilityTimeoutId = null;
+    }
+    
     if (this.#sseConnection) {
       this.#sseConnection.close();
       this.#sseConnection = null;

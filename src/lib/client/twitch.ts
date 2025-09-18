@@ -40,7 +40,7 @@ const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 // Development testing variables
 let testStartTime: number | null = null;
 const TEST_LIVE_START = 10000; // Go live after 10 seconds
-const TEST_LIVE_END = 70000; // Go offline after 1 minute 10 seconds (70 seconds total)
+const TEST_LIVE_END = 130000; // Go offline after 130 seconds (2 minutes 10 seconds total)
 
 // Known user IDs for testing
 const NEXTLANDER_USER_ID = '689331234'; // You may need to adjust this ID
@@ -60,19 +60,12 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   // Initialize test timer on first call
   if (testStartTime === null) {
     testStartTime = now;
-    console.log('🧪 Dev mode: Test timer started - nextlander will go "live" in 10 seconds, then offline after 1 minute 10 seconds');
   }
 
   const elapsed = now - testStartTime;
 
   // Determine if should be live based on timing
   const shouldBeLive = elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_END;
-
-  if (shouldBeLive && elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_START + 1000) {
-    console.log('🔴 Dev mode: nextlander is now "live" (test simulation)');
-  } else if (!shouldBeLive && elapsed >= TEST_LIVE_END && elapsed < TEST_LIVE_END + 1000) {
-    console.log('⚫ Dev mode: nextlander is now "offline" (test simulation)');
-  }
 
   const status: StreamStatus = {
     userId,
