@@ -62,7 +62,7 @@ export const adminNotificationSchema = z
       const now = new Date();
 
       // Allow start dates up to 24 hours in the past for admin flexibility
-      const twentyFourHoursAgo = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+      const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       return startDate >= twentyFourHoursAgo;
     },

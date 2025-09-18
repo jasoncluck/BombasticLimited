@@ -315,10 +315,10 @@ describe('adminNotificationSchema', () => {
 
       const result = adminNotificationSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
-      
+
       if (!result.success) {
-        const startDatetimeIssue = result.error.issues.find(
-          issue => issue.path.includes('startDatetime')
+        const startDatetimeIssue = result.error.issues.find((issue) =>
+          issue.path.includes('startDatetime')
         );
         expect(startDatetimeIssue?.message).toBe('Invalid datetime format');
       }
@@ -335,10 +335,10 @@ describe('adminNotificationSchema', () => {
 
       const result = adminNotificationSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
-      
+
       if (!result.success) {
-        const endDatetimeIssue = result.error.issues.find(
-          issue => issue.path.includes('endDatetime')
+        const endDatetimeIssue = result.error.issues.find((issue) =>
+          issue.path.includes('endDatetime')
         );
         expect(endDatetimeIssue?.message).toBe('Invalid datetime format');
       }
@@ -368,12 +368,14 @@ describe('adminNotificationSchema', () => {
 
       const result = adminNotificationSchema.safeParse(invalidData);
       expect(result.success).toBe(false);
-      
+
       if (!result.success) {
-        const startDatetimeIssue = result.error.issues.find(
-          issue => issue.path.includes('startDatetime')
+        const startDatetimeIssue = result.error.issues.find((issue) =>
+          issue.path.includes('startDatetime')
         );
-        expect(startDatetimeIssue?.message).toBe('Start date cannot be more than 24 hours in the past');
+        expect(startDatetimeIssue?.message).toBe(
+          'Start date cannot be more than 24 hours in the past'
+        );
       }
     });
 
