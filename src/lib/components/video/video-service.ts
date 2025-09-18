@@ -1,4 +1,4 @@
-import { type Video, getInProgressVideos } from '$lib/supabase/videos';
+import { type Video } from '$lib/supabase/videos';
 import { showToast } from '$lib/state/notifications.svelte';
 import { showNotification } from '$lib/supabase/notifications';
 import type {
@@ -7,7 +7,6 @@ import type {
   SupabaseClient,
 } from '@supabase/supabase-js';
 import type { Database } from '$lib/supabase/database.types';
-import type { TimestampFilter } from '../content/content-filter';
 import { goto, invalidate } from '$app/navigation';
 import {
   deleteVideoTimestamps,
@@ -48,9 +47,9 @@ export async function handleAddVideoTimestamps({
   videoTimestamps: TimestampWithVideoId[];
   session: Session | null;
   supabase: SupabaseClient;
-}): Promise<{ error?: PostgrestError }> {
+}): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
   // Save and get back updated video data
-  const { error } = await saveVideoTimestamps({
+  const { videos: updatedVideos, error } = await saveVideoTimestamps({
     videoTimestamps,
     session,
     supabase,
@@ -60,7 +59,7 @@ export async function handleAddVideoTimestamps({
   if (error) {
     showToast('Unable to save timestamp');
   }
-  return { error };
+  return { updatedVideos: updatedVideos ?? [], error };
 }
 
 export async function handleDeleteVideosTimestamp({

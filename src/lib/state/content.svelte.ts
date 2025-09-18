@@ -130,7 +130,7 @@ export class ContentState {
   constructor(pageState: PageState) {
     this.pageState = pageState;
     this.startDropdownValidation();
-    this.setupGlobalClickOutsideListener();
+    this.setupGlobalClickHandling(); // Use consolidated setup
   }
 
   // Start interval to validate dropdown state against DOM reality
@@ -210,82 +210,120 @@ export class ContentState {
     this.validateDropdownState();
   }
 
-  // Setup global click outside listener for context menus
-  private setupGlobalClickOutsideListener(): void {
-    if (typeof document === 'undefined') return;
+  // Single consolidated click handler
+  private globalClickHandler = (event: MouseEvent): void => {
+    const target = event.target as HTMLElement;
 
-    // Handle both left clicks and right clicks outside context menus
-    const handleGlobalClick = (event: MouseEvent): void => {
-      // Only handle if a context menu is open
-      if (!this.openContextMenuSection) return;
-
-      const target = event.target as HTMLElement;
-
-      // Check if the click is inside a context menu
-      const isClickingOnContextMenu =
-        target.closest('[data-testid="content-context-menu-content"]') ||
-        target.closest('[role="menu"][data-radix-context-menu-content]') ||
-        target.closest('[data-radix-context-menu-content]');
-
-      // If clicking outside the context menu, close it
-      if (!isClickingOnContextMenu) {
-        this.openContextMenuSection = null;
-
-        // Clear any scheduled context menu close to prevent race conditions
-        if (this.contextMenuCloseScheduled) {
-          clearTimeout(this.contextMenuCloseScheduled);
-          this.contextMenuCloseScheduled = null;
-        }
+    // Handle context menu closing first
+    if (this.openContextMenuSection && this.shouldCloseContextMenu(target)) {
+      this.openContextMenuSection = null;
+      if (this.contextMenuCloseScheduled) {
+        clearTimeout(this.contextMenuCloseScheduled);
+        this.contextMenuCloseScheduled = null;
       }
-    };
+      return;
+    }
 
-    // Handle context menu events (right clicks)
-    const handleGlobalContextMenu = (event: MouseEvent): void => {
-      // Only handle if a context menu is already open
-      if (!this.openContextMenuSection) return;
+    // Handle dropdown interactions
+    if (this.isDropdownMenuOpen && this.shouldCloseDropdowns(target)) {
+      this.closeAllDropdowns();
+      return;
+    }
 
-      const target = event.target as HTMLElement;
+    // Handle selection clearing last
+    if (this.shouldClearSelections(event, target)) {
+      this.clearSelectionsOnOutsideClick();
+    }
+  };
 
-      // Check if the right-click is inside a context menu or on a video element
-      const isClickingOnContextMenu =
-        target.closest('[data-testid="content-context-menu-content"]') ||
-        target.closest('[role="menu"][data-radix-context-menu-content]') ||
-        target.closest('[data-radix-context-menu-content]');
+  private shouldCloseContextMenu(target: HTMLElement): boolean {
+    const isClickingOnContextMenu =
+      target.closest('[data-slot="context-menu-item"]') ||
+      target.closest('[role="menu"][data-radix-context-menu-content]') ||
+      target.closest('[data-radix-context-menu-content]');
 
-      const isClickingOnVideo =
-        target.closest('[data-video-id]') ||
-        target.closest('[data-testid*="video"]') ||
-        target.closest('.video-item'); // Adjust selector based on your video component structure
-
-      // If right-clicking outside both context menu and video elements, close the context menu
-      if (!isClickingOnContextMenu && !isClickingOnVideo) {
-        event.preventDefault(); // Prevent default context menu from showing
-        this.openContextMenuSection = null;
-
-        // Clear any scheduled context menu close to prevent race conditions
-        if (this.contextMenuCloseScheduled) {
-          clearTimeout(this.contextMenuCloseScheduled);
-          this.contextMenuCloseScheduled = null;
-        }
-      }
-    };
-
-    // Add listeners with capture phase to ensure they run before component handlers
-    document.addEventListener('click', handleGlobalClick, { capture: true });
-    document.addEventListener('contextmenu', handleGlobalContextMenu, {
-      capture: true,
-    });
-
-    // Store cleanup functions
-    this.contextMenuOutsideCleanup = (): void => {
-      document.removeEventListener('click', handleGlobalClick, {
-        capture: true,
-      });
-      document.removeEventListener('contextmenu', handleGlobalContextMenu, {
-        capture: true,
-      });
-    };
+    return !isClickingOnContextMenu;
   }
+
+  private shouldCloseDropdowns(target: HTMLElement): boolean {
+    const isClickingOnDropdown =
+      target.closest('[data-testid="content-dropdown-trigger"]') ||
+      target.closest('[data-testid="content-dropdown-content"]') ||
+      target.closest('[data-radix-dropdown-menu-trigger]') ||
+      target.closest('[data-radix-dropdown-menu-content]') ||
+      target.closest('[role="menu"]');
+
+    return !isClickingOnDropdown;
+  }
+
+  private shouldClearSelections(event: MouseEvent, target: HTMLElement): boolean {
+    // Don't clear selections if any of these conditions are true:
+    return !(
+      this.dragContentType || // User is dragging
+      event.shiftKey || event.ctrlKey || event.metaKey || // Modifier keys held
+      this.isDropdownMenuOpen || // Dropdown is open
+      this.openContextMenuSection || // Context menu is open  
+      this.isDrawerOpenForAnySection() || // Drawer is open
+      // Clicking on dropdown/menu elements
+      target.closest('[data-testid="content-dropdown-trigger"]') ||
+      target.closest('[data-testid="content-dropdown-content"]') ||
+      target.closest('[data-radix-dropdown-menu-trigger]') ||
+      target.closest('[data-radix-dropdown-menu-content]') ||
+      target.closest('[role="menu"]')
+    );
+  }
+
+  private clearSelectionsOnOutsideClick(): void {
+    // Clear selections from all sections
+    for (const sectionId in this.selectedVideosBySection) {
+      const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+      const hoveredVideo = this.hoveredVideosBySection[sectionId];
+
+      if (selectedVideos.length > 0) {
+        this.selectedVideosBySection[sectionId] = hoveredVideo ? [hoveredVideo] : [];
+      }
+    }
+  }
+
+  // Consolidated setup method - replaces both old setup methods
+  public setupGlobalClickHandling(): () => void {
+    if (typeof document === 'undefined') return () => { };
+
+    // Remove old listeners if they exist
+    if (this.clickOutsideCleanup) {
+      this.clickOutsideCleanup();
+    }
+    if (this.contextMenuOutsideCleanup) {
+      this.contextMenuOutsideCleanup();
+    }
+
+    // Single consolidated listener
+    document.addEventListener('click', this.globalClickHandler, { capture: true });
+    document.addEventListener('contextmenu', this.handleGlobalContextMenu, { capture: true });
+
+    // Store cleanup function
+    const cleanup = (): void => {
+      document.removeEventListener('click', this.globalClickHandler, { capture: true });
+      document.removeEventListener('contextmenu', this.handleGlobalContextMenu, { capture: true });
+    };
+
+    this.clickOutsideCleanup = cleanup;
+    return cleanup;
+  }
+
+  private handleGlobalContextMenu = (event: MouseEvent): void => {
+    if (!this.openContextMenuSection) return;
+
+    const target = event.target as HTMLElement;
+    if (this.shouldCloseContextMenu(target)) {
+      event.preventDefault();
+      this.openContextMenuSection = null;
+      if (this.contextMenuCloseScheduled) {
+        clearTimeout(this.contextMenuCloseScheduled);
+        this.contextMenuCloseScheduled = null;
+      }
+    }
+  };
 
   // Clean up interval when instance is destroyed
   public destroy(): void {
@@ -298,11 +336,6 @@ export class ContentState {
     if (this.clickOutsideCleanup) {
       this.clickOutsideCleanup();
       this.clickOutsideCleanup = null;
-    }
-
-    if (this.contextMenuOutsideCleanup) {
-      this.contextMenuOutsideCleanup();
-      this.contextMenuOutsideCleanup = null;
     }
   }
 
@@ -412,7 +445,7 @@ export class ContentState {
 
     // Restart dropdown validation and global listeners after reset
     this.startDropdownValidation();
-    this.setupGlobalClickOutsideListener();
+    this.setupGlobalClickHandling();
   }
 
   // Reset state for a specific section
@@ -960,23 +993,44 @@ export class ContentState {
     // Clear selections from all other sections first
     this.clearOtherSections(sectionId);
 
-    // Close any existing context menu from other sections
-    if (this.isAnyContextMenuOpen) {
-      this.openContextMenuSection = null;
-    }
-
     // Close any open dropdowns when context menu is opened
     this.closeAllDropdowns();
 
-    this.openContextMenuSection = sectionId;
+    // If there's already a context menu open (same or different section)
+    if (this.isAnyContextMenuOpen) {
+      // Force close the existing context menu first
+      this.openContextMenuSection = null;
 
-    // Use nullish coalescing to get selected videos for this section
-    const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
-    const isVideoSelected = selectedVideos.some((v) => v.id === video.id);
+      // Use a small timeout to ensure the previous context menu closes before opening new one
+      // This gives Radix time to properly clean up the DOM
+      this.contextMenuCloseScheduled = setTimeout(() => {
+        // Open the new context menu
+        this.openContextMenuSection = sectionId;
 
-    if (!isVideoSelected) {
-      // If the video isn't already selected, make it the only selected video
-      this.selectedVideosBySection[sectionId] = [video];
+        // Set up the selection for the new video
+        const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+        const isVideoSelected = selectedVideos.some((v) => v.id === video.id);
+
+        if (!isVideoSelected) {
+          // If the video isn't already selected, make it the only selected video
+          this.selectedVideosBySection[sectionId] = [video];
+        }
+
+        // Clear the scheduled timeout reference
+        this.contextMenuCloseScheduled = null;
+      }, 50); // Small delay to allow DOM cleanup
+    } else {
+      // No existing context menu, open directly
+      this.openContextMenuSection = sectionId;
+
+      // Set up the selection
+      const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
+      const isVideoSelected = selectedVideos.some((v) => v.id === video.id);
+
+      if (!isVideoSelected) {
+        // If the video isn't already selected, make it the only selected video
+        this.selectedVideosBySection[sectionId] = [video];
+      }
     }
   }
 
@@ -1017,73 +1071,10 @@ export class ContentState {
     return this.isDrawerOpenForSection(sectionId) ? this.drawerVariant : null;
   }
 
-  setupClickOutsideListener(
-    sectionId: string = DEFAULT_SECTION_ID
-  ): () => void {
-    const handleClickOutside = (event: MouseEvent): void => {
-      this.hoverTimeoutId = null;
-
-      // Check if the click is on a context menu or dropdown menu
-      const target = event.target as HTMLElement;
-      const isClickingOnDropdown =
-        target.closest('[data-dropdown]') ||
-        target.closest('[role="listbox"]') ||
-        target.closest('[role="combobox"]');
-
-      // If clicking on drawer elements, don't clear anything
-      if (this.isDrawerOpenForAnySection()) {
-        return;
-      }
-
-      // If context menu is open and we're clicking elsewhere (like dropdown),
-      // close the context menu but preserve selection temporarily
-      if (this.openContextMenuSection) {
-        // Use a small delay to allow the click handler to run first
-        this.contextMenuCloseScheduled = setTimeout(() => {
-          this.openContextMenuSection = null;
-          this.contextMenuCloseScheduled = null;
-        }, 0);
-        return;
-      }
-
-      // Don't clear selection if:
-      // - User is dragging
-      // - User is holding modifier keys (shift, ctrl, cmd)
-      // - Dropdown menu is open
-      // - Clicking on dropdown elements
-      if (
-        this.dragContentType ||
-        event.shiftKey ||
-        event.ctrlKey ||
-        event.metaKey ||
-        isClickingOnDropdown
-      ) {
-        return;
-      }
-
-      // Normal click outside behavior - clear selection
-      const selectedVideos = this.selectedVideosBySection[sectionId] ?? [];
-      const hoveredVideo = this.hoveredVideosBySection[sectionId];
-
-      // Only clear if there are selected videos
-      if (selectedVideos.length > 0) {
-        this.selectedVideosBySection[sectionId] = hoveredVideo
-          ? [hoveredVideo]
-          : [];
-      }
-    };
-
-    // Use capture phase to ensure our listener runs first
-    document.addEventListener('click', handleClickOutside, { capture: true });
-
-    // Store cleanup function
-    this.clickOutsideCleanup = (): void => {
-      document.removeEventListener('click', handleClickOutside, {
-        capture: true,
-      });
-    };
-
-    return this.clickOutsideCleanup;
+  // Keep this method for API compatibility but make it delegate to the global handler
+  setupClickOutsideListener(sectionId: string = DEFAULT_SECTION_ID): () => void {
+    // The global handler now manages everything
+    return () => { }; // No-op, but maintains API compatibility
   }
 }
 
