@@ -1,26 +1,51 @@
+#!/usr/bin/env tsx
+
+/**
+ * Setup script for Twitch EventSub webhooks
+ * Usage: tsx scripts/setup-twitch-webhooks.ts [command]
+ * Commands: setup, list, cleanup
+ */
+
 import { AppTokenAuthProvider } from '@twurple/auth';
 import { ApiClient } from '@twurple/api';
-import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
-import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
-import { dev } from '$app/environment';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+
+// Load source constants
+const SOURCE_INFO = {
+  giantbomb: { twitchId: '504350', displayName: 'Giant Bomb' },
+  jeffgerstmann: { twitchId: '504350', displayName: 'Jeff Gerstmann' },
+  nextlander: { twitchId: '689331234', displayName: 'Nextlander' },
+  remap: { twitchId: '913491352', displayName: 'Remap' },
+} as const;
+
+const SOURCES = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'] as const;
+type Source = (typeof SOURCES)[number];
 
 // Environment configuration
+const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
+const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const TWITCH_WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET;
-const WEBHOOK_BASE_URL = dev 
+
+const isDev = process.env.NODE_ENV === 'development';
+const WEBHOOK_BASE_URL = isDev 
   ? 'https://localhost:5173' 
   : (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://your-domain.com');
 
 // Use Vercel rewrite path for production webhook URL
-const WEBHOOK_CALLBACK_URL = dev
+const WEBHOOK_CALLBACK_URL = isDev
   ? `${WEBHOOK_BASE_URL}/api/twitch/webhook`
   : `${WEBHOOK_BASE_URL}/webhooks/twitch`;
 
 /**
  * Setup webhook subscriptions with Twitch EventSub
- * This should be run once to register webhooks with Twitch
  */
-export async function setupTwitchWebhooks(): Promise<void> {
+async function setupTwitchWebhooks(): Promise<void> {
   // Validate environment variables
+  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
+    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET environment variables are required');
+  }
+
   if (TWITCH_CLIENT_ID === 'placeholder_client_id' || TWITCH_CLIENT_SECRET === 'placeholder_client_secret') {
     throw new Error('Twitch credentials not configured');
   }
@@ -119,13 +144,16 @@ export async function setupTwitchWebhooks(): Promise<void> {
   }
 
   console.log('\n🎯 Webhook setup complete!');
-  return;
 }
 
 /**
  * List existing EventSub subscriptions
  */
-export async function listWebhookSubscriptions(): Promise<void> {
+async function listWebhookSubscriptions(): Promise<void> {
+  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
+    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET environment variables are required');  
+  }
+
   const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
   const apiClient = new ApiClient({ authProvider });
 
@@ -162,7 +190,11 @@ export async function listWebhookSubscriptions(): Promise<void> {
 /**
  * Clean up all existing EventSub subscriptions
  */
-export async function cleanupWebhookSubscriptions(): Promise<void> {
+async function cleanupWebhookSubscriptions(): Promise<void> {
+  if (!TWITCH_CLIENT_ID || !TWITCH_CLIENT_SECRET) {
+    throw new Error('TWITCH_CLIENT_ID and TWITCH_CLIENT_SECRET environment variables are required');
+  }
+
   const authProvider = new AppTokenAuthProvider(TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET);
   const apiClient = new ApiClient({ authProvider });
 
@@ -198,7 +230,7 @@ export async function cleanupWebhookSubscriptions(): Promise<void> {
 /**
  * CLI utility function for running setup commands
  */
-export async function runWebhookCommand(command: string): Promise<void> {
+async function runWebhookCommand(command: string): Promise<void> {
   switch (command) {
     case 'setup':
       await setupTwitchWebhooks();
@@ -215,8 +247,18 @@ export async function runWebhookCommand(command: string): Promise<void> {
   }
 }
 
-// If running as a script, execute the command
-if (typeof process !== 'undefined' && process.argv && import.meta.url.endsWith(process.argv[1])) {
-  const command = process.argv[2] || 'setup';
-  runWebhookCommand(command).catch(console.error);
-}
+// Main execution
+const command = process.argv[2] || 'setup';
+
+console.log(`🎯 Running webhook command: ${command}`);
+console.log('');
+
+runWebhookCommand(command)
+  .then(() => {
+    console.log('✅ Command completed successfully');
+    process.exit(0);
+  })
+  .catch((error) => {
+    console.error('❌ Command failed:', error);
+    process.exit(1);
+  });

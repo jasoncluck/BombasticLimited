@@ -44,7 +44,10 @@ describe('twitch-webhooks', () => {
   });
 
   describe('verifyWebhookSignature', () => {
-    it('should verify valid webhook signatures', async () => {
+    it('should verify valid webhook signatures when secret is configured', async () => {
+      // Ensure secret is set
+      process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
+      vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
       
       const body = '{"test": "data"}';
@@ -65,7 +68,27 @@ describe('twitch-webhooks', () => {
       expect(result).toBe(true);
     });
 
-    it('should reject invalid webhook signatures', async () => {
+    it('should skip verification and return true when no secret is configured', async () => {
+      // Remove the webhook secret
+      delete process.env.TWITCH_WEBHOOK_SECRET;
+      
+      // Re-import to get the updated module with no secret
+      vi.resetModules();
+      const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
+      
+      const body = '{"test": "data"}';
+      const messageId = 'test-message-id';
+      const timestamp = '2023-01-01T00:00:00Z';
+      const signature = 'sha256=invalid-signature';
+      
+      const result = verifyWebhookSignature(body, signature, messageId, timestamp);
+      expect(result).toBe(true); // Should return true when no secret configured
+    });
+
+    it('should reject invalid webhook signatures when secret is configured', async () => {
+      // Ensure secret is set
+      process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
+      vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
       
       const body = '{"test": "data"}';
@@ -77,7 +100,10 @@ describe('twitch-webhooks', () => {
       expect(result).toBe(false);
     });
 
-    it('should reject signatures without sha256 prefix', async () => {
+    it('should reject signatures without sha256 prefix when secret is configured', async () => {
+      // Ensure secret is set
+      process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
+      vi.resetModules();
       const { verifyWebhookSignature } = await import('../twitch-webhooks.js');
       
       const body = '{"test": "data"}';
@@ -174,7 +200,10 @@ describe('twitch-webhooks', () => {
       expect(response.status).toBe(200);
     });
 
-    it('should reject requests with invalid signatures', async () => {
+    it('should reject requests with invalid signatures when secret is configured', async () => {
+      // Ensure secret is set  
+      process.env.TWITCH_WEBHOOK_SECRET = 'test-secret';
+      vi.resetModules();
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
       
       const body = JSON.stringify({ test: 'data' });
@@ -194,7 +223,10 @@ describe('twitch-webhooks', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should reject requests with missing headers', async () => {
+    it('should accept requests without signature verification when no secret is configured', async () => {
+      // Remove the webhook secret
+      delete process.env.TWITCH_WEBHOOK_SECRET;
+      vi.resetModules();
       const { handleWebhookEvent } = await import('../twitch-webhooks.js');
       
       const body = JSON.stringify({ test: 'data' });
@@ -202,13 +234,37 @@ describe('twitch-webhooks', () => {
       const request = new Request('http://localhost:5173/api/twitch/webhook', {
         method: 'POST',
         headers: {
-          // Missing required headers
+          'twitch-eventsub-message-signature': 'sha256=invalid-signature',
+          'twitch-eventsub-message-id': 'test-message-id',
+          'twitch-eventsub-message-timestamp': '2023-01-01T00:00:00Z',
+          'twitch-eventsub-message-type': 'notification',
         },
         body,
       });
       
       const response = await handleWebhookEvent(request);
-      expect(response.status).toBe(400);
+      expect(response.status).toBe(200); // Should succeed when no secret configured
+    });
+
+    it('should handle requests with missing headers when no secret is configured', async () => {
+      // Remove the webhook secret to test the optional signature scenario
+      delete process.env.TWITCH_WEBHOOK_SECRET;
+      vi.resetModules();
+      const { handleWebhookEvent } = await import('../twitch-webhooks.js');
+      
+      const body = JSON.stringify({ test: 'data' });
+      
+      const request = new Request('http://localhost:5173/api/twitch/webhook', {
+        method: 'POST',
+        headers: {
+          // Missing required headers, but should be OK without secret verification
+          'twitch-eventsub-message-type': 'notification',
+        },
+        body,
+      });
+      
+      const response = await handleWebhookEvent(request);
+      expect(response.status).toBe(200); // Should succeed when no secret configured
     });
   });
 });

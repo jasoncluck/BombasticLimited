@@ -7,7 +7,7 @@ import type { Source } from '$lib/constants/source.js';
 import crypto from 'crypto';
 
 // Environment variables for webhook configuration
-const TWITCH_WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET || 'default-dev-secret';
+const TWITCH_WEBHOOK_SECRET = process.env.TWITCH_WEBHOOK_SECRET;
 
 // Initialize Twitch API client for webhook management
 let authProvider: AppTokenAuthProvider | undefined;
@@ -86,6 +86,7 @@ function findSourceByTwitchId(twitchId: string): Source | undefined {
 
 /**
  * Verify webhook signature using HMAC-SHA256
+ * Returns true if signature is valid OR if no secret is configured (no signature verification)
  */
 export function verifyWebhookSignature(
   body: string,
@@ -93,6 +94,12 @@ export function verifyWebhookSignature(
   messageId: string,
   timestamp: string
 ): boolean {
+  // If no webhook secret is configured, skip signature verification
+  if (!TWITCH_WEBHOOK_SECRET) {
+    console.log('⚠️  Skipping webhook signature verification (no secret configured)');
+    return true;
+  }
+
   try {
     // Twitch EventSub signature format: sha256=<signature>
     if (!signature.startsWith('sha256=')) {
@@ -186,13 +193,13 @@ export async function handleWebhookEvent(request: Request): Promise<Response> {
     // Get body
     const body = await request.text();
     
-    // Verify signature
-    if (!signature || !messageId || !timestamp) {
-      console.warn('Missing required headers');
+    // Verify signature (skip if no secret configured)
+    if (!TWITCH_WEBHOOK_SECRET) {
+      console.log('ℹ️  Webhook signature verification skipped (no secret configured)');
+    } else if (!signature || !messageId || !timestamp) {
+      console.warn('Missing required headers for signature verification');
       return new Response('Bad Request', { status: 400 });
-    }
-    
-    if (!verifyWebhookSignature(body, signature, messageId, timestamp)) {
+    } else if (!verifyWebhookSignature(body, signature, messageId, timestamp)) {
       console.warn('Invalid webhook signature');
       return new Response('Unauthorized', { status: 401 });
     }

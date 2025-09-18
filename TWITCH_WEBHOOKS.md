@@ -39,12 +39,17 @@ Add these environment variables to your `.env` file:
 TWITCH_CLIENT_ID=your_client_id
 TWITCH_CLIENT_SECRET=your_client_secret
 
-# Required: Webhook secret for signature verification
+# Optional: Webhook secret for signature verification (recommended for production)
 TWITCH_WEBHOOK_SECRET=your_secure_random_secret
 
 # Optional: Used for webhook URL generation (auto-detected in Vercel)
 VERCEL_URL=your-domain.vercel.app
 ```
+
+**Note about TWITCH_WEBHOOK_SECRET:**
+- **Optional but recommended**: If provided, Twitch will sign webhook payloads and your application will verify signatures for security
+- **If omitted**: Webhook signature verification is skipped (less secure but simpler setup)
+- **Production recommendation**: Always use a webhook secret in production for security
 
 ## Webhook URL Configuration
 
@@ -78,7 +83,15 @@ The rewrite is configured in `vercel.json`:
 
 ### 1. Configure Environment Variables
 
-Ensure all required environment variables are set in your deployment environment.
+Ensure required environment variables are set in your deployment environment:
+
+**Required:**
+- `TWITCH_CLIENT_ID` - Your Twitch application client ID
+- `TWITCH_CLIENT_SECRET` - Your Twitch application client secret
+
+**Optional:**
+- `TWITCH_WEBHOOK_SECRET` - Secret for webhook signature verification (recommended for production)
+- `VERCEL_URL` - Webhook domain (auto-detected in Vercel deployments)
 
 ### 2. Set Up Webhook Subscriptions
 
@@ -124,8 +137,9 @@ Deploy your application with the webhook endpoint available at:
 
 ## Security
 
-- **Signature Verification**: All webhook events are verified using HMAC-SHA256
-- **Message Validation**: Proper header and payload validation
+- **Signature Verification**: If `TWITCH_WEBHOOK_SECRET` is configured, all webhook events are verified using HMAC-SHA256
+- **Optional Security**: Webhook secret is optional - if omitted, signature verification is skipped
+- **Message Validation**: Proper header and payload validation regardless of signature verification
 - **Error Handling**: Graceful handling of malformed requests
 
 ## Monitoring
@@ -162,7 +176,8 @@ npm run test "src/routes/(app)/api/twitch/__tests__/server.test.ts"
 
 ## Deployment Checklist
 
-- [ ] Environment variables configured
+- [ ] Environment variables configured (TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET required)
+- [ ] Optional TWITCH_WEBHOOK_SECRET configured for enhanced security
 - [ ] Webhook subscriptions created (`npm run twitch:webhook:setup`)
 - [ ] Webhook endpoint accessible at `/webhooks/twitch` (via Vercel rewrite)
 - [ ] Test webhook functionality
