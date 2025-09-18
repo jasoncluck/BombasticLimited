@@ -5,6 +5,7 @@ import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 
 import type { HelixStream } from '@twurple/api';
 import { browser } from '$app/environment';
+import { dev } from '$app/environment';
 
 const clientId = TWITCH_CLIENT_ID;
 const clientSecret = TWITCH_CLIENT_SECRET;
@@ -34,9 +35,32 @@ interface StreamStatus {
 }
 
 const streamCache = new Map<string, StreamStatus>();
-const CACHE_DURATION = 30 * 1000; // 30 seconds cache
+const CACHE_DURATION = dev ? 5 * 1000 : 30 * 1000; // 5 seconds in dev, 30 seconds in production
 const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 const API_REQUEST_TIMEOUT = 10000; // 10 second timeout for individual API requests
+
+// Development testing variables
+let testStartTime: number | null = null;
+const TEST_LIVE_START = 10000; // Go live after 10 seconds
+const TEST_LIVE_END = 70000; // Go offline after 1 minute 10 seconds (70 seconds total)
+
+// Known user IDs for testing
+const NEXTLANDER_USER_ID = '689331234'; // You may need to adjust this ID
+
+/**
+ * Promise with timeout wrapper
+ */
+function withApiTimeout<T>(promise: Promise<T>): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(
+        () => reject(new Error('API request timeout')),
+        API_REQUEST_TIMEOUT
+      )
+    ),
+  ]);
+}
 
 /**
  * Check if we're in test scenario for nextlander (now works in all environments)
@@ -199,17 +223,3 @@ export function getCacheStats() {
     })),
   };
 }
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
