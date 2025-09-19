@@ -251,12 +251,10 @@
 
 <Drawer.Root
   bind:open
-  handleOnly={true}
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Drawer.Content
-    class="bg-background drawer flex min-h-[100%] flex-col overscroll-y-contain"
-    onInteractOutside={(e) => e.preventDefault()}
+    class="bg-background drawer flex min-h-[95%] flex-col overscroll-y-contain"
   >
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
