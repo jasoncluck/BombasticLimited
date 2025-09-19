@@ -9,7 +9,7 @@ import { PUBLIC_SUPABASE_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
-// Enhanced configuration with smart request management
+// Optimized configuration for faster response times
 interface CacheConfig {
   readonly maxImageCacheSize: number;
   readonly maxCacheAgeMs: number;
@@ -21,19 +21,21 @@ interface CacheConfig {
   readonly maxRequestAge: number;
   readonly abandonAfterMs: number;
   readonly maxRetries: number;
+  readonly immediateFetchThreshold: number;
 }
 
 const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 200,
-  batchTimeoutMs: 250,
-  maxBatchSize: 50,
+  batchTimeoutMs: 50, // Reduced from 200ms for faster processing
+  maxBatchSize: 30, // Reduced for faster batch completion
   minBatchSize: 1,
-  staleRequestTimeoutMs: 5000,
-  maxRequestAge: 3000,
-  abandonAfterMs: 8000,
-  maxRetries: 2,
+  staleRequestTimeoutMs: 3000, // Reduced from 5000ms
+  maxRequestAge: 2000, // Reduced from 3000ms
+  abandonAfterMs: 6000, // Reduced from 8000ms
+  maxRetries: 1, // Reduced for faster failure handling
+  immediateFetchThreshold: 5, // Process immediately if fewer active fetches
 };
 
 // Cache names
@@ -65,17 +67,14 @@ const SUPABASE_HOSTNAME: string | null = (() => {
   }
 })();
 
-// Enhanced request tracking
+// Simplified request tracking for better performance
 interface TrackedRequest {
   readonly id: string;
   readonly url: string;
-  readonly request: Request;
   readonly timestamp: number;
-  readonly referrer: string;
   readonly retryCount: number;
   resolve: (response: Response) => void;
   reject: (error: Error) => void;
-  timeoutId?: ReturnType<typeof setTimeout>;
   aborted: boolean;
 }
 
@@ -93,7 +92,7 @@ interface SharedRequest {
   rejecters: Array<(error: Error) => void>;
 }
 
-// Enhanced service worker state
+// Simplified service worker state
 interface ServiceWorkerState {
   activeFetches: Map<string, TrackedRequest>;
   pendingRequests: Map<string, TrackedRequest>;
@@ -102,7 +101,6 @@ interface ServiceWorkerState {
   currentReferrer: string;
   lastNavigationTime: number;
   batchTimer?: ReturnType<typeof setTimeout>;
-  cleanupTimer?: ReturnType<typeof setTimeout>;
 }
 
 const state: ServiceWorkerState = {
@@ -113,7 +111,6 @@ const state: ServiceWorkerState = {
   currentReferrer: '',
   lastNavigationTime: Date.now(),
   batchTimer: undefined,
-  cleanupTimer: undefined,
 };
 
 // Essential headers to preserve
@@ -145,8 +142,6 @@ const updateNavigation = (referrer: string): void => {
   if (hasNavigationChanged(referrer)) {
     state.currentReferrer = referrer;
     state.lastNavigationTime = Date.now();
-
-    // Clean up old requests when navigation changes
     cleanupStaleRequests();
   }
 };
@@ -169,7 +164,7 @@ const shouldCacheAsImage = (url: URL): boolean => {
   return (isKnownImageDomain && isImageUrl(url)) || isSupabaseImageUrl(url);
 };
 
-// Create a normalized cache key to improve cache hits
+// Optimized cache key creation with better normalization
 const createCacheKey = (request: Request): string => {
   const url = new URL(request.url);
   // Remove cache-busting parameters that don't affect the actual resource
@@ -177,13 +172,14 @@ const createCacheKey = (request: Request): string => {
   url.searchParams.delete('t');
   url.searchParams.delete('timestamp');
   url.searchParams.delete('v');
+  url.searchParams.delete('cache');
   return url.toString();
 };
 
 const createCachedResponse = (originalResponse: Response): Response => {
   const headers = new Headers();
 
-  // Copy essential headers
+  // Copy essential headers efficiently
   for (const headerName of ESSENTIAL_HEADERS) {
     const headerValue = originalResponse.headers.get(headerName);
     if (headerValue) {
@@ -191,12 +187,12 @@ const createCachedResponse = (originalResponse: Response): Response => {
     }
   }
 
-  // Set cache headers to prevent validation requests
+  // Set optimized cache headers
   headers.set('x-served-by', 'service-worker');
   headers.set('x-cache-status', 'HIT');
   headers.set('cache-control', 'public, max-age=31536000, immutable');
 
-  // Remove conditional request headers to prevent 304 responses
+  // Remove validation headers to prevent 304 responses
   headers.delete('etag');
   headers.delete('last-modified');
 
@@ -209,7 +205,6 @@ const createCachedResponse = (originalResponse: Response): Response => {
 
 const createCorsRequest = (originalRequest: Request): Request => {
   if (isSupabaseImageUrl(new URL(originalRequest.url))) {
-    // Create a clean request without validation headers
     const headers = new Headers();
     headers.set('Accept', originalRequest.headers.get('Accept') || 'image/*');
 
@@ -230,6 +225,32 @@ const createCorsRequest = (originalRequest: Request): Request => {
   return originalRequest;
 };
 
+// Immediate processing check for critical resources
+const shouldProcessImmediately = (request: Request, referrer: string): boolean => {
+  const url = new URL(request.url);
+
+  // Always process navigation-critical resources immediately
+  if (url.origin === sw.location.origin) {
+    const pathname = url.pathname;
+    if (pathname.endsWith('.html') ||
+      pathname.endsWith('.css') ||
+      pathname.endsWith('.js') ||
+      pathname === '/' ||
+      STATIC_ASSETS.includes(pathname)) {
+      return true;
+    }
+  }
+
+  // Process images immediately if low activity and same navigation
+  if (shouldCacheAsImage(url) &&
+    state.activeFetches.size < CACHE_CONFIG.immediateFetchThreshold &&
+    !hasNavigationChanged(referrer)) {
+    return true;
+  }
+
+  return false;
+};
+
 // Request priority calculation
 const calculatePriority = (
   trackedRequest: TrackedRequest
@@ -238,67 +259,17 @@ const calculatePriority = (
   const age = now - trackedRequest.timestamp;
   const referrerAge = now - state.lastNavigationTime;
 
-  // High priority: Recent requests from current page
-  if (
-    age < 1000 &&
-    referrerAge < 2000 &&
-    !hasNavigationChanged(trackedRequest.referrer)
-  ) {
+  // High priority: Very recent requests
+  if (age < 500 && referrerAge < 1500) {
     return 'high';
   }
 
-  // Low priority: Old requests or from previous navigation
-  if (
-    age > CACHE_CONFIG.maxRequestAge ||
-    hasNavigationChanged(trackedRequest.referrer)
-  ) {
+  // Low priority: Old requests
+  if (age > CACHE_CONFIG.maxRequestAge) {
     return 'low';
   }
 
   return 'normal';
-};
-
-// Cleanup stale and abandoned requests
-const cleanupStaleRequests = (): void => {
-  const currentTime = Date.now();
-  const requestsToAbandon: string[] = [];
-
-  // Check pending requests
-  state.pendingRequests.forEach((trackedRequest, id) => {
-    const age = currentTime - trackedRequest.timestamp;
-    const shouldAbandon =
-      age > CACHE_CONFIG.abandonAfterMs ||
-      (age > CACHE_CONFIG.staleRequestTimeoutMs &&
-        hasNavigationChanged(trackedRequest.referrer));
-
-    if (shouldAbandon && !trackedRequest.aborted) {
-      requestsToAbandon.push(id);
-    }
-  });
-
-  // Abandon old requests
-  requestsToAbandon.forEach((id) => {
-    const request = state.pendingRequests.get(id);
-    if (request && !request.aborted) {
-      request.aborted = true;
-      if (request.timeoutId) {
-        clearTimeout(request.timeoutId);
-      }
-      request.reject(
-        new Error('Request abandoned due to navigation or timeout')
-      );
-      state.pendingRequests.delete(id);
-    }
-  });
-
-  // Clean up completed shared requests
-  const sharedRequestsToClean: string[] = [];
-  state.sharedRequests.forEach((sharedRequest, requestUrl) => {
-    if (sharedRequest.resolvers.length === 0 && sharedRequest.rejecters.length === 0) {
-      sharedRequestsToClean.push(requestUrl);
-    }
-  });
-  sharedRequestsToClean.forEach(requestUrl => state.sharedRequests.delete(requestUrl));
 };
 
 // Improved request deduplication using shared requests
@@ -314,7 +285,7 @@ const getOrCreateSharedRequest = (request: Request): Promise<Response> => {
     });
   }
 
-  // Create resolvers and rejecters arrays first
+  // Create the resolvers and rejecters arrays
   const resolvers: Array<(response: Response) => void> = [];
   const rejecters: Array<(error: Error) => void> = [];
 
@@ -357,7 +328,67 @@ const getOrCreateSharedRequest = (request: Request): Promise<Response> => {
   return promise;
 };
 
-// Process requests in intelligent batches
+// Global timeout handling for better performance
+const setupGlobalTimeout = (): void => {
+  setInterval(() => {
+    const now = Date.now();
+    const toRemove: string[] = [];
+
+    state.pendingRequests.forEach((request, id) => {
+      if (now - request.timestamp > CACHE_CONFIG.abandonAfterMs) {
+        toRemove.push(id);
+      }
+    });
+
+    toRemove.forEach(id => {
+      const request = state.pendingRequests.get(id);
+      if (request && !request.aborted) {
+        request.aborted = true;
+        request.reject(new Error('Request timeout'));
+        state.pendingRequests.delete(id);
+      }
+    });
+  }, 1000); // Check every second
+};
+
+// Cleanup stale and abandoned requests
+const cleanupStaleRequests = (): void => {
+  const currentTime = Date.now();
+  const requestsToAbandon: string[] = [];
+
+  // Check pending requests
+  state.pendingRequests.forEach((trackedRequest, id) => {
+    const age = currentTime - trackedRequest.timestamp;
+    const shouldAbandon = age > CACHE_CONFIG.abandonAfterMs;
+
+    if (shouldAbandon && !trackedRequest.aborted) {
+      requestsToAbandon.push(id);
+    }
+  });
+
+  // Abandon old requests
+  requestsToAbandon.forEach((id) => {
+    const request = state.pendingRequests.get(id);
+    if (request && !request.aborted) {
+      request.aborted = true;
+      request.reject(
+        new Error('Request abandoned due to timeout')
+      );
+      state.pendingRequests.delete(id);
+    }
+  });
+
+  // Clean up completed shared requests
+  const sharedRequestsToClean: string[] = [];
+  state.sharedRequests.forEach((sharedRequest, requestUrl) => {
+    if (sharedRequest.resolvers.length === 0 && sharedRequest.rejecters.length === 0) {
+      sharedRequestsToClean.push(requestUrl);
+    }
+  });
+  sharedRequestsToClean.forEach(requestUrl => state.sharedRequests.delete(requestUrl));
+};
+
+// Optimized batch processing
 const processPendingRequests = (): void => {
   if (state.pendingRequests.size === 0) return;
 
@@ -386,7 +417,7 @@ const processPendingRequests = (): void => {
     const requests = requestsByPriority[priority];
     if (requests.length === 0) return;
 
-    // Create batches for this priority level
+    // Create smaller batches for faster processing
     const batchSize =
       priority === 'high'
         ? Math.min(requests.length, CACHE_CONFIG.maxBatchSize)
@@ -423,25 +454,20 @@ const processBatch = (
       return;
     }
 
-    const { request, resolve, reject, id } = trackedRequest;
+    const { url, resolve, reject, id } = trackedRequest;
 
     try {
-      // Clear individual timeout since we're processing now
-      if (trackedRequest.timeoutId) {
-        clearTimeout(trackedRequest.timeoutId);
-      }
-
       // Mark as active
       state.activeFetches.set(id, trackedRequest);
 
-      const corsRequest = createCorsRequest(request);
-      const response = await fetch(corsRequest);
+      // Use shared request to avoid duplicates
+      const response = await getOrCreateSharedRequest(new Request(url));
 
       // Only resolve if not aborted
       if (!trackedRequest.aborted) {
-        // Cache successful responses
+        // Cache successful responses asynchronously
         if (response.ok && response.status === 200) {
-          cacheResponse(request, response.clone()).catch(() => {
+          cacheResponse(new Request(url), response.clone()).catch(() => {
             // Silent fail on cache errors
           });
         }
@@ -450,7 +476,7 @@ const processBatch = (
       }
     } catch (error) {
       if (!trackedRequest.aborted) {
-        // Retry logic for high priority requests
+        // Simplified retry logic
         if (
           priority === 'high' &&
           trackedRequest.retryCount < CACHE_CONFIG.maxRetries
@@ -465,15 +491,12 @@ const processBatch = (
           // Add back to pending for retry
           state.pendingRequests.set(retryRequest.id, retryRequest);
 
-          // Schedule retry processing
-          setTimeout(
-            () => {
-              if (state.pendingRequests.has(retryRequest.id)) {
-                processPendingRequests();
-              }
-            },
-            100 * (trackedRequest.retryCount + 1)
-          ); // Exponential backoff
+          // Schedule retry processing with exponential backoff
+          setTimeout(() => {
+            if (state.pendingRequests.has(retryRequest.id)) {
+              processPendingRequests();
+            }
+          }, 100 * (trackedRequest.retryCount + 1));
         } else {
           reject(error instanceof Error ? error : new Error('Fetch failed'));
         }
@@ -489,12 +512,17 @@ const processBatch = (
   });
 };
 
-// Add request to processing queue with better deduplication
+// Optimized request queuing with immediate processing bypass
 const queueRequest = (request: Request): Promise<Response> => {
   const referrer = getReferrerFromRequest(request);
   updateNavigation(referrer);
 
-  // Check for existing shared request first
+  // Process immediately if critical or low activity
+  if (shouldProcessImmediately(request, referrer)) {
+    return getOrCreateSharedRequest(request);
+  }
+
+  // Check for existing shared request
   const cacheKey = createCacheKey(request);
   const existingShared = state.sharedRequests.get(cacheKey);
   if (existingShared) {
@@ -509,35 +537,24 @@ const queueRequest = (request: Request): Promise<Response> => {
     const trackedRequest: TrackedRequest = {
       id,
       url: request.url,
-      request,
       timestamp: Date.now(),
-      referrer,
       retryCount: 0,
       resolve,
       reject,
       aborted: false,
     };
 
-    // Set individual request timeout
-    trackedRequest.timeoutId = setTimeout(() => {
-      if (state.pendingRequests.has(id) && !trackedRequest.aborted) {
-        trackedRequest.aborted = true;
-        state.pendingRequests.delete(id);
-        reject(new Error('Individual request timeout'));
-      }
-    }, CACHE_CONFIG.abandonAfterMs);
-
     // Add to pending queue
     state.pendingRequests.set(id, trackedRequest);
 
-    // Schedule batch processing
+    // Schedule batch processing with adaptive timeout
     if (state.batchTimer) {
       clearTimeout(state.batchTimer);
     }
 
     // Use shorter timeout for high activity periods
     const timeout =
-      state.pendingRequests.size > 10 ? 50 : CACHE_CONFIG.batchTimeoutMs;
+      state.pendingRequests.size > 10 ? 25 : CACHE_CONFIG.batchTimeoutMs;
 
     state.batchTimer = setTimeout(() => {
       processPendingRequests();
@@ -553,7 +570,7 @@ const queueRequest = (request: Request): Promise<Response> => {
   });
 };
 
-// Simple cache function with normalized keys
+// Optimized cache response function
 const cacheResponse = async (
   request: Request,
   response: Response
@@ -573,33 +590,43 @@ const cacheResponse = async (
   }
 };
 
-// Enhanced image caching function
+// Optimized cache retrieval
+const getFromCache = async (request: Request, cacheName: string): Promise<Response | null> => {
+  try {
+    const cache = await caches.open(cacheName);
+    const cacheKey = createCacheKey(request);
+    const cacheRequest = new Request(cacheKey, {
+      method: 'GET',
+      headers: new Headers({
+        'Accept': request.headers.get('Accept') || '*/*',
+      }),
+    });
+
+    return await cache.match(cacheRequest);
+  } catch {
+    return null;
+  }
+};
+
+// Enhanced image caching function with optimized cache-first strategy
 const cacheImage = async (request: Request): Promise<Response> => {
-  const cache = await caches.open(IMAGE_CACHE);
-  const cacheKey = createCacheKey(request);
-  const cacheRequest = new Request(cacheKey, {
-    method: 'GET',
-    headers: new Headers({
-      'Accept': request.headers.get('Accept') || 'image/*',
-    }),
-  });
-
-  const cached = await cache.match(cacheRequest);
-
-  // Serve from cache immediately if available and return proper headers
+  // Fast cache lookup first
+  const cached = await getFromCache(request, IMAGE_CACHE);
   if (cached) {
     return createCachedResponse(cached);
   }
 
-  // For very low activity, use shared request to prevent duplicates
-  if (state.activeFetches.size < 3 && state.pendingRequests.size < 2) {
+  const referrer = getReferrerFromRequest(request);
+
+  // For low activity or critical requests, fetch immediately
+  if (state.activeFetches.size < CACHE_CONFIG.immediateFetchThreshold ||
+    shouldProcessImmediately(request, referrer)) {
     try {
       const response = await getOrCreateSharedRequest(request);
 
       if (response.ok && response.status === 200) {
-        cacheResponse(request, response.clone()).catch(() => {
-          // Silent fail on cache errors
-        });
+        // Cache asynchronously to avoid blocking
+        cacheResponse(request, response.clone()).catch(() => { });
       }
 
       return response;
@@ -612,11 +639,9 @@ const cacheImage = async (request: Request): Promise<Response> => {
   return queueRequest(request);
 };
 
-// Simple static asset caching
+// Optimized static asset caching
 const cacheStaticAsset = async (request: Request): Promise<Response> => {
-  const cache = await caches.open(STATIC_CACHE);
-  const cached = await cache.match(request);
-
+  const cached = await getFromCache(request, STATIC_CACHE);
   if (cached) {
     return createCachedResponse(cached);
   }
@@ -624,6 +649,7 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   try {
     const response = await fetch(request);
     if (response.ok && response.status === 200) {
+      const cache = await caches.open(STATIC_CACHE);
       await cache.put(request, response.clone());
     }
     return response;
@@ -634,13 +660,13 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
   }
 };
 
-// Periodic cleanup
+// Optimized cleanup function
 const performCleanup = async (): Promise<void> => {
   try {
     // Clean up stale requests
     cleanupStaleRequests();
 
-    // Cache size management
+    // Cache size management with batched deletion
     const cache = await caches.open(IMAGE_CACHE);
     const keys = await cache.keys();
 
@@ -650,6 +676,7 @@ const performCleanup = async (): Promise<void> => {
         keys.length - CACHE_CONFIG.maxImageCacheSize + 500
       );
 
+      // Delete in smaller batches for better performance
       for (let i = 0; i < keysToDelete.length; i += 20) {
         const batch = keysToDelete.slice(i, i + 20);
         await Promise.allSettled(batch.map((key) => cache.delete(key)));
@@ -673,6 +700,7 @@ sw.addEventListener('activate', (event) => {
   event.waitUntil(Promise.all([cleanupOldCaches(), sw.clients.claim()]));
 });
 
+// Optimized fetch event handler
 sw.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -681,7 +709,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle static assets
+  // Handle static assets with cache-first strategy
   if (
     url.origin === sw.location.origin &&
     (STATIC_ASSETS.includes(url.pathname) ||
@@ -691,7 +719,7 @@ sw.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Handle images with intelligent batching
+  // Handle images with optimized strategy
   if (shouldCacheAsImage(url)) {
     event.respondWith(cacheImage(request));
     return;
@@ -737,14 +765,17 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Enhanced periodic maintenance
+// Initialize global timeout handling
+setupGlobalTimeout();
+
+// Optimized periodic maintenance with reduced frequency
 setInterval(() => {
   performCleanup();
-}, 30000);
+}, 45000); // Increased to 45 seconds for better performance
 
-// Intelligent stale request cleanup
+// Targeted stale request cleanup only during high activity
 setInterval(() => {
-  if (state.pendingRequests.size > 10 || state.activeFetches.size > 15) {
+  if (state.pendingRequests.size > 8 || state.activeFetches.size > 12) {
     cleanupStaleRequests();
   }
-}, 5000);
+}, 8000); // Less frequent but more targeted cleanup
