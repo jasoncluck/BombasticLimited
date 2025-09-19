@@ -178,7 +178,6 @@ export async function startSimpleVideoHistory({
     };
   }
 
-
   const { error } = await startVideoHistorySession({
     videoId,
     sessionStartTime,
@@ -190,7 +189,6 @@ export async function startSimpleVideoHistory({
     console.error('❌ Failed to start video history:', error);
     return { success: false, error };
   }
-
 
   return { success: true };
 }
@@ -223,7 +221,6 @@ export async function endSimpleVideoHistory({
     };
   }
 
-
   const { error } = await updateVideoHistoryEndTime({
     videoId,
     sessionStartTime, // Pass the required start time
@@ -236,7 +233,6 @@ export async function endSimpleVideoHistory({
     console.error('❌ Failed to end video history:', error);
     return { success: false, error };
   }
-
 
   return { success: true };
 }
@@ -273,7 +269,6 @@ export async function recordCompleteVideoHistory({
       } as PostgrestError,
     };
   }
-
 
   // Use provided start time or create a new one
   const actualStartTime = sessionStartTime || new Date();
