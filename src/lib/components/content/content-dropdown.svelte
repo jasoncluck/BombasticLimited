@@ -94,7 +94,6 @@
   let selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
   );
-  console.log(playlist);
 
   let hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
