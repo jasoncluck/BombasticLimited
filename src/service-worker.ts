@@ -27,12 +27,12 @@ const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
   maxConcurrentRequests: 100,
-  batchTimeoutMs: 200, // Slightly increased for better batching efficiency
+  batchTimeoutMs: 200,
   maxBatchSize: 50,
   minBatchSize: 3,
-  staleRequestTimeoutMs: 5000, // Abandon requests older than 5 seconds
-  maxRequestAge: 3000, // Deprioritize requests older than 3 seconds
-  abandonAfterMs: 8000, // Hard timeout for any request
+  staleRequestTimeoutMs: 5000,
+  maxRequestAge: 3000,
+  abandonAfterMs: 8000,
   maxRetries: 2,
 };
 
@@ -86,11 +86,19 @@ interface ProcessingBatch {
   readonly priority: 'high' | 'normal' | 'low';
 }
 
+// Shared request promise tracking to prevent duplicates
+interface SharedRequest {
+  promise: Promise<Response>;
+  resolvers: Array<(response: Response) => void>;
+  rejecters: Array<(error: Error) => void>;
+}
+
 // Enhanced service worker state
 interface ServiceWorkerState {
   activeFetches: Map<string, TrackedRequest>;
   pendingRequests: Map<string, TrackedRequest>;
   processingBatches: Map<string, ProcessingBatch>;
+  sharedRequests: Map<string, SharedRequest>;
   currentReferrer: string;
   lastNavigationTime: number;
   batchTimer?: ReturnType<typeof setTimeout>;
@@ -101,6 +109,7 @@ const state: ServiceWorkerState = {
   activeFetches: new Map(),
   pendingRequests: new Map(),
   processingBatches: new Map(),
+  sharedRequests: new Map(),
   currentReferrer: '',
   lastNavigationTime: Date.now(),
   batchTimer: undefined,
@@ -120,7 +129,7 @@ const ESSENTIAL_HEADERS = [
 
 // Utility functions
 const generateRequestId = (): string =>
-  `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
 
 const getReferrerFromRequest = (request: Request): string => {
   return request.referrer || sw.location.origin;
@@ -160,6 +169,17 @@ const shouldCacheAsImage = (url: URL): boolean => {
   return (isKnownImageDomain && isImageUrl(url)) || isSupabaseImageUrl(url);
 };
 
+// Create a normalized cache key to improve cache hits
+const createCacheKey = (request: Request): string => {
+  const url = new URL(request.url);
+  // Remove cache-busting parameters that don't affect the actual resource
+  url.searchParams.delete('_');
+  url.searchParams.delete('t');
+  url.searchParams.delete('timestamp');
+  url.searchParams.delete('v');
+  return url.toString();
+};
+
 const createCachedResponse = (originalResponse: Response): Response => {
   const headers = new Headers();
 
@@ -171,8 +191,14 @@ const createCachedResponse = (originalResponse: Response): Response => {
     }
   }
 
+  // Set cache headers to prevent validation requests
   headers.set('x-served-by', 'service-worker');
   headers.set('x-cache-status', 'HIT');
+  headers.set('cache-control', 'public, max-age=31536000, immutable');
+
+  // Remove conditional request headers to prevent 304 responses
+  headers.delete('etag');
+  headers.delete('last-modified');
 
   return new Response(originalResponse.body, {
     status: originalResponse.status,
@@ -182,12 +208,19 @@ const createCachedResponse = (originalResponse: Response): Response => {
 };
 
 const createCorsRequest = (originalRequest: Request): Request => {
-  const url = new URL(originalRequest.url);
+  if (isSupabaseImageUrl(new URL(originalRequest.url))) {
+    // Create a clean request without validation headers
+    const headers = new Headers();
+    headers.set('Accept', originalRequest.headers.get('Accept') || 'image/*');
 
-  if (isSupabaseImageUrl(url)) {
+    const userAgent = originalRequest.headers.get('User-Agent');
+    if (userAgent) {
+      headers.set('User-Agent', userAgent);
+    }
+
     return new Request(originalRequest.url, {
       method: originalRequest.method,
-      headers: originalRequest.headers,
+      headers,
       mode: 'cors',
       credentials: 'omit',
       cache: 'default',
@@ -227,12 +260,12 @@ const calculatePriority = (
 
 // Cleanup stale and abandoned requests
 const cleanupStaleRequests = (): void => {
-  const now = Date.now();
+  const currentTime = Date.now();
   const requestsToAbandon: string[] = [];
 
   // Check pending requests
   state.pendingRequests.forEach((trackedRequest, id) => {
-    const age = now - trackedRequest.timestamp;
+    const age = currentTime - trackedRequest.timestamp;
     const shouldAbandon =
       age > CACHE_CONFIG.abandonAfterMs ||
       (age > CACHE_CONFIG.staleRequestTimeoutMs &&
@@ -257,13 +290,77 @@ const cleanupStaleRequests = (): void => {
       state.pendingRequests.delete(id);
     }
   });
+
+  // Clean up completed shared requests
+  const sharedRequestsToClean: string[] = [];
+  state.sharedRequests.forEach((sharedRequest, requestUrl) => {
+    if (sharedRequest.resolvers.length === 0 && sharedRequest.rejecters.length === 0) {
+      sharedRequestsToClean.push(requestUrl);
+    }
+  });
+  sharedRequestsToClean.forEach(requestUrl => state.sharedRequests.delete(requestUrl));
+};
+
+// Improved request deduplication using shared requests
+const getOrCreateSharedRequest = (request: Request): Promise<Response> => {
+  const cacheKey = createCacheKey(request);
+
+  // Check if we already have a shared request for this URL
+  const existing = state.sharedRequests.get(cacheKey);
+  if (existing) {
+    return new Promise<Response>((resolve, reject) => {
+      existing.resolvers.push(resolve);
+      existing.rejecters.push(reject);
+    });
+  }
+
+  // Create resolvers and rejecters arrays first
+  const resolvers: Array<(response: Response) => void> = [];
+  const rejecters: Array<(error: Error) => void> = [];
+
+  // Create the shared request promise
+  const promise = (async (): Promise<Response> => {
+    try {
+      const corsRequest = createCorsRequest(request);
+      const response = await fetch(corsRequest);
+
+      // Resolve all waiting promises with cloned responses
+      resolvers.forEach(resolver => {
+        resolver(response.clone());
+      });
+
+      // Clean up
+      state.sharedRequests.delete(cacheKey);
+
+      return response;
+    } catch (error) {
+      // Reject all waiting promises
+      const err = error instanceof Error ? error : new Error('Fetch failed');
+      rejecters.forEach(rejecter => {
+        rejecter(err);
+      });
+
+      // Clean up
+      state.sharedRequests.delete(cacheKey);
+
+      throw err;
+    }
+  })();
+
+  // Store the shared request
+  state.sharedRequests.set(cacheKey, {
+    promise,
+    resolvers,
+    rejecters,
+  });
+
+  return promise;
 };
 
 // Process requests in intelligent batches
 const processPendingRequests = (): void => {
   if (state.pendingRequests.size === 0) return;
 
-  const now = Date.now();
   const requestsByPriority = {
     high: [] as TrackedRequest[],
     normal: [] as TrackedRequest[],
@@ -326,7 +423,7 @@ const processBatch = (
       return;
     }
 
-    const { url, request, resolve, reject, id } = trackedRequest;
+    const { request, resolve, reject, id } = trackedRequest;
 
     try {
       // Clear individual timeout since we're processing now
@@ -392,10 +489,20 @@ const processBatch = (
   });
 };
 
-// Add request to processing queue
+// Add request to processing queue with better deduplication
 const queueRequest = (request: Request): Promise<Response> => {
   const referrer = getReferrerFromRequest(request);
   updateNavigation(referrer);
+
+  // Check for existing shared request first
+  const cacheKey = createCacheKey(request);
+  const existingShared = state.sharedRequests.get(cacheKey);
+  if (existingShared) {
+    return new Promise<Response>((resolve, reject) => {
+      existingShared.resolvers.push(resolve);
+      existingShared.rejecters.push(reject);
+    });
+  }
 
   return new Promise<Response>((resolve, reject) => {
     const id = generateRequestId();
@@ -420,20 +527,6 @@ const queueRequest = (request: Request): Promise<Response> => {
       }
     }, CACHE_CONFIG.abandonAfterMs);
 
-    // Check if already being fetched (avoid duplicates)
-    const existingActive = Array.from(state.activeFetches.values()).find(
-      (req) => req.url === request.url && !req.aborted
-    );
-
-    if (existingActive) {
-      // Piggyback on existing request
-      existingActive.resolve = (response: Response) => {
-        trackedRequest.resolve(response.clone());
-        existingActive.resolve(response);
-      };
-      return;
-    }
-
     // Add to pending queue
     state.pendingRequests.set(id, trackedRequest);
 
@@ -450,7 +543,7 @@ const queueRequest = (request: Request): Promise<Response> => {
       processPendingRequests();
     }, timeout);
 
-    // Process immediately if batch is full or all high priority
+    // Process immediately if batch is full
     if (state.pendingRequests.size >= CACHE_CONFIG.maxBatchSize) {
       if (state.batchTimer) {
         clearTimeout(state.batchTimer);
@@ -460,14 +553,21 @@ const queueRequest = (request: Request): Promise<Response> => {
   });
 };
 
-// Simple cache function
+// Simple cache function with normalized keys
 const cacheResponse = async (
   request: Request,
   response: Response
 ): Promise<void> => {
   try {
     const cache = await caches.open(IMAGE_CACHE);
-    await cache.put(request, response);
+    const cacheKey = createCacheKey(request);
+    const cacheRequest = new Request(cacheKey, {
+      method: 'GET',
+      headers: new Headers({
+        'Accept': request.headers.get('Accept') || 'image/*',
+      }),
+    });
+    await cache.put(cacheRequest, response);
   } catch (error) {
     console.warn('Failed to cache response:', error);
   }
@@ -476,18 +576,25 @@ const cacheResponse = async (
 // Enhanced image caching function
 const cacheImage = async (request: Request): Promise<Response> => {
   const cache = await caches.open(IMAGE_CACHE);
-  const cached = await cache.match(request);
+  const cacheKey = createCacheKey(request);
+  const cacheRequest = new Request(cacheKey, {
+    method: 'GET',
+    headers: new Headers({
+      'Accept': request.headers.get('Accept') || 'image/*',
+    }),
+  });
 
-  // Serve from cache immediately if available
+  const cached = await cache.match(cacheRequest);
+
+  // Serve from cache immediately if available and return proper headers
   if (cached) {
     return createCachedResponse(cached);
   }
 
-  // For very low activity, fetch immediately to avoid lag
+  // For very low activity, use shared request to prevent duplicates
   if (state.activeFetches.size < 3 && state.pendingRequests.size < 2) {
     try {
-      const corsRequest = createCorsRequest(request);
-      const response = await fetch(corsRequest);
+      const response = await getOrCreateSharedRequest(request);
 
       if (response.ok && response.status === 200) {
         cacheResponse(request, response.clone()).catch(() => {
@@ -630,15 +737,14 @@ const cleanupOldCaches = async (): Promise<void> => {
   await Promise.all(oldCaches.map((name) => caches.delete(name)));
 };
 
-// Enhanced periodic maintenance - reduce frequency during normal operation
+// Enhanced periodic maintenance
 setInterval(() => {
   performCleanup();
-}, 30000); // Reduced frequency to every 30 seconds instead of 10 seconds
+}, 30000);
 
-// Intelligent stale request cleanup - only during high activity
+// Intelligent stale request cleanup
 setInterval(() => {
-  // Only run expensive cleanup when there's actually significant activity
   if (state.pendingRequests.size > 10 || state.activeFetches.size > 15) {
     cleanupStaleRequests();
   }
-}, 5000); // Less frequent but more targeted cleanup
+}, 5000);
