@@ -255,7 +255,7 @@
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Drawer.Content
-    class="bg-background drawer flex min-h-[100%] flex-col"
+    class="bg-background drawer flex flex-col"
     onInteractOutside={(e) => e.preventDefault()}
   >
     <div class="flex-shrink-0 p-4 pb-0">
@@ -268,7 +268,7 @@
     </div>
 
     <!-- Scrollable content area -->
-    <div class="min-h-0 flex-1 overflow-auto">
+    <div class="flex-1 overflow-y-auto">
       <div class="p-4">
         <!-- Description moved inside scrollable area -->
         <div class="mb-6">
@@ -284,7 +284,7 @@
             e.preventDefault();
             handleSubmit();
           }}
-          class="space-y-4"
+          class="relative flex grow flex-col gap-4"
         >
           <!-- Title -->
           <div class="flex flex-col gap-2">
@@ -428,7 +428,7 @@
     </div>
 
     <!-- Fixed footer area outside scrollable content -->
-    <div class="bg-background flex-shrink-0 border-t p-4 pt-2">
+    <div class="bg-background border-t p-4 pt-2">
       <div class="flex flex-col gap-2">
         <Button
           type="submit"
