@@ -16,7 +16,6 @@ interface CacheConfig {
   readonly maxConcurrentRequests: number;
   readonly batchTimeoutMs: number;
   readonly maxBatchSize: number;
-  readonly minBatchSize: number;
   readonly staleRequestTimeoutMs: number;
   readonly maxRequestAge: number;
   readonly abandonAfterMs: number;
@@ -27,10 +26,9 @@ interface CacheConfig {
 const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
   maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
-  maxConcurrentRequests: 200,
-  batchTimeoutMs: 50, // Reduced from 200ms for faster processing
-  maxBatchSize: 30, // Reduced for faster batch completion
-  minBatchSize: 1,
+  maxConcurrentRequests: 100,
+  batchTimeoutMs: 50,
+  maxBatchSize: 50, // Reduced for faster batch completion
   staleRequestTimeoutMs: 3000, // Reduced from 5000ms
   maxRequestAge: 2000, // Reduced from 3000ms
   abandonAfterMs: 6000, // Reduced from 8000ms
