@@ -145,7 +145,7 @@ describe('Hover-Drag Conflict Prevention', () => {
     let contentState: ContentState;
 
     beforeEach(() => {
-      contentState = new ContentState(mockPageState);
+      contentState = new ContentState();
     });
 
     it('should clear hover states when drag starts', () => {

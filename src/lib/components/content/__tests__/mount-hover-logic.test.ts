@@ -46,7 +46,7 @@ describe('ContentCard Robust Mount Hover Detection Logic', () => {
       handleDragEnd: vi.fn(),
     };
 
-    contentState = new ContentState(mockPageState as PageState);
+    contentState = new ContentState();
 
     // Mock setTimeout
     vi.useFakeTimers();

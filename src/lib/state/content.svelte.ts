@@ -77,7 +77,6 @@ export interface Session {
 }
 
 export class ContentState {
-
   // Carousel state for snapshots
   carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 
@@ -301,7 +300,7 @@ export class ContentState {
 
   // Consolidated setup method - replaces both old setup methods
   public setupGlobalClickHandling(): () => void {
-    if (typeof document === 'undefined') return () => { };
+    if (typeof document === 'undefined') return () => {};
 
     // Remove old listeners if they exist
     if (this.clickOutsideCleanup) {
@@ -1090,9 +1089,7 @@ export class ContentState {
 
 const DEFAULT_KEY = '$_content_state';
 
-export function setContentState(
-  key = DEFAULT_KEY
-): ContentState {
+export function setContentState(key = DEFAULT_KEY): ContentState {
   const contentState = new ContentState();
   return setContext(key, contentState);
 }

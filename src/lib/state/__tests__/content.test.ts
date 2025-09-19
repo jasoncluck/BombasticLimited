@@ -42,7 +42,6 @@ global.document = mockDocument as any;
 
 describe('ContentState', () => {
   let contentState: ContentState;
-  let mockPageState: PageState;
   let mockVideo: any;
   let mockPlaylist: any;
   let mockSession: any;
@@ -53,41 +52,6 @@ describe('ContentState', () => {
     // Reset document mock
     mockDocument.body.classList.add.mockClear();
     mockDocument.body.classList.remove.mockClear();
-
-    // Create mock PageState
-    mockPageState = {
-      contentScrollPosition: null,
-      sidebarScrollPosition: null,
-      contentScrollState: {
-        scrolling: false,
-        direction: null,
-        interval: null,
-      },
-      sidebarScrollState: {
-        scrolling: false,
-        direction: null,
-        interval: null,
-      },
-      autoScrollConfig: {
-        scrollSpeed: 10,
-        scrollZoneSize: 50,
-      },
-      viewportRefs: {
-        sidebarViewportRef: null,
-        contentViewportRef: null,
-      },
-      startAutoScroll: vi.fn(),
-      stopAutoScroll: vi.fn(),
-      handleViewportDragOver: vi.fn(),
-      handleDragOver: vi.fn(),
-      handleDragEnd: vi.fn(),
-      handleDrop: vi.fn(),
-      createViewportSnapshot: vi.fn(),
-      restoreViewportScroll: vi.fn(),
-      setSidebarViewportRef: vi.fn(),
-      setContentViewportRef: vi.fn(),
-      cleanup: vi.fn(),
-    } as PageState;
 
     // Create test data
     mockVideo = createMockVideo({ id: 'test-video-1', title: 'Test Video' });
@@ -111,7 +75,7 @@ describe('ContentState', () => {
       },
     });
 
-    contentState = new ContentState(mockPageState);
+    contentState = new ContentState();
   });
 
   afterEach(() => {
@@ -137,10 +101,6 @@ describe('ContentState', () => {
       expect(contentState.draggedFromSectionId).toBeNull();
       expect(contentState.lastClickTime).toBe(0);
       expect(contentState.lastClickedVideo).toBeNull();
-    });
-
-    it('should store reference to pageState', () => {
-      expect(contentState.pageState).toBe(mockPageState);
     });
 
     it('should initialize carousel state with lastViewedIndex 0', () => {
