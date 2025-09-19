@@ -591,7 +591,7 @@ const cacheResponse = async (
 };
 
 // Optimized cache retrieval
-const getFromCache = async (request: Request, cacheName: string): Promise<Response | null> => {
+const getFromCache = async (request: Request, cacheName: string): Promise<Response | undefined | null> => {
   try {
     const cache = await caches.open(cacheName);
     const cacheKey = createCacheKey(request);
