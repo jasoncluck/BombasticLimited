@@ -83,7 +83,7 @@ interface ServiceWorkerState {
 const state: ServiceWorkerState = {
   activeFetches: new Map(),
   pendingRequests: new Map(),
-  urlToRequestIds: Map(),
+  urlToRequestIds: new Map(),
   lastCleanup: Date.now(),
 };
 
