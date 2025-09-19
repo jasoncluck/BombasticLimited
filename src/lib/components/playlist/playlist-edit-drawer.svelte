@@ -253,7 +253,9 @@
     </Drawer.Trigger>
   {/if}
 
-  <Drawer.Content class="bg-background drawer flex min-h-[100%] flex-col">
+  <Drawer.Content
+    class="bg-background drawer flex min-h-[95%] flex-col overscroll-y-contain"
+  >
     <div class="flex-shrink-0 p-4 pb-0">
       <Drawer.Header class="px-0">
         <Drawer.Title class="text-xl">Edit Playlist</Drawer.Title>
