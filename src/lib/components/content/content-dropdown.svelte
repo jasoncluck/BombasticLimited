@@ -300,7 +300,7 @@
         contentState.isDropdownMenuOpen = true;
         // Add this line
         contentState.lastDropdownOpenTime = Date.now();
-      } else {
+      } else if (!isOpen && variant !== 'header') {
         contentState.selectedVideosBySection[sectionId] = [];
         contentState.hoveredVideosBySection[sectionId] = null;
       }

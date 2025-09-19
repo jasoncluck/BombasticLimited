@@ -304,7 +304,7 @@ export class ContentState {
 
   // Consolidated setup method - replaces both old setup methods
   public setupGlobalClickHandling(): () => void {
-    if (typeof document === 'undefined') return () => { };
+    if (typeof document === 'undefined') return () => {};
 
     // Remove old listeners if they exist
     if (this.clickOutsideCleanup) {
