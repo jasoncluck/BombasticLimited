@@ -347,6 +347,9 @@
       align="end"
       class="stable-dropdown outline-none"
       data-testid="content-dropdown-content"
+      onCloseAutoFocus={(e) => {
+        e.preventDefault();
+      }}
     >
       {#if availableActions.hasSelectAll}
         <DropdownMenu.Item
