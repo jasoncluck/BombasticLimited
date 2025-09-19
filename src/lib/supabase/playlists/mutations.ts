@@ -156,17 +156,13 @@ export async function deleteVideosFromPlaylist({
   videoIds: string[];
   supabase: SupabaseClient<Database>;
 }) {
-  console.log(videoIds);
-  console.log(playlistId);
-  const { data, error } = await supabase
+  const { error } = await supabase
     .rpc('delete_playlist_videos', {
       p_playlist_id: playlistId,
       p_video_ids: videoIds,
     })
     .select();
 
-  console.log(data);
-  console.log(error);
 
   if (error) {
     console.error(error);

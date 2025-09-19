@@ -111,6 +111,9 @@ export class ContentState {
   lastClickTime = $state(0);
   lastClickedVideo = $state<Video | null>(null);
 
+  lastDropdownOpenTime = $state(0);
+
+
   // Track context menu state to prevent race conditions
   private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
 
@@ -224,8 +227,11 @@ export class ContentState {
       return;
     }
 
-    // Handle dropdown interactions
-    if (this.isDropdownMenuOpen && this.shouldCloseDropdowns(target)) {
+    console.log(this.isDropdownMenuOpen)
+    // Handle dropdown interactions - but not if a dropdown was just opened
+    if (this.isDropdownMenuOpen &&
+      Date.now() - this.lastDropdownOpenTime > 250 && // grace period
+      this.shouldCloseDropdowns(target)) {
       this.closeAllDropdowns();
       return;
     }
@@ -1068,12 +1074,6 @@ export class ContentState {
     sectionId: string = DEFAULT_SECTION_ID
   ): ContentSelectVariant | null {
     return this.isDrawerOpenForSection(sectionId) ? this.drawerVariant : null;
-  }
-
-  // Keep this method for API compatibility but make it delegate to the global handler
-  setupClickOutsideListener(sectionId: string = DEFAULT_SECTION_ID): () => void {
-    // The global handler now manages everything
-    return () => { }; // No-op, but maintains API compatibility
   }
 }
 

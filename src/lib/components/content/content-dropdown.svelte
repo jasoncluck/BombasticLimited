@@ -298,6 +298,8 @@
         frozenOperationVideos = determineOperationVideos();
         contentState.openDropdownId = dropdownId;
         contentState.isDropdownMenuOpen = true;
+        // Add this line
+        contentState.lastDropdownOpenTime = Date.now();
       }
     }}
     onOpenChangeComplete={(isOpen) => {
@@ -316,7 +318,10 @@
           {...props}
           variant="ghost"
           onclick={(e) => {
-            if (variant === 'list-items' && videos.length > 0) {
+            if (
+              (variant === 'list-items' || variant === 'item') &&
+              videos.length > 0
+            ) {
               contentState.selectedVideosBySection[sectionId] = [videos[0]];
             }
             e.stopPropagation();
