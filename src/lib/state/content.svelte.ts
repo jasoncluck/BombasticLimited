@@ -240,15 +240,16 @@ export class ContentState {
     const isClickingOnContextMenu =
       target.closest('[data-slot="context-menu-item"]') ||
       target.closest('[role="menu"][data-radix-context-menu-content]') ||
-      target.closest('[data-radix-context-menu-content]');
+      target.closest('[data-radix-context-menu-content]') ||
+      // Add these selectors to catch SubTrigger and SubContent interactions
+      target.closest('[data-radix-context-menu-sub-trigger]') ||
+      target.closest('[data-radix-context-menu-sub-content]');
 
     return !isClickingOnContextMenu;
   }
 
   private shouldCloseDropdowns(target: HTMLElement): boolean {
     const isClickingOnDropdown =
-      target.closest('[data-testid="content-dropdown-trigger"]') ||
-      target.closest('[data-testid="content-dropdown-content"]') ||
       target.closest('[data-radix-dropdown-menu-trigger]') ||
       target.closest('[data-radix-dropdown-menu-content]') ||
       target.closest('[role="menu"]');
@@ -265,11 +266,13 @@ export class ContentState {
       this.openContextMenuSection || // Context menu is open  
       this.isDrawerOpenForAnySection() || // Drawer is open
       // Clicking on dropdown/menu elements
-      target.closest('[data-testid="content-dropdown-trigger"]') ||
-      target.closest('[data-testid="content-dropdown-content"]') ||
       target.closest('[data-radix-dropdown-menu-trigger]') ||
       target.closest('[data-radix-dropdown-menu-content]') ||
-      target.closest('[role="menu"]')
+      target.closest('[role="menu"]') ||
+      // Add context menu selectors to prevent clearing selections
+      target.closest('[data-radix-context-menu-sub-trigger]') ||
+      target.closest('[data-radix-context-menu-sub-content]') ||
+      target.closest('[data-radix-context-menu-content]')
     );
   }
 
@@ -297,13 +300,13 @@ export class ContentState {
       this.contextMenuOutsideCleanup();
     }
 
-    // Single consolidated listener
-    document.addEventListener('click', this.globalClickHandler, { capture: true });
+    // Use bubble phase (default) instead of capture phase to allow event.stopPropagation() to work
+    document.addEventListener('click', this.globalClickHandler);
     document.addEventListener('contextmenu', this.handleGlobalContextMenu, { capture: true });
 
     // Store cleanup function
     const cleanup = (): void => {
-      document.removeEventListener('click', this.globalClickHandler, { capture: true });
+      document.removeEventListener('click', this.globalClickHandler);
       document.removeEventListener('contextmenu', this.handleGlobalContextMenu, { capture: true });
     };
 
@@ -312,10 +315,26 @@ export class ContentState {
   }
 
   private handleGlobalContextMenu = (event: MouseEvent): void => {
+    // Only handle if a context menu is already open
     if (!this.openContextMenuSection) return;
 
     const target = event.target as HTMLElement;
-    if (this.shouldCloseContextMenu(target)) {
+
+    // Check if the right-click is inside a context menu
+    const isClickingOnContextMenu =
+      target.closest('[data-slot="context-menu-item"]') ||
+      target.closest('[role="menu"][data-radix-context-menu-content]') ||
+      target.closest('[data-radix-context-menu-content]') ||
+      target.closest('[data-radix-context-menu-sub-trigger]') ||
+      target.closest('[data-radix-context-menu-sub-content]');
+
+    // Check if clicking on a video element (which should open a new context menu)
+    const isClickingOnVideo = target.closest('[data-video-id]') ||
+      target.closest('[data-testid="content-item"]') ||
+      target.closest('[data-testid*="video"]');
+
+    // If clicking outside both context menu and videos, close the context menu
+    if (!isClickingOnContextMenu && !isClickingOnVideo) {
       event.preventDefault();
       this.openContextMenuSection = null;
       if (this.contextMenuCloseScheduled) {
@@ -323,6 +342,8 @@ export class ContentState {
         this.contextMenuCloseScheduled = null;
       }
     }
+    // If clicking on a video element, let the video's context menu handler take over
+    // (don't prevent the event, let it bubble to the video's oncontextmenu handler)
   };
 
   // Clean up interval when instance is destroyed
