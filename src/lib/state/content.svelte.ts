@@ -697,28 +697,6 @@ export class ContentState {
         // No navigation timeout - only double-click navigates
       }
     } else {
-      // Check if context menu is open in any section - use direct property check for reliability
-      if (this.openContextMenuSection !== null) {
-        // Prevent default behavior and stop propagation IMMEDIATELY
-        if ('preventDefault' in event) {
-          event.preventDefault();
-        }
-        if ('stopPropagation' in event) {
-          event.stopPropagation();
-        }
-
-        // Close the context menu by clearing the open section
-        this.openContextMenuSection = null;
-
-        // Clear selections from ALL sections, not just the current one
-        this.clearAllSections();
-
-        // Set the clicked video as the new hovered video for the current section
-        this.hoveredVideosBySection[sectionId] = video;
-
-        // Return early to prevent any other click handling
-        return;
-      }
 
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
