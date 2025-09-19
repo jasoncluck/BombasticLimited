@@ -31,7 +31,7 @@
 
   // Initialize all state
   const pageState = setPageState();
-  const contentState = setContentState(pageState);
+  const contentState = setContentState();
   const mediaQueryState = setMediaQueryState();
   const sidebarState = setSidebarState();
   const navigationState = setNavigationState();

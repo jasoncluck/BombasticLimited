@@ -417,6 +417,7 @@
           <ContentDropdown
             videos={[video]}
             variant="list-items"
+            {playlist}
             {sectionId}
             {supabase}
             {session}

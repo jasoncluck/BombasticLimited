@@ -256,6 +256,7 @@
 
   {#if session && hasAvailableActions && frozenOperationVideos.length > 0}
     <ContextMenu.Content
+      onCloseAutoFocus={(e) => e.preventDefault()}
       data-testid="content-context-menu-content"
       class="max-h-64 overflow-visible outline-none {mediaQueryState.isTouchDevice &&
         'hidden'} transition-opacity duration-75"

@@ -119,21 +119,6 @@
   // This will be set by individual content components
   const currentPlaylist = $derived(playlistState.currentPlaylist);
 
-  let contentRef = $state<HTMLDivElement>();
-  let clickOutsideCleanup: (() => void) | null = null;
-
-  onMount(() => {
-    // Cleanup function for when component unmounts
-    return () => {
-      if (clickOutsideCleanup) {
-        clickOutsideCleanup();
-        clickOutsideCleanup = null;
-      }
-      // Reset the section state when component unmounts
-      contentState.resetState();
-    };
-  });
-
   // Handle navigation - reset all relevant state
   onNavigate(() => {
     // Reset the section state completely when navigating
@@ -195,11 +180,7 @@
       {session}
       {form}
     >
-      <div
-        bind:this={contentRef}
-        {...restProps}
-        class="flex flex-col gap-5 overflow-x-clip"
-      >
+      <div {...restProps} class="flex flex-col gap-5 overflow-x-clip">
         <!-- User preference for larger screens (sm and above) -->
         {#if userProfile?.content_display === 'TABLE' || !mediaQueryState.isSm}
           <ContentTable

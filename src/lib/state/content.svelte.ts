@@ -77,8 +77,6 @@ export interface Session {
 }
 
 export class ContentState {
-  // Page state dependency
-  pageState: PageState;
 
   // Carousel state for snapshots
   carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
@@ -130,8 +128,7 @@ export class ContentState {
   private clickOutsideCleanup: (() => void) | null = null;
   private contextMenuOutsideCleanup: (() => void) | null = null;
 
-  constructor(pageState: PageState) {
-    this.pageState = pageState;
+  constructor() {
     this.startDropdownValidation();
     this.setupGlobalClickHandling(); // Use consolidated setup
   }
@@ -304,7 +301,7 @@ export class ContentState {
 
   // Consolidated setup method - replaces both old setup methods
   public setupGlobalClickHandling(): () => void {
-    if (typeof document === 'undefined') return () => {};
+    if (typeof document === 'undefined') return () => { };
 
     // Remove old listeners if they exist
     if (this.clickOutsideCleanup) {
@@ -1094,10 +1091,9 @@ export class ContentState {
 const DEFAULT_KEY = '$_content_state';
 
 export function setContentState(
-  pageState: PageState,
   key = DEFAULT_KEY
 ): ContentState {
-  const contentState = new ContentState(pageState);
+  const contentState = new ContentState();
   return setContext(key, contentState);
 }
 

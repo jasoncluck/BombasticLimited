@@ -77,22 +77,24 @@
 
   const isPlaylistOwner = $derived(session?.user.id === playlist?.created_by);
 
-  // Updated isFollowingPlaylist to include playlists created by the user
-  const isFollowingPlaylist = $derived(
-    playlist &&
-      session?.user.id &&
-      variant === 'header' &&
-      // User is following the playlist OR user created the playlist
-      (sidebarState
-        .getFollowedPlaylists(session)
-        .some((fp) => fp.id === playlist.id) ||
-        playlist.created_by === session.user.id)
-  );
+  // NOTE: Likely can be removed, leaving for now just in case
+  // // Updated isFollowingPlaylist to include playlists created by the user
+  // const isFollowingPlaylist = $derived(
+  //   playlist &&
+  //     session?.user.id &&
+  //     variant === 'header' &&
+  //     // User is following the playlist OR user created the playlist
+  //     (sidebarState
+  //       .getFollowedPlaylists(session)
+  //       .some((fp) => fp.id === playlist.id) ||
+  //       playlist.created_by === session.user.id)
+  // );
 
   // Get selected and hovered videos for this section
   let selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
   );
+  console.log(playlist);
 
   let hoveredVideo = $derived(contentState.hoveredVideosBySection[sectionId]);
 
@@ -298,11 +300,7 @@
         frozenOperationVideos = determineOperationVideos();
         contentState.openDropdownId = dropdownId;
         contentState.isDropdownMenuOpen = true;
-        // Add this line
         contentState.lastDropdownOpenTime = Date.now();
-      } else if (!isOpen && variant !== 'header') {
-        contentState.selectedVideosBySection[sectionId] = [];
-        contentState.hoveredVideosBySection[sectionId] = null;
       }
     }}
     onOpenChangeComplete={(isOpen) => {
