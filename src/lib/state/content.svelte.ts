@@ -228,14 +228,14 @@ export class ContentState {
     }
 
     // Handle dropdown interactions - but not if a dropdown was just opened
-    if (
-      this.isDropdownMenuOpen &&
-      Date.now() - this.lastDropdownOpenTime > 250 && // grace period
-      this.shouldCloseDropdowns(target)
-    ) {
-      this.closeAllDropdowns();
-      return;
-    }
+    // if (
+    //   this.isDropdownMenuOpen &&
+    //   Date.now() - this.lastDropdownOpenTime > 250 && // grace period
+    //   this.shouldCloseDropdowns(target)
+    // ) {
+    //   this.closeAllDropdowns();
+    //   return;
+    // }
 
     // Handle selection clearing last
     if (this.shouldClearSelections(event, target)) {

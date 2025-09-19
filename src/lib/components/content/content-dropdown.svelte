@@ -300,6 +300,9 @@
         contentState.isDropdownMenuOpen = true;
         // Add this line
         contentState.lastDropdownOpenTime = Date.now();
+      } else {
+        contentState.selectedVideosBySection[sectionId] = [];
+        contentState.hoveredVideosBySection[sectionId] = null;
       }
     }}
     onOpenChangeComplete={(isOpen) => {
