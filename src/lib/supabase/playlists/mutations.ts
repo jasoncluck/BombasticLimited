@@ -1,6 +1,5 @@
-import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '../database.types';
-import type { CropArea } from 'svelte-easy-crop';
 import { invalidate } from '$app/navigation';
 import {
   type SortKey,
