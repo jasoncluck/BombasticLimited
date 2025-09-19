@@ -123,10 +123,6 @@
   let clickOutsideCleanup: (() => void) | null = null;
 
   onMount(() => {
-    if (contentRef) {
-      clickOutsideCleanup = contentState.setupClickOutsideListener(sectionId);
-    }
-
     // Cleanup function for when component unmounts
     return () => {
       if (clickOutsideCleanup) {

@@ -163,7 +163,6 @@ export async function deleteVideosFromPlaylist({
     })
     .select();
 
-
   if (error) {
     console.error(error);
     invalidate('supabase:db:playlists');

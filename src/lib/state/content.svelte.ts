@@ -1,3 +1,5 @@
+/* eslint-disable svelte/prefer-svelte-reactivity */
+
 import type { Video } from '$lib/supabase/videos';
 import type { Playlist } from '$lib/supabase/playlists';
 import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
@@ -113,11 +115,9 @@ export class ContentState {
 
   lastDropdownOpenTime = $state(0);
 
-
   // Track context menu state to prevent race conditions
   private contextMenuCloseScheduled = $state<NodeJS.Timeout | null>(null);
 
-  // Track pending video operations (like timestamp saves)
   pendingVideoOperations = $state<
     Set<Promise<{ error?: PostgrestError | null }>>
   >(new Set());
@@ -227,11 +227,12 @@ export class ContentState {
       return;
     }
 
-    console.log(this.isDropdownMenuOpen)
     // Handle dropdown interactions - but not if a dropdown was just opened
-    if (this.isDropdownMenuOpen &&
+    if (
+      this.isDropdownMenuOpen &&
       Date.now() - this.lastDropdownOpenTime > 250 && // grace period
-      this.shouldCloseDropdowns(target)) {
+      this.shouldCloseDropdowns(target)
+    ) {
       this.closeAllDropdowns();
       return;
     }
@@ -1088,7 +1089,6 @@ export class ContentState {
   ): ContentSelectVariant | null {
     return this.isDrawerOpenForSection(sectionId) ? this.drawerVariant : null;
   }
-
 }
 
 const DEFAULT_KEY = '$_content_state';
