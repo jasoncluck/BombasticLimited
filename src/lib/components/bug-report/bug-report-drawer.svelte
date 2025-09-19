@@ -255,7 +255,7 @@
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Drawer.Content
-    class="bg-background drawer flex flex-col"
+    class="bg-background drawer min-h-70vh flex flex-col"
     onInteractOutside={(e) => e.preventDefault()}
   >
     <div class="flex-shrink-0 p-4 pb-0">
@@ -425,33 +425,33 @@
           </div>
         </form>
       </div>
-    </div>
 
-    <!-- Fixed footer area outside scrollable content -->
-    <div class="bg-background border-t p-4 pt-2">
-      <div class="flex flex-col gap-2">
-        <Button
-          type="submit"
-          onclick={handleSubmit}
-          class="drawer-button-footer"
-          disabled={isSubmitting}
-        >
-          {#if isSubmitting}
-            <Loader class="mr-2 h-4 w-4 animate-spin" />
-            Submitting...
-          {:else}
-            Submit Report
-          {/if}
-        </Button>
-        <Button
-          type="button"
-          variant="outline"
-          class="drawer-button-footer"
-          onclick={() => (open = false)}
-          disabled={isSubmitting}
-        >
-          Cancel
-        </Button>
+      <!-- Fixed footer area outside scrollable content -->
+      <div class="bg-background shrink-0 border-t p-4 pt-2">
+        <div class="flex flex-col gap-2">
+          <Button
+            type="submit"
+            onclick={handleSubmit}
+            class="drawer-button-footer"
+            disabled={isSubmitting}
+          >
+            {#if isSubmitting}
+              <Loader class="mr-2 h-4 w-4 animate-spin" />
+              Submitting...
+            {:else}
+              Submit Report
+            {/if}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            class="drawer-button-footer"
+            onclick={() => (open = false)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+        </div>
       </div>
     </div>
   </Drawer.Content>
