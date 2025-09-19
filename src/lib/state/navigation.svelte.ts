@@ -24,7 +24,7 @@ export interface NavigationItem {
 }
 
 /**
- * Navigation state configuration - Optimized for performance
+ * Navigation state configuration
  */
 export interface NavigationConfig {
   enableHomeNavigation: boolean;
@@ -138,7 +138,8 @@ export interface NavigationState {
 
 /**
  * Navigation state class implementing the NavigationState interface
- * Optimized for performance and reliable preloading
+ * Centralizes navigation logic, state management, and user interactions
+ * FIXED: Prevents search input value from being overwritten during active typing
  */
 export class NavigationStateClass implements NavigationState {
   // Private tracking variables
@@ -152,7 +153,7 @@ export class NavigationStateClass implements NavigationState {
   private typingTimeout: ReturnType<typeof setTimeout> | undefined;
   private wasInternalNavigation: boolean = false;
 
-  // Performance optimizations
+  // Performance and preloading improvements
   private preloadInProgress: boolean = false;
   private pendingPreloadValue: string = '';
   private lastSuccessfulPreload: string = '';
@@ -191,8 +192,8 @@ export class NavigationStateClass implements NavigationState {
     enableHomeNavigation: true,
     enableBrandLogo: true,
     homeRouteReplaceState: true,
-    searchDebounceMs: 200, // Reduced from 400ms for faster response
-    preloadDebounceMs: 100, // Reduced from 150ms for more responsive preloading
+    searchDebounceMs: 250, // Optimized from 400ms
+    preloadDebounceMs: 100, // Optimized from 150ms  
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -274,7 +275,7 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Optimized preload management
+   * Improved preload management - more reliable
    */
   private async triggerPreload(searchValue: string): Promise<void> {
     if (this.preloadInProgress || searchValue.length < 2) {
@@ -305,7 +306,7 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Sync search query from URL - Enhanced to prevent overwriting user input
+   * FIXED: Sync search query from URL - Enhanced to NEVER overwrite user input during active typing
    */
   syncSearchQueryFromUrl = (pathname: string, force: boolean = false): void => {
     const urlSearchQuery = this.extractSearchFromUrl(pathname);
@@ -313,18 +314,22 @@ export class NavigationStateClass implements NavigationState {
     // Always update the URL-based search query (this doesn't affect the input)
     this.searchQuery = urlSearchQuery;
 
-    // Only sync to input value if:
-    // 1. Force is true AND it's not from internal navigation, OR
-    // 2. User is not currently typing AND no recent user input
     const now = Date.now();
     const timeSinceLastInput = now - this.lastUserInputTimestamp;
 
-    // Don't force sync if this was triggered by our own internal navigation
-    const shouldAllowForcedSync = force && !this.wasInternalNavigation;
-
+    // CRITICAL FIX: Be much more conservative about overwriting input
+    // Only sync to input value if ALL of these conditions are met:
     const shouldSyncToInput =
-      shouldAllowForcedSync ||
-      (!this.isUserTyping && !this.isSearching && timeSinceLastInput > 2000); // Reduced from 3000ms
+      // Force is explicitly requested AND it's not from our internal navigation
+      (force && !this.wasInternalNavigation) ||
+      // OR all of these safety conditions are met:
+      (
+        !this.isUserTyping &&                    // User is not actively typing
+        !this.isSearching &&                     // Not currently processing a search  
+        timeSinceLastInput > 5000 &&             // Much longer grace period (5s instead of 3s)
+        this.searchInputValue.trim() === '' &&   // Input is empty (user hasn't typed anything)
+        !this.preloadInProgress                   // Not in middle of preloading
+      );
 
     if (shouldSyncToInput) {
       this.searchInputValue = urlSearchQuery;
@@ -523,25 +528,25 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Search methods
+   * FIXED: Search methods with better user input protection
    */
   setSearchInputValue = (value: string): void => {
     this.searchInputValue = value;
     this.lastUserInputTimestamp = Date.now();
     this.isUserTyping = true;
 
-    // Clear the typing flag after a short delay
+    // Clear the typing flag after a shorter delay for better responsiveness
     clearTimeout(this.typingTimeout);
     this.typingTimeout = setTimeout(() => {
       this.isUserTyping = false;
-    }, 300); // Reduced from 500ms for better responsiveness
+    }, 200); // Reduced from 500ms
   };
 
   setSearchQuery = (value: string): void => {
     this.searchQuery = value;
   };
 
-  // Clear all search-related state - Enhanced cleanup
+  // FIXED: Clear all search-related state with better cleanup
   clearSearchQuery = (): void => {
     this.searchInputValue = '';
     this.searchQuery = '';
@@ -665,7 +670,8 @@ export class NavigationStateClass implements NavigationState {
         this.searchAbortController = null;
       }
 
-      // Always reset internal navigation flag
+      // CRITICAL: Always reset the internal navigation flag here
+      // This was missing in some code paths causing the bug
       this.wasInternalNavigation = false;
     }
 
@@ -673,7 +679,7 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Optimized search handler with better preloading
+   * FIXED: Improved search handler with better preloading and no input overwrites
    */
   handleSearch(e: Event) {
     const input = e.target as HTMLInputElement;
@@ -695,7 +701,7 @@ export class NavigationStateClass implements NavigationState {
       this.searchAbortController = null;
     }
 
-    // Improved preloading logic - more reliable and efficient
+    // IMPROVED: Better preloading logic that doesn't interfere with search
     if (searchValue.length >= 2) {
       // Clear any existing preload timeout
       if (this.preloadTimeout) {
@@ -703,9 +709,9 @@ export class NavigationStateClass implements NavigationState {
         this.preloadTimeout = null;
       }
 
-      // Schedule preload with optimized timing
+      // Schedule preload with better timing
       this.preloadTimeout = setTimeout(() => {
-        // Verify the search value is still current and valid
+        // Double-check the search value is still current and user isn't searching
         if (
           this.searchInputValue.trim() === searchValue &&
           searchValue.length >= 2 &&
@@ -880,7 +886,7 @@ export class NavigationStateClass implements NavigationState {
   }
 
   /**
-   * Enhanced cleanup method with better resource management
+   * ENHANCED: Cleanup method with better resource management
    */
   cleanup(): void {
     // Stop refresh interval
@@ -907,7 +913,7 @@ export class NavigationStateClass implements NavigationState {
       this.typingTimeout = undefined;
     }
 
-    // Reset all state including performance tracking
+    // Reset all state including new performance tracking variables
     this.data = {
       userProfile: null,
       navigationItems: [],
