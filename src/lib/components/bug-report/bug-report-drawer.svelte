@@ -255,7 +255,7 @@
   onOpenChange={(newOpen) => (newOpen === false ? false : (open = newOpen))}
 >
   <Drawer.Content
-    class="bg-background drawer flex flex-col overscroll-y-contain"
+    class="bg-background drawer flex min-h-[100%] flex-col overscroll-y-contain"
     onInteractOutside={(e) => e.preventDefault()}
   >
     <div class="flex-shrink-0 p-4 pb-0">
