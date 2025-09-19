@@ -257,13 +257,18 @@ export class ContentState {
     return !isClickingOnDropdown;
   }
 
-  private shouldClearSelections(event: MouseEvent, target: HTMLElement): boolean {
+  private shouldClearSelections(
+    event: MouseEvent,
+    target: HTMLElement
+  ): boolean {
     // Don't clear selections if any of these conditions are true:
     return !(
       this.dragContentType || // User is dragging
-      event.shiftKey || event.ctrlKey || event.metaKey || // Modifier keys held
+      event.shiftKey ||
+      event.ctrlKey ||
+      event.metaKey || // Modifier keys held
       this.isDropdownMenuOpen || // Dropdown is open
-      this.openContextMenuSection || // Context menu is open  
+      this.openContextMenuSection || // Context menu is open
       this.isDrawerOpenForAnySection() || // Drawer is open
       // Clicking on dropdown/menu elements
       target.closest('[data-radix-dropdown-menu-trigger]') ||
@@ -283,14 +288,16 @@ export class ContentState {
       const hoveredVideo = this.hoveredVideosBySection[sectionId];
 
       if (selectedVideos.length > 0) {
-        this.selectedVideosBySection[sectionId] = hoveredVideo ? [hoveredVideo] : [];
+        this.selectedVideosBySection[sectionId] = hoveredVideo
+          ? [hoveredVideo]
+          : [];
       }
     }
   }
 
   // Consolidated setup method - replaces both old setup methods
   public setupGlobalClickHandling(): () => void {
-    if (typeof document === 'undefined') return () => { };
+    if (typeof document === 'undefined') return () => {};
 
     // Remove old listeners if they exist
     if (this.clickOutsideCleanup) {
@@ -302,12 +309,18 @@ export class ContentState {
 
     // Use bubble phase (default) instead of capture phase to allow event.stopPropagation() to work
     document.addEventListener('click', this.globalClickHandler);
-    document.addEventListener('contextmenu', this.handleGlobalContextMenu, { capture: true });
+    document.addEventListener('contextmenu', this.handleGlobalContextMenu, {
+      capture: true,
+    });
 
     // Store cleanup function
     const cleanup = (): void => {
       document.removeEventListener('click', this.globalClickHandler);
-      document.removeEventListener('contextmenu', this.handleGlobalContextMenu, { capture: true });
+      document.removeEventListener(
+        'contextmenu',
+        this.handleGlobalContextMenu,
+        { capture: true }
+      );
     };
 
     this.clickOutsideCleanup = cleanup;
@@ -329,7 +342,8 @@ export class ContentState {
       target.closest('[data-radix-context-menu-sub-content]');
 
     // Check if clicking on a video element (which should open a new context menu)
-    const isClickingOnVideo = target.closest('[data-video-id]') ||
+    const isClickingOnVideo =
+      target.closest('[data-video-id]') ||
       target.closest('[data-testid="content-item"]') ||
       target.closest('[data-testid*="video"]');
 
@@ -697,7 +711,6 @@ export class ContentState {
         // No navigation timeout - only double-click navigates
       }
     } else {
-
       // Single-click behavior - no selection, just navigate immediately
       // Only navigate for non-modifier clicks
       if (!event.shiftKey && !event.ctrlKey && !event.metaKey) {
@@ -1071,9 +1084,11 @@ export class ContentState {
   }
 
   // Keep this method for API compatibility but make it delegate to the global handler
-  setupClickOutsideListener(sectionId: string = DEFAULT_SECTION_ID): () => void {
+  setupClickOutsideListener(
+    sectionId: string = DEFAULT_SECTION_ID
+  ): () => void {
     // The global handler now manages everything
-    return () => { }; // No-op, but maintains API compatibility
+    return () => {}; // No-op, but maintains API compatibility
   }
 }
 

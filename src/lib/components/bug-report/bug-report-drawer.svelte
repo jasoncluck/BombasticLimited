@@ -268,7 +268,7 @@
     </div>
 
     <!-- Scrollable content area -->
-    <div class="min-h-0 flex-1 overflow-y-auto">
+    <div class="min-h-0 flex-1 overflow-auto">
       <div class="p-4">
         <!-- Description moved inside scrollable area -->
         <div class="mb-6">
@@ -424,34 +424,34 @@
             {/if}
           </div>
         </form>
+      </div>
+    </div>
 
-        <!-- Action buttons positioned below content but within scrollable area -->
-        <div class="mt-6 border-t pt-4 pb-8">
-          <div class="flex flex-col gap-2">
-            <Button
-              type="submit"
-              onclick={handleSubmit}
-              class="drawer-button-footer"
-              disabled={isSubmitting}
-            >
-              {#if isSubmitting}
-                <Loader class="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              {:else}
-                Submit Report
-              {/if}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              class="drawer-button-footer"
-              onclick={() => (open = false)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-          </div>
-        </div>
+    <!-- Fixed footer area outside scrollable content -->
+    <div class="bg-background flex-shrink-0 border-t p-4 pt-2">
+      <div class="flex flex-col gap-2">
+        <Button
+          type="submit"
+          onclick={handleSubmit}
+          class="drawer-button-footer"
+          disabled={isSubmitting}
+        >
+          {#if isSubmitting}
+            <Loader class="mr-2 h-4 w-4 animate-spin" />
+            Submitting...
+          {:else}
+            Submit Report
+          {/if}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          class="drawer-button-footer"
+          onclick={() => (open = false)}
+          disabled={isSubmitting}
+        >
+          Cancel
+        </Button>
       </div>
     </div>
   </Drawer.Content>
