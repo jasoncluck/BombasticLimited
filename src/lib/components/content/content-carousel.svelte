@@ -100,7 +100,7 @@
   function updateButtonStates() {
     if (api) {
       showPreviousButton = api.canScrollPrev();
-      showNextButton = api.canScrollNext();
+      showNextButton = videos.length > 0;
       contentState.selectedVideosBySection[sectionId] = [];
       contentState.hoveredVideosBySection[sectionId] = null;
       // Update slides in view
