@@ -207,7 +207,7 @@
             ? 'm-4'
             : 'm-2'}"
         >
-          <div class="w-full max-w-[1100px]">
+          <div class="w-full max-w-[1440px]">
             <div
               class="relative mb-20 flex flex-col"
               data-testid="content-pane"
