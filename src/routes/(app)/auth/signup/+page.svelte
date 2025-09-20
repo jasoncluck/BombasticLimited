@@ -22,13 +22,6 @@
 
 <div class="flex flex-row justify-center">
   <div class="mt-24 w-[400px]">
-    <Alert variant="default" class="mb-6">
-      <AlertTriangle class="h-4 w-4" />
-      <AlertDescription>
-        Bombastic is currently in Beta, accounts may be deleted prior to launch.
-      </AlertDescription>
-    </Alert>
-
     <SignupForm data={{ form: data.signupForm, ...data }} />
 
     <div class="flex w-full justify-center">
