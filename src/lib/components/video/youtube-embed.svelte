@@ -538,6 +538,6 @@
   });
 </script>
 
-<AspectRatio ratio={16 / 9}>
+<AspectRatio ratio={16 / 9} class="mx-auto flex w-full max-w-[1100px] ">
   <VideoEmbed divId="player" />
 </AspectRatio>

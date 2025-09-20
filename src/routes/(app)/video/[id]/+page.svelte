@@ -5,6 +5,6 @@
   let { video, contentFilter, supabase, session } = $derived(data);
 </script>
 
-<div class="mx-auto max-w-[1100px]">
+<div class="mx-auto w-full max-w-[1100px]">
   <VideoPlayer {video} {contentFilter} {supabase} {session} />
 </div>
