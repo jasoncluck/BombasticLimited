@@ -178,35 +178,9 @@ BEGIN
       session_result.updated_at,
       true;
   ELSE
-    -- Create new session
-    INSERT INTO public.video_history (
-      user_id, video_id, source, seconds_watched,
-      session_start_time, session_end_time
-    ) VALUES (
-      current_user_id, p_video_id, video_source, 0,
-      session_time, NULL
-    )
-    RETURNING 
-      public.video_history.video_id, 
-      public.video_history.source, 
-      public.video_history.seconds_watched,
-      public.video_history.session_start_time, 
-      public.video_history.session_end_time, 
-      public.video_history.created_at, 
-      public.video_history.updated_at
-    INTO session_result;
-    
-    -- Return new session (no user_id)
-    RETURN QUERY SELECT
-      current_user_id::text || '|' || session_result.video_id || '|' || EXTRACT(EPOCH FROM session_result.session_start_time)::bigint::text,
-      session_result.video_id,
-      session_result.source,
-      session_result.seconds_watched,
-      session_result.session_start_time,
-      session_result.session_end_time,
-      session_result.created_at,
-      session_result.updated_at,
-      false;
+    -- Create new session - DO NOT insert if seconds_watched would be 0
+    -- We'll return an empty result set instead of inserting a 0-second record
+    RETURN;
   END IF;
 END;
 $$;
@@ -233,6 +207,7 @@ DECLARE
   current_user_id uuid;
   current_end_time TIMESTAMP WITH TIME ZONE;
   result_record RECORD;
+  video_source "public"."source";
 BEGIN
   current_user_id := auth.uid();
   current_end_time := COALESCE(p_session_end_time, now());
@@ -241,18 +216,61 @@ BEGIN
     RETURN;
   END IF;
 
-  UPDATE public.video_history vh
-  SET 
-    seconds_watched = p_seconds_watched,
-    session_end_time = current_end_time,
-    updated_at = now()
+  -- Don't save if seconds_watched is 0
+  IF p_seconds_watched = 0 THEN
+    -- Delete existing record if it exists and has 0 seconds
+    DELETE FROM public.video_history vh
+    WHERE vh.user_id = current_user_id 
+      AND vh.video_id = p_video_id
+      AND vh.session_start_time = p_session_start_time
+      AND vh.seconds_watched = 0;
+    RETURN;
+  END IF;
+
+  -- Check if record exists
+  SELECT 1 FROM public.video_history vh
   WHERE vh.user_id = current_user_id 
     AND vh.video_id = p_video_id
     AND vh.session_start_time = p_session_start_time
-  RETURNING 
-    vh.video_id, vh.source, vh.seconds_watched,
-    vh.session_start_time, vh.session_end_time, vh.created_at, vh.updated_at
-  INTO result_record;
+  LIMIT 1;
+
+  IF NOT FOUND THEN
+    -- Get video source for new record
+    SELECT v.source INTO video_source
+    FROM public.videos v
+    WHERE v.id = p_video_id;
+    
+    IF video_source IS NULL THEN
+      RETURN;
+    END IF;
+
+    -- Insert new record since seconds_watched > 0
+    INSERT INTO public.video_history (
+      user_id, video_id, source, seconds_watched,
+      session_start_time, session_end_time
+    ) VALUES (
+      current_user_id, p_video_id, video_source, p_seconds_watched,
+      p_session_start_time, current_end_time
+    )
+    RETURNING 
+      video_id, source, seconds_watched,
+      session_start_time, session_end_time, created_at, updated_at
+    INTO result_record;
+  ELSE
+    -- Update existing record
+    UPDATE public.video_history vh
+    SET 
+      seconds_watched = p_seconds_watched,
+      session_end_time = current_end_time,
+      updated_at = now()
+    WHERE vh.user_id = current_user_id 
+      AND vh.video_id = p_video_id
+      AND vh.session_start_time = p_session_start_time
+    RETURNING 
+      vh.video_id, vh.source, vh.seconds_watched,
+      vh.session_start_time, vh.session_end_time, vh.created_at, vh.updated_at
+    INTO result_record;
+  END IF;
 
   RETURN QUERY SELECT
     current_user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
@@ -287,11 +305,26 @@ DECLARE
   current_user_id uuid;
   current_end_time TIMESTAMP WITH TIME ZONE;
   result_record RECORD;
+  calculated_seconds numeric;
 BEGIN
   current_user_id := auth.uid();
   current_end_time := COALESCE(p_session_end_time, now());
   
   IF current_user_id IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Calculate seconds that would be watched
+  SELECT GREATEST(0, FLOOR(EXTRACT(EPOCH FROM (current_end_time - p_session_start_time))))
+  INTO calculated_seconds;
+
+  -- Don't save if calculated seconds would be 0
+  IF calculated_seconds = 0 THEN
+    -- Delete existing record if it exists and would have 0 seconds
+    DELETE FROM public.video_history vh
+    WHERE vh.user_id = current_user_id 
+      AND vh.video_id = p_video_id
+      AND vh.session_start_time = p_session_start_time;
     RETURN;
   END IF;
 
@@ -306,6 +339,12 @@ BEGIN
     vh.video_id, vh.source, vh.seconds_watched,
     vh.session_start_time, vh.session_end_time, vh.created_at, vh.updated_at
   INTO result_record;
+
+  -- If no record was updated and seconds > 0, it means the record doesn't exist
+  -- In this case, we don't create a new record since the session wasn't started properly
+  IF result_record IS NULL THEN
+    RETURN;
+  END IF;
 
   RETURN QUERY SELECT
     current_user_id::text || '|' || result_record.video_id || '|' || EXTRACT(EPOCH FROM result_record.session_start_time)::bigint::text,
@@ -355,6 +394,7 @@ SET
   JOIN public.videos v ON vh.video_id = v.id
   WHERE vh.user_id = auth.uid()
     AND (p_video_id IS NULL OR vh.video_id = p_video_id)
+    AND vh.seconds_watched > 0  -- Only return records with actual watch time
   ORDER BY vh.session_start_time DESC
   LIMIT p_limit
   OFFSET p_offset;
@@ -388,12 +428,13 @@ SET
   WHERE vh.user_id = auth.uid()
     AND vh.session_start_time >= (now() - INTERVAL '1 day' * p_days_back)
     AND (p_video_id IS NULL OR vh.video_id = p_video_id)
+    AND vh.seconds_watched > 0  -- Only include records with actual watch time
   GROUP BY vh.video_id, v.title
   ORDER BY SUM(vh.seconds_watched) DESC;
 $$;
 
 -- ============================================================================
--- OPTIMIZED AUTO-RECORD TRIGGER (no changes needed)
+-- OPTIMIZED AUTO-RECORD TRIGGER
 -- ============================================================================
 -- Optimized function to auto-record video history
 CREATE OR REPLACE FUNCTION "public"."auto_record_video_history" () RETURNS TRIGGER LANGUAGE plpgsql
@@ -402,6 +443,7 @@ SET
 DECLARE
   video_source "public"."source";
   current_session_start TIMESTAMP WITH TIME ZONE; 
+  calculated_seconds numeric;
 BEGIN
   -- Only proceed for meaningful changes
   IF TG_OP = 'INSERT' OR (TG_OP = 'UPDATE' AND (
@@ -410,6 +452,15 @@ BEGIN
   )) THEN
     
     current_session_start := COALESCE(NEW.watched_at, now());
+    
+    -- Calculate potential seconds watched (this is a rough estimate)
+    -- In a real scenario, you'd have better logic to determine actual watch time
+    calculated_seconds := COALESCE(NEW.video_start_seconds, 0);
+    
+    -- Don't create video history record if calculated seconds is 0
+    IF calculated_seconds = 0 THEN
+      RETURN NEW;
+    END IF;
     
     -- Check if recent record exists
     IF NOT EXISTS (
@@ -422,13 +473,13 @@ BEGIN
       FROM public.videos v
       WHERE v.id = NEW.video_id;
 
-      -- Record video history session (non-blocking)
+      -- Record video history session only if we have meaningful watch time
       BEGIN
         INSERT INTO public.video_history (
           user_id, video_id, source, seconds_watched,
           session_start_time, session_end_time
         ) VALUES (
-          NEW.user_id, NEW.video_id, video_source, 0,
+          NEW.user_id, NEW.video_id, video_source, calculated_seconds,
           current_session_start, NULL
         );
       EXCEPTION
