@@ -9,7 +9,6 @@
   } from '$lib/supabase/videos';
   import type { HTMLAttributes } from 'svelte/elements';
   import { type Playlist } from '$lib/supabase/playlists';
-  import { onMount } from 'svelte';
   import {
     DEFAULT_SECTION_ID,
     getContentState,

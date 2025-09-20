@@ -147,7 +147,7 @@
   <Resizable.Pane
     defaultSize={15}
     minSize={12}
-    maxSize={50}
+    maxSize={30}
     collapsedSize={COLLAPSED_SIDEBAR_SIZE}
     collapsible={true}
     onCollapse={() => sidebarState.setSidebarCollapsed(true)}
@@ -207,7 +207,7 @@
             ? 'm-4'
             : 'm-2'}"
         >
-          <div class="w-full max-w-[1000px] @xl:max-w-[1450px]">
+          <div class="w-full max-w-[1440px]">
             <div
               class="relative mb-20 flex flex-col"
               data-testid="content-pane"

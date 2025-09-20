@@ -20,7 +20,7 @@
   let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 </script>
 
-<div>
+<div class="mx-auto w-full max-w-[1100px]">
   <div class="mb-10">
     {#key video.id}
       <VideoPlayer {video} {contentFilter} {playlist} {supabase} {session} />
