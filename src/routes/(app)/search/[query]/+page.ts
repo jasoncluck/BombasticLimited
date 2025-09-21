@@ -1,30 +1,46 @@
 import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { DEFAULT_PRELOAD_VIDEOS_CAROUSEL } from '$lib/supabase/videos';
+import { preloadImages, extractImageUrls, extractPlaylistImageUrls } from '$lib/utils/image-preloader';
+import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = ({ data }) => {
+export const load: PageLoad = async ({ data }) => {
   if (browser) {
+    const pageLoadingState = getPageLoadingState();
+    pageLoadingState.reset();
+
+    // Collect all image URLs
+    const allImageUrls: string[] = [];
+
+    // Preload playlist images
+    const playlistImageUrls = extractPlaylistImageUrls(data.playlistSearchResults);
+    allImageUrls.push(...playlistImageUrls);
+
+    // Preload video images
     let source: Source;
-
-    for (const playlist of data.playlistSearchResults) {
-      if (playlist.image_url) {
-        new Image().src = playlist.image_url;
-      }
-    }
-
     for (source in data.sourceVideos) {
       const videosToPreload = data.sourceVideos[source].slice(
         0,
         DEFAULT_PRELOAD_VIDEOS_CAROUSEL
       );
-      videosToPreload.forEach((video) => {
-        if (video.image_url) {
-          new Image().src = video.image_url;
-        } else {
-          new Image().src = video.thumbnail_url;
-        }
-      });
+      const videoImageUrls = extractImageUrls(videosToPreload);
+      allImageUrls.push(...videoImageUrls);
+    }
+
+    try {
+      const result = await preloadImages(allImageUrls, 8000); // 8 second timeout
+      
+      if (result.success) {
+        pageLoadingState.complete();
+      } else {
+        // Some images failed but continue anyway
+        console.warn('Some images failed to preload:', result.failed);
+        pageLoadingState.complete();
+      }
+    } catch (error) {
+      console.error('Image preloading error:', error);
+      pageLoadingState.fail('Failed to load images');
     }
   }
 

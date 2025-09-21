@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
   import Content from '$lib/components/content/content.svelte';
+  import PageLoadingWrapper from '$lib/components/layout/page-loading-wrapper.svelte';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import { MAIN_ROUTES } from '$lib/constants/routes.js';
 
@@ -84,58 +85,60 @@
   };
 </script>
 
-<div>
-  {#if session && continueWatchingVideos.length > 0}
-    <div class="mb-8 flex flex-col" data-testid="continue-watching-section">
-      <a
-        href={MAIN_ROUTES.CONTINUE}
-        class={getContentView(mediaQueryState, userProfile) === 'TABLE'
-          ? 'header-link-sticky'
-          : 'header-link'}
-        data-testid="continue-watching-link"
-      >
-        Continue Watching
-      </a>
-
-      <Content
-        videos={continueWatchingVideos}
-        {contentFilter}
-        isContinueVideos={true}
-        bind:carouselState={carouselsState.continueWatching}
-        tilesDisplay="CAROUSEL"
-        sectionId="continue"
-        {userProfile}
-        {supabase}
-        {session}
-      />
-    </div>
-  {/if}
-  <h1 class="header-content mb-4">Latest Videos</h1>
-
-  <div class="mt-4 mb-8 flex flex-col gap-8">
-    {#each sources as source (source)}
-      <div data-testid="source-section" data-source={source}>
+<PageLoadingWrapper loaderMessage="Loading latest videos...">
+  <div>
+    {#if session && continueWatchingVideos.length > 0}
+      <div class="mb-8 flex flex-col" data-testid="continue-watching-section">
         <a
-          href={`/${source}/latest`}
+          href={MAIN_ROUTES.CONTINUE}
           class={getContentView(mediaQueryState, userProfile) === 'TABLE'
             ? 'header-link-sticky'
             : 'header-link'}
-          data-testid="source-link"
-          data-source={source}
+          data-testid="continue-watching-link"
         >
-          {SOURCE_INFO[source].displayName}
+          Continue Watching
         </a>
+
         <Content
-          videos={sourceVideos[source]}
+          videos={continueWatchingVideos}
           {contentFilter}
-          bind:carouselState={carouselsState[source]}
+          isContinueVideos={true}
+          bind:carouselState={carouselsState.continueWatching}
           tilesDisplay="CAROUSEL"
-          sectionId={source}
+          sectionId="continue"
           {userProfile}
           {supabase}
           {session}
         />
       </div>
-    {/each}
+    {/if}
+    <h1 class="header-content mb-4">Latest Videos</h1>
+
+    <div class="mt-4 mb-8 flex flex-col gap-8">
+      {#each sources as source (source)}
+        <div data-testid="source-section" data-source={source}>
+          <a
+            href={`/${source}/latest`}
+            class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+              ? 'header-link-sticky'
+              : 'header-link'}
+            data-testid="source-link"
+            data-source={source}
+          >
+            {SOURCE_INFO[source].displayName}
+          </a>
+          <Content
+            videos={sourceVideos[source]}
+            {contentFilter}
+            bind:carouselState={carouselsState[source]}
+            tilesDisplay="CAROUSEL"
+            sectionId={source}
+            {userProfile}
+            {supabase}
+            {session}
+          />
+        </div>
+      {/each}
+    </div>
   </div>
-</div>
+</PageLoadingWrapper>
