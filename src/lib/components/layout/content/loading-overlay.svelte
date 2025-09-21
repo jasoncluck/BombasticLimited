@@ -9,11 +9,11 @@
 
   const pageLoadingState = getPageLoadingState();
   
-  // Show loading overlay only for searches that are taking too long
-  const showLoadingOverlay = $derived(pageLoadingState.shouldShowLoadingOverlay);
+  // Never show loading overlay - images will load all at once without visual feedback
+  const showLoadingOverlay = $derived(false);
 </script>
 
-<!-- Image Loading Overlay - Only for slow searches -->
+<!-- Image Loading Overlay - Disabled per user request -->
 {#if showLoadingOverlay}
   <div
     class="absolute inset-0 z-[10000] bg-background-lighter"
