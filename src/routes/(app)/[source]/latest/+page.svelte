@@ -3,7 +3,6 @@
   import { SOURCE_INFO } from '$lib/constants/source';
   import ContentHeader from '$lib/components/content/content-header.svelte';
   import Content from '$lib/components/content/content.svelte';
-  import PageLoadingWrapper from '$lib/components/layout/page-loading-wrapper.svelte';
   import { type Video } from '$lib/supabase/videos.js';
   import type { Snapshot } from '@sveltejs/kit';
   import {
@@ -71,39 +70,37 @@
   };
 </script>
 
-<PageLoadingWrapper loaderMessage="Loading latest videos...">
-  <div class="relative">
-    <ContentHeader
-      heading="Latest Videos"
-      subHeading={SOURCE_INFO[source].displayName}
-      subHeadingHref={`/${source}`}
-      {contentFilter}
-      {videos}
-      videosCount={videosCount ?? 0}
-      {currentPage}
-      {userProfile}
-      {source}
-      bind:showFloatingBreadcrumbs
-      breadcrumbs={[
-        {
-          label: SOURCE_INFO[source].displayName,
-          href: `/${page.params.source}`,
-        },
-        {
-          label: 'Latest',
-        },
-      ]}
-      {supabase}
-      {session}
-    />
-    <Content
-      {videos}
-      {videosCount}
-      tilesDisplay="TILES"
-      {userProfile}
-      {contentFilter}
-      {supabase}
-      {session}
-    />
-  </div>
-</PageLoadingWrapper>
+<div class="relative">
+  <ContentHeader
+    heading="Latest Videos"
+    subHeading={SOURCE_INFO[source].displayName}
+    subHeadingHref={`/${source}`}
+    {contentFilter}
+    {videos}
+    videosCount={videosCount ?? 0}
+    {currentPage}
+    {userProfile}
+    {source}
+    bind:showFloatingBreadcrumbs
+    breadcrumbs={[
+      {
+        label: SOURCE_INFO[source].displayName,
+        href: `/${page.params.source}`,
+      },
+      {
+        label: 'Latest',
+      },
+    ]}
+    {supabase}
+    {session}
+  />
+  <Content
+    {videos}
+    {videosCount}
+    tilesDisplay="TILES"
+    {userProfile}
+    {contentFilter}
+    {supabase}
+    {session}
+  />
+</div>

@@ -1,13 +1,9 @@
 import { DEFAULT_PRELOAD_VIDEOS_LIST } from '$lib/supabase/videos';
 import { preloadImages, extractPlaylistImageUrls } from '$lib/utils/image-preloader';
-import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ data }) => {
+export const load: PageLoad = ({ data }) => {
   if (typeof document !== 'undefined') {
-    const pageLoadingState = getPageLoadingState();
-    pageLoadingState.reset();
-
     // Preload first 10 playlists
     const playlistsToPreload = data.playlistResults.slice(
       0,
@@ -16,20 +12,10 @@ export const load: PageLoad = async ({ data }) => {
 
     const imageUrls = extractPlaylistImageUrls(playlistsToPreload);
 
-    try {
-      const result = await preloadImages(imageUrls, 8000); // 8 second timeout
-      
-      if (result.success) {
-        pageLoadingState.complete();
-      } else {
-        // Some images failed but continue anyway
-        console.warn('Some images failed to preload:', result.failed);
-        pageLoadingState.complete();
-      }
-    } catch (error) {
-      console.error('Image preloading error:', error);
-      pageLoadingState.fail('Failed to load images');
-    }
+    // Preload all images in background (fire-and-forget)
+    preloadImages(imageUrls, 8000).catch(error => {
+      console.warn('Background image preloading failed:', error);
+    });
   }
 
   return data;
