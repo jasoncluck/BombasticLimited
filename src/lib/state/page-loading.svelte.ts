@@ -20,6 +20,12 @@ class PageLoadingStateClass {
   #hasCompletedInitialLoad = false;
   #currentPageKey: string | null = null;
   
+  // Delayed loading overlay state for search
+  #showLoadingOverlay = $state(false);
+  #loadingDelayTimeout: ReturnType<typeof setTimeout> | null = null;
+  #searchString: string | null = null;
+  #searchTimestamp: number = 0;
+  
   /**
    * Set loading state
    */
@@ -52,7 +58,7 @@ class PageLoadingStateClass {
   /**
    * Reset all states only if we haven't completed initial load for this page
    */
-  reset(pageKey?: string) {
+  reset(pageKey?: string, searchString?: string, delayMs?: number) {
     // If we have a page key and it's the same as current, and we've completed initial load,
     // don't reset to prevent flashing
     if (pageKey && pageKey === this.#currentPageKey && this.#hasCompletedInitialLoad) {
@@ -65,9 +71,43 @@ class PageLoadingStateClass {
       this.#hasCompletedInitialLoad = false;
     }
     
+    // Clear any existing delay timeout
+    if (this.#loadingDelayTimeout) {
+      clearTimeout(this.#loadingDelayTimeout);
+      this.#loadingDelayTimeout = null;
+    }
+    
     this.isLoading = true;
     this.imagesReady = false;
     this.error = null;
+    this.#showLoadingOverlay = false;
+    
+    // If this is a search and we have a delay, set up delayed overlay
+    if (searchString && delayMs && delayMs > 0) {
+      const currentSearchTimestamp = Date.now();
+      this.#searchString = searchString;
+      this.#searchTimestamp = currentSearchTimestamp;
+      
+      this.#loadingDelayTimeout = setTimeout(() => {
+        // Only show overlay if search string hasn't changed and we're still loading
+        if (this.#searchString === searchString && 
+            this.#searchTimestamp === currentSearchTimestamp && 
+            this.isLoading && 
+            !this.imagesReady) {
+          this.#showLoadingOverlay = true;
+        }
+      }, delayMs);
+    } else {
+      // For non-search pages, show overlay immediately
+      this.#showLoadingOverlay = true;
+    }
+  }
+  
+  /**
+   * Get whether to show loading overlay (with potential delay for search)
+   */
+  get shouldShowLoadingOverlay(): boolean {
+    return this.isLoading && !this.imagesReady && this.#showLoadingOverlay;
   }
   
   /**
@@ -78,6 +118,13 @@ class PageLoadingStateClass {
     this.imagesReady = true;
     this.error = null;
     this.#hasCompletedInitialLoad = true;
+    this.#showLoadingOverlay = false;
+    
+    // Clear any pending delay timeout
+    if (this.#loadingDelayTimeout) {
+      clearTimeout(this.#loadingDelayTimeout);
+      this.#loadingDelayTimeout = null;
+    }
   }
   
   /**
@@ -88,6 +135,13 @@ class PageLoadingStateClass {
     this.imagesReady = false;
     this.error = error;
     this.#hasCompletedInitialLoad = true;
+    this.#showLoadingOverlay = false;
+    
+    // Clear any pending delay timeout
+    if (this.#loadingDelayTimeout) {
+      clearTimeout(this.#loadingDelayTimeout);
+      this.#loadingDelayTimeout = null;
+    }
   }
 }
 
@@ -104,6 +158,7 @@ export function getPageLoadingState(): PageLoadingStateClass {
       isLoading: false,
       imagesReady: true,
       error: null,
+      shouldShowLoadingOverlay: false,
       setLoading: () => {},
       setImagesReady: () => {},
       setError: () => {},

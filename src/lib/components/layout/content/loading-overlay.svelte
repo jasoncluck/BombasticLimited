@@ -9,8 +9,8 @@
 
   const pageLoadingState = getPageLoadingState();
   
-  // Show loading overlay when images are loading
-  const showLoadingOverlay = $derived(pageLoadingState.isLoading && !pageLoadingState.imagesReady);
+  // Show loading overlay when images are loading (with potential delay for search)
+  const showLoadingOverlay = $derived(pageLoadingState.shouldShowLoadingOverlay);
 </script>
 
 <!-- Image Loading Overlay -->

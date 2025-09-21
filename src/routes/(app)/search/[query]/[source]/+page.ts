@@ -4,11 +4,14 @@ import { preloadImages, extractImageUrls } from '$lib/utils/image-preloader';
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ data, url }) => {
+export const load: PageLoad = async ({ data, url, params }) => {
   if (browser) {
     const pageLoadingState = getPageLoadingState();
     const pageKey = url.pathname + url.search; // Include search params for uniqueness
-    pageLoadingState.reset(pageKey);
+    const searchQuery = params.query; // Get the search query from params
+    
+    // Use delayed loading overlay for search pages (500ms delay)
+    pageLoadingState.reset(pageKey, searchQuery, 500);
 
     // Preload images for the first 10 videos
     const videosToPreload = data.videos.slice(0, DEFAULT_PRELOAD_VIDEOS_LIST);
