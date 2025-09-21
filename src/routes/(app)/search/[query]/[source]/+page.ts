@@ -10,8 +10,8 @@ export const load: PageLoad = async ({ data, url, params }) => {
     const pageKey = url.pathname + url.search; // Include search params for uniqueness
     const searchQuery = params.query; // Get the search query from params
     
-    // Use delayed loading overlay for search pages (500ms delay)
-    pageLoadingState.reset(pageKey, searchQuery, 500);
+    // Use delayed loading overlay for search pages (200ms delay, 200ms minimum display)
+    pageLoadingState.reset(pageKey, searchQuery, 200, 200);
 
     // Preload images for the first 10 videos
     const videosToPreload = data.videos.slice(0, DEFAULT_PRELOAD_VIDEOS_LIST);
