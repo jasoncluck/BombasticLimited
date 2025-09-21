@@ -55,14 +55,10 @@ class PageLoadingStateClass {
     }
   }
   
-  // Additional state for minimum display duration
-  #overlayStartTime = 0;
-  #minimumDisplayDuration = 0;
-
   /**
    * Reset all states only if we haven't completed initial load for this page
    */
-  reset(pageKey?: string, searchString?: string, delayMs?: number, minimumDisplayMs?: number) {
+  reset(pageKey?: string, searchString?: string, delayMs?: number) {
     // If we have a page key and it's the same as current, and we've completed initial load,
     // don't reset to prevent flashing
     if (pageKey && pageKey === this.#currentPageKey && this.#hasCompletedInitialLoad) {
@@ -85,8 +81,6 @@ class PageLoadingStateClass {
     this.imagesReady = false;
     this.error = null;
     this.#showLoadingOverlay = false;
-    this.#overlayStartTime = 0;
-    this.#minimumDisplayDuration = minimumDisplayMs || 0;
     
     // If this is a search and we have a delay, set up delayed overlay
     if (searchString && delayMs && delayMs > 0) {
@@ -101,7 +95,6 @@ class PageLoadingStateClass {
             this.isLoading && 
             !this.imagesReady) {
           this.#showLoadingOverlay = true;
-          this.#overlayStartTime = Date.now();
         }
       }, delayMs);
     } else {
@@ -121,30 +114,11 @@ class PageLoadingStateClass {
    * Complete loading (images ready, no error)
    */
   complete() {
-    const now = Date.now();
-    const timeElapsed = this.#overlayStartTime > 0 ? now - this.#overlayStartTime : 0;
-    
-    // If overlay is showing and minimum display duration hasn't passed, delay hiding
-    if (this.#showLoadingOverlay && this.#minimumDisplayDuration > 0 && timeElapsed < this.#minimumDisplayDuration) {
-      const remainingTime = this.#minimumDisplayDuration - timeElapsed;
-      setTimeout(() => {
-        this.#finishComplete();
-      }, remainingTime);
-    } else {
-      this.#finishComplete();
-    }
-  }
-  
-  /**
-   * Internal method to finish completion
-   */
-  #finishComplete() {
     this.isLoading = false;
     this.imagesReady = true;
     this.error = null;
     this.#hasCompletedInitialLoad = true;
     this.#showLoadingOverlay = false;
-    this.#overlayStartTime = 0;
     
     // Clear any pending delay timeout
     if (this.#loadingDelayTimeout) {
@@ -162,7 +136,6 @@ class PageLoadingStateClass {
     this.error = error;
     this.#hasCompletedInitialLoad = true;
     this.#showLoadingOverlay = false;
-    this.#overlayStartTime = 0;
     
     // Clear any pending delay timeout
     if (this.#loadingDelayTimeout) {
