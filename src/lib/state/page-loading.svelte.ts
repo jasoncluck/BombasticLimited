@@ -16,6 +16,10 @@ class PageLoadingStateClass {
   imagesReady = $state(false);
   error = $state<string | null>(null);
   
+  // Track if we've completed loading for the current page to prevent resets
+  #hasCompletedInitialLoad = false;
+  #currentPageKey: string | null = null;
+  
   /**
    * Set loading state
    */
@@ -46,9 +50,21 @@ class PageLoadingStateClass {
   }
   
   /**
-   * Reset all states
+   * Reset all states only if we haven't completed initial load for this page
    */
-  reset() {
+  reset(pageKey?: string) {
+    // If we have a page key and it's the same as current, and we've completed initial load,
+    // don't reset to prevent flashing
+    if (pageKey && pageKey === this.#currentPageKey && this.#hasCompletedInitialLoad) {
+      return;
+    }
+    
+    // If it's a new page, update the page key and allow reset
+    if (pageKey && pageKey !== this.#currentPageKey) {
+      this.#currentPageKey = pageKey;
+      this.#hasCompletedInitialLoad = false;
+    }
+    
     this.isLoading = true;
     this.imagesReady = false;
     this.error = null;
@@ -61,6 +77,7 @@ class PageLoadingStateClass {
     this.isLoading = false;
     this.imagesReady = true;
     this.error = null;
+    this.#hasCompletedInitialLoad = true;
   }
   
   /**
@@ -70,6 +87,7 @@ class PageLoadingStateClass {
     this.isLoading = false;
     this.imagesReady = false;
     this.error = error;
+    this.#hasCompletedInitialLoad = true;
   }
 }
 
@@ -92,7 +110,7 @@ export function getPageLoadingState(): PageLoadingStateClass {
       reset: () => {},
       complete: () => {},
       fail: () => {},
-    } as PageLoadingStateClass;
+    } as unknown as PageLoadingStateClass;
   }
   
   if (!pageLoadingState) {

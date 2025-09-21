@@ -4,10 +4,11 @@ import { preloadImages, extractImageUrls } from '$lib/utils/image-preloader';
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ data }) => {
+export const load: PageLoad = async ({ data, url }) => {
   if (browser) {
     const pageLoadingState = getPageLoadingState();
-    pageLoadingState.reset();
+    const pageKey = url.pathname + url.search; // Include search params for uniqueness
+    pageLoadingState.reset(pageKey);
 
     // Preload images for the first 10 videos
     const videosToPreload = data.videos.slice(0, DEFAULT_PRELOAD_VIDEOS_LIST);

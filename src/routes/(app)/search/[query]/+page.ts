@@ -5,10 +5,11 @@ import { preloadImages, extractImageUrls, extractPlaylistImageUrls } from '$lib/
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ data }) => {
+export const load: PageLoad = async ({ data, url }) => {
   if (browser) {
     const pageLoadingState = getPageLoadingState();
-    pageLoadingState.reset();
+    const pageKey = url.pathname + url.search; // Include search params for uniqueness
+    pageLoadingState.reset(pageKey);
 
     // Collect all image URLs
     const allImageUrls: string[] = [];

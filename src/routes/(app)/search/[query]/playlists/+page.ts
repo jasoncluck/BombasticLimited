@@ -3,10 +3,11 @@ import { preloadImages, extractPlaylistImageUrls } from '$lib/utils/image-preloa
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
-export const load: PageLoad = async ({ data }) => {
+export const load: PageLoad = async ({ data, url }) => {
   if (typeof document !== 'undefined') {
     const pageLoadingState = getPageLoadingState();
-    pageLoadingState.reset();
+    const pageKey = url.pathname + url.search; // Include search params for uniqueness
+    pageLoadingState.reset(pageKey);
 
     // Preload first 10 playlists
     const playlistsToPreload = data.playlistResults.slice(
