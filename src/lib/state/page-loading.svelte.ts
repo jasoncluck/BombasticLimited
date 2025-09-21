@@ -98,8 +98,8 @@ class PageLoadingStateClass {
         }
       }, delayMs);
     } else {
-      // For non-search pages, show overlay immediately
-      this.#showLoadingOverlay = true;
+      // For non-search pages, don't show overlay
+      this.#showLoadingOverlay = false;
     }
   }
   
