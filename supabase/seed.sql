@@ -84951,11 +84951,6 @@ SELECT pg_catalog.setval('"public"."playlists_custom_seq"', 1004081, true);
 SELECT pg_catalog.setval('"public"."user_video_timestamps_id_seq"', 43, true);
 
 
---
--- Name: hooks_id_seq; Type: SEQUENCE SET; Schema: supabase_functions; Owner: supabase_functions_admin
---
-
-SELECT pg_catalog.setval('"supabase_functions"."hooks_id_seq"', 2060, true);
 
 
 --
