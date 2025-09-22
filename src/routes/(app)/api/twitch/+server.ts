@@ -35,18 +35,19 @@ let lastStreamCheck = 0;
 
 // Configuration that adapts to dev vs production
 // Optimized for webhook-enhanced mode with less frequent backup polling
-// Production timeout is constrained by Vercel's 60-second function timeout limit
+// Production timeout is more aggressive to prevent Vercel timeouts
 const STREAM_CHECK_INTERVAL = dev ? 30000 : 600000; // 30 seconds in dev, 10 minutes in production (backup only)
-const API_TIMEOUT = 15000; // 15 second timeout for API calls
-const MAX_SSE_DURATION = dev ? 120000 : 25000; // 25 seconds in production (under 30s timeout)
-const SSE_ITERATION_DELAY = dev ? 5000 : 5000; // Keep 5 seconds for more frequent updates
+const API_TIMEOUT = 10000; // Reduced to 10 seconds for faster failures
+const MAX_SSE_DURATION = dev ? 120000 : 40000; // 2 minutes in dev, 40 seconds in production (well under Vercel's 60s timeout)
+const SSE_ITERATION_DELAY = dev ? 5000 : 8000; // 5 seconds in dev, 8 seconds in production (fit 5 iterations in 40s)
+const GRACEFUL_SHUTDOWN_BUFFER = 5000; // 5 seconds buffer for cleanup
 
 if (dev || process.env.NODE_ENV !== 'production') {
   console.log('🔧 SSE Configuration (Webhook-Enhanced Mode):');
   console.log(`  - Stream check interval (backup): ${STREAM_CHECK_INTERVAL}ms`);
   console.log(`  - SSE iteration delay: ${SSE_ITERATION_DELAY}ms`);
   console.log(
-    `  - Max SSE duration: ${MAX_SSE_DURATION}ms ${!dev ? '(Vercel 60s timeout limit)' : ''}`
+    `  - Max SSE duration: ${MAX_SSE_DURATION}ms ${!dev ? '(Vercel timeout prevention)' : ''}`
   );
   console.log(
     `  - Primary updates via webhooks: ${!dev ? 'YES' : 'MIXED (dev)'}`
@@ -54,6 +55,8 @@ if (dev || process.env.NODE_ENV !== 'production') {
   console.log(
     `  - Estimated iterations per connection: ~${Math.floor(MAX_SSE_DURATION / SSE_ITERATION_DELAY)}`
   );
+  console.log(`  - API timeout: ${API_TIMEOUT}ms`);
+  console.log(`  - Graceful shutdown buffer: ${GRACEFUL_SHUTDOWN_BUFFER}ms`);
 }
 
 /**
@@ -77,7 +80,7 @@ async function updateStreamStatus(): Promise<void> {
       console.log('🔍 SSE: Backup stream status check for:', twitchIds);
     }
 
-    // Fetch stream status for all sources with timeout
+    // Fetch stream status for all sources with reduced timeout
     const streamStatuses = await withTimeout(
       getMultipleStreamStatus(twitchIds),
       API_TIMEOUT
@@ -136,9 +139,11 @@ async function initializeWebhooksIfNeeded(): Promise<void> {
     const { initializeWebhookState } = await import(
       '$lib/server/twitch-webhooks.js'
     );
-    await initializeWebhookState();
+
+    // Add timeout to webhook initialization to prevent hanging
+    await withTimeout(initializeWebhookState(), 5000);
   } catch (error) {
-    console.warn('Failed to initialize webhook state:', error);
+    console.warn('Failed to initialize webhook state (timeout or error):', error);
   }
 }
 
@@ -187,7 +192,7 @@ async function syncWithWebhookState(): Promise<void> {
   }
 }
 
-// Initialize webhooks on module load (production only)
+// Initialize webhooks on module load (production only) with timeout protection
 if (!dev) {
   initializeWebhooksIfNeeded().catch((error) => {
     console.warn('Failed to initialize webhooks on startup:', error);
@@ -198,6 +203,7 @@ export async function POST() {
   return produce(
     async function start({ emit }) {
       const startTime = Date.now();
+      let iterationCount = 0;
 
       if (dev) {
         console.log(
@@ -249,8 +255,8 @@ export async function POST() {
               }
             );
 
-            // Initial sync with webhook state in production
-            await syncWithWebhookState();
+            // Initial sync with webhook state in production with timeout
+            await withTimeout(syncWithWebhookState(), 3000);
 
             if (dev) {
               console.log(
@@ -312,20 +318,29 @@ export async function POST() {
 
       while (true) {
         try {
-          // Check if we're approaching the timeout limit
+          // Check if we're approaching the timeout limit with buffer for cleanup
           const elapsed = Date.now() - startTime;
-          if (elapsed > MAX_SSE_DURATION) {
+          if (elapsed > (MAX_SSE_DURATION - GRACEFUL_SHUTDOWN_BUFFER)) {
             if (dev) {
               console.log(
-                `SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully`
+                `🕒 SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully after ${iterationCount} iterations`
               );
             }
             break;
           }
 
-          // Sync with webhook state (primary source of truth) in production
+          iterationCount++;
+
+          // Sync with webhook state (primary source of truth) in production with timeout
           if (!dev) {
-            await syncWithWebhookState();
+            try {
+              await withTimeout(syncWithWebhookState(), 2000);
+            } catch (syncError) {
+              if (dev) {
+                console.log('Webhook sync timeout/error:', syncError);
+              }
+              // Continue without breaking the connection
+            }
           }
 
           // Prepare the data to send
@@ -356,7 +371,7 @@ export async function POST() {
             }
           }
 
-          // Run backup polling (more frequent in dev since no webhooks)
+          // Run backup polling with more aggressive timeout handling
           const pollingInterval = dev
             ? SSE_ITERATION_DELAY
             : STREAM_CHECK_INTERVAL;
@@ -369,12 +384,21 @@ export async function POST() {
             } catch (error) {
               if (dev) {
                 console.log(
-                  'Polling failed:',
+                  'Polling failed (continuing):',
                   error instanceof Error ? error.message : 'Unknown error'
                 );
               }
-              // Don't break on polling failures
+              // Don't break on polling failures, but log them
             }
+          }
+
+          // Check again if we should exit before waiting
+          const elapsedAfterWork = Date.now() - startTime;
+          if (elapsedAfterWork > (MAX_SSE_DURATION - GRACEFUL_SHUTDOWN_BUFFER)) {
+            if (dev) {
+              console.log(`🕒 SSE: Time budget exhausted, exiting after ${iterationCount} iterations`);
+            }
+            break;
           }
 
           // Wait before next iteration with appropriate delay
@@ -398,13 +422,24 @@ export async function POST() {
 
       // Clean up webhook subscription
       if (webhookUnsubscribe) {
-        webhookUnsubscribe();
+        try {
+          webhookUnsubscribe();
+        } catch (cleanupError) {
+          console.warn('Error during webhook cleanup:', cleanupError);
+        }
+      }
+
+      const totalElapsed = Date.now() - startTime;
+      if (dev) {
+        console.log(
+          `🏁 SSE: Connection ended after ${totalElapsed}ms (${iterationCount} iterations)`
+        );
       }
     },
     {
       stop() {
         if (dev) {
-          console.log('Stopping Twitch stream monitoring');
+          console.log('🛑 SSE: Stopping Twitch stream monitoring');
         }
       },
     }
