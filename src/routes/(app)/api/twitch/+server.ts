@@ -38,8 +38,8 @@ let lastStreamCheck = 0;
 // Production timeout is constrained by Vercel's 60-second function timeout limit
 const STREAM_CHECK_INTERVAL = dev ? 30000 : 600000; // 30 seconds in dev, 10 minutes in production (backup only)
 const API_TIMEOUT = 15000; // 15 second timeout for API calls
-const MAX_SSE_DURATION = dev ? 120000 : 50000; // 2 minutes in dev, 50 seconds in production (under Vercel's 60s timeout)
-const SSE_ITERATION_DELAY = dev ? 5000 : 10000; // 5 seconds in dev, 10 seconds in production (fit more iterations in 50s)
+const MAX_SSE_DURATION = dev ? 120000 : 25000; // 25 seconds in production (under 30s timeout)
+const SSE_ITERATION_DELAY = dev ? 5000 : 5000; // Keep 5 seconds for more frequent updates
 
 if (dev || process.env.NODE_ENV !== 'production') {
   console.log('🔧 SSE Configuration (Webhook-Enhanced Mode):');
