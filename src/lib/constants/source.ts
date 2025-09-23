@@ -79,8 +79,8 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     youtubeUrl: 'https://www.youtube.com/@Nextlander',
     highlightedPlaylists: [
       {
-        name: 'NXL Highlights',
-        youtubeId: 'PL8GKXV8flVOZkcetVtA7l9Z0SVIIIvUQ_',
+        name: "Patron's Choice Streams",
+        youtubeId: 'PL8GKXV8flVOZHp20zbwR6mWXdjVyKdsDD',
       },
       {
         name: "Talkin' Over Things",
