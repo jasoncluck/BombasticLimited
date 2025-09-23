@@ -86,9 +86,6 @@ vi.mock('$lib/state/streaming.svelte', () => ({
   },
 }));
 
-vi.mock('sveltekit-sse', () => ({
-  source: vi.fn(),
-}));
 
 // Mock the SimpleImagePreloader class entirely to avoid browser dependencies
 vi.mock('$lib/utils/image-preloader', () => ({

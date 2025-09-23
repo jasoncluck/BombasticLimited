@@ -1,148 +1,75 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Source } from '$lib/constants/source.js';
 
-// Mock the twitch poller
-const mockAddStreamChangeListener = vi.fn();
+// Mock the twitch poller  
 const mockGetActiveStreams = vi.fn();
 
 vi.mock('$lib/server/twitch-poller.js', () => ({
-  addStreamChangeListener: mockAddStreamChangeListener,
   getActiveStreams: mockGetActiveStreams,
 }));
 
 describe('/api/twitch endpoint', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAddStreamChangeListener.mockClear().mockReturnValue(vi.fn());
     mockGetActiveStreams.mockClear().mockReturnValue([]);
   });
 
-  it('should export POST function', async () => {
+  it('should export GET function', async () => {
     const module = await import('../+server.js');
 
-    expect(typeof module.POST).toBe('function');
+    expect(typeof module.GET).toBe('function');
   });
 
-  it('should export POST function', async () => {
-    const module = await import('../+server.js');
+  it('should return JSON response with correct headers', async () => {
+    const { GET } = await import('../+server.js');
 
-    expect(typeof module.POST).toBe('function');
-  });
-
-  it('should return SSE response with correct headers', async () => {
-    const { POST } = await import('../+server.js');
-
-    const response = await POST();
+    const response = await GET();
 
     expect(response).toBeInstanceOf(Response);
-    expect(response.headers.get('content-type')).toBe('text/event-stream');
-    expect(response.headers.get('cache-control')).toBe('no-cache');
-    expect(response.headers.get('connection')).toBe('keep-alive');
+    expect(response.headers.get('content-type')).toBe('application/json');
+    expect(response.headers.get('cache-control')).toBe('no-cache, must-revalidate');
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
   });
 
-  it('should return a ReadableStream', async () => {
-    const { POST } = await import('../+server.js');
-
-    const response = await POST();
-
-    expect(response.body).toBeDefined();
-    expect(response.body).toBeInstanceOf(ReadableStream);
-  });
-
   it('should use the twitch poller for stream state', async () => {
-    const { POST } = await import('../+server.js');
+    const { GET } = await import('../+server.js');
 
-    await POST();
+    await GET();
 
     expect(mockGetActiveStreams).toHaveBeenCalled();
-    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(
-      expect.any(Function)
-    );
   });
 
-  it('should send initial stream state', async () => {
+  it('should return current stream state as JSON', async () => {
     mockGetActiveStreams.mockReturnValue(['nextlander', 'remap']);
 
-    const { POST } = await import('../+server.js');
-    const response = await POST();
+    const { GET } = await import('../+server.js');
+    const response = await GET();
 
-    // Read the initial chunk from the stream
-    const reader = response.body!.getReader();
-    const decoder = new TextDecoder();
-
-    const { value } = await reader.read();
-    const text = decoder.decode(value);
-
-    expect(text).toContain('event: streamingSubscriptions');
-    expect(text).toContain('data: ["nextlander","remap"]');
-
-    reader.releaseLock();
+    const data = await response.json();
+    expect(data).toEqual(['nextlander', 'remap']);
   });
 
-  it('should handle stream changes from poller', async () => {
-    let changeCallback: any = null;
-
-    mockAddStreamChangeListener.mockImplementation((callback: any) => {
-      changeCallback = callback;
-      return vi.fn(); // cleanup function
+  it('should return empty array on error', async () => {
+    mockGetActiveStreams.mockImplementation(() => {
+      throw new Error('Simulated error');
     });
 
-    const { POST } = await import('../+server.js');
-    const response = await POST();
+    const { GET } = await import('../+server.js');
+    const response = await GET();
 
-    expect(changeCallback).toBeDefined();
-
-    // Simulate a stream change
-    if (changeCallback) {
-      changeCallback(['giantbomb']);
-    }
-
-    // The stream should have been updated (we can't easily test the output here
-    // without more complex stream mocking, but we can verify the callback was set up)
-    expect(mockAddStreamChangeListener).toHaveBeenCalledWith(
-      expect.any(Function)
-    );
+    expect(response.status).toBe(500);
+    const data = await response.json();
+    expect(data).toEqual([]);
   });
 
-  it('should have proper cleanup when stream is cancelled', async () => {
-    const mockCleanup = vi.fn();
+  it('should handle empty stream list', async () => {
+    mockGetActiveStreams.mockReturnValue([]);
 
-    mockAddStreamChangeListener.mockReturnValue(mockCleanup);
+    const { GET } = await import('../+server.js');
+    const response = await GET();
 
-    const { POST } = await import('../+server.js');
-    const response = await POST();
-
-    const reader = response.body!.getReader();
-
-    // Cancel the stream to trigger cleanup
-    await reader.cancel('test cancellation');
-
-    expect(mockCleanup).toHaveBeenCalled();
-  });
-
-  it('should support POST for backward compatibility', async () => {
-    const { POST } = await import('../+server.js');
-
-    const response = await POST();
-
-    expect(response).toBeInstanceOf(Response);
-    expect(response.headers.get('content-type')).toBe('text/event-stream');
-  });
-
-  it('should close connection before timeout in production mode', async () => {
-    // Mock production environment
-    vi.doMock('$app/environment', () => ({
-      dev: false,
-    }));
-
-    const { POST } = await import('../+server.js');
-    const response = await POST();
-
-    expect(response).toBeInstanceOf(Response);
-    expect(response.body).toBeInstanceOf(ReadableStream);
-
-    // The connection should have timeout management built-in
-    // This is difficult to test without advancing timers, but we verify the structure
+    const data = await response.json();
+    expect(data).toEqual([]);
+    expect(response.status).toBe(200);
   });
 });
