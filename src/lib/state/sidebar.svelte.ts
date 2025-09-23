@@ -204,10 +204,11 @@ export class SidebarStateClass implements SidebarState {
   // Streaming sources state
   streamingSources = $state<Source[]>([]);
 
-  // SSE connection state - REPLACED WITH POLLING
+  // Polling connection state  
   #pollingInterval: number | null = null;
   #pollingActive = $state(false);
   #isInitialStreamLoad = $state(true);
+  #tabVisibilityUnsubscribe: (() => void) | null = null;
   
   // Polling configuration  
   #pollingIntervalMs = 3 * 60 * 1000; // 3 minutes as requested
@@ -475,6 +476,7 @@ export class SidebarStateClass implements SidebarState {
 
   /**
    * Start polling for streaming updates every 3 minutes
+   * Respects tab visibility - pauses when tab is hidden, resumes when visible
    */
   startSSEConnection(): void {
     if (!browser || this.#pollingInterval) {
@@ -484,15 +486,58 @@ export class SidebarStateClass implements SidebarState {
     this.#isInitialStreamLoad = true;
     this.#pollingActive = true;
     
-    console.log('🔄 Starting Twitch stream polling (3 minute intervals)...');
+    console.log('🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...');
     
-    // Do initial poll immediately
+    // Subscribe to tab visibility changes
+    this.#tabVisibilityUnsubscribe = tabVisibility.subscribe((state) => {
+      if (state.isVisible && this.#pollingActive) {
+        // Tab became visible - resume polling if not already running
+        if (!this.#pollingInterval) {
+          this.resumePolling();
+        }
+      } else if (state.isHidden) {
+        // Tab became hidden - pause polling
+        this.pausePolling();
+      }
+    });
+    
+    // Start polling immediately if tab is visible
+    if (tabVisibility.isVisible) {
+      this.resumePolling();
+    }
+  }
+
+  /**
+   * Resume polling (internal method)
+   */
+  private resumePolling(): void {
+    if (this.#pollingInterval) {
+      return; // Already running
+    }
+
+    console.log('▶️ Resuming Twitch stream polling (tab visible)');
+    
+    // Do initial poll immediately when resuming
     this.pollStreamingStatus();
     
     // Set up polling interval
     this.#pollingInterval = window.setInterval(() => {
       this.pollStreamingStatus();
     }, this.#pollingIntervalMs);
+  }
+
+  /**
+   * Pause polling (internal method)
+   */
+  private pausePolling(): void {
+    if (!this.#pollingInterval) {
+      return; // Already paused
+    }
+
+    console.log('⏸️ Pausing Twitch stream polling (tab hidden)');
+    
+    clearInterval(this.#pollingInterval);
+    this.#pollingInterval = null;
   }
 
   /**
@@ -548,6 +593,12 @@ export class SidebarStateClass implements SidebarState {
     if (this.#pollingInterval) {
       clearInterval(this.#pollingInterval);
       this.#pollingInterval = null;
+    }
+    
+    // Clean up tab visibility subscription
+    if (this.#tabVisibilityUnsubscribe) {
+      this.#tabVisibilityUnsubscribe();
+      this.#tabVisibilityUnsubscribe = null;
     }
     
     this.#pollingActive = false;
