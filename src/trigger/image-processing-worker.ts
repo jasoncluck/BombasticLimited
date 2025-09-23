@@ -10,13 +10,11 @@ import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-// const supabaseUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
-// const supabaseServiceRoleKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
 
 // Supabase client setup
 const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!);
 
-// Configuration constants - reduced from 60s to 25s to fit within task timeout
+// Configuration constants
 const PROCESSING_TIMEOUT = 25000;
 
 interface WebhookPayload {
@@ -57,32 +55,26 @@ interface ProcessedImages {
   webp: Buffer;
   avif: Buffer;
 }
-// Generate storage paths for optimized images
+
+// Generate storage paths for optimized images (without timestamp for consistency)
 function generateStoragePaths(
   entityType: string,
   entityId: string
 ): StoragePaths {
-  const timestamp = Date.now();
-
-  // Timestamps for cache-busting previous entries
-
   if (entityType === 'video') {
-    const basePath = `thumbnails/${entityId}/thumbnail-${entityId}-${timestamp}`;
     return {
-      webpPath: `${basePath}.webp`,
-      avifPath: `${basePath}.avif`,
+      webpPath: `thumbnails/${entityId}/thumbnail-${entityId}.webp`,
+      avifPath: `thumbnails/${entityId}/thumbnail-${entityId}.avif`,
     };
   } else if (entityType === 'playlist') {
-    const basePath = `playlists/${entityId}/playlist-${entityId}-${timestamp}`;
     return {
-      webpPath: `${basePath}.webp`,
-      avifPath: `${basePath}.avif`,
+      webpPath: `playlists/${entityId}/playlist-${entityId}.webp`,
+      avifPath: `playlists/${entityId}/playlist-${entityId}.avif`,
     };
   } else {
-    const basePath = `${entityType}s/${entityId}/${entityType}-${entityId}-${timestamp}`;
     return {
-      webpPath: `${basePath}.webp`,
-      avifPath: `${basePath}.avif`,
+      webpPath: `${entityType}s/${entityId}/${entityType}-${entityId}.webp`,
+      avifPath: `${entityType}s/${entityId}/${entityType}-${entityId}.avif`,
     };
   }
 }
@@ -353,7 +345,7 @@ async function uploadToStorage(
     .upload(webpPath, webpBuffer, {
       contentType: 'image/webp',
       cacheControl: '31536000',
-      upsert: true,
+      upsert: true, // This will overwrite existing files
     });
 
   if (webpError) {
@@ -366,7 +358,7 @@ async function uploadToStorage(
     .upload(avifPath, avifBuffer, {
       contentType: 'image/avif',
       cacheControl: '31536000',
-      upsert: true,
+      upsert: true, // This will overwrite existing files
     });
 
   if (avifError) {
@@ -376,33 +368,98 @@ async function uploadToStorage(
   return { webpPath, avifPath };
 }
 
-// Delete existing optimized images
+// Comprehensive cleanup of all existing optimized images
 async function deleteExistingOptimizedImages(
   entityType: string,
   entityId: string
 ): Promise<void> {
-  if (entityType === 'playlist') {
-    const { data: playlist, error } = await supabase
-      .from('playlists')
-      .select('image_webp_url, image_avif_url')
-      .eq('id', entityId)
-      .maybeSingle();
+  try {
+    console.log(`Starting cleanup for ${entityType} ${entityId}`);
 
-    if (error || !playlist) {
+    // Get all files in the entity's folder
+    const folderPrefix =
+      entityType === 'video'
+        ? `thumbnails/${entityId}/`
+        : `playlists/${entityId}/`;
+
+    const { data: existingFiles, error: listError } = await supabase.storage
+      .from(IMAGES_BUCKET)
+      .list(folderPrefix.replace(/\/$/, ''), {
+        limit: 100, // Adjust if you expect more files
+      });
+
+    if (listError) {
+      console.warn(`Failed to list existing files: ${listError.message}`);
       return;
     }
 
-    const filesToDelete: string[] = [];
-    if (playlist?.image_webp_url) {
-      filesToDelete.push(playlist.image_webp_url);
-    }
-    if (playlist?.image_avif_url) {
-      filesToDelete.push(playlist.image_avif_url);
+    if (!existingFiles || existingFiles.length === 0) {
+      console.log(`No existing files found in ${folderPrefix}`);
+      return;
     }
 
-    if (filesToDelete.length > 0) {
-      await supabase.storage.from(IMAGES_BUCKET).remove(filesToDelete);
+    // Filter for image files (webp, avif, and any other formats)
+    const imageFiles = existingFiles.filter((file) => {
+      const name = file.name.toLowerCase();
+      return (
+        name.endsWith('.webp') ||
+        name.endsWith('.avif') ||
+        name.endsWith('.jpg') ||
+        name.endsWith('.png')
+      );
+    });
+
+    if (imageFiles.length === 0) {
+      console.log(`No image files found to delete in ${folderPrefix}`);
+      return;
     }
+
+    // Create full paths for deletion
+    const filesToDelete = imageFiles.map(
+      (file) => `${folderPrefix}${file.name}`
+    );
+
+    console.log(`Deleting ${filesToDelete.length} files:`, filesToDelete);
+
+    const { error: deleteError } = await supabase.storage
+      .from(IMAGES_BUCKET)
+      .remove(filesToDelete);
+
+    if (deleteError) {
+      console.warn(`Failed to delete some files: ${deleteError.message}`);
+    } else {
+      console.log(`Successfully deleted ${filesToDelete.length} files`);
+    }
+
+    // Also clean up database references for playlists
+    if (entityType === 'playlist') {
+      const { error: dbError } = await supabase
+        .from('playlists')
+        .update({
+          image_webp_url: null,
+          image_avif_url: null,
+        })
+        .eq('id', entityId);
+
+      if (dbError) {
+        console.warn(`Failed to clear database references: ${dbError.message}`);
+      }
+    } else if (entityType === 'video') {
+      const { error: dbError } = await supabase
+        .from('videos')
+        .update({
+          thumbnail_webp_url: null,
+          thumbnail_avif_url: null,
+        })
+        .eq('id', entityId);
+
+      if (dbError) {
+        console.warn(`Failed to clear database references: ${dbError.message}`);
+      }
+    }
+  } catch (error) {
+    console.error(`Error during cleanup: ${error}`);
+    // Don't throw here - we want to continue with processing even if cleanup fails
   }
 }
 
@@ -447,9 +504,7 @@ async function updateEntityWithProcessedImages(
 // Main image processing task
 export const processImageWebhook = task({
   id: 'process-image-webhook',
-  // Add explicit timeout
   maxDuration: 10 * 60, // 10 minutes
-  // Add retry configuration for OOM errors
   retry: {
     maxAttempts: 3,
     factor: 2,
@@ -457,11 +512,8 @@ export const processImageWebhook = task({
     maxTimeoutInMs: 10000,
     randomize: false,
   },
-
-  // Set a longer timeout for image processing
   run: async (payload: WebhookPayload): Promise<ProcessingResult> => {
     const { type, table, record, old_record, jobId, timestamp } = payload;
-
     const entityType = table === 'playlists' ? 'playlist' : 'video';
 
     console.log(`Starting image processing for ${entityType} ${record.id}`, {
@@ -472,7 +524,7 @@ export const processImageWebhook = task({
       thumbnailUrl: record.thumbnail_url,
     });
 
-    // Early validation - exit before any expensive operations
+    // Early validation
     if (!record.thumbnail_url) {
       console.log(
         `No thumbnail URL for ${entityType} ${record.id}, completing job`
@@ -491,24 +543,19 @@ export const processImageWebhook = task({
           console.warn(`Failed to complete job ${jobId}:`, error);
         }
       }
-      return {
-        processed: false,
-        reason: 'No thumbnail URL provided',
-      };
+      return { processed: false, reason: 'No thumbnail URL provided' };
     }
 
-    // Determine if we need to process based on changes
+    // Determine if we need to process
     let shouldProcess = false;
     let sourceUrl: string | null = null;
 
     if (type === 'INSERT') {
-      // New record with thumbnail_url
       if (record.thumbnail_url) {
         shouldProcess = true;
         sourceUrl = record.thumbnail_url;
       }
     } else if (type === 'UPDATE') {
-      // Check if thumbnail_url or image_properties changed
       const thumbnailChanged =
         record.thumbnail_url !== old_record?.thumbnail_url;
       const imagePropertiesChanged =
@@ -545,10 +592,7 @@ export const processImageWebhook = task({
           console.warn(`Failed to complete job ${jobId}:`, error);
         }
       }
-      return {
-        processed: false,
-        reason: 'No changes requiring processing',
-      };
+      return { processed: false, reason: 'No changes requiring processing' };
     }
 
     try {
@@ -556,7 +600,7 @@ export const processImageWebhook = task({
         `Processing ${entityType} ${record.id} with source: ${sourceUrl}`
       );
 
-      // Delete existing optimized images
+      // CRITICAL: Delete ALL existing optimized images first
       console.log(
         `Deleting existing optimized images for ${entityType} ${record.id}`
       );
@@ -579,18 +623,18 @@ export const processImageWebhook = task({
         `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
       );
 
-      // Generate storage paths
+      // Generate storage paths (consistent naming without timestamps)
       const { webpPath, avifPath } = generateStoragePaths(
         entityType,
         record.id
       );
 
-      // Upload to storage
+      // Upload to storage (upsert will overwrite if files exist)
       console.log(`Uploading optimized images for ${entityType} ${record.id}`);
       await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
       console.log(`Uploaded images to storage:`, { webpPath, avifPath });
 
-      // Mark job as completed if jobId provided, otherwise update directly
+      // Complete job or update database
       if (jobId) {
         try {
           console.log(`Completing job ${jobId} with paths:`, {
@@ -624,7 +668,6 @@ export const processImageWebhook = task({
           console.log(`Successfully completed job ${jobId}`);
         } catch (error) {
           console.error(`Failed to complete job ${jobId}:`, error);
-          // Fallback to direct database update
           console.log('Attempting fallback database update...');
           await updateEntityWithProcessedImages(
             entityType,
@@ -635,7 +678,6 @@ export const processImageWebhook = task({
           console.log('Fallback database update completed');
         }
       } else {
-        // No job ID, update directly
         console.log(`No job ID, updating ${entityType} ${record.id} directly`);
         await updateEntityWithProcessedImages(
           entityType,
@@ -661,7 +703,6 @@ export const processImageWebhook = task({
     } catch (error) {
       console.error(`Failed to process ${entityType} ${record.id}:`, error);
 
-      // Mark job as failed if jobId provided
       if (jobId) {
         try {
           const errorMessage =
