@@ -8,14 +8,13 @@ import {
 } from '$lib/utils/dynamic-crop-dimensions';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
-//FIX: Do not commit, just for testing
-// const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-// const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const supabaseUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
-const supabaseServiceRoleKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
+const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// const supabaseUrl = 'https://blrvnfwxtzzbofsdrvwv.supabase.co';
+// const supabaseServiceRoleKey = 'sb_secret_KbOPFiPjUeHUVd0jPTV1Kg_Rndl23de';
 
 // Supabase client setup
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!);
 
 // Configuration constants - reduced from 60s to 25s to fit within task timeout
 const PROCESSING_TIMEOUT = 25000;
@@ -515,7 +514,7 @@ export const processImageWebhook = task({
       const imagePropertiesChanged =
         table === 'playlists' &&
         JSON.stringify(record.image_properties) !==
-          JSON.stringify(old_record?.image_properties);
+        JSON.stringify(old_record?.image_properties);
 
       console.log(`UPDATE: ${entityType} ${record.id}`, {
         thumbnailChanged,

@@ -1,6 +1,10 @@
 import { browser } from '$app/environment';
 import { DEFAULT_PRELOAD_VIDEOS_CAROUSEL } from '$lib/supabase/videos';
-import { preloadImages, extractImageUrls, extractPlaylistImageUrls } from '$lib/utils/image-preloader';
+import {
+  preloadImages,
+  extractImageUrls,
+  extractPlaylistImageUrls,
+} from '$lib/utils/image-preloader';
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
@@ -27,7 +31,9 @@ export const load: PageLoad = async ({ data, url }) => {
         0,
         DEFAULT_PRELOAD_VIDEOS_CAROUSEL
       );
-      const highlightVideoImageUrls = extractImageUrls(highlightVideosToPreload);
+      const highlightVideoImageUrls = extractImageUrls(
+        highlightVideosToPreload
+      );
       allImageUrls.push(...highlightVideoImageUrls);
     }
 
@@ -37,7 +43,7 @@ export const load: PageLoad = async ({ data, url }) => {
 
     try {
       const result = await preloadImages(allImageUrls, 8000); // 8 second timeout
-      
+
       if (result.success) {
         pageLoadingState.complete();
       } else {

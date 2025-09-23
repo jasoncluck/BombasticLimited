@@ -9,7 +9,7 @@ export const load: PageLoad = async ({ data, url, params }) => {
     const pageLoadingState = getPageLoadingState();
     const pageKey = url.pathname + url.search; // Include search params for uniqueness
     const searchQuery = params.query; // Get the search query from params
-    
+
     // Use delayed loading overlay for search pages (500ms delay)
     pageLoadingState.reset(pageKey, searchQuery, 500);
 
@@ -19,7 +19,7 @@ export const load: PageLoad = async ({ data, url, params }) => {
 
     try {
       const result = await preloadImages(imageUrls, 8000); // 8 second timeout
-      
+
       if (result.success) {
         pageLoadingState.complete();
       } else {

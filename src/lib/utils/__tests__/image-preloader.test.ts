@@ -25,7 +25,7 @@ describe('image-preloader', () => {
         onload: null as (() => void) | null,
         onerror: null as (() => void) | null,
       };
-      
+
       (global.Image as any).mockImplementation(() => {
         // Simulate immediate success
         setTimeout(() => {
@@ -47,7 +47,7 @@ describe('image-preloader', () => {
         onload: null as (() => void) | null,
         onerror: null as (() => void) | null,
       };
-      
+
       (global.Image as any).mockImplementation(() => {
         // Simulate immediate error
         setTimeout(() => {
@@ -58,7 +58,9 @@ describe('image-preloader', () => {
         return mockImage;
       });
 
-      await expect(preloadImage('invalid-image.jpg')).rejects.toThrow('Failed to load image: invalid-image.jpg');
+      await expect(preloadImage('invalid-image.jpg')).rejects.toThrow(
+        'Failed to load image: invalid-image.jpg'
+      );
     });
   });
 
@@ -75,11 +77,11 @@ describe('image-preloader', () => {
         onload: null as (() => void) | null,
         onerror: null as (() => void) | null,
       };
-      
+
       (global.Image as any).mockImplementation(() => mockImage);
 
       const result = await preloadImages(['slow-image.jpg'], 50); // 50ms timeout
-      
+
       // Don't trigger onload or onerror - let it timeout
       expect(result.success).toBe(false);
       expect(result.failed).toContain('slow-image.jpg');

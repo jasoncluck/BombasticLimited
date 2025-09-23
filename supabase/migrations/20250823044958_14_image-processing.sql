@@ -646,6 +646,9 @@ BEGIN
           -- Clear any existing optimized URLs since we're processing new content
           NEW.thumbnail_webp_url = NULL;
           NEW.thumbnail_avif_url = NULL;
+          RAISE LOG 'Queued image processing job % for new video %', job_id, NEW.id;
+        ELSE
+          RAISE WARNING 'Failed to queue image processing job for new video %', NEW.id;
         END IF;
       ELSE
         RAISE LOG 'Video % already has optimized images for current config, skipping processing', NEW.id;
@@ -660,8 +663,12 @@ BEGIN
                      
   -- For UPDATE: check if thumbnail_url changed
   ELSIF TG_OP = 'UPDATE' THEN
-    -- Check what changed
-    thumbnail_changed := COALESCE(OLD.thumbnail_url, '') != COALESCE(NEW.thumbnail_url, '');
+    -- Improved change detection using IS DISTINCT FROM
+    thumbnail_changed := (OLD.thumbnail_url IS DISTINCT FROM NEW.thumbnail_url);
+    
+    -- Debug logging to help diagnose issues
+    RAISE LOG 'Video % update detected: thumbnail_changed=%, old_url=%, new_url=%', 
+      NEW.id, thumbnail_changed, OLD.thumbnail_url, NEW.thumbnail_url;
     
     -- Determine if we need processing
     needs_processing := thumbnail_changed;
@@ -680,9 +687,13 @@ BEGIN
           'video', NEW.id, 'thumbnail', NEW.thumbnail_url, NULL, 50
         );
 
-        IF job_id IS NULL THEN
-          -- If job creation failed, reset to completed to avoid stuck state
-          NEW.image_processing_status = 'completed';
+        IF job_id IS NOT NULL THEN
+          RAISE LOG 'Successfully queued image processing job % for video % thumbnail update', job_id, NEW.id;
+        ELSE
+          -- If job creation failed, log the error but don't reset to completed
+          RAISE WARNING 'Failed to queue image processing job for video % thumbnail update', NEW.id;
+          -- Keep status as pending to indicate something needs attention
+          NEW.image_processing_status = 'failed';
         END IF;
       ELSE
         -- No thumbnail_url, clear optimized URLs and mark as completed
@@ -690,10 +701,11 @@ BEGIN
         NEW.thumbnail_avif_url = NULL;
         NEW.image_processing_status = 'completed';
         NEW.image_processing_updated_at = now();
+        RAISE LOG 'Cleared thumbnail data for video % (thumbnail_url removed)', NEW.id;
       END IF;
     ELSE
       -- Nothing relevant changed, don't modify processing status or queue new jobs
-      RAISE LOG 'Video % update detected but no relevant changes (thumbnail)', NEW.id;
+      RAISE LOG 'Video % update detected but no relevant changes (thumbnail unchanged)', NEW.id;
     END IF;
   END IF;
 

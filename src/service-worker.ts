@@ -224,25 +224,32 @@ const createCorsRequest = (originalRequest: Request): Request => {
 };
 
 // Immediate processing check for critical resources
-const shouldProcessImmediately = (request: Request, referrer: string): boolean => {
+const shouldProcessImmediately = (
+  request: Request,
+  referrer: string
+): boolean => {
   const url = new URL(request.url);
 
   // Always process navigation-critical resources immediately
   if (url.origin === sw.location.origin) {
     const pathname = url.pathname;
-    if (pathname.endsWith('.html') ||
+    if (
+      pathname.endsWith('.html') ||
       pathname.endsWith('.css') ||
       pathname.endsWith('.js') ||
       pathname === '/' ||
-      STATIC_ASSETS.includes(pathname)) {
+      STATIC_ASSETS.includes(pathname)
+    ) {
       return true;
     }
   }
 
   // Process images immediately if low activity and same navigation
-  if (shouldCacheAsImage(url) &&
+  if (
+    shouldCacheAsImage(url) &&
     state.activeFetches.size < CACHE_CONFIG.immediateFetchThreshold &&
-    !hasNavigationChanged(referrer)) {
+    !hasNavigationChanged(referrer)
+  ) {
     return true;
   }
 
@@ -294,7 +301,7 @@ const getOrCreateSharedRequest = (request: Request): Promise<Response> => {
       const response = await fetch(corsRequest);
 
       // Resolve all waiting promises with cloned responses
-      resolvers.forEach(resolver => {
+      resolvers.forEach((resolver) => {
         resolver(response.clone());
       });
 
@@ -305,7 +312,7 @@ const getOrCreateSharedRequest = (request: Request): Promise<Response> => {
     } catch (error) {
       // Reject all waiting promises
       const err = error instanceof Error ? error : new Error('Fetch failed');
-      rejecters.forEach(rejecter => {
+      rejecters.forEach((rejecter) => {
         rejecter(err);
       });
 
@@ -338,7 +345,7 @@ const setupGlobalTimeout = (): void => {
       }
     });
 
-    toRemove.forEach(id => {
+    toRemove.forEach((id) => {
       const request = state.pendingRequests.get(id);
       if (request && !request.aborted) {
         request.aborted = true;
@@ -369,9 +376,7 @@ const cleanupStaleRequests = (): void => {
     const request = state.pendingRequests.get(id);
     if (request && !request.aborted) {
       request.aborted = true;
-      request.reject(
-        new Error('Request abandoned due to timeout')
-      );
+      request.reject(new Error('Request abandoned due to timeout'));
       state.pendingRequests.delete(id);
     }
   });
@@ -379,11 +384,16 @@ const cleanupStaleRequests = (): void => {
   // Clean up completed shared requests
   const sharedRequestsToClean: string[] = [];
   state.sharedRequests.forEach((sharedRequest, requestUrl) => {
-    if (sharedRequest.resolvers.length === 0 && sharedRequest.rejecters.length === 0) {
+    if (
+      sharedRequest.resolvers.length === 0 &&
+      sharedRequest.rejecters.length === 0
+    ) {
       sharedRequestsToClean.push(requestUrl);
     }
   });
-  sharedRequestsToClean.forEach(requestUrl => state.sharedRequests.delete(requestUrl));
+  sharedRequestsToClean.forEach((requestUrl) =>
+    state.sharedRequests.delete(requestUrl)
+  );
 };
 
 // Optimized batch processing
@@ -490,11 +500,14 @@ const processBatch = (
           state.pendingRequests.set(retryRequest.id, retryRequest);
 
           // Schedule retry processing with exponential backoff
-          setTimeout(() => {
-            if (state.pendingRequests.has(retryRequest.id)) {
-              processPendingRequests();
-            }
-          }, 100 * (trackedRequest.retryCount + 1));
+          setTimeout(
+            () => {
+              if (state.pendingRequests.has(retryRequest.id)) {
+                processPendingRequests();
+              }
+            },
+            100 * (trackedRequest.retryCount + 1)
+          );
         } else {
           reject(error instanceof Error ? error : new Error('Fetch failed'));
         }
@@ -579,7 +592,7 @@ const cacheResponse = async (
     const cacheRequest = new Request(cacheKey, {
       method: 'GET',
       headers: new Headers({
-        'Accept': request.headers.get('Accept') || 'image/*',
+        Accept: request.headers.get('Accept') || 'image/*',
       }),
     });
     await cache.put(cacheRequest, response);
@@ -589,14 +602,17 @@ const cacheResponse = async (
 };
 
 // Optimized cache retrieval
-const getFromCache = async (request: Request, cacheName: string): Promise<Response | undefined | null> => {
+const getFromCache = async (
+  request: Request,
+  cacheName: string
+): Promise<Response | undefined | null> => {
   try {
     const cache = await caches.open(cacheName);
     const cacheKey = createCacheKey(request);
     const cacheRequest = new Request(cacheKey, {
       method: 'GET',
       headers: new Headers({
-        'Accept': request.headers.get('Accept') || '*/*',
+        Accept: request.headers.get('Accept') || '*/*',
       }),
     });
 
@@ -617,14 +633,16 @@ const cacheImage = async (request: Request): Promise<Response> => {
   const referrer = getReferrerFromRequest(request);
 
   // For low activity or critical requests, fetch immediately
-  if (state.activeFetches.size < CACHE_CONFIG.immediateFetchThreshold ||
-    shouldProcessImmediately(request, referrer)) {
+  if (
+    state.activeFetches.size < CACHE_CONFIG.immediateFetchThreshold ||
+    shouldProcessImmediately(request, referrer)
+  ) {
     try {
       const response = await getOrCreateSharedRequest(request);
 
       if (response.ok && response.status === 200) {
         // Cache asynchronously to avoid blocking
-        cacheResponse(request, response.clone()).catch(() => { });
+        cacheResponse(request, response.clone()).catch(() => {});
       }
 
       return response;

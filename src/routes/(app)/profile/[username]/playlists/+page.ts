@@ -1,5 +1,8 @@
 import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
-import { preloadImages, extractPlaylistImageUrls } from '$lib/utils/image-preloader';
+import {
+  preloadImages,
+  extractPlaylistImageUrls,
+} from '$lib/utils/image-preloader';
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';
 
@@ -19,7 +22,7 @@ export const load: PageLoad = async ({ data, url }) => {
 
     try {
       const result = await preloadImages(imageUrls, 8000); // 8 second timeout
-      
+
       if (result.success) {
         pageLoadingState.complete();
       } else {

@@ -143,7 +143,10 @@ async function initializeWebhooksIfNeeded(): Promise<void> {
     // Add timeout to webhook initialization to prevent hanging
     await withTimeout(initializeWebhookState(), 5000);
   } catch (error) {
-    console.warn('Failed to initialize webhook state (timeout or error):', error);
+    console.warn(
+      'Failed to initialize webhook state (timeout or error):',
+      error
+    );
   }
 }
 
@@ -320,7 +323,7 @@ export async function POST() {
         try {
           // Check if we're approaching the timeout limit with buffer for cleanup
           const elapsed = Date.now() - startTime;
-          if (elapsed > (MAX_SSE_DURATION - GRACEFUL_SHUTDOWN_BUFFER)) {
+          if (elapsed > MAX_SSE_DURATION - GRACEFUL_SHUTDOWN_BUFFER) {
             if (dev) {
               console.log(
                 `🕒 SSE: Approaching timeout limit (${MAX_SSE_DURATION}ms), closing connection gracefully after ${iterationCount} iterations`
@@ -394,9 +397,11 @@ export async function POST() {
 
           // Check again if we should exit before waiting
           const elapsedAfterWork = Date.now() - startTime;
-          if (elapsedAfterWork > (MAX_SSE_DURATION - GRACEFUL_SHUTDOWN_BUFFER)) {
+          if (elapsedAfterWork > MAX_SSE_DURATION - GRACEFUL_SHUTDOWN_BUFFER) {
             if (dev) {
-              console.log(`🕒 SSE: Time budget exhausted, exiting after ${iterationCount} iterations`);
+              console.log(
+                `🕒 SSE: Time budget exhausted, exiting after ${iterationCount} iterations`
+              );
             }
             break;
           }

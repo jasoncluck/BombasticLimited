@@ -16,7 +16,7 @@ export const load: PageLoad = async ({ data, url }) => {
 
     try {
       const result = await preloadImages(imageUrls, 8000); // 8 second timeout
-      
+
       if (result.success) {
         pageLoadingState.complete();
       } else {
