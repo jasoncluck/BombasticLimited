@@ -396,7 +396,6 @@ async function processJob(
 ): Promise<ProcessedJob> {
   const jobContext = `Job ${job.job_id} (${job.entity_type} ${job.entity_id})`;
 
-  // CRITICAL FIX: Reset fresh retry jobs BEFORE attempting to mark as processing
   if (needsFreshRetry && originalStatus) {
     console.log(
       `🆕 ${jobContext}: Performing FRESH RETRY - resetting from ${originalStatus} to pending with attempts=0...`

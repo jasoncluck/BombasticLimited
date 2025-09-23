@@ -36,10 +36,10 @@ let lastStreamCheck = 0;
 // Configuration that adapts to dev vs production
 // Optimized for webhook-enhanced mode with less frequent backup polling
 // Production timeout is more aggressive to prevent Vercel timeouts
-const STREAM_CHECK_INTERVAL = dev ? 30000 : 600000; // 30 seconds in dev, 10 minutes in production (backup only)
+const STREAM_CHECK_INTERVAL = dev ? 30000 : 180000; // 3 minutes backup polling in production
 const API_TIMEOUT = 10000; // Reduced to 10 seconds for faster failures
-const MAX_SSE_DURATION = dev ? 120000 : 40000; // 2 minutes in dev, 40 seconds in production (well under Vercel's 60s timeout)
-const SSE_ITERATION_DELAY = dev ? 5000 : 8000; // 5 seconds in dev, 8 seconds in production (fit 5 iterations in 40s)
+const MAX_SSE_DURATION = dev ? 120000 : 120000; // 2 minutes for both
+const SSE_ITERATION_DELAY = dev ? 5000 : 20000; // 20 seconds in production
 const GRACEFUL_SHUTDOWN_BUFFER = 5000; // 5 seconds buffer for cleanup
 
 if (dev || process.env.NODE_ENV !== 'production') {
