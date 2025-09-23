@@ -8,7 +8,7 @@
   } = $props();
 
   const pageLoadingState = getPageLoadingState();
-  
+
   // Never show loading overlay - images will load all at once without visual feedback
   const showLoadingOverlay = $derived(false);
 </script>
@@ -16,7 +16,7 @@
 <!-- Image Loading Overlay - Disabled per user request -->
 {#if showLoadingOverlay}
   <div
-    class="absolute inset-0 z-[10000] bg-background-lighter"
+    class="bg-background-lighter absolute inset-0 z-[10000]"
     data-testid="image-loading-overlay"
   ></div>
 {/if}

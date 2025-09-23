@@ -13,7 +13,7 @@ export const load: PageLoad = async ({ data, url }) => {
 
     // Collect all image URLs from all sources
     const allImageUrls: string[] = [];
-    
+
     let source: Source;
     for (source in data.sourceVideos) {
       const videosToPreload = data.sourceVideos[source].slice(
@@ -33,7 +33,7 @@ export const load: PageLoad = async ({ data, url }) => {
     // Preload all images and wait for completion
     try {
       const result = await preloadImages(allImageUrls, 8000); // 8 second timeout
-      
+
       if (result.success) {
         pageLoadingState.complete();
       } else {

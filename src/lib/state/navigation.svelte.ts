@@ -193,7 +193,7 @@ export class NavigationStateClass implements NavigationState {
     enableBrandLogo: true,
     homeRouteReplaceState: true,
     searchDebounceMs: 350, // Optimized from 400ms
-    preloadDebounceMs: 100, // Optimized from 150ms  
+    preloadDebounceMs: 100, // Optimized from 150ms
     notificationRefreshIntervalMs: 5 * 60 * 1000, // 5 minutes
   });
 
@@ -323,13 +323,11 @@ export class NavigationStateClass implements NavigationState {
       // Force is explicitly requested AND it's not from our internal navigation
       (force && !this.wasInternalNavigation) ||
       // OR all of these safety conditions are met:
-      (
-        !this.isUserTyping &&                    // User is not actively typing
-        !this.isSearching &&                     // Not currently processing a search  
-        timeSinceLastInput > 5000 &&             // Much longer grace period (5s instead of 3s)
-        this.searchInputValue.trim() === '' &&   // Input is empty (user hasn't typed anything)
-        !this.preloadInProgress                   // Not in middle of preloading
-      );
+      (!this.isUserTyping && // User is not actively typing
+        !this.isSearching && // Not currently processing a search
+        timeSinceLastInput > 5000 && // Much longer grace period (5s instead of 3s)
+        this.searchInputValue.trim() === '' && // Input is empty (user hasn't typed anything)
+        !this.preloadInProgress); // Not in middle of preloading
 
     if (shouldSyncToInput) {
       this.searchInputValue = urlSearchQuery;
@@ -364,7 +362,7 @@ export class NavigationStateClass implements NavigationState {
    */
   initialize = async (): Promise<() => void> => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Load initial data
@@ -386,7 +384,7 @@ export class NavigationStateClass implements NavigationState {
    */
   initializeNonBlocking = (): (() => void) => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Mark as initialized immediately for UI purposes

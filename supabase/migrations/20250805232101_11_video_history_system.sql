@@ -511,6 +511,7 @@ $$;
 
 -- Create trigger
 DROP TRIGGER IF EXISTS "trigger_auto_record_video_history" ON "public"."timestamps";
+
 CREATE TRIGGER "trigger_auto_record_video_history"
 AFTER INSERT
 OR
