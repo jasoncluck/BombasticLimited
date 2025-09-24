@@ -225,7 +225,7 @@
               <a
                 href="/getting-started"
                 class="text-muted-foreground text-xs hover:underline"
-                >Documentation</a
+                >Getting Started</a
               >
               <a
                 href="/privacy"
