@@ -258,7 +258,7 @@ export class SidebarStateClass implements SidebarState {
   private async getActiveStreamsFromSupabase(): Promise<Source[]> {
     const supabase = this.getSupabaseClient();
 
-    const { data: sources, error } = await supabase
+    const { data, error } = await supabase
       .from('active_streams')
       .select('source')
       .eq('is_live', true)
@@ -268,6 +268,8 @@ export class SidebarStateClass implements SidebarState {
       console.error('❌ Failed to fetch active streams from database:', error);
       throw error;
     }
+
+    const sources = data?.map((row: Source) => row.source as Source) || [];
 
     if (dev) {
       console.log('📡 Fetched active streams from Supabase:', sources);
@@ -497,7 +499,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): Promise<() => void> => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Set the preferred image format from server if provided
@@ -529,7 +531,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): (() => void) => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Set the preferred image format from server if provided
@@ -598,9 +600,7 @@ export class SidebarStateClass implements SidebarState {
       return; // Already running
     }
 
-    console.log(
-      '▶️ Resuming Twitch stream polling (tab visible, direct Supabase)'
-    );
+    console.log('▶️ Resuming Twitch stream polling (tab visible, direct Supabase)');
 
     // Do initial poll immediately when resuming
     this.pollStreamingStatus();
@@ -649,10 +649,7 @@ export class SidebarStateClass implements SidebarState {
       this.updateStreamingState(streamingSources);
 
       if (this.#isInitialStreamLoad) {
-        console.log(
-          '📡 Initial streaming status loaded from Supabase:',
-          streamingSources
-        );
+        console.log('📡 Initial streaming status loaded from Supabase:', streamingSources);
         this.#isInitialStreamLoad = false;
       }
     } catch (error) {
