@@ -3,7 +3,7 @@
  * Uses stateless polling with shared state management
  */
 
-import { getMultipleStreamStatus } from '$lib/client/twitch.js';
+import { getMultipleStreamStatus, type StreamStatus } from '$lib/client/twitch.js';
 import { SOURCE_INFO, SOURCES, type Source } from '$lib/constants/source.js';
 import { dev } from '$app/environment';
 
@@ -15,9 +15,8 @@ let pollingTimeout: NodeJS.Timeout | null = null;
 let pollingExplicitlyStarted = false;
 
 // Configuration optimized for serverless
-const POLL_INTERVAL = 60000; // 1 minute
-const MIN_POLL_INTERVAL = 5000; // Minimum 5 seconds between polls
-const SERVERLESS_POLL_INTERVAL = dev ? 120000 : 90000; // Longer intervals in serverless (2 min dev, 1.5 min prod)
+const POLL_INTERVAL = dev ? 10000 : 60000; // 10 seconds in dev, 1 minute in prod
+const MIN_POLL_INTERVAL = 2000; // Minimum 2 seconds between polls
 
 // Event listeners for stream changes
 type StreamChangeListener = (activeStreams: Source[]) => void;
@@ -75,8 +74,13 @@ function triggerPollIfNeeded() {
   // In development mode, poll more aggressively to support test stream simulation
   const effectivePollInterval = dev ? 5000 : POLL_INTERVAL; // 5 seconds in dev, 60 seconds in prod
 
+  if (dev) {
+    console.log(`⏰ Poll check: timeSince=${timeSinceLastPoll}ms, threshold=${effectivePollInterval}ms, listeners=${changeListeners.size}`);
+  }
+
   // If we have listeners and data is stale, poll immediately
   if (changeListeners.size > 0 && timeSinceLastPoll > effectivePollInterval) {
+    console.log('🚀 Triggering immediate poll due to stale data');
     pollStreamStatus();
   }
 
@@ -86,6 +90,7 @@ function triggerPollIfNeeded() {
     dev &&
     timeSinceLastPoll > effectivePollInterval
   ) {
+    console.log('🚀 Triggering dev poll for direct API call');
     pollStreamStatus();
   }
 
@@ -104,16 +109,19 @@ function scheduleNextPoll() {
     clearTimeout(pollingTimeout);
   }
 
-  const interval = dev ? POLL_INTERVAL : SERVERLESS_POLL_INTERVAL;
-
   pollingTimeout = setTimeout(() => {
     pollingTimeout = null;
     // Continue polling if explicitly started or if there are listeners
     if (changeListeners.size > 0 || pollingExplicitlyStarted) {
+      console.log('⏰ Scheduled poll executing...');
       pollStreamStatus();
       scheduleNextPoll(); // Schedule next poll
     }
-  }, interval);
+  }, POLL_INTERVAL);
+
+  if (dev) {
+    console.log(`⏰ Next poll scheduled in ${POLL_INTERVAL}ms`);
+  }
 }
 
 /**
@@ -124,6 +132,7 @@ async function pollStreamStatus(): Promise<void> {
 
   // Prevent excessive polling
   if (now - lastPollTime < MIN_POLL_INTERVAL) {
+    console.log('⚠️ Skipping poll due to rate limiting');
     return;
   }
 
@@ -131,15 +140,20 @@ async function pollStreamStatus(): Promise<void> {
   isPolling = true;
   lastPollTime = now;
 
+  console.log('🔄 Starting stream status poll...');
+
   try {
     // Get all Twitch user IDs from sources
     const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
+    console.log('📋 Polling for user IDs:', twitchIds);
 
     // Fetch stream status for all sources
     const streamStatuses = await getMultipleStreamStatus(twitchIds);
+    console.log('📊 Poll results:', streamStatuses);
 
     // Handle case where API returns undefined/null
     if (!streamStatuses || !Array.isArray(streamStatuses)) {
+      console.warn('⚠️ No stream statuses returned from API');
       return;
     }
 
@@ -153,17 +167,13 @@ async function pollStreamStatus(): Promise<void> {
         (source) => SOURCE_INFO[source].twitchId === status.userId
       );
 
-      if (dev) {
-        console.log(
-          `🔍 Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`
-        );
-      }
+      console.log(
+        `🔍 Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`
+      );
 
       if (sourceName && status.isLive) {
         activeStreams.add(sourceName);
-        if (dev) {
-          console.log(`✅ Added ${sourceName} to active streams`);
-        }
+        console.log(`✅ Added ${sourceName} to active streams`);
       }
     }
 
@@ -173,7 +183,11 @@ async function pollStreamStatus(): Promise<void> {
       [...activeStreams].some((s) => !previouslyActive.has(s)) ||
       [...previouslyActive].some((s) => !activeStreams.has(s));
 
+    console.log(`📈 Stream changes detected: ${hasChanges}`);
+    console.log(`📊 Active streams: [${Array.from(activeStreams).join(', ')}]`);
+
     if (hasChanges) {
+      console.log('🔔 Notifying listeners of stream changes');
       notifyListeners();
     }
   } catch (error) {
@@ -181,6 +195,7 @@ async function pollStreamStatus(): Promise<void> {
   } finally {
     // Reset polling flag
     isPolling = false;
+    console.log('✅ Poll completed');
   }
 }
 
@@ -188,6 +203,7 @@ async function pollStreamStatus(): Promise<void> {
  * Start the background polling service
  */
 export function startPolling(): void {
+  console.log('🚀 Starting explicit polling service');
   pollingExplicitlyStarted = true;
 
   // Initial poll
@@ -201,6 +217,7 @@ export function startPolling(): void {
  * Stop the background polling service
  */
 export function stopPolling(): void {
+  console.log('🛑 Stopping polling service');
   pollingExplicitlyStarted = false;
 
   if (pollingTimeout) {
@@ -253,5 +270,6 @@ if (typeof window === 'undefined' && process.env.NODE_ENV !== 'test' && !dev) {
   dev
 ) {
   // In development, keep the old behavior
+  console.log('🌟 Auto-starting polling in development mode');
   startPolling();
 }

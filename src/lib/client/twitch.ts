@@ -1,8 +1,6 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
-import { ApiClient, } from '@twurple/api';
-
+import { ApiClient } from '@twurple/api';
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
-
 import type { HelixStream } from '@twurple/api';
 import { dev } from '$app/environment';
 
@@ -26,7 +24,7 @@ if (shouldInitialize) {
 }
 
 // Cache for stream status to minimize API calls
-interface StreamStatus {
+export interface StreamStatus {
   userId: string;
   isLive: boolean;
   lastChecked: number;
@@ -34,7 +32,7 @@ interface StreamStatus {
 }
 
 const streamCache = new Map<string, StreamStatus>();
-const CACHE_DURATION = dev ? 5 * 1000 : 30 * 1000; // 5 seconds in dev, 30 seconds in production
+const CACHE_DURATION = dev ? 2 * 1000 : 15 * 1000; // Reduced cache duration for better responsiveness
 const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 
 // Development testing variables - moved to module level for polling system
@@ -50,7 +48,7 @@ if (dev && typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
   );
 }
 
-// Known user IDs for testing
+// Known user IDs for testing - make sure this matches your actual source configuration
 const NEXTLANDER_USER_ID = '689331234'; // You may need to adjust this ID
 
 /**
@@ -94,9 +92,6 @@ export function getTestStreamStatus(userId: string): StreamStatus | null {
     stream: shouldBeLive ? ({} as HelixStream) : undefined,
   };
 
-  // Don't cache test scenarios - return fresh status each time to allow dynamic changes
-  // This ensures the test stream can transition from offline to online to offline
-
   return status;
 }
 
@@ -109,6 +104,9 @@ export async function getStreamStatus(
   // Check for dev mode test override first
   const testStatus = getTestStreamStatus(userId);
   if (testStatus) {
+    if (dev) {
+      console.log(`🎯 Returning test status for ${userId}:`, testStatus);
+    }
     return testStatus;
   }
 
@@ -122,10 +120,14 @@ export async function getStreamStatus(
 
   // Return cached result if still valid
   if (cached && now - cached.lastChecked < CACHE_DURATION) {
+    if (dev) {
+      console.log(`📋 Returning cached status for ${userId}:`, cached);
+    }
     return cached;
   }
 
   try {
+    console.log(`🌐 Fetching fresh stream status for user ${userId}...`);
     const stream = await apiClient.streams.getStreamByUserId(userId);
     const status: StreamStatus = {
       userId,
@@ -135,12 +137,14 @@ export async function getStreamStatus(
     };
 
     streamCache.set(userId, status);
+    console.log(`✅ Fresh status for ${userId}:`, status);
     return status;
   } catch (error) {
     console.error(`Failed to fetch stream status for user ${userId}:`, error);
 
     // Return cached data if available, even if stale
     if (cached) {
+      console.log(`⚠️ Returning stale cached data for ${userId}`);
       return cached;
     }
 
@@ -166,6 +170,7 @@ export async function getMultipleStreamStatus(
     return [];
   }
 
+  console.log(`🔍 Getting stream status for ${userIds.length} users:`, userIds);
   const results: StreamStatus[] = [];
 
   for (let i = 0; i < userIds.length; i++) {
@@ -180,6 +185,7 @@ export async function getMultipleStreamStatus(
     }
   }
 
+  console.log(`📊 Final results:`, results);
   return results;
 }
 

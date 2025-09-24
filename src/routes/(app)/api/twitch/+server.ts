@@ -1,5 +1,5 @@
 import { json } from '@sveltejs/kit';
-import { getActiveStreams } from '$lib/server/twitch-poller.js';
+import { getActiveStreams, getPollerStatus } from '$lib/server/twitch-poller.js';
 import { dev } from '$app/environment';
 
 /**
@@ -15,8 +15,12 @@ export async function GET() {
     // Get current active streams from the poller
     const activeStreams = getActiveStreams();
 
+    // Get poller status for debugging
+    const pollerStatus = getPollerStatus();
+
     if (dev) {
       console.log('📊 Twitch API: Current active streams:', activeStreams);
+      console.log('🔧 Poller status:', pollerStatus);
     }
 
     return json(activeStreams, {
