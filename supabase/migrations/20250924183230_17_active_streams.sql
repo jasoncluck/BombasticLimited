@@ -15,7 +15,9 @@ COMMENT ON COLUMN public.active_streams.last_checked IS 'When the stream status 
 
 -- Create updated_at trigger
 CREATE OR REPLACE FUNCTION public.update_active_streams_updated_at()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER 
+SET
+  search_path = '' AS $$
 BEGIN
     NEW.updated_at = now();
     RETURN NEW;
@@ -59,3 +61,19 @@ CREATE POLICY "Service role can insert" ON public.active_streams
 
 -- Create index for performance
 CREATE INDEX IF NOT EXISTS idx_active_streams_updated_at ON public.active_streams(updated_at DESC);
+
+-- Setup Supabase cron for Twitch stream polling edge function, run every minute
+SELECT
+  cron.schedule (
+    'invoke-poll-twitch-streams-every-minute',
+    '* * * * *', -- every minute
+    $$
+  SELECT net.http_post(
+      url := (SELECT decrypted_secret FROM vault.decrypted_secrets WHERE name = 'project_url') || '/functions/v1/poll-twitch-streams',
+      headers := jsonb_build_object(
+          'Content-Type', 'application/json'
+      ),
+      body := jsonb_build_object('time', now()::text)
+  );
+  $$
+  );
