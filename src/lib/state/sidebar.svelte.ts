@@ -2,12 +2,16 @@ import type { Playlist } from '$lib/supabase/playlists';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import type { Session } from '@supabase/supabase-js';
 import { getContext, setContext } from 'svelte';
-import { browser } from '$app/environment';
+import { browser, dev } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
 import { tabVisibility } from '$lib/utils/tab-visibility';
 import { showToast } from '$lib/state/notifications.svelte';
-// Removed SSE import - now using polling
+import { createClient } from '@supabase/supabase-js';
+import {
+  PUBLIC_SUPABASE_URL,
+  PUBLIC_SUPABASE_ANON_KEY,
+} from '$env/static/public';
 import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
@@ -222,11 +226,54 @@ export class SidebarStateClass implements SidebarState {
     searchDebounceMs: 350,
   });
 
+  // Supabase client (lazy initialized)
+  #supabaseClient: ReturnType<typeof createClient> | null = null;
+
   constructor() {
     // Initialize sidebar state from cookie on construction
     this.loadStateFromCookie();
     // Also initialize sidebar collapsed state from localStorage (from layout pattern)
     this.loadSidebarStateFromLocalStorage();
+  }
+
+  /**
+   * Get or create Supabase client
+   */
+  private getSupabaseClient() {
+    if (!this.#supabaseClient) {
+      // Use local Supabase in development, remote in production
+      const supabaseUrl = dev ? 'http://127.0.0.1:54321' : PUBLIC_SUPABASE_URL;
+      const supabaseKey = dev
+        ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
+        : PUBLIC_SUPABASE_ANON_KEY;
+
+      this.#supabaseClient = createClient(supabaseUrl, supabaseKey);
+    }
+    return this.#supabaseClient;
+  }
+
+  /**
+   * Get active streams directly from Supabase
+   */
+  private async getActiveStreamsFromSupabase(): Promise<Source[]> {
+    const supabase = this.getSupabaseClient();
+
+    const { data: sources, error } = await supabase
+      .from('active_streams')
+      .select('source')
+      .eq('is_live', true)
+      .order('updated_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Failed to fetch active streams from database:', error);
+      throw error;
+    }
+
+    if (dev) {
+      console.log('📡 Fetched active streams from Supabase:', sources);
+    }
+
+    return sources;
   }
 
   /**
@@ -521,7 +568,7 @@ export class SidebarStateClass implements SidebarState {
     this.#pollingActive = true;
 
     console.log(
-      '🔄 Starting Twitch stream polling (2 minute intervals, tab-visibility aware)...'
+      '🔄 Starting Twitch stream polling (2 minute intervals, tab-visibility aware, direct Supabase)...'
     );
 
     // Subscribe to tab visibility changes
@@ -551,7 +598,9 @@ export class SidebarStateClass implements SidebarState {
       return; // Already running
     }
 
-    console.log('▶️ Resuming Twitch stream polling (tab visible)');
+    console.log(
+      '▶️ Resuming Twitch stream polling (tab visible, direct Supabase)'
+    );
 
     // Do initial poll immediately when resuming
     this.pollStreamingStatus();
@@ -592,30 +641,22 @@ export class SidebarStateClass implements SidebarState {
   }
 
   /**
-   * Poll the server for current streaming status
+   * Poll Supabase directly for current streaming status
    */
   private async pollStreamingStatus(): Promise<void> {
     try {
-      const response = await fetch('/api/twitch', {
-        method: 'GET',
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const streamingSources: Source[] = await response.json();
+      const streamingSources = await this.getActiveStreamsFromSupabase();
       this.updateStreamingState(streamingSources);
 
       if (this.#isInitialStreamLoad) {
-        console.log('📡 Initial streaming status loaded:', streamingSources);
+        console.log(
+          '📡 Initial streaming status loaded from Supabase:',
+          streamingSources
+        );
         this.#isInitialStreamLoad = false;
       }
     } catch (error) {
-      console.error('Failed to poll streaming status:', error);
+      console.error('Failed to poll streaming status from Supabase:', error);
       // Continue polling even on error - don't stop the interval
     }
   }
@@ -804,6 +845,7 @@ export class SidebarStateClass implements SidebarState {
     this.#isInitialStreamLoad = true;
     this.isDraggingDivider = false;
     this.preferredImageFormat = null;
+    this.#supabaseClient = null; // Reset Supabase client
     // Note: Don't reset isSidebarCollapsed or collapsed - they should persist across page refreshes
   }
 
