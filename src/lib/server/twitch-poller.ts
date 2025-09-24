@@ -8,7 +8,7 @@ import { SOURCE_INFO, SOURCES, type Source } from '$lib/constants/source.js';
 import { dev } from '$app/environment';
 
 // Global state for active streams - this persists across requests within the same instance
-let activeStreams = new Set<Source>();
+const activeStreams = new Set<Source>();
 let lastPollTime = 0;
 let isPolling = false;
 let pollingTimeout: NodeJS.Timeout | null = null;

@@ -1,5 +1,5 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
-import { ApiClient, extractUserId } from '@twurple/api';
+import { ApiClient } from '@twurple/api';
 
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 
@@ -40,7 +40,7 @@ const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 // Development testing variables
 let testStartTime: number | null = null;
 const TEST_LIVE_START = 10000; // Go live after 10 seconds
-const TEST_LIVE_END = 130000; // Go offline after 130 seconds (2 minutes 10 seconds total)
+const TEST_LIVE_END = 70000; // Go offline after 70 seconds 
 
 // Initialize test timer immediately in development mode
 if (dev && typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
@@ -148,32 +148,6 @@ export async function getStreamStatus(
 }
 
 /**
- * Helper function for getting a Twitch ID, only used to figure out IDs and not called at the moment
- */
-// export async function getTwitchUserName(userName: string) {
-//   const authProvider = new AppTokenAuthProvider(
-//     TWITCH_CLIENT_ID,
-//     TWITCH_CLIENT_SECRET
-//   );
-//   const apiClient = new ApiClient({ authProvider });
-//
-//   const user = await apiClient.users.getUserByName(userName);
-//   console.log(user);
-//   const stream = await user?.getStream();
-//   console.log(stream);
-//   console.log(stream?.userId);
-//   if (user) {
-//     console.log(extractUserId(user));
-//   }
-//
-//   if (user) {
-//     return user; // This will return the username
-//   } else {
-//     return null; // User not found
-//   }
-// }
-
-/**
  * Get stream status for multiple users with rate limiting
  */
 export async function getMultipleStreamStatus(
@@ -215,7 +189,7 @@ export function resetTestTimer(): void {
   testStartTime = null;
   clearStreamCache(); // Also clear cache when resetting
   console.log('🔄 Test timer reset - next call will restart the sequence');
-  
+
   // Re-initialize if in development mode
   if (dev && typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
     testStartTime = Date.now();
