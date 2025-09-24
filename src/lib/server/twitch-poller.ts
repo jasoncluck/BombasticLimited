@@ -12,6 +12,7 @@ let activeStreams = new Set<Source>();
 let lastPollTime = 0;
 let isPolling = false;
 let pollingTimeout: NodeJS.Timeout | null = null;
+let pollingExplicitlyStarted = false;
 
 // Configuration optimized for serverless
 const POLL_INTERVAL = 60000; // 1 minute
@@ -103,7 +104,8 @@ function scheduleNextPoll() {
 
   pollingTimeout = setTimeout(() => {
     pollingTimeout = null;
-    if (changeListeners.size > 0) {
+    // Continue polling if explicitly started or if there are listeners
+    if (changeListeners.size > 0 || pollingExplicitlyStarted) {
       pollStreamStatus();
       scheduleNextPoll(); // Schedule next poll
     }
@@ -180,6 +182,8 @@ async function pollStreamStatus(): Promise<void> {
  * Start the background polling service
  */
 export function startPolling(): void {
+  pollingExplicitlyStarted = true;
+  
   // Initial poll
   pollStreamStatus();
 
@@ -191,6 +195,8 @@ export function startPolling(): void {
  * Stop the background polling service
  */
 export function stopPolling(): void {
+  pollingExplicitlyStarted = false;
+  
   if (pollingTimeout) {
     clearTimeout(pollingTimeout);
     pollingTimeout = null;
@@ -202,6 +208,7 @@ export function stopPolling(): void {
  */
 export function getPollerStatus() {
   return {
+    isPolling: isPolling,
     activeStreamsCount: activeStreams.size,
     activeStreams: Array.from(activeStreams),
     listenersCount: changeListeners.size,
@@ -219,6 +226,7 @@ export function resetPollerState(): void {
   activeStreams.clear();
   changeListeners.clear();
   lastPollTime = 0;
+  pollingExplicitlyStarted = false;
 }
 
 /**

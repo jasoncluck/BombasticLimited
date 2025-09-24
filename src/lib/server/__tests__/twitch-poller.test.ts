@@ -62,6 +62,7 @@ describe('Twitch Poller', () => {
         activeStreams: [],
         listenersCount: 0,
         lastPollTime: null,
+        isStale: true, // Data is stale when never polled
       });
     });
   });
@@ -84,8 +85,8 @@ describe('Twitch Poller', () => {
 
       startPolling();
 
-      // Fast-forward time to trigger interval polling
-      await vi.advanceTimersByTimeAsync(60000); // 1 minute
+      // Fast-forward time to trigger interval polling (90 seconds for serverless in prod)
+      await vi.advanceTimersByTimeAsync(90000); // 1.5 minutes for non-dev mode
 
       expect(mockGetMultipleStreamStatus).toHaveBeenCalledTimes(2); // Initial + interval poll
     });
