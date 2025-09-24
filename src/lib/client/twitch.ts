@@ -40,12 +40,14 @@ const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 // Development testing variables
 let testStartTime: number | null = null;
 const TEST_LIVE_START = 10000; // Go live after 10 seconds
-const TEST_LIVE_END = 70000; // Go offline after 70 seconds 
+const TEST_LIVE_END = 70000; // Go offline after 70 seconds
 
 // Initialize test timer immediately in development mode
 if (dev && typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
   testStartTime = Date.now();
-  console.log('🚀 Twitch test simulation started for nextlander channel - will go live in 10 seconds');
+  console.log(
+    '🚀 Twitch test simulation started for nextlander channel - will go live in 10 seconds'
+  );
 }
 
 // Known user IDs for testing
@@ -66,7 +68,9 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   // Initialize test timer on first call if not already initialized
   if (testStartTime === null) {
     testStartTime = now;
-    console.log('🚀 Twitch test simulation timer started for nextlander channel');
+    console.log(
+      '🚀 Twitch test simulation timer started for nextlander channel'
+    );
   }
 
   const elapsed = now - testStartTime;
@@ -75,7 +79,9 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   const shouldBeLive = elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_END;
 
   if (dev) {
-    console.log(`🎮 Test stream status for ${userId}: elapsed=${elapsed}ms, shouldBeLive=${shouldBeLive}`);
+    console.log(
+      `🎮 Test stream status for ${userId}: elapsed=${elapsed}ms, shouldBeLive=${shouldBeLive}`
+    );
   }
 
   const status: StreamStatus = {
@@ -193,7 +199,9 @@ export function resetTestTimer(): void {
   // Re-initialize if in development mode
   if (dev && typeof window === 'undefined' && process.env.NODE_ENV !== 'test') {
     testStartTime = Date.now();
-    console.log('🚀 Twitch test simulation restarted for nextlander channel - will go live in 10 seconds');
+    console.log(
+      '🚀 Twitch test simulation restarted for nextlander channel - will go live in 10 seconds'
+    );
   }
 }
 

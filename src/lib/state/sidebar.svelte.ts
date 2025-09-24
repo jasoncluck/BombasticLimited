@@ -93,8 +93,12 @@ export interface SidebarState {
   loadData: () => Promise<void>;
   loadDataInBackground: () => Promise<void>;
   refreshData: () => Promise<void>;
-  initialize: (preferredImageFormat?: ImageFormat | null) => Promise<() => void>;
-  initializeNonBlocking: (preferredImageFormat?: ImageFormat | null) => () => void;
+  initialize: (
+    preferredImageFormat?: ImageFormat | null
+  ) => Promise<() => void>;
+  initializeNonBlocking: (
+    preferredImageFormat?: ImageFormat | null
+  ) => () => void;
   initializeEffects: () => void;
 
   // Polling methods
@@ -204,18 +208,18 @@ export class SidebarStateClass implements SidebarState {
   // Streaming sources state
   streamingSources = $state<Source[]>([]);
 
-  // Polling connection state  
+  // Polling connection state
   #pollingInterval: number | null = null;
   #pollingActive = $state(false);
   #isInitialStreamLoad = $state(true);
   #tabVisibilityUnsubscribe: (() => void) | null = null;
 
-  // Polling configuration  
-  #pollingIntervalMs = 2 * 60 * 1000; // 2 minutes 
+  // Polling configuration
+  #pollingIntervalMs = 3 * 60 * 1000; // 3 minutes as requested
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
-    searchDebounceMs: 350,
+    searchDebounceMs: 250,
   });
 
   constructor() {
@@ -228,286 +232,297 @@ export class SidebarStateClass implements SidebarState {
   /**
    * Update context (called by parent components)
    */
-  updaeContext(updates: { preferredImageFormat?: ImageFormat | null }): void {
-  nst formatChanged = updates.preferredImageFormat !== this.preferredImageFormat;
+  updateContext(updates: { preferredImageFormat?: ImageFormat | null }): void {
+    const formatChanged =
+      updates.preferredImageFormat !== this.preferredImageFormat;
 
     if (updates.preferredImageFormat !== undefined) {
-  this.preferredImageFormat = updates.preferredImageFormat;
-}
-  
-// If format was just set for the first time and we haven't loaded data yet, load it now
-    if (formatChanged && this.preferredImageFormat && !this.#hasLoadedOnce && this.#initialized) {
+      this.preferredImageFormat = updates.preferredImageFormat;
+    }
+
+    // If format was just set for the first time and we haven't loaded data yet, load it now
+    if (
+      formatChanged &&
+      this.preferredImageFormat &&
+      !this.#hasLoadedOnce &&
+      this.#initialized
+    ) {
       this.loadDataInBackground();
     }
   }
 
   /**
-   Lad sidebar state from localStorage (from layout pattern)
+   * Load sidebar state from localStorage (from layout pattern)
    */
-  ivate loadSidebarStateFromLocalStorage(): void {
-     (!browser) return;
-    
-  {
-  nst saved = localStorage.getItem('bombastic-sidebar-collapsed');
-   (saved !== null) {
-  this.isSidebarCollapsed = JSON.parse(saved);
+  private loadSidebarStateFromLocalStorage(): void {
+    if (!browser) return;
+
+    try {
+      const saved = localStorage.getItem('bombastic-sidebar-collapsed');
+      if (saved !== null) {
+        this.isSidebarCollapsed = JSON.parse(saved);
         // Also sync with the collapsed state for consistency
-    this.collapsed = this.isSidebarCollapsed;
+        this.collapsed = this.isSidebarCollapsed;
       }
     } catch (error) {
       console.error('Failed to load sidebar state from localStorage:', error);
-      
-    
-      
-      
-        sidebar state to localStorage(from layout pattern)
-          /
-          private
-     s a veSidebarStateToLocalStorage(collapsed: boolean): void {
-    browser) return;
+    }
+  }
 
-            try { 
-      calStorage.setItem(
-                'bombastic-sidebar-collapsed',
-                JSON.stringify(collapsed)
-              );
-              catch(error) {
-                console.error('Failed to save sidebar state to localStorage:', error);
-    
-      
-        
-  
-    d sidebar state from cookie
-        
-          StateFromCookie(): void {
-          tests, check if document exists instead of browser flag
-            = 'undefined') return;
-          
-          {
-            t cookies = document.cookie.split(';');
-          nst sidebarCookie = cookies.find((cookie) =>
-          cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+  /**
+   * Save sidebar state to localStorage (from layout pattern)
+   */
+  private saveSidebarStateToLocalStorage(collapsed: boolean): void {
+    if (!browser) return;
+
+    try {
+      localStorage.setItem(
+        'bombastic-sidebar-collapsed',
+        JSON.stringify(collapsed)
+      );
+    } catch (error) {
+      console.error('Failed to save sidebar state to localStorage:', error);
+    }
+  }
+
+  /**
+   * Load sidebar state from cookie
+   */
+  private loadStateFromCookie(): void {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return;
+
+    try {
+      const cookies = document.cookie.split(';');
+      const sidebarCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+      );
+
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(
+          decodeURIComponent(cookieValue)
         );
+        this.collapsed = state.collapsed ?? false;
+      }
+    } catch (error) {
+      console.error('Failed to load sidebar state from cookie:', error);
+      this.collapsed = false; // Default to expanded if cookie is malformed
+    }
+  }
 
-          (sidebarCookie) {
-          alue = sidebarCookie.split('=')[1];
-          const state: SidebarCookieState = JSON.parse(
-                        decodeURIComponent(cookieValue)
-                      );
-                      this.collapsed = state.collapsed ?? false;
-                    }
-  catch(error) {
-                      console.error('Failed to load sidebar state from cookie:', error);
-          this.collapsed = false; // Default to expanded if cookie is malformed
-                          }
-          
-              
-            
+  /**
    * Save sidebar state to cookie
-            
-            llapsed: boolean, defaultSize?: number): void {     
-                      // In tests, check if document exists instead of browser flag
-                      if (typeof document === 'undefined') return;
+   */
+  saveStateToCookie(collapsed: boolean, defaultSize?: number): void {
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return;
 
-                      const state: SidebarCookieState = { collapsed };
-                      if (defaultSize !== undefined) {
-                        state.defaultSize = defaultSize;
-                      }
-    
-                      const cookieValue = encodeURIComponent(JSON.stringify(state));
-                      document.cookie = `${SIDEBAR_COOKIE_NAME}=${cookieValue}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
-                    }
+    const state: SidebarCookieState = { collapsed };
+    if (defaultSize !== undefined) {
+      state.defaultSize = defaultSize;
+    }
+
+    const cookieValue = encodeURIComponent(JSON.stringify(state));
+    document.cookie = `${SIDEBAR_COOKIE_NAME}=${cookieValue}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+  }
 
   /**
    * Get default size from cookie
    */
   getDefaultSizeFromCookie(): number | undefined {
-                      // In tests, check if document exists instead of browser flag
-                      if (typeof document === 'undefined') return undefined;
+    // In tests, check if document exists instead of browser flag
+    if (typeof document === 'undefined') return undefined;
 
-                      try {
-                        const cookies = document.cookie.split(';');
-                        const sidebarCookie = cookies.find((cookie) =>
-                          cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
-                        );
+    try {
+      const cookies = document.cookie.split(';');
+      const sidebarCookie = cookies.find((cookie) =>
+        cookie.trim().startsWith(`${SIDEBAR_COOKIE_NAME}=`)
+      );
 
-                        if (sidebarCookie) {
-                          const cookieValue = sidebarCookie.split('=')[1];
-                          const state: SidebarCookieState = JSON.parse(
-                            decodeURIComponent(cookieValue)
-                          );
-                          return state.defaultSize;
-                        }
-                      } catch (error) {
-                        console.error('Failed to get default size from cookie:', error);
-                      }
+      if (sidebarCookie) {
+        const cookieValue = sidebarCookie.split('=')[1];
+        const state: SidebarCookieState = JSON.parse(
+          decodeURIComponent(cookieValue)
+        );
+        return state.defaultSize;
+      }
+    } catch (error) {
+      console.error('Failed to get default size from cookie:', error);
+    }
 
-                      return undefined;
-                    }
-  
-  *
-                      Set collapsed state and save to cookie
-  /
-                    setCollapsed(collapsed: boolean, defaultSize ?: number): void {
-                      this.collapsed = collapsed;
-                      this.saveStateToCookie(collapsed, defaultSize);
+    return undefined;
+  }
 
+  /**
+   * Set collapsed state and save to cookie
+   */
+  setCollapsed(collapsed: boolean, defaultSize?: number): void {
+    this.collapsed = collapsed;
+    this.saveStateToCookie(collapsed, defaultSize);
+  }
 
-                      /**
-                     * Toggle collapsed state
-                     */
-                      ggleCollapsed(): void {
-                        is.setCollapsed(!this.collapsed);
-    
-      
-        
-      ebar methods(from layout pattern)
+  /**
+   * Toggle collapsed state
+   */
+  toggleCollapsed(): void {
+    this.setCollapsed(!this.collapsed);
+  }
 
-                        tSidebarCollapsed = (collapsed: boolean): void => {
-                          this.isSidebarCollapsed = collapsed;
-                          this.collapsed = collapsed; // Keep both states in sync
-                          this.saveSidebarStateToLocalStorage(collapsed);
-                          this.saveStateToCookie(collapsed);
-                        };
+  /**
+   * Sidebar methods (from layout pattern)
+   */
+  setSidebarCollapsed = (collapsed: boolean): void => {
+    this.isSidebarCollapsed = collapsed;
+    this.collapsed = collapsed; // Keep both states in sync
+    this.saveSidebarStateToLocalStorage(collapsed);
+    this.saveStateToCookie(collapsed);
+  };
 
-                        toggleSidebar = (): void => {
-                          this.setSidebarCollapsed(!this.isSidebarCollapsed);
-                        };
+  toggleSidebar = (): void => {
+    this.setSidebarCollapsed(!this.isSidebarCollapsed);
+  };
 
-                        // Initialize effects (should be called when component is mounted)
-                        itializeEffects() {
-                          (browser) {
-                            // Initialize ordered sources from user profile when data loads
-                            $effect(() => {
-                              if (this.data?.userProfile?.sources) {
-                                this.orderedSources = [...this.data.userProfile.sources];
-                              }
-                            });
-                          }
-  
+  // Initialize effects (should be called when component is mounted)
+  initializeEffects() {
+    if (browser) {
+      // Initialize ordered sources from user profile when data loads
+      $effect(() => {
+        if (this.data?.userProfile?.sources) {
+          this.orderedSources = [...this.data.userProfile.sources];
+        }
+      });
+    }
+  }
 
-  t initialized() {
-    turn this.#initialized;
+  get initialized() {
+    return this.#initialized;
+  }
 
+  get pollingActive() {
+    return this.#pollingActive;
+  }
 
-                            llingActive() {
-    turn this.#pollingActive;
-                            }
-
-                            lowedPlaylists(session: Session | null) {
-                              rn(
-                                this.data?.playlists.filter((up) => up.created_by !== session?.user.id) ??
-                                []
-
-
+  getFollowedPlaylists(session: Session | null) {
+    return (
+      this.data?.playlists.filter((up) => up.created_by !== session?.user.id) ??
+      []
+    );
+  }
 
   /**
    * Record that a notification was shown
    */
   private recordShownNotification(source: Source): void {
-                                if(!browser) return;
+    if (!browser) return;
 
-                                y {
-                                const shownNotifications = getShownNotifications();
-                                shownNotifications.push({
-                                  source,
-                                  timestamp: Date.now(),
-                                });
+    try {
+      const shownNotifications = getShownNotifications();
+      shownNotifications.push({
+        source,
+        timestamp: Date.now(),
+      });
 
-                                localStorage.setItem(
-                                  SHOWN_NOTIFICATIONS_KEY,
-                                  JSON.stringify(shownNotifications)
-                                );
-                              } catch (error) {
-                                console.error('Failed to record shown notification:', error);
-                              }
-
+      localStorage.setItem(
+        SHOWN_NOTIFICATIONS_KEY,
+        JSON.stringify(shownNotifications)
+      );
+    } catch (error) {
+      console.error('Failed to record shown notification:', error);
+    }
+  }
 
   /**
-   Check if a notification was recently shown for this source
-  /
-    ate wasNotificationRecentlyShown(source: Source): boolean {
-  const shownNotifications = getShownNotifications();
+   * Check if a notification was recently shown for this source
+   */
+  private wasNotificationRecentlyShown(source: Source): boolean {
+    const shownNotifications = getShownNotifications();
     return shownNotifications.some(
-    (notification) => notification.source === source
+      (notification) => notification.source === source
     );
-  
-  
+  }
+
   /**
-   Initialize the sidebar state. Should be called in onMount.
-   Loads initial data and sets up any necessary listeners.
-    
-  itialize = async (preferredImageFormat?: ImageFormat | null): Promise<() => void> => {
-  if (this.#initialized) {
-      return () => { };
+   * Initialize the sidebar state. Should be called in onMount.
+   * Loads initial data and sets up any necessary listeners.
+   */
+  initialize = async (
+    preferredImageFormat?: ImageFormat | null
+  ): Promise<() => void> => {
+    if (this.#initialized) {
+      return () => {};
     }
 
     // Set the preferred image format from server if provided
     if (preferredImageFormat !== undefined) {
-    this.preferredImageFormat = preferredImageFormat;
-    
-  
-    // Only load data if we have a preferred format, otherwise wait for updateContext
-  if (this.preferredImageFormat) {
-    await this.loadData();
-    
-  
-    this.#initialized = true;
-  
-  // Start SSE connection
-  this.startSSEConnection();
-
-  // Return cleanup function
-  return () => {
-    this.cleanup();
-  };
-  };
-  
-  *
-   * Non-blocking initialization for faster UI loading.
-   Marks as initialized immediately and loads data in background.
-  /
-    ializeNonBlocking = (preferredImageFormat?: ImageFormat | null): (() => void) => {
-  if (this.#initialized) {
-    return () => { };
+      this.preferredImageFormat = preferredImageFormat;
     }
 
-  // Set the preferred image format from server if provided
-  if (preferredImageFormat !== undefined) {
-    this.preferredImageFormat = preferredImageFormat;
-  }
-  
-// Mark as initialized immediately for UI purposes
+    // Only load data if we have a preferred format, otherwise wait for updateContext
+    if (this.preferredImageFormat) {
+      await this.loadData();
+    }
+
     this.#initialized = true;
-this.loading = false; // Allow UI to render
+
+    // Start SSE connection
+    this.startSSEConnection();
+
+    // Return cleanup function
+    return () => {
+      this.cleanup();
+    };
+  };
+
+  /**
+   * Non-blocking initialization for faster UI loading.
+   * Marks as initialized immediately and loads data in background.
+   */
+  initializeNonBlocking = (
+    preferredImageFormat?: ImageFormat | null
+  ): (() => void) => {
+    if (this.#initialized) {
+      return () => {};
+    }
+
+    // Set the preferred image format from server if provided
+    if (preferredImageFormat !== undefined) {
+      this.preferredImageFormat = preferredImageFormat;
+    }
+
+    // Mark as initialized immediately for UI purposes
+    this.#initialized = true;
+    this.loading = false; // Allow UI to render
 
     // Load data in background only if we have a preferred format
-if (browser && this.preferredImageFormat) {
+    if (browser && this.preferredImageFormat) {
       this.loadDataInBackground();
-}
+    }
 
-   Start SSE connection
-    .startSSEConnection();
-    
-      urn cleanup function
-    rn () => {
-  this.cleanup();
-    
-    
-  
-*
+    // Start SSE connection
+    this.startSSEConnection();
+
+    // Return cleanup function
+    return () => {
+      this.cleanup();
+    };
+  };
+
+  /**
    * Start polling for streaming updates every 3 minutes
- Respects tab visibility - pauses when tab is hidden, resumes when visible
-/
-  tSSEConnection(): void {
-if (!browser || this.#pollingInterval) {
+   * Respects tab visibility - pauses when tab is hidden, resumes when visible
+   */
+  startSSEConnection(): void {
+    if (!browser || this.#pollingInterval) {
       return;
     }
 
     this.#isInitialStreamLoad = true;
     this.#pollingActive = true;
 
-    console.log('🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...');
+    console.log(
+      '🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...'
+    );
 
     // Subscribe to tab visibility changes
     this.#tabVisibilityUnsubscribe = tabVisibility.subscribe((state) => {
@@ -520,330 +535,330 @@ if (!browser || this.#pollingInterval) {
         // Tab became hidden - pause polling
         this.pausePolling();
       }
-  })
-  
-// Start polling immediately if tab is visible
-    if (tabVisibility.isVisible) {
-  this.resumePolling();
-    }
+    });
 
+    // Start polling immediately if tab is visible
+    if (tabVisibility.isVisible) {
+      this.resumePolling();
+    }
+  }
 
   /**
    * Resume polling (internal method)
+   */
+  private resumePolling(): void {
+    if (this.#pollingInterval) {
+      return; // Already running
+    }
+
+    console.log('▶️ Resuming Twitch stream polling (tab visible)');
+
+    // Do initial poll immediately when resuming
+    this.pollStreamingStatus();
+
+    // Set up polling interval
+    this.#pollingInterval = window.setInterval(() => {
+      this.pollStreamingStatus();
+    }, this.#pollingIntervalMs);
+  }
+
+  /**
+   * Pause polling (internal method)
+   */
+  private pausePolling(): void {
+    if (!this.#pollingInterval) {
+      return; // Already paused
+    }
+
+    console.log('⏸️ Pausing Twitch stream polling (tab hidden)');
+
+    clearInterval(this.#pollingInterval);
+    this.#pollingInterval = null;
+  }
+
+  /**
+   * Manually retry polling connection (restarts polling)
+   */
+  retrySSEConnection(): void {
+    if (!browser) {
+      return;
+    }
+
+    // Stop existing polling
+    this.stopSSEConnection();
+
+    console.log('🔄 Manually restarting Twitch stream polling...');
+    this.startSSEConnection();
+  }
+
+  /**
+   * Poll the server for current streaming status
+   */
+  private async pollStreamingStatus(): Promise<void> {
+    try {
+      const response = await fetch('/api/twitch', {
+        method: 'GET',
+        headers: {
+          Accept: 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const streamingSources: Source[] = await response.json();
+      this.updateStreamingState(streamingSources);
+
+      if (this.#isInitialStreamLoad) {
+        console.log('📡 Initial streaming status loaded:', streamingSources);
+        this.#isInitialStreamLoad = false;
+      }
+    } catch (error) {
+      console.error('Failed to poll streaming status:', error);
+      // Continue polling even on error - don't stop the interval
+    }
+  }
+
+  /**
+   * Stop polling for streaming updates
+   */
+  stopSSEConnection(): void {
+    console.log('🛑 Stopping Twitch stream polling...');
+
+    if (this.#pollingInterval) {
+      clearInterval(this.#pollingInterval);
+      this.#pollingInterval = null;
+    }
+
+    // Clean up tab visibility subscription
+    if (this.#tabVisibilityUnsubscribe) {
+      this.#tabVisibilityUnsubscribe();
+      this.#tabVisibilityUnsubscribe = null;
+    }
+
+    this.#pollingActive = false;
+  }
+
+  /**
+   * Update the local streaming state and send notifications
+   */
+  private updateStreamingState(newStreamingSources: Source[]): void {
+    const previousStreams = new SvelteSet(this.streamingSources);
+    const currentStreams = new SvelteSet(newStreamingSources);
+
+    // Find sources that just started streaming
+    const startedStreaming = newStreamingSources.filter(
+      (source) => !previousStreams.has(source)
+    );
+
+    // Find sources that stopped streaming
+    const stoppedStreaming = this.streamingSources.filter(
+      (source) => !currentStreams.has(source)
+    );
+
+    // Update the sidebar streaming state
+    this.updateStreamingSources(newStreamingSources);
+
+    // Check if this is the initial load and handle flag
+    const isInitialLoad = this.#isInitialStreamLoad;
+    if (isInitialLoad) {
+      this.#isInitialStreamLoad = false;
+    }
+
+    // Only send notifications for real-time changes, not on initial load
+    if (!isInitialLoad) {
+      // Send notifications for streams that started
+      startedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+
+        // Only show notification if it wasn't recently shown
+        if (!this.wasNotificationRecentlyShown(source)) {
+          showToast(`${displayName} is now streaming.`);
+          this.recordShownNotification(source);
+        }
+      });
+
+      // Send notifications for streams that stopped
+      stoppedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+        showToast(`${displayName} has stopped streaming.`);
+      });
+    }
+  }
+
+  // Data loading methods
+  async loadData(): Promise<void> {
+    if (!browser) return;
+
+    this.loading = true;
+    this.error = null;
+
+    try {
+      const response = await fetch('/api/sidebar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          preferredImageFormat: this.preferredImageFormat,
+        }),
+      });
+
+      if (response.ok) {
+        this.data = await response.json();
+        this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
+      } else {
+        this.error = `Failed to load sidebar data: ${response.statusText}`;
+        console.error(this.error);
+      }
+    } catch (error) {
+      this.error = 'Failed to load sidebar';
+      console.error('Failed to load sidebar:', error);
+    } finally {
+      this.loading = false;
+    }
+  }
+
+  async loadDataInBackground(): Promise<void> {
+    if (!browser) return;
+
+    // Don't show loading state for background loads
+    this.error = null;
+
+    try {
+      const response = await fetch('/api/sidebar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          preferredImageFormat: this.preferredImageFormat,
+        }),
+      });
+      if (response.ok) {
+        this.data = await response.json();
+        this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
+      } else {
+        this.error = `Failed to load sidebar data: ${response.statusText}`;
+        console.error(this.error);
+      }
+    } catch (error) {
+      this.error = 'Failed to load sidebar';
+      console.error('Failed to load sidebar:', error);
+    }
+  }
+
+  // Debounce data refresh to prevent excessive API calls
+  private refreshDataDebounced = debounce(async () => {
+    // Only refresh if tab is visible to save resources
+    // Also check if we're already refreshing to prevent duplicate calls
+    if (!tabVisibility.isVisible || this.loading) {
+      return;
+    }
+
+    await this.loadData();
+  }, 1000); // 1 second debounce
+
+  async refreshData(): Promise<void> {
+    // Use debounced version to prevent excessive calls
+    return this.refreshDataDebounced();
+  }
+
+  // Data validation helpers
+  get isDataLoaded(): boolean {
+    return this.data !== null && !this.loading;
+  }
+
+  get hasPlaylists(): boolean {
+    return this.playlists.length > 0;
+  }
+
+  get hasError(): boolean {
+    return this.error !== null;
+  }
+
+  get showPlaceholder(): boolean {
+    // Only show placeholder on initial load (initialized but never loaded data successfully)
+    return this.#initialized && !this.#hasLoadedOnce && !this.hasError;
+  }
+
+  // Cleanup method
+  cleanup(): void {
+    // Stop SSE connection
+    this.stopSSEConnection();
+
+    // Cancel any pending debounced refresh calls
+    if (this.refreshDataDebounced?.clear) {
+      this.refreshDataDebounced.clear();
+    }
+
+    // Reset all state
+    this.data = null;
+    this.loading = false;
+    this.error = null;
+    this.orderedSources = [];
+    this.streamingSources = [];
+    this.#initialized = false;
+    this.#hasLoadedOnce = false;
+    this.#isInitialStreamLoad = true;
+    this.isDraggingDivider = false;
+    this.preferredImageFormat = null;
+    // Note: Don't reset isSidebarCollapsed or collapsed - they should persist across page refreshes
+  }
+
+  // Streaming sources management
+  updateStreamingSources(sources: Source[]): void {
+    this.streamingSources = [...sources];
+  }
+
+  isSourceStreaming(source: Source): boolean {
+    return this.streamingSources.includes(source);
+  }
+
+  getStreamingSources(): Source[] {
+    return [...this.streamingSources];
+  }
+
+  // Test helper methods (only for testing)
+  /**
+   * Set the initial stream load flag (for testing)
+   */
+  setInitialStreamLoadFlag(value: boolean): void {
+    this.#isInitialStreamLoad = value;
+  }
+
+  /**
+   * Get the initial stream load flag (for testing)
+   */
+  getInitialStreamLoadFlag(): boolean {
+    return this.#isInitialStreamLoad;
+  }
+
+  start(): void {
+    // Alias for startSSEConnection for backward compatibility
+    this.startSSEConnection();
+  }
+
+  stop(): void {
+    // Alias for stopSSEConnection for backward compatibility
+    this.stopSSEConnection();
+  }
+}
+
+const DEFAULT_KEY = '$_sidebar_state';
+
+/**
+ * Set sidebar state in context
  */
- rivate resumePolling(): void {
-                                if(this.#pollingInterval) {
-                                return; // Already running
-                              }
+export function setSidebarState(key = DEFAULT_KEY): SidebarStateClass {
+  const sidebarState = new SidebarStateClass();
+  return setContext(key, sidebarState);
+}
 
-                              console.log('▶️ Resuming Twitch stream polling (tab visible)');
-
-                              // Do initial poll immediately when resuming
-                              this.pollStreamingStatus();
-
-                              // Set up polling interval
-                              this.#pollingInterval = window.setInterval(() => {
-                                this.pollStreamingStatus();
-                              }, this.#pollingIntervalMs);
-                            }
-
-                            /**
-                             Pause polling (internal method)
-                              
-                                e pausePolling(): void {     
-                                !this.#pollingInterval) {
-                                  rn; // Already paused
-                                
-                              
-                              console.log('⏸️ Pausing Twitch stream polling (tab hidden)');
-                              
-                            rInterval(this.#pollingInterval);
-                          is.#pollingInterval = null;
-                            }
-                          
-                          
-                             * Manually retry polling connection (restarts polling)
-                          
-                            SEConnection(): void {
-                            !browser) {
-                          return;
-                              }
-                            
-                             Stop existing polling
-                          this.stopSSEConnection();
-                          
-                              console.log('🔄 Manually restarting Twitch stream polling...');
-                              this.startSSEConnection();
-                            }
-                          
-                            *
-                             * Poll the server for current streaming status
-                            /
-                            ate async pollStreamingStatus(): Promise<void> {
-                            y {
-                            const response = await fetch('/api/twitch', {
-                                  method: 'GET',
-                              headers: {
-                                'Accept': 'application/json',
-                              },
-                            });
-                          
-                                if (!response.ok) {
-                              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-                                }
-                          
-                                const streamingSources: Source[] = await response.json();
-                                this.updateStreamingState(streamingSources);
-                            
-                              if (this.#isInitialStreamLoad) {
-                                  console.log('📡 Initial streaming status loaded:', streamingSources);
-                                this.#isInitialStreamLoad = false;
-                              }
-                              catch (error) {
-                              console.error('Failed to poll streaming status:', error);
-                                // Continue polling even on error - don't stop the interval
-                            }
-                            
-                              
-                            *
-                             * Stop polling for streaming updates
-                            /
-                            opSSEConnection(): void {
-                              console.log('🛑 Stopping Twitch stream polling...');
-                            
-                            if (this.#pollingInterval) {
-                              learInterval(this.#pollingInterval);
-                              this.#pollingInterval = null;
-                            }
-                          
-                              // Clean up tab visibility subscription
-                              if(this.#tabVisibilityUnsubscribe) {
-                              this.#tabVisi bilityUnsub scribe();
-                              this.#tabVisibilityUnsubscribe = null;
-                                
-                          
-                                .#pollingActive = false;
-                                
-                                    
-                                  
-                                ate the local streaming state and send notifications
-                              
-                            private updateStreamingState(newStreamingSources: Source[]): void {
-                              nst previousStreams = new SvelteSet(this.streamingSources);
-                              nst currentStreams = new SvelteSet(newStreamingSources);
-                                
-                                ind sources that just started streaming
-                              nst startedStreaming = newStreamingSources.filter(
-                              (source) => !previousStreams.has(source)
-                            );
-                          
-                              // Find sources that stopped streaming
-                              const stoppedStreaming  =  this.streamingSources.filter(
-                              source) => !currentStreams.has(source)
-                              );
-                            
-                            // Update the sidebar streaming state
-                              this.updateStreamingSources(newStreamingSources);
-                            
-                               Check if this is the initial load and handle flag
-                                t isInitialLoad = this.#isInitialStreamLoad;   
-                                isInitialLoad) {
-                                  .#isInitialStreamLoad = false;
-                                
-                                
-                                  y send notifications for real-time changes, not on initial load
-                                !isInitialLoad) {
-                              // Send notifications for streams that started
-                                startedStreaming.forEach((source) => {
-                                onst displayName = SOURCE_INFO[source]?.displayName || source;
-                            
-                            // Only show notification if it wasn't recently shown
-                            if (!this.wasNotificationRecentlyShown(source)) {
-                              showToast(`${displayName} is now streaming.`);
-                              this.recordShownNotification(source);
-                            }
-                                });
-                            
-                            // Send notifications for streams that stopped
-                            stoppedStreaming.forEach((source) => {
-                              const displayName = SOURCE_INFO[source]?.displayName || source;
-                              showToast(`${displayName} has stopped streaming.`);
-                                });
-                              }
-                            }  
-                            
-                            // Data loading methods   
-                            ync loadData(): Promise<void> {
-                            if (!browser) return;
-                          
-                            this.loading = true;
-                              is.error = null;
-                                
-                                {
-                                  t response = await fetch('/api/sidebar', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                 preferredImageFormat: this.preferredImageFormat,
-                            }),
-                            ;
-                          
-                             (response.ok) {
-                            this.data = await response.json();
-                            this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
-                                } else {
-                              this.error = `Failed to load sidebar data: ${response.statusText}`;
-                              console.error(this.error);
-                            }
-                              } catch (error) {
-                                this.error = 'Failed to load sidebar';
-                                console.error('Failed to load sidebar:', error);
-                              } finally {
-                              this.loading = false;
-                            }
-                            
-                              
-                            ync loadDataInBackground(): Promise<void> {
-                              if (!browser) return;
-                            
-                            // Don't show loading state for background loads
-                              this.error = null;
-                            
-                            try {
-                              const response = await fetch('/api/sidebar', {
-                                method: 'POST',
-                                  headers: {
-                                    'Content-Type': 'application/json',
-                                  },
-                                body: JSON.stringify({
-                                  preferredImageFormat: this.preferredImageFormat,
-                                  }),
-                                });
-                              if (response.ok) {
-                                this.data = await response.json();
-                                  this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
-                                } else {
-                                this.error = `Failed to load sidebar data: ${response.statusText}`;
-                                console.error(this.error);
-                                }
-                              } catch (error) {
-                              this.error = 'Failed to load sidebar';
-                              console.error('Failed to load sidebar:', error);
-                            }
-                            }
-                          
-                          // Debounce data refresh to prevent excessive API calls
-                            ivate refreshDataDebounced = debounce(async () => {
-                            // Only refresh if tab is visible to save resources
-                              // Also check if we're already refreshing to prevent duplicate calls
-                            if (!tabVisibility.isVisible || this.loading) {
-                              eturn;
-                            
-                          
-                              await this.loadData();
-                           1000); // 1 second debounce
-                          
-                          ync refreshData(): Promise<void> {
-                          // Use debounced version to prevent excessive calls
-                          return this.refreshDataDebounced();
-                          
-                          
-                           Data validation helpers
-                          t isDataLoaded(): boolean {
-                          return this.data !== null && !this.loading;
-                          
-                          
-                            get hasPlaylists(): boolean {
-                              return this.playlists.length > 0;
-                          }
-                          
-                            t hasError(): boolean {
-                            return this.error !== null;
-                            }
-                          
-                            t showPlaceholder(): boolean {
-                            // Only show placeholder on initial load (initialized but never loaded data successfully)
-                              return this.#initialized && !this.#hasLoadedOnce && !this.hasError;
-                          }
-                            
-                          // Cleanup method
-                            cleanup(): void {
-                              // Stop SSE connection
-                              this.stopSSEConnection();
-                          
-                              // Cancel any pending debounced refresh calls
-                            if (this.refreshDataDebounced?.clear) {
-                              this.refreshDataDebounced.clear();
-                              }
-                          
-                              // Reset all state
-                            this.data = null;
-                            this.loading = false;
-                            this.error = null;
-                              this.orderedSources = [];
-                            this.streamingSources = [];
-                            this.#initialized = false;
-                            this.#hasLoadedOnce = false;
-                            this.#isInitialStreamLoad = true;
-                              this.isDraggingDivider = false;
-                            this.preferredImageFormat = null;
-                            // Note: Don't reset isSidebarCollapsed or collapsed - they should persist across page refreshes
-                            
-                          
-                            // Streaming sources management
-                            updateStreamingSources(sources: Source[]): void {
-                              this.streamingSources = [...sources];
-                            }
-                          
-                            isSourceStreaming(source: Source): boolean {
-                              return this.streamingSources.includes(source);
-                            }
-                          
-                            getStreamingSources(): Source[] {
-                              return [...this.streamingSources];
-                            }
-                          
-                            // Test helper methods (only for testing)
-                            /**
-                             * Set the initial stream load flag (for testing)
-                             */
-                            setInitialStreamLoadFlag(value: boolean): void {
-                              this.#isInitialStreamLoad = value;
-                            }
-
-                            /**
-                             * Get the initial stream load flag (for testing)
-                             */
-                            getInitialStreamLoadFlag(): boolean {
-                              return this.#isInitialStreamLoad;
-                            }
-
-                            start(): void {
-                              // Alias for startSSEConnection for backward compatibility
-                              this.startSSEConnection();
-                            }
-
-                            stop(): void {
-                              // Alias for stopSSEConnection for backward compatibility
-                              this.stopSSEConnection();
-                            }
-                          }
-
-                          const DEFAULT_KEY = '$_sidebar_state';
-
-                          /**
-                           * Set sidebar state in context
-                           */
-                          export function setSidebarState(key = DEFAULT_KEY): SidebarStateClass {
-                            const sidebarState = new SidebarStateClass();
-                            return setContext(key, sidebarState);
-                          }
-
-                          /**
-                           * Get sidebar state from context
-                           */
-                          export function getSidebarState(key = DEFAULT_KEY): SidebarState {
-                            return getContext<SidebarState>(key);
-                          }
+/**
+ * Get sidebar state from context
+ */
+export function getSidebarState(key = DEFAULT_KEY): SidebarState {
+  return getContext<SidebarState>(key);
+}

@@ -81,7 +81,11 @@ function triggerPollIfNeeded() {
   }
 
   // For direct API calls (no listeners), still poll if data is stale in dev mode
-  if (changeListeners.size === 0 && dev && timeSinceLastPoll > effectivePollInterval) {
+  if (
+    changeListeners.size === 0 &&
+    dev &&
+    timeSinceLastPoll > effectivePollInterval
+  ) {
     pollStreamStatus();
   }
 
@@ -150,7 +154,9 @@ async function pollStreamStatus(): Promise<void> {
       );
 
       if (dev) {
-        console.log(`🔍 Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`);
+        console.log(
+          `🔍 Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`
+        );
       }
 
       if (sourceName && status.isLive) {
@@ -183,7 +189,7 @@ async function pollStreamStatus(): Promise<void> {
  */
 export function startPolling(): void {
   pollingExplicitlyStarted = true;
-  
+
   // Initial poll
   pollStreamStatus();
 
@@ -196,7 +202,7 @@ export function startPolling(): void {
  */
 export function stopPolling(): void {
   pollingExplicitlyStarted = false;
-  
+
   if (pollingTimeout) {
     clearTimeout(pollingTimeout);
     pollingTimeout = null;
