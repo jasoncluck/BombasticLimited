@@ -34,6 +34,30 @@ export type Database = {
   };
   public: {
     Tables: {
+      active_streams: {
+        Row: {
+          created_at: string;
+          is_live: boolean;
+          last_checked: string;
+          source: Database['public']['Enums']['source'];
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          is_live?: boolean;
+          last_checked?: string;
+          source: Database['public']['Enums']['source'];
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          is_live?: boolean;
+          last_checked?: string;
+          source?: Database['public']['Enums']['source'];
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       image_processing_jobs: {
         Row: {
           attempts: number;

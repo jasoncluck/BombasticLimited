@@ -1,13 +1,9 @@
 <script lang="ts">
-  import { getPageLoadingState } from '$lib/state/page-loading.svelte.js';
-
   let {
     isNavigatingToContent,
   }: {
     isNavigatingToContent: boolean;
   } = $props();
-
-  const pageLoadingState = getPageLoadingState();
 
   // Never show loading overlay - images will load all at once without visual feedback
   const showLoadingOverlay = $derived(false);

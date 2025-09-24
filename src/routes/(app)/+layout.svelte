@@ -116,25 +116,30 @@
 
     try {
       // Step 1: Invalidate auth first if requested
-      if (includeAuth) {
+      if (session && includeAuth) {
         await invalidate('supabase:auth');
       }
 
-      // Step 2: Update context for both states
-      navigationState.updateContext({
-        session: data.session,
-        supabase: data.supabase,
-      });
+      if (session) {
+        navigationState.updateContext({
+          session: data.session,
+          supabase: data.supabase,
+        });
+      }
 
       sidebarState.updateContext({
         preferredImageFormat,
       });
 
       // Step 3: Refresh data concurrently but await both
-      await Promise.all([
-        sidebarState.refreshData(),
-        navigationState.refreshData(),
-      ]);
+      if (session) {
+        await Promise.all([
+          sidebarState.refreshData(),
+          navigationState.refreshData(),
+        ]);
+      } else {
+        sidebarState.refreshData();
+      }
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
 
@@ -334,20 +339,18 @@
 
   // Visibility-aware periodic sync interval with auth error handling
   $effect(() => {
-    if (!session || !isHydrated) return;
+    if (!isHydrated) return;
 
     // Use visibility-aware interval from the tab-visibility utility
     const visibilityAwareInterval = createVisibilityAwareInterval(async () => {
       // Double-check session is still valid when interval fires
-      if (session) {
-        try {
-          await performDataRefresh('5-minute interval', false);
-        } catch (error) {
-          // Handle potential auth errors during periodic sync
-          await handleAuthError(error, '5-minute interval sync');
-        }
+      try {
+        await performDataRefresh('3-minute interval', false);
+      } catch (error) {
+        // Handle potential auth errors during periodic sync
+        await handleAuthError(error, '3-minute interval sync');
       }
-    }, 300000); // 5 minutes = 300,000ms
+    }, 120000); // 2 minutes
 
     visibilityAwareInterval.start();
 
@@ -434,7 +437,6 @@
       if (layoutCleanup && typeof layoutCleanup === 'function') {
         layoutCleanup();
       }
-      // SSE connection is now automatically cleaned up by sidebarCleanup
     };
   }
 

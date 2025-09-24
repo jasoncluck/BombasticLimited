@@ -7,6 +7,7 @@ import {
 import { getProfile } from '$lib/supabase/user-profiles';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
+import { getActiveStreams } from '$lib/supabase/streams';
 
 interface RequestBody {
   preferredImageFormat?: string;
@@ -22,16 +23,28 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     detectOptimalFormat(request.headers.get('accept') || '');
 
   const { data: claimsData } = await supabase.auth.getClaims();
+
+
+
   if (!claimsData?.claims) {
-    return json({ playlists: [], userProfile: null, userPlaylistsCount: 0 });
+
+
+    const [
+      { sources },
+    ] = await Promise.all([
+      getActiveStreams({ supabase }),
+    ]);
+    return json({ playlists: [], userProfile: null, userPlaylistsCount: 0, streamingSources: sources });
   }
 
   const [
     { userPlaylists, count: userPlaylistsCount },
     { profile: userProfile },
+    { sources },
   ] = await Promise.all([
     getUserPlaylists({ supabase, preferredImageFormat }),
     getProfile({ supabase }),
+    getActiveStreams({ supabase }),
   ]);
 
   // Process image URLs in parallel
@@ -52,6 +65,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
       playlists: playlistsWithImages ?? [],
       userProfile,
       userPlaylistsCount: userPlaylistsCount ?? 0,
+      streamingSources: sources ?? [],
     },
     {
       headers: {

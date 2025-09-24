@@ -32,7 +32,7 @@
       <div
         class="border-primary mx-auto animate-spin rounded-full border-b-2 {sizeClasses[
           size
-        ]}"
+        ]} {variant === 'fullscreen' ? 'mb-2' : ''}"
       ></div>
       {#if message && variant === 'fullscreen'}
         <p class="text-muted-foreground text-sm">{message}</p>

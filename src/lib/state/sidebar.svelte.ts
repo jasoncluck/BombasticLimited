@@ -2,16 +2,10 @@ import type { Playlist } from '$lib/supabase/playlists';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import type { Session } from '@supabase/supabase-js';
 import { getContext, setContext } from 'svelte';
-import { browser, dev } from '$app/environment';
+import { browser } from '$app/environment';
 import type { Source } from '$lib/constants/source';
 import { SOURCE_INFO } from '$lib/constants/source';
-import { tabVisibility } from '$lib/utils/tab-visibility';
 import { showToast } from '$lib/state/notifications.svelte';
-import { createClient } from '@supabase/supabase-js';
-import {
-  PUBLIC_SUPABASE_URL,
-  PUBLIC_SUPABASE_ANON_KEY,
-} from '$env/static/public';
 import {
   SIDEBAR_COOKIE_NAME,
   SIDEBAR_COOKIE_MAX_AGE,
@@ -25,6 +19,7 @@ export interface SidebarData {
   followedPlaylists: Playlist[];
   userProfile: UserProfile;
   userPlaylistsCount: number;
+  streamingSources: Source[];
 }
 
 export interface SidebarCookieState {
@@ -61,6 +56,7 @@ export interface SidebarState {
   playlists: Playlist[];
   userProfile: UserProfile | null;
   userPlaylistsCount: number;
+  streamingSources: Source[];
 
   // Drag and drop state
   draggedSourceIndex: number | null;
@@ -68,12 +64,6 @@ export interface SidebarState {
 
   // Source ordering state
   orderedSources: Source[];
-
-  // Streaming sources state
-  streamingSources: Source[];
-
-  // Polling connection state
-  pollingActive: boolean;
 
   // Configuration
   config: SidebarConfig;
@@ -104,12 +94,6 @@ export interface SidebarState {
     preferredImageFormat?: ImageFormat | null
   ) => () => void;
   initializeEffects: () => void;
-
-  // Polling methods
-  startSSEConnection: () => void;
-  stopSSEConnection: () => void;
-  start: () => void;
-  stop: () => void;
 
   // Streaming methods
   updateStreamingSources: (sources: Source[]) => void;
@@ -201,6 +185,7 @@ export class SidebarStateClass implements SidebarState {
   playlists = $derived(this.data?.playlists ?? []);
   userProfile = $derived(this.data?.userProfile ?? null);
   userPlaylistsCount = $derived(this.data?.userPlaylistsCount ?? 0);
+  streamingSources = $state<Source[]>([]);
 
   // Drag and drop state
   draggedSourceIndex = $state<number | null>(null);
@@ -209,73 +194,19 @@ export class SidebarStateClass implements SidebarState {
   // Source ordering state
   orderedSources = $state<Source[]>([]);
 
-  // Streaming sources state
-  streamingSources = $state<Source[]>([]);
-
-  // Polling connection state
-  #pollingInterval: number | null = null;
-  #pollingActive = $state(false);
+  // Track initial stream load for notification logic
   #isInitialStreamLoad = $state(true);
-  #tabVisibilityUnsubscribe: (() => void) | null = null;
-
-  // Polling configuration
-  #pollingIntervalMs = 2 * 60 * 1000; // 2 minutes
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
     searchDebounceMs: 350,
   });
 
-  // Supabase client (lazy initialized)
-  #supabaseClient: ReturnType<typeof createClient> | null = null;
-
   constructor() {
     // Initialize sidebar state from cookie on construction
     this.loadStateFromCookie();
     // Also initialize sidebar collapsed state from localStorage (from layout pattern)
     this.loadSidebarStateFromLocalStorage();
-  }
-
-  /**
-   * Get or create Supabase client
-   */
-  private getSupabaseClient() {
-    if (!this.#supabaseClient) {
-      // Use local Supabase in development, remote in production
-      const supabaseUrl = dev ? 'http://127.0.0.1:54321' : PUBLIC_SUPABASE_URL;
-      const supabaseKey = dev
-        ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
-        : PUBLIC_SUPABASE_ANON_KEY;
-
-      this.#supabaseClient = createClient(supabaseUrl, supabaseKey);
-    }
-    return this.#supabaseClient;
-  }
-
-  /**
-   * Get active streams directly from Supabase
-   */
-  private async getActiveStreamsFromSupabase(): Promise<Source[]> {
-    const supabase = this.getSupabaseClient();
-
-    const { data, error } = await supabase
-      .from('active_streams')
-      .select('source')
-      .eq('is_live', true)
-      .order('updated_at', { ascending: false });
-
-    if (error) {
-      console.error('❌ Failed to fetch active streams from database:', error);
-      throw error;
-    }
-
-    const sources = data?.map((row: Source) => row.source as Source) || [];
-
-    if (dev) {
-      console.log('📡 Fetched active streams from Supabase:', sources);
-    }
-
-    return sources;
   }
 
   /**
@@ -448,10 +379,6 @@ export class SidebarStateClass implements SidebarState {
     return this.#initialized;
   }
 
-  get pollingActive() {
-    return this.#pollingActive;
-  }
-
   getFollowedPlaylists(session: Session | null) {
     return (
       this.data?.playlists.filter((up) => up.created_by !== session?.user.id) ??
@@ -514,9 +441,6 @@ export class SidebarStateClass implements SidebarState {
 
     this.#initialized = true;
 
-    // Start SSE connection
-    this.startSSEConnection();
-
     // Return cleanup function
     return () => {
       this.cleanup();
@@ -548,182 +472,11 @@ export class SidebarStateClass implements SidebarState {
       this.loadDataInBackground();
     }
 
-    // Start SSE connection
-    this.startSSEConnection();
-
     // Return cleanup function
     return () => {
       this.cleanup();
     };
   };
-
-  /**
-   * Start polling for streaming updates every 2 minutes
-   * Respects tab visibility - pauses when tab is hidden, resumes when visible
-   */
-  startSSEConnection(): void {
-    if (!browser || this.#pollingInterval) {
-      return;
-    }
-
-    this.#isInitialStreamLoad = true;
-    this.#pollingActive = true;
-
-    console.log(
-      '🔄 Starting Twitch stream polling (2 minute intervals, tab-visibility aware, direct Supabase)...'
-    );
-
-    // Subscribe to tab visibility changes
-    this.#tabVisibilityUnsubscribe = tabVisibility.subscribe((state) => {
-      if (state.isVisible && this.#pollingActive) {
-        // Tab became visible - resume polling if not already running
-        if (!this.#pollingInterval) {
-          this.resumePolling();
-        }
-      } else if (state.isHidden) {
-        // Tab became hidden - pause polling
-        this.pausePolling();
-      }
-    });
-
-    // Start polling immediately if tab is visible
-    if (tabVisibility.isVisible) {
-      this.resumePolling();
-    }
-  }
-
-  /**
-   * Resume polling (internal method)
-   */
-  private resumePolling(): void {
-    if (this.#pollingInterval) {
-      return; // Already running
-    }
-
-    console.log('▶️ Resuming Twitch stream polling (tab visible, direct Supabase)');
-
-    // Do initial poll immediately when resuming
-    this.pollStreamingStatus();
-
-    // Set up polling interval
-    this.#pollingInterval = window.setInterval(() => {
-      this.pollStreamingStatus();
-    }, this.#pollingIntervalMs);
-  }
-
-  /**
-   * Pause polling (internal method)
-   */
-  private pausePolling(): void {
-    if (!this.#pollingInterval) {
-      return; // Already paused
-    }
-
-    console.log('⏸️ Pausing Twitch stream polling (tab hidden)');
-
-    clearInterval(this.#pollingInterval);
-    this.#pollingInterval = null;
-  }
-
-  /**
-   * Manually retry polling connection (restarts polling)
-   */
-  retrySSEConnection(): void {
-    if (!browser) {
-      return;
-    }
-
-    // Stop existing polling
-    this.stopSSEConnection();
-
-    console.log('🔄 Manually restarting Twitch stream polling...');
-    this.startSSEConnection();
-  }
-
-  /**
-   * Poll Supabase directly for current streaming status
-   */
-  private async pollStreamingStatus(): Promise<void> {
-    try {
-      const streamingSources = await this.getActiveStreamsFromSupabase();
-      this.updateStreamingState(streamingSources);
-
-      if (this.#isInitialStreamLoad) {
-        console.log('📡 Initial streaming status loaded from Supabase:', streamingSources);
-        this.#isInitialStreamLoad = false;
-      }
-    } catch (error) {
-      console.error('Failed to poll streaming status from Supabase:', error);
-      // Continue polling even on error - don't stop the interval
-    }
-  }
-
-  /**
-   * Stop polling for streaming updates
-   */
-  stopSSEConnection(): void {
-    console.log('🛑 Stopping Twitch stream polling...');
-
-    if (this.#pollingInterval) {
-      clearInterval(this.#pollingInterval);
-      this.#pollingInterval = null;
-    }
-
-    // Clean up tab visibility subscription
-    if (this.#tabVisibilityUnsubscribe) {
-      this.#tabVisibilityUnsubscribe();
-      this.#tabVisibilityUnsubscribe = null;
-    }
-
-    this.#pollingActive = false;
-  }
-
-  /**
-   * Update the local streaming state and send notifications
-   */
-  private updateStreamingState(newStreamingSources: Source[]): void {
-    const previousStreams = new SvelteSet(this.streamingSources);
-    const currentStreams = new SvelteSet(newStreamingSources);
-
-    // Find sources that just started streaming
-    const startedStreaming = newStreamingSources.filter(
-      (source) => !previousStreams.has(source)
-    );
-
-    // Find sources that stopped streaming
-    const stoppedStreaming = this.streamingSources.filter(
-      (source) => !currentStreams.has(source)
-    );
-
-    // Update the sidebar streaming state
-    this.updateStreamingSources(newStreamingSources);
-
-    // Check if this is the initial load and handle flag
-    const isInitialLoad = this.#isInitialStreamLoad;
-    if (isInitialLoad) {
-      this.#isInitialStreamLoad = false;
-    }
-
-    // Only send notifications for real-time changes, not on initial load
-    if (!isInitialLoad) {
-      // Send notifications for streams that started
-      startedStreaming.forEach((source) => {
-        const displayName = SOURCE_INFO[source]?.displayName || source;
-
-        // Only show notification if it wasn't recently shown
-        if (!this.wasNotificationRecentlyShown(source)) {
-          showToast(`${displayName} is now streaming.`);
-          this.recordShownNotification(source);
-        }
-      });
-
-      // Send notifications for streams that stopped
-      stoppedStreaming.forEach((source) => {
-        const displayName = SOURCE_INFO[source]?.displayName || source;
-        showToast(`${displayName} has stopped streaming.`);
-      });
-    }
-  }
 
   // Data loading methods
   async loadData(): Promise<void> {
@@ -745,6 +498,7 @@ export class SidebarStateClass implements SidebarState {
 
       if (response.ok) {
         this.data = await response.json();
+        this.updateStreamingSources(this.data?.streamingSources)
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
         this.error = `Failed to load sidebar data: ${response.statusText}`;
@@ -789,12 +543,6 @@ export class SidebarStateClass implements SidebarState {
 
   // Debounce data refresh to prevent excessive API calls
   private refreshDataDebounced = debounce(async () => {
-    // Only refresh if tab is visible to save resources
-    // Also check if we're already refreshing to prevent duplicate calls
-    if (!tabVisibility.isVisible || this.loading) {
-      return;
-    }
-
     await this.loadData();
   }, 1000); // 1 second debounce
 
@@ -823,9 +571,6 @@ export class SidebarStateClass implements SidebarState {
 
   // Cleanup method
   cleanup(): void {
-    // Stop SSE connection
-    this.stopSSEConnection();
-
     // Cancel any pending debounced refresh calls
     if (this.refreshDataDebounced?.clear) {
       this.refreshDataDebounced.clear();
@@ -842,13 +587,57 @@ export class SidebarStateClass implements SidebarState {
     this.#isInitialStreamLoad = true;
     this.isDraggingDivider = false;
     this.preferredImageFormat = null;
-    this.#supabaseClient = null; // Reset Supabase client
     // Note: Don't reset isSidebarCollapsed or collapsed - they should persist across page refreshes
   }
 
   // Streaming sources management
-  updateStreamingSources(sources: Source[]): void {
-    this.streamingSources = [...sources];
+  updateStreamingSources(newStreamingSources?: Source[]): void {
+    if (!newStreamingSources) {
+      return
+    }
+
+    const previousStreams = new SvelteSet(this.streamingSources);
+    const currentStreams = new SvelteSet(newStreamingSources);
+
+
+    // Find sources that just started streaming
+    const startedStreaming = newStreamingSources.filter(
+      (source) => !previousStreams.has(source)
+    );
+
+    // Find sources that stopped streaming
+    const stoppedStreaming = this.streamingSources.filter(
+      (source) => !currentStreams.has(source)
+    );
+
+    // Update the sidebar streaming state
+    this.streamingSources = newStreamingSources;
+
+    // Check if this is the initial load and handle flag
+    const isInitialLoad = this.#isInitialStreamLoad;
+    if (isInitialLoad) {
+      this.#isInitialStreamLoad = false;
+    }
+
+    // Only send notifications for real-time changes, not on initial load
+    if (!isInitialLoad) {
+      // Send notifications for streams that started
+      startedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+
+        // Only show notification if it wasn't recently shown
+        if (!this.wasNotificationRecentlyShown(source)) {
+          showToast(`${displayName} is now streaming.`);
+          this.recordShownNotification(source);
+        }
+      });
+
+      // Send notifications for streams that stopped
+      stoppedStreaming.forEach((source) => {
+        const displayName = SOURCE_INFO[source]?.displayName || source;
+        showToast(`${displayName} has stopped streaming.`);
+      });
+    }
   }
 
   isSourceStreaming(source: Source): boolean {
@@ -872,16 +661,6 @@ export class SidebarStateClass implements SidebarState {
    */
   getInitialStreamLoadFlag(): boolean {
     return this.#isInitialStreamLoad;
-  }
-
-  start(): void {
-    // Alias for startSSEConnection for backward compatibility
-    this.startSSEConnection();
-  }
-
-  stop(): void {
-    // Alias for stopSSEConnection for backward compatibility
-    this.stopSSEConnection();
   }
 }
 
