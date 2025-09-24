@@ -93,8 +93,12 @@ export interface SidebarState {
   loadData: () => Promise<void>;
   loadDataInBackground: () => Promise<void>;
   refreshData: () => Promise<void>;
-  initialize: (preferredImageFormat?: ImageFormat | null) => Promise<() => void>;
-  initializeNonBlocking: (preferredImageFormat?: ImageFormat | null) => () => void;
+  initialize: (
+    preferredImageFormat?: ImageFormat | null
+  ) => Promise<() => void>;
+  initializeNonBlocking: (
+    preferredImageFormat?: ImageFormat | null
+  ) => () => void;
   initializeEffects: () => void;
 
   // Polling methods
@@ -204,18 +208,18 @@ export class SidebarStateClass implements SidebarState {
   // Streaming sources state
   streamingSources = $state<Source[]>([]);
 
-  // Polling connection state  
+  // Polling connection state
   #pollingInterval: number | null = null;
   #pollingActive = $state(false);
   #isInitialStreamLoad = $state(true);
   #tabVisibilityUnsubscribe: (() => void) | null = null;
 
-  // Polling configuration  
-  #pollingIntervalMs = 3 * 60 * 1000; // 3 minutes as requested
+  // Polling configuration
+  #pollingIntervalMs = 2 * 60 * 1000; // 2 minutes
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
-    searchDebounceMs: 250,
+    searchDebounceMs: 350,
   });
 
   constructor() {
@@ -229,14 +233,20 @@ export class SidebarStateClass implements SidebarState {
    * Update context (called by parent components)
    */
   updateContext(updates: { preferredImageFormat?: ImageFormat | null }): void {
-    const formatChanged = updates.preferredImageFormat !== this.preferredImageFormat;
+    const formatChanged =
+      updates.preferredImageFormat !== this.preferredImageFormat;
 
     if (updates.preferredImageFormat !== undefined) {
       this.preferredImageFormat = updates.preferredImageFormat;
     }
 
     // If format was just set for the first time and we haven't loaded data yet, load it now
-    if (formatChanged && this.preferredImageFormat && !this.#hasLoadedOnce && this.#initialized) {
+    if (
+      formatChanged &&
+      this.preferredImageFormat &&
+      !this.#hasLoadedOnce &&
+      this.#initialized
+    ) {
       this.loadDataInBackground();
     }
   }
@@ -436,7 +446,9 @@ export class SidebarStateClass implements SidebarState {
    * Initialize the sidebar state. Should be called in onMount.
    * Loads initial data and sets up any necessary listeners.
    */
-  initialize = async (preferredImageFormat?: ImageFormat | null): Promise<() => void> => {
+  initialize = async (
+    preferredImageFormat?: ImageFormat | null
+  ): Promise<() => void> => {
     if (this.#initialized) {
       return () => { };
     }
@@ -466,7 +478,9 @@ export class SidebarStateClass implements SidebarState {
    * Non-blocking initialization for faster UI loading.
    * Marks as initialized immediately and loads data in background.
    */
-  initializeNonBlocking = (preferredImageFormat?: ImageFormat | null): (() => void) => {
+  initializeNonBlocking = (
+    preferredImageFormat?: ImageFormat | null
+  ): (() => void) => {
     if (this.#initialized) {
       return () => { };
     }
@@ -506,7 +520,9 @@ export class SidebarStateClass implements SidebarState {
     this.#isInitialStreamLoad = true;
     this.#pollingActive = true;
 
-    console.log('🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...');
+    console.log(
+      '🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...'
+    );
 
     // Subscribe to tab visibility changes
     this.#tabVisibilityUnsubscribe = tabVisibility.subscribe((state) => {
@@ -583,7 +599,7 @@ export class SidebarStateClass implements SidebarState {
       const response = await fetch('/api/twitch', {
         method: 'GET',
         headers: {
-          'Accept': 'application/json',
+          Accept: 'application/json',
         },
       });
 

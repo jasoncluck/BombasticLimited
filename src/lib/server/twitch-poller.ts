@@ -8,10 +8,11 @@ import { SOURCE_INFO, SOURCES, type Source } from '$lib/constants/source.js';
 import { dev } from '$app/environment';
 
 // Global state for active streams - this persists across requests within the same instance
-let activeStreams = new Set<Source>();
+const activeStreams = new Set<Source>();
 let lastPollTime = 0;
 let isPolling = false;
 let pollingTimeout: NodeJS.Timeout | null = null;
+let pollingExplicitlyStarted = false;
 
 // Configuration optimized for serverless
 const POLL_INTERVAL = 60000; // 1 minute
@@ -71,8 +72,20 @@ function triggerPollIfNeeded() {
   const now = Date.now();
   const timeSinceLastPoll = now - lastPollTime;
 
+  // In development mode, poll more aggressively to support test stream simulation
+  const effectivePollInterval = dev ? 5000 : POLL_INTERVAL; // 5 seconds in dev, 60 seconds in prod
+
   // If we have listeners and data is stale, poll immediately
-  if (changeListeners.size > 0 && timeSinceLastPoll > POLL_INTERVAL) {
+  if (changeListeners.size > 0 && timeSinceLastPoll > effectivePollInterval) {
+    pollStreamStatus();
+  }
+
+  // For direct API calls (no listeners), still poll if data is stale in dev mode
+  if (
+    changeListeners.size === 0 &&
+    dev &&
+    timeSinceLastPoll > effectivePollInterval
+  ) {
     pollStreamStatus();
   }
 
@@ -95,7 +108,8 @@ function scheduleNextPoll() {
 
   pollingTimeout = setTimeout(() => {
     pollingTimeout = null;
-    if (changeListeners.size > 0) {
+    // Continue polling if explicitly started or if there are listeners
+    if (changeListeners.size > 0 || pollingExplicitlyStarted) {
       pollStreamStatus();
       scheduleNextPoll(); // Schedule next poll
     }
@@ -113,6 +127,8 @@ async function pollStreamStatus(): Promise<void> {
     return;
   }
 
+  // Set polling flag
+  isPolling = true;
   lastPollTime = now;
 
   try {
@@ -137,8 +153,17 @@ async function pollStreamStatus(): Promise<void> {
         (source) => SOURCE_INFO[source].twitchId === status.userId
       );
 
+      if (dev) {
+        console.log(
+          `🔍 Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`
+        );
+      }
+
       if (sourceName && status.isLive) {
         activeStreams.add(sourceName);
+        if (dev) {
+          console.log(`✅ Added ${sourceName} to active streams`);
+        }
       }
     }
 
@@ -153,6 +178,9 @@ async function pollStreamStatus(): Promise<void> {
     }
   } catch (error) {
     console.error('Failed to poll Twitch stream status:', error);
+  } finally {
+    // Reset polling flag
+    isPolling = false;
   }
 }
 
@@ -160,6 +188,8 @@ async function pollStreamStatus(): Promise<void> {
  * Start the background polling service
  */
 export function startPolling(): void {
+  pollingExplicitlyStarted = true;
+
   // Initial poll
   pollStreamStatus();
 
@@ -171,6 +201,8 @@ export function startPolling(): void {
  * Stop the background polling service
  */
 export function stopPolling(): void {
+  pollingExplicitlyStarted = false;
+
   if (pollingTimeout) {
     clearTimeout(pollingTimeout);
     pollingTimeout = null;
@@ -182,6 +214,7 @@ export function stopPolling(): void {
  */
 export function getPollerStatus() {
   return {
+    isPolling: isPolling,
     activeStreamsCount: activeStreams.size,
     activeStreams: Array.from(activeStreams),
     listenersCount: changeListeners.size,
@@ -199,6 +232,7 @@ export function resetPollerState(): void {
   activeStreams.clear();
   changeListeners.clear();
   lastPollTime = 0;
+  pollingExplicitlyStarted = false;
 }
 
 /**

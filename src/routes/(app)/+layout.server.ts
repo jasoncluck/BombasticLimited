@@ -20,7 +20,9 @@ export const load: LayoutServerLoad = loadFlash(
 
     const claimsPromise = supabase.auth.getClaims();
 
-    const preferredImageFormat = detectOptimalImageFormat(request.headers.get('Accept') ?? 'image/*');
+    const preferredImageFormat = detectOptimalImageFormat(
+      request.headers.get('Accept') ?? 'image/*'
+    );
 
     let view: ContentView;
     if (url.pathname === MAIN_ROUTES.CONTINUE) {
