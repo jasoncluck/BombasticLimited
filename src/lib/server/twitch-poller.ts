@@ -10,7 +10,7 @@ import { dev } from '$app/environment';
 // Global state for active streams - this persists across requests within the same instance
 const activeStreams = new Set<Source>();
 let lastPollTime = 0;
-const isPolling = false;
+let isPolling = false;
 let pollingTimeout: NodeJS.Timeout | null = null;
 let pollingExplicitlyStarted = false;
 
