@@ -1,7 +1,7 @@
 import type { ContentView } from '$lib/components/content/content';
 import { getFilterOptionFromQueryParams } from '$lib/components/content/content-filter';
 import { getProfile } from '$lib/supabase/user-profiles';
-import { MAIN_ROUTES } from '$lib/constants/routes.js';
+import { MAIN_ROUTES } from '$lib/constants/routes';
 import type { LayoutServerLoad } from './$types';
 import { loadFlash } from 'sveltekit-flash-message/server';
 import { detectOptimalImageFormat } from '$lib/supabase/images';
