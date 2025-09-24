@@ -215,11 +215,11 @@ export class SidebarStateClass implements SidebarState {
   #tabVisibilityUnsubscribe: (() => void) | null = null;
 
   // Polling configuration
-  #pollingIntervalMs = 3 * 60 * 1000; // 3 minutes as requested
+  #pollingIntervalMs = 2 * 60 * 1000; // 2 minutes
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
-    searchDebounceMs: 250,
+    searchDebounceMs: 350,
   });
 
   constructor() {
@@ -450,7 +450,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): Promise<() => void> => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Set the preferred image format from server if provided
@@ -482,7 +482,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): (() => void) => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
     // Set the preferred image format from server if provided
