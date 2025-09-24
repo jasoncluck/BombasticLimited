@@ -3,8 +3,8 @@
  * Uses stateless polling with shared state management
  */
 
-import { getMultipleStreamStatus, type StreamStatus } from '$lib/client/twitch.js';
-import { SOURCE_INFO, SOURCES, type Source } from '$lib/constants/source.js';
+import { getMultipleStreamStatus, type StreamStatus } from '$lib/client/twitch';
+import { SOURCE_INFO, SOURCES, type Source } from '$lib/constants/source';
 import { dev } from '$app/environment';
 
 // Global state for active streams - this persists across requests within the same instance
@@ -42,11 +42,51 @@ export function addStreamChangeListener(
 }
 
 /**
+ * Get current active streams, forcing fresh data fetch if needed
+ * This is the main function for serverless on-demand polling
+ */
+export async function getActiveStreamsWithFreshData(): Promise<Source[]> {
+  const now = Date.now();
+  const timeSinceLastPoll = now - lastPollTime;
+  
+  // Force fresh poll if data is stale or this is the first call
+  const shouldPoll = lastPollTime === 0 || timeSinceLastPoll > POLL_INTERVAL;
+  
+  if (shouldPoll && !isPolling) {
+    if (dev) {
+      console.log(`🔄 Forcing fresh poll (${timeSinceLastPoll}ms since last poll)`);
+    }
+    await pollStreamStatus();
+  } else if (isPolling) {
+    // If already polling, wait for it to complete
+    if (dev) {
+      console.log('⏳ Waiting for ongoing poll to complete...');
+    }
+    
+    // Wait for the current poll to complete (with timeout)
+    const pollTimeout = 10000; // 10 second timeout
+    const startWait = Date.now();
+    
+    while (isPolling && (Date.now() - startWait) < pollTimeout) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    if (isPolling) {
+      console.warn('⚠️ Poll timeout - returning current data');
+    }
+  }
+  
+  return Array.from(activeStreams);
+}
+
+/**
  * Get current active streams
  */
 export function getActiveStreams(): Source[] {
-  // Trigger a poll if data is stale
-  triggerPollIfNeeded();
+  // For backward compatibility, still trigger a poll if data is stale in development
+  if (dev) {
+    triggerPollIfNeeded();
+  }
   return Array.from(activeStreams);
 }
 
@@ -126,13 +166,15 @@ function scheduleNextPoll() {
 
 /**
  * Poll Twitch API for stream status updates
+ * Enhanced with better error handling and logging for serverless environments
  */
 async function pollStreamStatus(): Promise<void> {
   const now = Date.now();
+  const pollId = Math.random().toString(36).substr(2, 9);
 
   // Prevent excessive polling
   if (now - lastPollTime < MIN_POLL_INTERVAL) {
-    console.log('⚠️ Skipping poll due to rate limiting');
+    console.log(`⚠️ [${pollId}] Skipping poll due to rate limiting (${now - lastPollTime}ms < ${MIN_POLL_INTERVAL}ms)`);
     return;
   }
 
@@ -140,21 +182,39 @@ async function pollStreamStatus(): Promise<void> {
   isPolling = true;
   lastPollTime = now;
 
-  console.log('🔄 Starting stream status poll...');
+  console.log(`🔄 [${pollId}] Starting stream status poll...`);
+  const startTime = Date.now();
 
   try {
     // Get all Twitch user IDs from sources
     const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
-    console.log('📋 Polling for user IDs:', twitchIds);
+    console.log(`📋 [${pollId}] Polling for user IDs:`, twitchIds);
 
-    // Fetch stream status for all sources
-    const streamStatuses = await getMultipleStreamStatus(twitchIds);
-    console.log('📊 Poll results:', streamStatuses);
+    // Fetch stream status for all sources with timeout
+    const fetchPromise = getMultipleStreamStatus(twitchIds);
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Poll timeout')), 15000); // 15 second timeout
+    });
+
+    const streamStatuses = await Promise.race([fetchPromise, timeoutPromise]);
+    const fetchDuration = Date.now() - startTime;
+    
+    console.log(`📊 [${pollId}] Poll results (${fetchDuration}ms):`, streamStatuses);
 
     // Handle case where API returns undefined/null
     if (!streamStatuses || !Array.isArray(streamStatuses)) {
-      console.warn('⚠️ No stream statuses returned from API');
+      console.warn(`⚠️ [${pollId}] No stream statuses returned from API - keeping current state`);
       return;
+    }
+
+    // Validate stream statuses structure
+    const validStatuses = streamStatuses.filter(status => 
+      status && typeof status === 'object' && 
+      'userId' in status && 'isLive' in status
+    );
+
+    if (validStatuses.length !== streamStatuses.length) {
+      console.warn(`⚠️ [${pollId}] Filtered ${streamStatuses.length - validStatuses.length} invalid status objects`);
     }
 
     // Track previous state for change detection
@@ -162,18 +222,26 @@ async function pollStreamStatus(): Promise<void> {
     activeStreams.clear();
 
     // Update active streams
-    for (const status of streamStatuses) {
+    let processedCount = 0;
+    let addedCount = 0;
+    
+    for (const status of validStatuses) {
       const sourceName = SOURCES.find(
         (source) => SOURCE_INFO[source].twitchId === status.userId
       );
 
       console.log(
-        `🔍 Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`
+        `🔍 [${pollId}] Processing stream status: userId=${status.userId}, isLive=${status.isLive}, sourceName=${sourceName}`
       );
+
+      processedCount++;
 
       if (sourceName && status.isLive) {
         activeStreams.add(sourceName);
-        console.log(`✅ Added ${sourceName} to active streams`);
+        addedCount++;
+        console.log(`✅ [${pollId}] Added ${sourceName} to active streams`);
+      } else if (!sourceName && status.isLive) {
+        console.warn(`⚠️ [${pollId}] Unknown source for userId ${status.userId} (live but not in SOURCE_INFO)`);
       }
     }
 
@@ -183,19 +251,39 @@ async function pollStreamStatus(): Promise<void> {
       [...activeStreams].some((s) => !previouslyActive.has(s)) ||
       [...previouslyActive].some((s) => !activeStreams.has(s));
 
-    console.log(`📈 Stream changes detected: ${hasChanges}`);
-    console.log(`📊 Active streams: [${Array.from(activeStreams).join(', ')}]`);
+    const totalDuration = Date.now() - startTime;
+    
+    console.log(`📈 [${pollId}] Stream changes detected: ${hasChanges} (processed ${processedCount}, added ${addedCount}, ${totalDuration}ms total)`);
+    console.log(`📊 [${pollId}] Active streams: [${Array.from(activeStreams).join(', ')}]`);
 
     if (hasChanges) {
-      console.log('🔔 Notifying listeners of stream changes');
+      console.log(`🔔 [${pollId}] Notifying ${changeListeners.size} listeners of stream changes`);
       notifyListeners();
     }
+    
+    // Log performance metrics for serverless optimization
+    if (totalDuration > 5000) {
+      console.warn(`⚠️ [${pollId}] Slow poll detected: ${totalDuration}ms (threshold: 5000ms)`);
+    }
+    
   } catch (error) {
-    console.error('Failed to poll Twitch stream status:', error);
+    const duration = Date.now() - startTime;
+    console.error(`❌ [${pollId}] Failed to poll Twitch stream status (${duration}ms):`, {
+      error: error instanceof Error ? error.message : error,
+      stack: error instanceof Error ? error.stack : undefined,
+      activeStreamsCount: activeStreams.size,
+      listenersCount: changeListeners.size,
+      timeSinceLastSuccessfulPoll: lastPollTime > 0 ? now - lastPollTime : 'never'
+    });
+    
+    // Don't clear active streams on error - keep previous state
+    // This provides better resilience in serverless environments
+    
   } finally {
     // Reset polling flag
     isPolling = false;
-    console.log('✅ Poll completed');
+    const totalDuration = Date.now() - startTime;
+    console.log(`✅ [${pollId}] Poll completed (${totalDuration}ms)`);
   }
 }
 
@@ -228,16 +316,32 @@ export function stopPolling(): void {
 
 /**
  * Get poller status and stats
+ * Enhanced with serverless-relevant metrics
  */
 export function getPollerStatus() {
+  const now = Date.now();
+  const timeSinceLastPoll = lastPollTime > 0 ? now - lastPollTime : null;
+  
   return {
     isPolling: isPolling,
     activeStreamsCount: activeStreams.size,
     activeStreams: Array.from(activeStreams),
     listenersCount: changeListeners.size,
-    lastPollTime:
-      lastPollTime > 0 ? new Date(lastPollTime).toISOString() : null,
-    isStale: Date.now() - lastPollTime > POLL_INTERVAL,
+    lastPollTime: lastPollTime > 0 ? new Date(lastPollTime).toISOString() : null,
+    isStale: timeSinceLastPoll === null || timeSinceLastPoll > POLL_INTERVAL,
+    timeSinceLastPoll: timeSinceLastPoll,
+    cacheAge: timeSinceLastPoll !== null ? Math.floor(timeSinceLastPoll / 1000) : null,
+    environment: {
+      isDev: dev,
+      pollInterval: POLL_INTERVAL,
+      minPollInterval: MIN_POLL_INTERVAL,
+      nodeEnv: process.env.NODE_ENV,
+      isServerless: typeof window === 'undefined'
+    },
+    performance: {
+      uptime: process.uptime?.() || 0,
+      memoryUsage: process.memoryUsage?.() || null
+    }
   };
 }
 

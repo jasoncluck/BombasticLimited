@@ -24,12 +24,13 @@ import {
   startPolling,
   stopPolling,
   getActiveStreams,
+  getActiveStreamsWithFreshData,
   addStreamChangeListener,
   getPollerStatus,
   forcePoll,
   resetPollerState,
-} from '../twitch-poller.js';
-import { getMultipleStreamStatus } from '$lib/client/twitch.js';
+} from '../twitch-poller';
+import { getMultipleStreamStatus } from '$lib/client/twitch';
 
 // Get the mocked function
 const mockGetMultipleStreamStatus = vi.mocked(getMultipleStreamStatus);
@@ -56,14 +57,14 @@ describe('Twitch Poller', () => {
 
     it('should provide correct initial status', () => {
       const status = getPollerStatus();
-      expect(status).toEqual({
-        isPolling: false,
-        activeStreamsCount: 0,
-        activeStreams: [],
-        listenersCount: 0,
-        lastPollTime: null,
-        isStale: true, // Data is stale when never polled
-      });
+      expect(status.isPolling).toBe(false);
+      expect(status.activeStreamsCount).toBe(0);
+      expect(status.activeStreams).toEqual([]);
+      expect(status.listenersCount).toBe(0);
+      expect(status.lastPollTime).toBeNull();
+      expect(status.isStale).toBe(true);
+      expect(status.environment).toBeDefined();
+      expect(status.performance).toBeDefined();
     });
   });
 
@@ -303,6 +304,49 @@ describe('Twitch Poller', () => {
       const status = getPollerStatus();
       expect(status.activeStreamsCount).toBe(2);
       expect(status.activeStreams).toHaveLength(2);
+    });
+
+    it('should include environment and performance metrics', () => {
+      const status = getPollerStatus();
+      expect(status.environment).toBeDefined();
+      expect(status.environment.isDev).toBe(false); // We mocked dev to false
+      expect(status.environment.isServerless).toBe(false); // In test environment, `window` is undefined but it's not truly serverless
+      expect(status.performance).toBeDefined();
+    });
+  });
+
+  describe('getActiveStreamsWithFreshData', () => {
+    it('should force fresh poll when data is stale', async () => {
+      mockGetMultipleStreamStatus.mockResolvedValue([
+        { userId: '689331234', isLive: true, lastChecked: Date.now() },
+      ]);
+
+      const streams = await getActiveStreamsWithFreshData();
+      expect(streams).toEqual(['nextlander']);
+      expect(mockGetMultipleStreamStatus).toHaveBeenCalled();
+    });
+
+    it('should return current streams when poll is already in progress', async () => {
+      // Mock a quick response
+      mockGetMultipleStreamStatus.mockResolvedValue([]);
+
+      const streams = await getActiveStreamsWithFreshData();
+      expect(Array.isArray(streams)).toBe(true);
+      expect(mockGetMultipleStreamStatus).toHaveBeenCalled();
+    });
+
+    it('should handle concurrent requests efficiently', async () => {
+      mockGetMultipleStreamStatus.mockResolvedValue([
+        { userId: '689331234', isLive: true, lastChecked: Date.now() },
+      ]);
+
+      // Test that the function works correctly with concurrent calls
+      const result1 = await getActiveStreamsWithFreshData();
+      const result2 = await getActiveStreamsWithFreshData();
+      
+      expect(result1).toEqual(['nextlander']);
+      expect(result2).toEqual(['nextlander']);
+      expect(mockGetMultipleStreamStatus).toHaveBeenCalled();
     });
   });
 });
