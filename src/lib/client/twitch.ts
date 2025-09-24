@@ -1,5 +1,5 @@
 import { AppTokenAuthProvider } from '@twurple/auth';
-import { ApiClient } from '@twurple/api';
+import { ApiClient, } from '@twurple/api';
 
 import { TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET } from '$env/static/private';
 
@@ -37,7 +37,7 @@ const streamCache = new Map<string, StreamStatus>();
 const CACHE_DURATION = dev ? 5 * 1000 : 30 * 1000; // 5 seconds in dev, 30 seconds in production
 const RATE_LIMIT_DELAY = 100; // 100ms between requests to respect rate limits
 
-// Development testing variables
+// Development testing variables - moved to module level for polling system
 let testStartTime: number | null = null;
 const TEST_LIVE_START = 10000; // Go live after 10 seconds
 const TEST_LIVE_END = 70000; // Go offline after 70 seconds
@@ -55,8 +55,9 @@ const NEXTLANDER_USER_ID = '689331234'; // You may need to adjust this ID
 
 /**
  * Check if we're in dev mode test scenario for nextlander
+ * Made public so the poller can use it
  */
-function getTestStreamStatus(userId: string): StreamStatus | null {
+export function getTestStreamStatus(userId: string): StreamStatus | null {
   if (!dev) return null;
 
   // Check if this is the nextlander user (you can check by userId or get the ID first)
@@ -68,9 +69,7 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   // Initialize test timer on first call if not already initialized
   if (testStartTime === null) {
     testStartTime = now;
-    console.log(
-      '🚀 Twitch test simulation timer started for nextlander channel'
-    );
+    console.log('🎬 Test timer started - nextlander will go live in 10 seconds');
   }
 
   const elapsed = now - testStartTime;
@@ -79,9 +78,12 @@ function getTestStreamStatus(userId: string): StreamStatus | null {
   const shouldBeLive = elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_END;
 
   if (dev) {
-    console.log(
-      `🎮 Test stream status for ${userId}: elapsed=${elapsed}ms, shouldBeLive=${shouldBeLive}`
-    );
+    const statusEmoji = shouldBeLive ? '🔴' : '⚫';
+    const timeUntilChange = shouldBeLive
+      ? Math.max(0, TEST_LIVE_END - elapsed)
+      : Math.max(0, TEST_LIVE_START - elapsed);
+
+    console.log(`${statusEmoji} Test Status: nextlander ${shouldBeLive ? 'LIVE' : 'OFFLINE'} (${elapsed}ms elapsed, next change in ${timeUntilChange}ms)`);
   }
 
   const status: StreamStatus = {
@@ -217,5 +219,27 @@ export function getCacheStats() {
       lastChecked: new Date(status.lastChecked).toISOString(),
       cacheAge: Date.now() - status.lastChecked,
     })),
+  };
+}
+
+/**
+ * Get current test timer info (useful for debugging)
+ */
+export function getTestTimerInfo() {
+  if (!dev || testStartTime === null) {
+    return null;
+  }
+
+  const now = Date.now();
+  const elapsed = now - testStartTime;
+
+  return {
+    started: new Date(testStartTime).toISOString(),
+    elapsed,
+    liveStart: TEST_LIVE_START,
+    liveEnd: TEST_LIVE_END,
+    currentlyInLiveWindow: elapsed >= TEST_LIVE_START && elapsed < TEST_LIVE_END,
+    timeUntilLive: elapsed < TEST_LIVE_START ? TEST_LIVE_START - elapsed : 0,
+    timeUntilOffline: elapsed < TEST_LIVE_END ? TEST_LIVE_END - elapsed : 0,
   };
 }

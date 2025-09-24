@@ -215,7 +215,7 @@ export class SidebarStateClass implements SidebarState {
   #tabVisibilityUnsubscribe: (() => void) | null = null;
 
   // Polling configuration
-  #pollingIntervalMs = 2 * 60 * 1000; // 2 minutes
+  #pollingIntervalMs = 2 * 60 * 2000; // 2 minutes
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
