@@ -27,7 +27,7 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Failed to get Twitch stream status:', error);
-    
+
     // Return empty array on error to prevent client-side issues
     return json([], {
       status: 500,

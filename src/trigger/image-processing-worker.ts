@@ -561,7 +561,7 @@ export const processImageWebhook = task({
       const imagePropertiesChanged =
         table === 'playlists' &&
         JSON.stringify(record.image_properties) !==
-        JSON.stringify(old_record?.image_properties);
+          JSON.stringify(old_record?.image_properties);
 
       console.log(`UPDATE: ${entityType} ${record.id}`, {
         thumbnailChanged,

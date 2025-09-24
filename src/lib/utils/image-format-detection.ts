@@ -91,25 +91,3 @@ export function detectBrowserImageSupport(): Promise<{
     }, 'image/webp');
   });
 }
-
-/**
- * Get optimal format based on browser support (client-side)
- */
-export async function getOptimalFormatForBrowser(): Promise<ImageFormat> {
-  try {
-    const support = await detectBrowserImageSupport();
-
-    if (support.avif) {
-      return 'avif';
-    }
-
-    if (support.webp) {
-      return 'webp';
-    }
-
-    return 'jpeg';
-  } catch {
-    // Fallback to WebP on any error
-    return 'webp';
-  }
-}

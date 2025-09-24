@@ -93,8 +93,8 @@ export interface SidebarState {
   loadData: () => Promise<void>;
   loadDataInBackground: () => Promise<void>;
   refreshData: () => Promise<void>;
-  initialize: () => Promise<() => void>;
-  initializeNonBlocking: () => () => void;
+  initialize: (preferredImageFormat?: ImageFormat | null) => Promise<() => void>;
+  initializeNonBlocking: (preferredImageFormat?: ImageFormat | null) => () => void;
   initializeEffects: () => void;
 
   // Polling methods
@@ -186,7 +186,7 @@ export class SidebarStateClass implements SidebarState {
   collapsed = $state(false);
   openAccountDrawer = $state(false);
 
-  // Preferred image format - now properly reactive
+  // Preferred image format - now properly reactive and initialized from server
   preferredImageFormat = $state<ImageFormat | null>(null);
 
   // Derived values for easier access
@@ -209,7 +209,7 @@ export class SidebarStateClass implements SidebarState {
   #pollingActive = $state(false);
   #isInitialStreamLoad = $state(true);
   #tabVisibilityUnsubscribe: (() => void) | null = null;
-  
+
   // Polling configuration  
   #pollingIntervalMs = 3 * 60 * 1000; // 3 minutes as requested
 
@@ -229,8 +229,15 @@ export class SidebarStateClass implements SidebarState {
    * Update context (called by parent components)
    */
   updateContext(updates: { preferredImageFormat?: ImageFormat | null }): void {
+    const formatChanged = updates.preferredImageFormat !== this.preferredImageFormat;
+
     if (updates.preferredImageFormat !== undefined) {
       this.preferredImageFormat = updates.preferredImageFormat;
+    }
+
+    // If format was just set for the first time and we haven't loaded data yet, load it now
+    if (formatChanged && this.preferredImageFormat && !this.#hasLoadedOnce && this.#initialized) {
+      this.loadDataInBackground();
     }
   }
 
@@ -429,13 +436,21 @@ export class SidebarStateClass implements SidebarState {
    * Initialize the sidebar state. Should be called in onMount.
    * Loads initial data and sets up any necessary listeners.
    */
-  initialize = async (): Promise<() => void> => {
+  initialize = async (preferredImageFormat?: ImageFormat | null): Promise<() => void> => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
     }
 
-    // Load initial data
-    await this.loadData();
+    // Set the preferred image format from server if provided
+    if (preferredImageFormat !== undefined) {
+      this.preferredImageFormat = preferredImageFormat;
+    }
+
+    // Only load data if we have a preferred format, otherwise wait for updateContext
+    if (this.preferredImageFormat) {
+      await this.loadData();
+    }
+
     this.#initialized = true;
 
     // Start SSE connection
@@ -451,17 +466,22 @@ export class SidebarStateClass implements SidebarState {
    * Non-blocking initialization for faster UI loading.
    * Marks as initialized immediately and loads data in background.
    */
-  initializeNonBlocking = (): (() => void) => {
+  initializeNonBlocking = (preferredImageFormat?: ImageFormat | null): (() => void) => {
     if (this.#initialized) {
-      return () => {};
+      return () => { };
+    }
+
+    // Set the preferred image format from server if provided
+    if (preferredImageFormat !== undefined) {
+      this.preferredImageFormat = preferredImageFormat;
     }
 
     // Mark as initialized immediately for UI purposes
     this.#initialized = true;
     this.loading = false; // Allow UI to render
 
-    // Load data in background
-    if (browser) {
+    // Load data in background only if we have a preferred format
+    if (browser && this.preferredImageFormat) {
       this.loadDataInBackground();
     }
 
@@ -485,9 +505,9 @@ export class SidebarStateClass implements SidebarState {
 
     this.#isInitialStreamLoad = true;
     this.#pollingActive = true;
-    
+
     console.log('🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...');
-    
+
     // Subscribe to tab visibility changes
     this.#tabVisibilityUnsubscribe = tabVisibility.subscribe((state) => {
       if (state.isVisible && this.#pollingActive) {
@@ -500,7 +520,7 @@ export class SidebarStateClass implements SidebarState {
         this.pausePolling();
       }
     });
-    
+
     // Start polling immediately if tab is visible
     if (tabVisibility.isVisible) {
       this.resumePolling();
@@ -516,10 +536,10 @@ export class SidebarStateClass implements SidebarState {
     }
 
     console.log('▶️ Resuming Twitch stream polling (tab visible)');
-    
+
     // Do initial poll immediately when resuming
     this.pollStreamingStatus();
-    
+
     // Set up polling interval
     this.#pollingInterval = window.setInterval(() => {
       this.pollStreamingStatus();
@@ -535,7 +555,7 @@ export class SidebarStateClass implements SidebarState {
     }
 
     console.log('⏸️ Pausing Twitch stream polling (tab hidden)');
-    
+
     clearInterval(this.#pollingInterval);
     this.#pollingInterval = null;
   }
@@ -573,7 +593,7 @@ export class SidebarStateClass implements SidebarState {
 
       const streamingSources: Source[] = await response.json();
       this.updateStreamingState(streamingSources);
-      
+
       if (this.#isInitialStreamLoad) {
         console.log('📡 Initial streaming status loaded:', streamingSources);
         this.#isInitialStreamLoad = false;
@@ -589,18 +609,18 @@ export class SidebarStateClass implements SidebarState {
    */
   stopSSEConnection(): void {
     console.log('🛑 Stopping Twitch stream polling...');
-    
+
     if (this.#pollingInterval) {
       clearInterval(this.#pollingInterval);
       this.#pollingInterval = null;
     }
-    
+
     // Clean up tab visibility subscription
     if (this.#tabVisibilityUnsubscribe) {
       this.#tabVisibilityUnsubscribe();
       this.#tabVisibilityUnsubscribe = null;
     }
-    
+
     this.#pollingActive = false;
   }
 

@@ -323,6 +323,15 @@
     }
   });
 
+  // React to preferredImageFormat changes and update sidebar context
+  $effect(() => {
+    if (isHydrated && preferredImageFormat) {
+      sidebarState.updateContext({
+        preferredImageFormat,
+      });
+    }
+  });
+
   // Visibility-aware periodic sync interval with auth error handling
   $effect(() => {
     if (!session || !isHydrated) return;
@@ -364,9 +373,10 @@
     // Initialize media queries immediately (fast, synchronous)
     const mediaCleanup = mediaQueryState.initialize();
 
-    // Initialize sidebar non-blocking (fast UI, loads data in background)
+    // Initialize sidebar non-blocking with the server-provided preferred image format
     // This now also starts the SSE connection automatically
-    const sidebarCleanup = sidebarState.initializeNonBlocking();
+    const sidebarCleanup =
+      sidebarState.initializeNonBlocking(preferredImageFormat);
 
     navigation.setupNavigationHooks();
 
@@ -391,6 +401,11 @@
 
     // Set up visibility change listener for data refresh and auth state checking
     document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    // Set up global context menu listener
+    document.addEventListener('contextmenu', handleGlobalContextMenu, {
+      capture: true,
+    });
 
     // Return cleanup function
     return () => {

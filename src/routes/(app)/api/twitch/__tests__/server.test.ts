@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Source } from '$lib/constants/source.js';
 
-// Mock the twitch poller  
+// Mock the twitch poller
 const mockGetActiveStreams = vi.fn();
 
 vi.mock('$lib/server/twitch-poller.js', () => ({
@@ -27,7 +27,9 @@ describe('/api/twitch endpoint', () => {
 
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('application/json');
-    expect(response.headers.get('cache-control')).toBe('no-cache, must-revalidate');
+    expect(response.headers.get('cache-control')).toBe(
+      'no-cache, must-revalidate'
+    );
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
   });
 
