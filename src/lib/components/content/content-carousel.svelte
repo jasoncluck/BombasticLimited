@@ -35,7 +35,7 @@
 
   let api = $state<CarouselAPI>();
   let showPreviousButton = $state(false);
-  let showNextButton = $state(videos.length > 0);
+  let showNextButton = $state(false);
   let isInitializing = $state(true);
   let userInteracting = $state(false);
   let slidesInView = $state<number[]>([]);
@@ -54,11 +54,15 @@
       // Listen for changes
       api.on('slidesInView', updateSlidesInView);
       api.on('scroll', updateSlidesInView);
+      api.on('select', updateSlidesInView);
+      api.on('reInit', updateSlidesInView);
 
       return () => {
         if (api) {
           api.off('slidesInView', updateSlidesInView);
           api.off('scroll', updateSlidesInView);
+          api.off('select', updateSlidesInView);
+          api.off('reInit', updateSlidesInView);
         }
       };
     }
@@ -98,15 +102,56 @@
   }
 
   function updateButtonStates() {
-    if (api) {
+    if (api && videos.length > 0) {
       showPreviousButton = api.canScrollPrev();
-      showNextButton = videos.length > 0;
+      showNextButton = api.canScrollNext();
       contentState.selectedVideosBySection[sectionId] = [];
       contentState.hoveredVideosBySection[sectionId] = null;
       // Update slides in view
       slidesInView = api.slidesInView();
+    } else {
+      showPreviousButton = false;
+      showNextButton = false;
     }
   }
+
+  // Listen for viewport changes that might affect items per view
+  $effect(() => {
+    if (api && !isInitializing && !userInteracting) {
+      // Add a small delay to allow for layout changes
+      const timeoutId = setTimeout(() => {
+        updateButtonStates();
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  });
+
+  // Listen for API changes to update button states
+  $effect(() => {
+    if (api) {
+      const handleSelect = () => {
+        updateButtonStates();
+      };
+
+      const handleReInit = () => {
+        updateButtonStates();
+      };
+
+      api.on('select', handleSelect);
+      api.on('reInit', handleReInit);
+
+      // Initial update
+      updateButtonStates();
+
+      return () => {
+        if (api) {
+          api.off('select', handleSelect);
+          api.off('reInit', handleReInit);
+        }
+      };
+    }
+  });
 
   async function waitForCarouselReady(
     api: CarouselAPI,
@@ -139,7 +184,14 @@
           scrollToVideoIndex(carouselState.lastViewedIndex);
         } else {
           isInitializing = false;
+          updateButtonStates();
         }
+      });
+    } else if (api && isInitializing) {
+      // If no carousel state, just update button states after initialization
+      waitForCarouselReady(api).then(() => {
+        isInitializing = false;
+        updateButtonStates();
       });
     }
   });
@@ -191,6 +243,26 @@
       contentState.hoverTimeoutId = null;
     }
   }
+
+  // Listen for window resize events to update button states
+  $effect(() => {
+    if (typeof window !== 'undefined' && api) {
+      const handleResize = () => {
+        // Debounce the resize handler
+        setTimeout(() => {
+          if (api && !isInitializing) {
+            updateButtonStates();
+          }
+        }, 150);
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  });
 </script>
 
 <Carousel.Root

@@ -78,7 +78,9 @@ describe('/api/twitch endpoint', () => {
 
     expect(response).toBeInstanceOf(Response);
     expect(response.headers.get('content-type')).toBe('application/json');
-    expect(mockEvent.getResponseHeaders()['Access-Control-Allow-Origin']).toBe('*');
+    expect(mockEvent.getResponseHeaders()['Access-Control-Allow-Origin']).toBe(
+      '*'
+    );
   });
 
   it('should use the twitch poller for stream state', async () => {
@@ -91,7 +93,10 @@ describe('/api/twitch endpoint', () => {
   });
 
   it('should return current stream state as JSON', async () => {
-    mockGetActiveStreamsWithFreshData.mockResolvedValue(['nextlander', 'remap']);
+    mockGetActiveStreamsWithFreshData.mockResolvedValue([
+      'nextlander',
+      'remap',
+    ]);
 
     const { GET } = await import('../+server');
     const mockEvent = createMockRequestEvent();
@@ -104,14 +109,16 @@ describe('/api/twitch endpoint', () => {
   it('should return cached data on error', async () => {
     // First set up some successful data to cache
     mockGetActiveStreamsWithFreshData.mockResolvedValueOnce(['cached-stream']);
-    
+
     const { GET } = await import('../+server');
     const mockEvent1 = createMockRequestEvent();
     await GET(mockEvent1 as any); // This should cache the data
-    
+
     // Now make it fail and expect cached data
-    mockGetActiveStreamsWithFreshData.mockRejectedValue(new Error('Simulated error'));
-    
+    mockGetActiveStreamsWithFreshData.mockRejectedValue(
+      new Error('Simulated error')
+    );
+
     const mockEvent2 = createMockRequestEvent();
     const response = await GET(mockEvent2 as any);
 
@@ -144,11 +151,11 @@ describe('/api/twitch endpoint', () => {
     });
 
     const { GET } = await import('../+server');
-    
+
     // First request - should get data and ETag
     const mockEvent1 = createMockRequestEvent();
     const response1 = await GET(mockEvent1 as any);
-    
+
     expect(response1.status).toBe(200);
     const etag = mockEvent1.getResponseHeaders()['ETag'];
     expect(etag).toBeTruthy();
@@ -156,7 +163,7 @@ describe('/api/twitch endpoint', () => {
     // Second request with matching ETag - should get 304
     const mockEvent2 = createMockRequestEvent({ 'if-none-match': etag });
     const response2 = await GET(mockEvent2 as any);
-    
+
     expect(response2.status).toBe(304);
   });
 
@@ -176,6 +183,8 @@ describe('/api/twitch endpoint', () => {
     const response = await GET(mockEvent as any);
 
     expect(response.status).toBe(200);
-    expect(mockEvent.getResponseHeaders()['Cache-Control']).toContain('stale-while-revalidate');
+    expect(mockEvent.getResponseHeaders()['Cache-Control']).toContain(
+      'stale-while-revalidate'
+    );
   });
 });

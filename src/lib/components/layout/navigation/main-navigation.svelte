@@ -10,6 +10,7 @@
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
   import { getNavigationState } from '$lib/state/navigation.svelte';
+  import Loader from '$lib/components/loader.svelte';
 
   let {
     userProfile,
@@ -106,6 +107,11 @@
 
     <!-- Search Input -->
     <SearchInput />
+    {#if navigationState.isSearching}
+      <div class="absolute -right-11">
+        <Loader message="" variant="block" />
+      </div>
+    {/if}
   </div>
 
   <!-- Right Section: User Controls -->

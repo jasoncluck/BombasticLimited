@@ -450,7 +450,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): Promise<() => void> => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Set the preferred image format from server if provided
@@ -482,7 +482,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): (() => void) => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Set the preferred image format from server if provided

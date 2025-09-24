@@ -30,7 +30,7 @@
   <div class={containerClasses}>
     <div class="text-center">
       <div
-        class="border-primary mx-auto mb-2 animate-spin rounded-full border-b-2 {sizeClasses[
+        class="border-primary mx-auto animate-spin rounded-full border-b-2 {sizeClasses[
           size
         ]}"
       ></div>

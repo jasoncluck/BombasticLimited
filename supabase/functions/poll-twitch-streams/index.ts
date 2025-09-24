@@ -70,7 +70,10 @@ const SOURCES: Source[] = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
 /**
  * Get Twitch App Access Token
  */
-async function getTwitchAppToken(clientId: string, clientSecret: string): Promise<string> {
+async function getTwitchAppToken(
+  clientId: string,
+  clientSecret: string
+): Promise<string> {
   const response = await fetch('https://id.twitch.tv/oauth2/token', {
     method: 'POST',
     headers: {
@@ -84,7 +87,9 @@ async function getTwitchAppToken(clientId: string, clientSecret: string): Promis
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to get Twitch token: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Failed to get Twitch token: ${response.status} ${response.statusText}`
+    );
   }
 
   const data = await response.json();
@@ -105,25 +110,30 @@ async function getMultipleStreamStatus(
 
   // Build query parameters for multiple user IDs
   const params = new URLSearchParams();
-  userIds.forEach(id => params.append('user_id', id));
+  userIds.forEach((id) => params.append('user_id', id));
 
-  const response = await fetch(`https://api.twitch.tv/helix/streams?${params.toString()}`, {
-    headers: {
-      'Client-ID': clientId,
-      'Authorization': `Bearer ${accessToken}`,
-    },
-  });
+  const response = await fetch(
+    `https://api.twitch.tv/helix/streams?${params.toString()}`,
+    {
+      headers: {
+        'Client-ID': clientId,
+        Authorization: `Bearer ${accessToken}`,
+      },
+    }
+  );
 
   if (!response.ok) {
-    throw new Error(`Twitch API error: ${response.status} ${response.statusText}`);
+    throw new Error(
+      `Twitch API error: ${response.status} ${response.statusText}`
+    );
   }
 
   const data: TwitchStreamResponse = await response.json();
   const now = Date.now();
 
   // Create stream status for all requested user IDs
-  return userIds.map(userId => {
-    const liveStream = data.data.find(stream => stream.user_id === userId);
+  return userIds.map((userId) => {
+    const liveStream = data.data.find((stream) => stream.user_id === userId);
     return {
       userId,
       isLive: !!liveStream,
@@ -143,22 +153,25 @@ async function updateActiveStreams(
 
   for (const status of streamStatuses) {
     // Find the source that matches this user ID
-    const source = SOURCES.find(s => SOURCE_INFO[s].twitchId === status.userId);
-    
+    const source = SOURCES.find(
+      (s) => SOURCE_INFO[s].twitchId === status.userId
+    );
+
     if (!source) {
       console.warn(`⚠️ Unknown source for userId ${status.userId}`);
       continue;
     }
 
-    const { error } = await supabase
-      .from('active_streams')
-      .upsert({
+    const { error } = await supabase.from('active_streams').upsert(
+      {
         source,
         is_live: status.isLive,
         last_checked: new Date().toISOString(),
-      }, {
-        onConflict: 'source'
-      });
+      },
+      {
+        onConflict: 'source',
+      }
+    );
 
     if (error) {
       console.error(`❌ Error updating ${source}:`, error);
@@ -193,7 +206,10 @@ async function pollTwitchStreams(): Promise<PollResponse> {
   }
 
   // Skip if using placeholder credentials
-  if (twitchClientId === 'placeholder_client_id' || twitchClientSecret === 'placeholder_client_secret') {
+  if (
+    twitchClientId === 'placeholder_client_id' ||
+    twitchClientSecret === 'placeholder_client_secret'
+  ) {
     console.log('🚫 Skipping poll - placeholder Twitch credentials detected');
     return {
       success: true,
@@ -210,27 +226,38 @@ async function pollTwitchStreams(): Promise<PollResponse> {
   try {
     // Get Twitch access token
     console.log('🔑 Getting Twitch access token...');
-    const accessToken = await getTwitchAppToken(twitchClientId, twitchClientSecret);
+    const accessToken = await getTwitchAppToken(
+      twitchClientId,
+      twitchClientSecret
+    );
 
     // Get all Twitch user IDs
-    const twitchIds = SOURCES.map(source => SOURCE_INFO[source].twitchId);
+    const twitchIds = SOURCES.map((source) => SOURCE_INFO[source].twitchId);
     console.log('📋 Polling for user IDs:', twitchIds);
 
     // Fetch stream statuses
     console.log('🌐 Fetching stream statuses from Twitch API...');
-    const streamStatuses = await getMultipleStreamStatus(twitchIds, twitchClientId, accessToken);
+    const streamStatuses = await getMultipleStreamStatus(
+      twitchIds,
+      twitchClientId,
+      accessToken
+    );
 
     // Update database
     await updateActiveStreams(supabase, streamStatuses);
 
     // Get list of currently active streams
-    const activeStreams = SOURCES.filter(source => {
-      const status = streamStatuses.find(s => s.userId === SOURCE_INFO[source].twitchId);
+    const activeStreams = SOURCES.filter((source) => {
+      const status = streamStatuses.find(
+        (s) => s.userId === SOURCE_INFO[source].twitchId
+      );
       return status?.isLive || false;
     });
 
     const duration = Date.now() - startTime;
-    console.log(`✅ Poll completed in ${duration}ms. Active streams: [${activeStreams.join(', ')}]`);
+    console.log(
+      `✅ Poll completed in ${duration}ms. Active streams: [${activeStreams.join(', ')}]`
+    );
 
     return {
       success: true,
@@ -239,7 +266,6 @@ async function pollTwitchStreams(): Promise<PollResponse> {
       timestamp,
       duration,
     };
-
   } catch (error) {
     console.error('❌ Error during Twitch polling:', error);
     throw error;
@@ -249,8 +275,8 @@ async function pollTwitchStreams(): Promise<PollResponse> {
 serve(async (req: Request): Promise<Response> => {
   if (req.method !== 'POST') {
     return new Response(
-      JSON.stringify({ 
-        success: false, 
+      JSON.stringify({
+        success: false,
         error: 'Method not allowed',
         processedCount: 0,
         activeStreams: [],
