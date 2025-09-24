@@ -215,7 +215,7 @@ export class SidebarStateClass implements SidebarState {
   #tabVisibilityUnsubscribe: (() => void) | null = null;
 
   // Polling configuration
-  #pollingIntervalMs = 2 * 60 * 2000; // 2 minutes
+  #pollingIntervalMs = 2 * 60 * 1000; // 2 minutes
 
   // Configuration (from layout pattern)
   config = $state<SidebarConfig>({
@@ -509,7 +509,7 @@ export class SidebarStateClass implements SidebarState {
   };
 
   /**
-   * Start polling for streaming updates every 3 minutes
+   * Start polling for streaming updates every 2 minutes
    * Respects tab visibility - pauses when tab is hidden, resumes when visible
    */
   startSSEConnection(): void {
@@ -521,7 +521,7 @@ export class SidebarStateClass implements SidebarState {
     this.#pollingActive = true;
 
     console.log(
-      '🔄 Starting Twitch stream polling (3 minute intervals, tab-visibility aware)...'
+      '🔄 Starting Twitch stream polling (2 minute intervals, tab-visibility aware)...'
     );
 
     // Subscribe to tab visibility changes
