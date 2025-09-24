@@ -426,7 +426,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): Promise<() => void> => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Set the preferred image format from server if provided
@@ -455,7 +455,7 @@ export class SidebarStateClass implements SidebarState {
     preferredImageFormat?: ImageFormat | null
   ): (() => void) => {
     if (this.#initialized) {
-      return () => { };
+      return () => {};
     }
 
     // Set the preferred image format from server if provided
@@ -498,7 +498,7 @@ export class SidebarStateClass implements SidebarState {
 
       if (response.ok) {
         this.data = await response.json();
-        this.updateStreamingSources(this.data?.streamingSources)
+        this.updateStreamingSources(this.data?.streamingSources);
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
         this.error = `Failed to load sidebar data: ${response.statusText}`;
@@ -593,12 +593,11 @@ export class SidebarStateClass implements SidebarState {
   // Streaming sources management
   updateStreamingSources(newStreamingSources?: Source[]): void {
     if (!newStreamingSources) {
-      return
+      return;
     }
 
     const previousStreams = new SvelteSet(this.streamingSources);
     const currentStreams = new SvelteSet(newStreamingSources);
-
 
     // Find sources that just started streaming
     const startedStreaming = newStreamingSources.filter(

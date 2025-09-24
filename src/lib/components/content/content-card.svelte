@@ -270,10 +270,13 @@
   }
 
   function handleContextMenu(event: MouseEvent) {
+    console.log(video);
+    console.log(session);
     if (!video) return;
 
     const isCtrlPressed = event.ctrlKey || event.metaKey;
 
+    console.log(isCtrlPressed);
     if (isCtrlPressed || !session) {
       event.preventDefault();
       event.stopPropagation();

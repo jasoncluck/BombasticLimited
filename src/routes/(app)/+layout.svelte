@@ -405,11 +405,6 @@
     // Set up visibility change listener for data refresh and auth state checking
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    // Set up global context menu listener
-    document.addEventListener('contextmenu', handleGlobalContextMenu, {
-      capture: true,
-    });
-
     // Return cleanup function
     return () => {
       // Clean up Supabase auth listener
@@ -419,11 +414,6 @@
 
       // Clean up visibility change listener
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-
-      // Clean up global context menu listener
-      document.removeEventListener('contextmenu', handleGlobalContextMenu, {
-        capture: true,
-      });
 
       if (navigationCleanup && typeof navigationCleanup === 'function') {
         navigationCleanup();
@@ -438,21 +428,6 @@
         layoutCleanup();
       }
     };
-  }
-
-  /**
-   * Global context menu handler that catches all context menu events,
-   * including those from Portal elements like ShadCN context menus.
-   * This ensures the browser context menu is always blocked in production.
-   */
-  function handleGlobalContextMenu(event: MouseEvent): void {
-    if (!dev) {
-      // Always prevent the default browser context menu in production
-      event.preventDefault();
-
-      // Stop propagation to prevent conflicts with custom context menus
-      event.stopPropagation();
-    }
   }
 
   /**

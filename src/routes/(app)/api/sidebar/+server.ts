@@ -24,17 +24,14 @@ export const POST: RequestHandler = async ({ locals, request }) => {
 
   const { data: claimsData } = await supabase.auth.getClaims();
 
-
-
   if (!claimsData?.claims) {
-
-
-    const [
-      { sources },
-    ] = await Promise.all([
-      getActiveStreams({ supabase }),
-    ]);
-    return json({ playlists: [], userProfile: null, userPlaylistsCount: 0, streamingSources: sources });
+    const [{ sources }] = await Promise.all([getActiveStreams({ supabase })]);
+    return json({
+      playlists: [],
+      userProfile: null,
+      userPlaylistsCount: 0,
+      streamingSources: sources,
+    });
   }
 
   const [
