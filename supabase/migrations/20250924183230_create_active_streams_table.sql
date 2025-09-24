@@ -1,6 +1,6 @@
 -- Create active_streams table for tracking Twitch stream status
 CREATE TABLE IF NOT EXISTS public.active_streams (
-    source source NOT NULL PRIMARY KEY,
+    source public.source NOT NULL PRIMARY KEY,
     is_live boolean NOT NULL DEFAULT false,
     last_checked timestamp with time zone DEFAULT now() NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
@@ -14,7 +14,7 @@ COMMENT ON COLUMN public.active_streams.is_live IS 'Whether the stream is curren
 COMMENT ON COLUMN public.active_streams.last_checked IS 'When the stream status was last checked';
 
 -- Create updated_at trigger
-CREATE OR REPLACE FUNCTION update_active_streams_updated_at()
+CREATE OR REPLACE FUNCTION public.update_active_streams_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = now();
@@ -25,7 +25,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER update_active_streams_updated_at
     BEFORE UPDATE ON public.active_streams
     FOR EACH ROW
-    EXECUTE FUNCTION update_active_streams_updated_at();
+    EXECUTE FUNCTION public.update_active_streams_updated_at();
 
 -- Insert initial records for all sources
 INSERT INTO public.active_streams (source, is_live) VALUES

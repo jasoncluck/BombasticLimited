@@ -28,7 +28,11 @@ function generateETag(data: string[]): string {
  * Get active streams from database
  */
 async function getActiveStreamsFromDatabase(): Promise<Source[]> {
-  const supabase = createClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY);
+  // Use local Supabase in development, remote in production
+  const supabaseUrl = dev ? 'http://127.0.0.1:54321' : PUBLIC_SUPABASE_URL;
+  const supabaseKey = dev ? 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0' : PUBLIC_SUPABASE_ANON_KEY;
+  
+  const supabase = createClient(supabaseUrl, supabaseKey);
   
   const { data, error } = await supabase
     .from('active_streams')
