@@ -56,25 +56,29 @@ interface ProcessedImages {
   avif: Buffer;
 }
 
-// Generate storage paths for optimized images (without timestamp for consistency)
+// Generate storage paths for optimized images (WITH timestamp for versioning)
 function generateStoragePaths(
   entityType: string,
-  entityId: string
+  entityId: string,
+  timestamp?: string
 ): StoragePaths {
+  // Use provided timestamp or create a new one
+  const ts = timestamp || new Date().toISOString().replace(/[:.]/g, '-');
+
   if (entityType === 'video') {
     return {
-      webpPath: `thumbnails/${entityId}/thumbnail-${entityId}.webp`,
-      avifPath: `thumbnails/${entityId}/thumbnail-${entityId}.avif`,
+      webpPath: `thumbnails/${entityId}/thumbnail-${entityId}-${ts}.webp`,
+      avifPath: `thumbnails/${entityId}/thumbnail-${entityId}-${ts}.avif`,
     };
   } else if (entityType === 'playlist') {
     return {
-      webpPath: `playlists/${entityId}/playlist-${entityId}.webp`,
-      avifPath: `playlists/${entityId}/playlist-${entityId}.avif`,
+      webpPath: `playlists/${entityId}/playlist-${entityId}-${ts}.webp`,
+      avifPath: `playlists/${entityId}/playlist-${entityId}-${ts}.avif`,
     };
   } else {
     return {
-      webpPath: `${entityType}s/${entityId}/${entityType}-${entityId}.webp`,
-      avifPath: `${entityType}s/${entityId}/${entityType}-${entityId}.avif`,
+      webpPath: `${entityType}s/${entityId}/${entityType}-${entityId}-${ts}.webp`,
+      avifPath: `${entityType}s/${entityId}/${entityType}-${entityId}-${ts}.avif`,
     };
   }
 }
@@ -345,7 +349,7 @@ async function uploadToStorage(
     .upload(webpPath, webpBuffer, {
       contentType: 'image/webp',
       cacheControl: '31536000',
-      upsert: true, // This will overwrite existing files
+      upsert: false, // Don't overwrite - use unique timestamps
     });
 
   if (webpError) {
@@ -358,7 +362,7 @@ async function uploadToStorage(
     .upload(avifPath, avifBuffer, {
       contentType: 'image/avif',
       cacheControl: '31536000',
-      upsert: true, // This will overwrite existing files
+      upsert: false, // Don't overwrite - use unique timestamps
     });
 
   if (avifError) {
@@ -385,7 +389,7 @@ async function deleteExistingOptimizedImages(
     const { data: existingFiles, error: listError } = await supabase.storage
       .from(IMAGES_BUCKET)
       .list(folderPrefix.replace(/\/$/, ''), {
-        limit: 100, // Adjust if you expect more files
+        limit: 1000, // Increased limit to handle more timestamped files
       });
 
     if (listError) {
@@ -561,7 +565,7 @@ export const processImageWebhook = task({
       const imagePropertiesChanged =
         table === 'playlists' &&
         JSON.stringify(record.image_properties) !==
-          JSON.stringify(old_record?.image_properties);
+        JSON.stringify(old_record?.image_properties);
 
       console.log(`UPDATE: ${entityType} ${record.id}`, {
         thumbnailChanged,
@@ -623,13 +627,14 @@ export const processImageWebhook = task({
         `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
       );
 
-      // Generate storage paths (consistent naming without timestamps)
+      // Generate storage paths with timestamp for versioning
       const { webpPath, avifPath } = generateStoragePaths(
         entityType,
-        record.id
+        record.id,
+        timestamp // Use the webhook timestamp for consistency
       );
 
-      // Upload to storage (upsert will overwrite if files exist)
+      // Upload to storage with unique timestamped filenames
       console.log(`Uploading optimized images for ${entityType} ${record.id}`);
       await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
       console.log(`Uploaded images to storage:`, { webpPath, avifPath });

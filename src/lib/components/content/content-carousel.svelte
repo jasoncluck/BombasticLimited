@@ -3,12 +3,13 @@
   import ContentCard from './content-card.svelte';
   import { type CarouselState, type ContentDisplayProps } from './content';
   import type { CarouselAPI } from '../ui/carousel/context';
-  import { onDestroy } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
   } from '$lib/state/content.svelte';
   import type { CombinedContentFilter } from './content-filter';
+  import { browser } from '$app/environment';
 
   type ContentCarouselProps = ContentDisplayProps & {
     carouselState?: CarouselState;
@@ -39,6 +40,26 @@
   let isInitializing = $state(true);
   let userInteracting = $state(false);
   let slidesInView = $state<number[]>([]);
+
+  // Window resize handler - set up once on mount
+  onMount(() => {
+    if (browser) {
+      const handleResize = () => {
+        // Debounce the resize handler
+        setTimeout(() => {
+          if (api && !isInitializing) {
+            updateButtonStates();
+          }
+        }, 150);
+      };
+
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  });
 
   // Track slides in view for reactive updates
   $effect(() => {
@@ -243,26 +264,6 @@
       contentState.hoverTimeoutId = null;
     }
   }
-
-  // Listen for window resize events to update button states
-  $effect(() => {
-    if (typeof window !== 'undefined' && api) {
-      const handleResize = () => {
-        // Debounce the resize handler
-        setTimeout(() => {
-          if (api && !isInitializing) {
-            updateButtonStates();
-          }
-        }, 150);
-      };
-
-      window.addEventListener('resize', handleResize);
-
-      return () => {
-        window.removeEventListener('resize', handleResize);
-      };
-    }
-  });
 </script>
 
 <Carousel.Root
