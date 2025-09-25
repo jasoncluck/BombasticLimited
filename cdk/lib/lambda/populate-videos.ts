@@ -23,8 +23,6 @@ const getBestThumbnailUrl = (
 };
 
 // Helper to remove "_live" suffix from thumbnail URLs
-const removeLiveSuffix = (url?: string | null): string | null | undefined =>
-  url ? url.replace(/_live(\.\w+)$/, '$1') : url;
 
 export const populateVideos = async ({
   source,
@@ -144,9 +142,7 @@ export const populateVideos = async ({
           title: item.snippet?.title,
           description: item.snippet?.description,
           published_at: item.snippet?.publishedAt,
-          thumbnail_url: removeLiveSuffix(
-            getBestThumbnailUrl(item.snippet?.thumbnails)
-          ),
+          thumbnail_url: getBestThumbnailUrl(item.snippet?.thumbnails),
           duration: videoDetail?.duration,
           pending_delete: false, // All YouTube videos are current
         };

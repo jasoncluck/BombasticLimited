@@ -25,7 +25,7 @@ interface CacheConfig {
 
 const CACHE_CONFIG: CacheConfig = {
   maxImageCacheSize: 5000,
-  maxCacheAgeMs: 14 * 24 * 60 * 60 * 1000, // 14 days
+  maxCacheAgeMs: 2 * 60 * 60 * 1000, // 2 hours
   maxConcurrentRequests: 100,
   batchTimeoutMs: 150,
   maxBatchSize: 50, // Reduced for faster batch completion
@@ -642,7 +642,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
 
       if (response.ok && response.status === 200) {
         // Cache asynchronously to avoid blocking
-        cacheResponse(request, response.clone()).catch(() => {});
+        cacheResponse(request, response.clone()).catch(() => { });
       }
 
       return response;
