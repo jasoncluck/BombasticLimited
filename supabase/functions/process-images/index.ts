@@ -90,10 +90,10 @@ if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing required Supabase environment variables');
 }
 
-// Configuration constants - FIXED: Reduced stuck job threshold to 5 minutes
+// Configuration constants
 const RETRY_COOLDOWN_MINUTES = 5;
-const STUCK_JOB_THRESHOLD_MINUTES = 5; // Changed from 10 to 5 minutes
-const PLAYLIST_PROCESSING_COOLDOWN_MINUTES = 5; // New constant for playlist processing cooldown
+const STUCK_JOB_THRESHOLD_MINUTES = 5;
+const PROCESSING_COOLDOWN_MINUTES = 5; // Cooldown for all new jobs before processing
 
 /**
  * Get current queue status from the database
@@ -173,7 +173,7 @@ function isJobStuckProcessing(job: JobRow): boolean {
 
 /**
  * Check if a job is ready for processing
- * For playlist images, they can only be processed if 5 minutes have passed since created_at
+ * All jobs (videos and playlists) must wait 5 minutes since creation before processing
  */
 function isJobReadyForProcessing(job: JobRow): {
   ready: boolean;
@@ -181,27 +181,39 @@ function isJobReadyForProcessing(job: JobRow): {
 } {
   // Always process pending jobs
   if (job.status === 'pending') {
-    // For playlist image jobs, check if 5 minutes have passed since creation
-    if (job.entity_type === 'playlist' && job.image_type === 'playlist_image') {
-      const now = new Date();
-      const createdAt = new Date(job.created_at);
-      const timeDifferenceMs = now.getTime() - createdAt.getTime();
-      const cooldownMs = PLAYLIST_PROCESSING_COOLDOWN_MINUTES * 60 * 1000;
+    // Check if 5 minutes have passed since creation for ALL jobs
+    const now = new Date();
+    const createdAt = new Date(job.created_at);
+    const timeDifferenceMs = now.getTime() - createdAt.getTime();
+    const cooldownMs = PROCESSING_COOLDOWN_MINUTES * 60 * 1000;
 
-      const isAfterCooldown = timeDifferenceMs >= cooldownMs;
-      const minutesElapsed = Math.floor(timeDifferenceMs / 1000 / 60);
+    const isAfterCooldown = timeDifferenceMs >= cooldownMs;
+    const minutesElapsed = Math.floor(timeDifferenceMs / 1000 / 60);
 
-      if (!isAfterCooldown) {
-        console.log(
-          `⏳ Playlist image job ${job.id} still in cooldown (${minutesElapsed}/${PLAYLIST_PROCESSING_COOLDOWN_MINUTES}min since creation)`
-        );
-        return { ready: false, needsFreshRetry: false };
-      }
+    if (!isAfterCooldown) {
+      const entityDescription =
+        job.entity_type === 'playlist' && job.image_type === 'playlist_image'
+          ? 'Playlist image'
+          : job.entity_type === 'video' && job.image_type === 'thumbnail'
+            ? 'Video thumbnail'
+            : `${job.entity_type} ${job.image_type}`;
 
       console.log(
-        `✅ Playlist image job ${job.id} ready for processing after ${minutesElapsed} minutes since creation`
+        `⏳ ${entityDescription} job ${job.id} still in cooldown (${minutesElapsed}/${PROCESSING_COOLDOWN_MINUTES}min since creation)`
       );
+      return { ready: false, needsFreshRetry: false };
     }
+
+    const entityDescription =
+      job.entity_type === 'playlist' && job.image_type === 'playlist_image'
+        ? 'Playlist image'
+        : job.entity_type === 'video' && job.image_type === 'thumbnail'
+          ? 'Video thumbnail'
+          : `${job.entity_type} ${job.image_type}`;
+
+    console.log(
+      `✅ ${entityDescription} job ${job.id} ready for processing after ${minutesElapsed} minutes since creation`
+    );
 
     // Check if this pending job has exceeded max attempts (needs fresh retry)
     if (job.attempts >= job.max_attempts) {
@@ -331,10 +343,10 @@ async function resetStuckJob(
 ): Promise<void> {
   const minutesStuck = job.processing_started_at
     ? Math.floor(
-        (new Date().getTime() - new Date(job.processing_started_at).getTime()) /
-          1000 /
-          60
-      )
+      (new Date().getTime() - new Date(job.processing_started_at).getTime()) /
+      1000 /
+      60
+    )
     : 0;
 
   const { error } = await supabase
