@@ -467,6 +467,11 @@
             fs: 1,
             rel: 0,
             modestbranding: 1,
+            enablejsapi: 1,
+            origin: window.location.origin,
+            // Enable ads
+            hl: 'en',
+            iv_load_policy: 1,
           },
           events: {
             onReady: onPlayerReady,

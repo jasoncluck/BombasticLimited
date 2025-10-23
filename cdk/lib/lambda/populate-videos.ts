@@ -19,7 +19,12 @@ const getBestThumbnailUrl = (
     thumbnails.default?.url, // 120x90
   ];
 
-  return candidates.find((url) => url) || null;
+  const url = candidates.find((url) => url);
+  if (!url) return null;
+
+  // Add cache-busting timestamp to prevent stale thumbnails
+  const cacheBuster = `?_cb=${Date.now()}`;
+  return `${url}${cacheBuster}`;
 };
 
 // Helper to remove "_live" suffix from thumbnail URLs

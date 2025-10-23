@@ -93,7 +93,7 @@ if (!supabaseUrl || !supabaseServiceKey) {
 // Configuration constants
 const RETRY_COOLDOWN_MINUTES = 5;
 const STUCK_JOB_THRESHOLD_MINUTES = 5;
-const PROCESSING_COOLDOWN_MINUTES = 5; // Cooldown for all new jobs before processing
+const PROCESSING_COOLDOWN_MINUTES = 15; // Cooldown for all new jobs before processing
 
 /**
  * Get current queue status from the database

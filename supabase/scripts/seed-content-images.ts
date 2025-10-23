@@ -8,8 +8,8 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 // Production Supabase configuration to pull images from
-const remoteUrl = process.env.PROD_SUPABASE_URL;
-const remoteKey = process.env.PROD_SUPABASE_SERVICE_ROLE_KEY;
+const remoteUrl = 'https://hguqxixjgwazwsuvhkmo.supabase.co';
+const remoteKey = 'sb_secret_AX11TXY4_3gz7CLJSjD6Bg_CRDYTjjq';
 
 const bucketName = 'content-images';
 const localDownloadPath = join(process.cwd(), '../content-images');
@@ -474,9 +474,9 @@ async function downloadContentImages(): Promise<void> {
     // Verify we got everything
     if (
       stats.downloadedFiles +
-        stats.skippedFiles +
-        stats.errorFiles +
-        stats.invalidFiles !==
+      stats.skippedFiles +
+      stats.errorFiles +
+      stats.invalidFiles !==
       stats.totalFiles
     ) {
       console.warn(`⚠️  Warning: File count mismatch detected!`);
