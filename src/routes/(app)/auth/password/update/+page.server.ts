@@ -1,7 +1,7 @@
 import { type Actions } from '@sveltejs/kit';
 import { setFlash } from 'sveltekit-flash-message/server';
 import { fail, superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import { passwordConfirmationSchema } from '$lib/schema/auth-schema';
 import type { PageServerLoad } from './$types';
 

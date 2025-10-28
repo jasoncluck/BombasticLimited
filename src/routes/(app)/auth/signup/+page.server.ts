@@ -1,7 +1,7 @@
 import type { Actions } from '@sveltejs/kit';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 import { superValidate, fail } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad } from './$types';
 import { signupSchema } from '$lib/schema/auth-schema';
 import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';

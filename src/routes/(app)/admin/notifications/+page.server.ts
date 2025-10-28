@@ -4,7 +4,7 @@ import {
   createNotification,
 } from '$lib/supabase/notifications';
 import { fail, superValidate } from 'sveltekit-superforms';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import { adminNotificationSchema } from '$lib/schema/admin-notification-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 

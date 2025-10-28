@@ -10,7 +10,7 @@
     type PasswordConfirmationSchema,
   } from '$lib/schema/auth-schema';
   import type { Database } from '$lib/supabase/database.types';
-  import { zodClient } from 'sveltekit-superforms/adapters';
+  import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import * as Form from '$lib/components/ui/form';
   import Input from '$lib/components/ui/input/input.svelte';

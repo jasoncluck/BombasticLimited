@@ -66,7 +66,7 @@
       elementId: string,
       config: {
         videoId: string;
-        playerVars: Record<string, number | boolean>;
+        playerVars: Record<string, number | boolean | string>;
         events: {
           onReady: (event: YouTubePlayerEvent) => void;
           onStateChange: (event: YouTubeStateChangeEvent) => void;
