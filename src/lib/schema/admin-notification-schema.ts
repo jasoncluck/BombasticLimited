@@ -18,14 +18,14 @@ const datetimeString = z
       return !isNaN(date.getTime());
     },
     {
-      message: 'Invalid datetime format',
+      error: 'Invalid datetime format',
     }
   );
 
 export const adminNotificationSchema = z
   .object({
     type: z.enum(NOTIFICATION_TYPES, {
-      errorMap: () => ({ message: 'Please select a valid notification type' }),
+      error: () => 'Please select a valid notification type',
     }),
     title: z.string().min(1, 'Title is required'),
     message: z.string().min(1, 'Message is required'),
@@ -47,8 +47,8 @@ export const adminNotificationSchema = z
       return startDate < endDate;
     },
     {
-      message: 'End date must be after start date',
       path: ['endDatetime'],
+      error: 'End date must be after start date',
     }
   )
   .refine(
@@ -67,8 +67,8 @@ export const adminNotificationSchema = z
       return startDate >= twentyFourHoursAgo;
     },
     {
-      message: 'Start date cannot be more than 24 hours in the past',
       path: ['startDatetime'],
+      error: 'Start date cannot be more than 24 hours in the past',
     }
   );
 

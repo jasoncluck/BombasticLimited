@@ -139,7 +139,6 @@
     "crypto-js": "^4.2.0",
     "debounce": "^2.2.0",
     "embla-carousel-svelte": "^8.6.0",
-    "inngest": "^3.40.1",
     "jose": "^6.0.12",
     "marked": "^16.2.0",
     "paneforge": "^1.0.2",
@@ -149,6 +148,6 @@
     "svelte-radix": "^2.0.1",
     "tailwindcss": "^4.1.11",
     "tw-animate-css": "^1.3.6",
-    "zod": "^3.25.76"
+    "zod": "^4.1.12"
   }
 }

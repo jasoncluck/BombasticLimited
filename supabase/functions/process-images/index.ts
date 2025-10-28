@@ -343,10 +343,10 @@ async function resetStuckJob(
 ): Promise<void> {
   const minutesStuck = job.processing_started_at
     ? Math.floor(
-      (new Date().getTime() - new Date(job.processing_started_at).getTime()) /
-      1000 /
-      60
-    )
+        (new Date().getTime() - new Date(job.processing_started_at).getTime()) /
+          1000 /
+          60
+      )
     : 0;
 
   const { error } = await supabase

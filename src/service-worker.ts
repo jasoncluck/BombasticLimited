@@ -642,7 +642,7 @@ const cacheImage = async (request: Request): Promise<Response> => {
 
       if (response.ok && response.status === 200) {
         // Cache asynchronously to avoid blocking
-        cacheResponse(request, response.clone()).catch(() => { });
+        cacheResponse(request, response.clone()).catch(() => {});
       }
 
       return response;

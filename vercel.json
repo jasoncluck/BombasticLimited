@@ -3,9 +3,7 @@
   "devCommand": "npm run dev",
   "installCommand": "npm ci",
   "framework": "sveltekit",
-  "regions": [
-    "iad1"
-  ],
+  "regions": ["iad1"],
   "git": {
     "deploymentEnabled": {
       "copilot*": false
