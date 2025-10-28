@@ -466,10 +466,9 @@
             playsinline: 1,
             fs: 1,
             rel: 0,
-            modestbranding: 1,
+            modestbranding: 0, // Changed from 1 to 0
             enablejsapi: 1,
             origin: window.location.origin,
-            // Enable ads
             hl: 'en',
             iv_load_policy: 1,
           },
