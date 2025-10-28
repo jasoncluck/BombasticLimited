@@ -6,7 +6,7 @@
   import { Button } from '$lib/components/ui/button';
   import { Input } from '$lib/components/ui/input';
   import type { Playlist } from '$lib/supabase/playlists';
-  import { zodClient } from 'sveltekit-superforms/adapters';
+  import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
   import { Crop, ListVideo, Loader, Pencil, X } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
   import Cropper, { type CropArea } from 'svelte-easy-crop';

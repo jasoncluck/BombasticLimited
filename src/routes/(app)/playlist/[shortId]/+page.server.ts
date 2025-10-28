@@ -11,7 +11,7 @@ import { type Actions, type RequestEvent } from '@sveltejs/kit';
 import type { PageServerLoad } from '../[shortId]/$types';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { playlistSchema } from '$lib/schema/playlist-schema';
-import { zod } from 'sveltekit-superforms/adapters';
+import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import {
   isPlaylistVideosFilter,
   type SortKey,

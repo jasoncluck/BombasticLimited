@@ -13,7 +13,7 @@
     notificationTemplates,
     notificationTypes,
   } from './notification-templates';
-  import { zodClient } from 'sveltekit-superforms/adapters';
+  import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
   import {
     getTimezoneInfo,
     localToUtcDateTime,
