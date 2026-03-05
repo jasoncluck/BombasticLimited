@@ -1,0 +1,21 @@
+name: CI
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.PUBLIC_SUPABASE_ANON_KEY }}
+      PUBLIC_SUPABASE_URL: ${{ secrets.PUBLIC_SUPABASE_URL }}
+      NGROK_AUTH_TOKEN: ${{ secrets.NGROK_AUTH_TOKEN }}
+      SUPABASE_AUTH_EXTERNAL_DISCORD_CLIENT_ID:
+        ${{ secrets.SUPABASE_AUTH_EXTERNAL_DISCORD_CLIENT_ID }}
+      SUPABASE_AUTH_EXTERNAL_DISCORD_CLIENT_SECRET:
+        ${{ secrets.SUPABASE_AUTH_EXTERNAL_DISCORD_CLIENT_SECRET }}
+      TWITCH_CLIENT_ID: ${{ secrets.TWITCH_CLIENT_ID }}
+      TWITCH_CLIENT_SECRET: ${{ secrets.TWITCH_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'

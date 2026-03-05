@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Bombastic Limited</title>
+
+    <link rel="preconnect" href="https://www.youtube.com" />
+    <link rel="preconnect" href="https://i.ytimg.com" />
+    <link rel="preconnect" href="https://s.ytimg.com" />
+    <link rel="preconnect" href="https://embed.twitch.tv" />
+
+    <!-- Standard favicon -->
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="%sveltekit.assets%/favicon-96x96.svg"
+      sizes="96x96"
+    />
+    <link rel="shortcut icon" href="%sveltekit.assets%/favicon.svg" />
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%sveltekit.assets%/apple-touch-icon.svg"
+    />
+
+    <!-- Legacy support -->
+    <link rel="shortcut icon" href="%sveltekit.assets%/favicon.ico" />
+
+    <!-- Apple devices -->
+    <link
+      rel="apple-touch-icon"
+      sizes="180x180"
+      href="%sveltekit.assets%/apple-touch-icon.png"
+    />
+
+    <!-- PWA manifest -->
+    <link rel="manifest" href="%sveltekit.assets%/site.webmanifest" />
+
+    <!-- Theme color for browser UI -->
+    <meta
+      name="theme-color"
+      content="#8b5cf6"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#a78bfa"
+      media="(prefers-color-scheme: dark)"
+    />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    %sveltekit.head%
+  </head>
+  <body
+    data-sveltekit-preload-data="hover"
+    class="absolute flex h-full min-h-[600px] w-full min-w-[350px] flex-col overflow-hidden overscroll-y-none"
+  >
+    <div style="display: contents">%sveltekit.body%</div>
+  </body>
+</html>

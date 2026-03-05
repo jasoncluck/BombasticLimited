@@ -1,0 +1,275 @@
+<script lang="ts">
+  import { MoveLeft } from '@lucide/svelte';
+  import { Button } from '$lib/components/ui/button';
+</script>
+
+<a class="w-32" href="/">
+<Button class="mb-4 flex gap-2 cursor-pointer" >
+<MoveLeft /> Bombastic
+</Button>
+</a>
+
+# Bombastic - Getting Started
+
+## About Bombastic
+
+Bombastic's goal is to provide a curated experience and a consolidated platform
+for the expanded Giant Bomb community.
+
+Bombastic retrieves data from YouTube for selected video game media creators.
+This not only creates a simplified cross-channel search view, but also allows
+for the creation of custom playlists that can contain content from multiple
+YouTube channels. Bombastic's watch tracking feature allows users to easily
+resume watching videos and playlists where they previously left off.
+
+<div class="toc">
+
+## Table of Contents
+
+- [Features](#features)
+  - [Account Management](#account-management)
+  - [Selected Creators](#selected-creators)
+  - [Browsing Videos - Card and Table Views](#browsing-videos---card-and-table-views)
+  - [Search Functionality](#search-functionality)
+  - [Playlist Management](#playlist-management)
+    - [Create a playlist](#create-a-playlist)
+    - [Edit a playlist](#edit-a-playlist)
+    - [Delete a playlist](#delete-a-playlist)
+    - [Follow a public playlist](#follow-a-public-playlist)
+    - [Unfollow a public playlist](#unfollow-a-public-playlist)
+    - [Reorder playlists](#reorder-playlists)
+    - [Add a video to a playlist](#add-a-video-to-a-playlist)
+    - [Remove a video from a playlist](#remove-a-video-from-a-playlist)
+    - [Reorder videos in a playlist](#reorder-videos-in-a-playlist)
+    - [Update playlist thumbnail](#update-playlist-thumbnail)
+  - [Watch Tracking](#watch-tracking)
+    - [Mark a video as watched](#mark-a-video-as-watched)
+    - [Reset video progress](#reset-video-progress)
+  - [Notifications](#notifications)
+- [Reporting Issues](#reporting-issues)
+
+</div>
+
+## Features
+
+Bombastic is available for free. An account is required to use all features
+except for search.
+
+### Account Management
+
+Creating a Bombastic account grants you access to all features. An account can
+be created through Bombastic, or you can log in with an existing Discord
+account. If you create a Bombastic account via email, you can link a Discord
+account later. Linking a Discord account will update your user avatar on
+Bombastic to match your Discord avatar.
+
+Account settings can be found by clicking on your avatar in the upper right
+corner and selecting "Settings". The following options are available in the
+settings menu:
+
+- Update your email address
+- Update your username
+- Reset your password
+- Link your Discord account
+- Delete your account
+
+If you delete your account, all data associated with the account, including
+playlists created by the account, will be deleted.
+
+### Selected Creators
+
+The list of selected creators is managed by Bombastic, users are unable to add
+additional creators. Each creator page contains a link to directly support the
+creator and their content. The list of creators in the left-hand navigation can
+be reordered by dragging and dropping the creator to the desired location in the
+list.
+
+When a creator is live-streaming on Twitch, a red dot will appear on their
+thumbnail in the left-hand navigation; clicking the creator will take you to
+their creator page with a view of their live Twitch stream.
+
+### Browsing Videos - Card and Table Views
+
+Bombastic supports two views: Card and Table. The views can be switched by
+clicking the Card or Table icon in the upper right of the navigation bar.
+
+Card is the default view. It makes it easier to browse videos by providing
+larger video thumbnails and an action menu dropdown on each card. Card view does
+not support selecting multiple videos; if you're adding videos to a playlist,
+they must be added to the playlist one at a time.
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/card-view.png" width="750px" alt="Screenshot of using the Card view" />
+</div>
+
+Table view is only available to users with accounts or on smaller screens. Table
+view supports selecting multiple videos or rows; due to this, videos need to be
+double-clicked in order to play. Alternatively, there is a Play button column on
+the left of each row which can be clicked once to view the video. Selecting
+multiple videos can be done by holding down Ctrl/Cmd to select non-adjacent rows
+and Shift to select all inclusive rows. Multiple rows can be dragged and
+dropped. Once videos are selected, the actions menu can be displayed by
+right-clicking, or by accessing the dropdown in the heading section.
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/table-view.png" width="750px" alt="Screenshot of using the Table view with multiple items selected using Shift and Ctrl" />
+</div>
+
+### Search Functionality
+
+Searching for videos or playlists can be done using the input in the top
+navigation bar. Searches will return results from the titles and descriptions of
+videos and playlists. Any playlists that you own will not show in your view of
+the search results. Search result links can be copied and sent to others.
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/search.png" width="750px" alt="Screenshot of searching for 'armored core' on Bombastic" />
+</div>
+
+### Playlist Management
+
+Up to 25 playlists can be associated with your account. Each playlist can
+contain up to 100 videos.
+
+Playlists can be public or private. Public playlists are searchable by all users
+whereas private playlists are solely visible to you. Only owners of playlists
+are able to add or remove videos from it, as well as manage the Custom sort
+order. If you follow a public playlist, you can select from the "Sort by"
+options to set how you want to watch the videos in the playlist.
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/playlist.png" width="750px" alt="Screenshot of a playlist titled 'Minotti zone' with videos of gaming's number #1 bad boy Mike Minotti" />
+</div>
+
+#### Create a playlist
+
+Click the add button next to the "Playlists" header on the left-hand navigation.
+
+#### Edit a playlist
+
+Click on the playlist in the left-hand navigation. On the playlist page, click
+the playlist image, title, or select "Edit Playlist" from the dot menu.
+
+#### Delete a playlist
+
+Right-click the playlist in the left-hand navigation and select "Delete
+Playlist", or navigate to the playlist page and select "Delete Playlist" from
+the dot menu.
+
+If a public playlist is deleted, direct links to the playlist will be usable for
+2 weeks, but the playlist will not show up in search results. Users that are
+following the playlist will receive a notification that the playlist has been
+deleted. During this time, users can make their own copies of the playlist
+before it is permanently deleted. To copy the playlist, users will need to
+create a new playlist, then add the videos to their new playlist.
+
+#### Follow a public playlist
+
+On the playlist page, click the add button to follow the playlist. This action
+will add the playlist to your left-hand navigation and allow for saving your
+sorting preference.
+
+#### Unfollow a public playlist
+
+Right-click the playlist in the left-hand navigation and select "Unfollow", or
+navigate to the playlist page and click the minus button to unfollow. This
+action will remove the playlist from your left-hand navigation.
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/playlist-follow.png" width="750px" alt="Screenshot of following the Full Motion Vinny playlist" />
+</div>
+
+#### Reorder playlists
+
+In the left-hand navigation bar, drag and drop a playlist to the desired
+location in the list.
+
+#### Add a video to a playlist
+
+Select the desired video(s), drag and drop them to the desired playlist, or
+right-click, select "Add video(s) to playlist", then select the desired
+playlist.
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/playlist-add.png" width="750px" alt="Screenshot of adding videos of the game Haze to a playlist named BOOSH" />
+</div>
+
+#### Remove a video from a playlist
+
+Select the desired video(s), right-click, select "Remove video(s) from
+playlist".
+
+#### Reorder videos in a playlist
+
+There are three "sort by" options: Custom, Date Published, and Title.
+
+The order of the videos in the Custom sort option is managed by the playlist
+owner. Playlist owners can manually order videos in playlist by dragging and
+dropping video(s) to their desired location in the playlist.
+
+#### Update playlist thumbnail
+
+The thumbnail of a playlist can only be set to an image that is a thumbnail of a
+video in the playlist. To update the playlist thumbnail, navigate to the
+playlist page and find the video thumbnail you want to use as the playlist
+thumbnail. Right-click on the video and select "Set as playlist image". After
+the image is set, you can then go to the Edit Playlist menu to zoom or crop the
+thumbnail image.
+
+### Watch Tracking
+
+When you stop watching a video (either by pausing, navigating to a different
+page, or closing the browser tab) your progress is automatically saved. The
+video will now show up in your "Continue Watching" queue at the top of the
+Bombastic homepage. At the end of the video, the video will be marked as
+"Watched".
+
+Playlists will automatically track where you are in the playlist. Clicking the
+play button on a playlist's page will automatically resume the playlist at the
+next video that is not yet marked as "Watched". If you change the sort order of
+the playlist after some videos have been watched, the play will resume at the
+first video in the new sort order that is not yet marked as "Watched".
+
+<div class="flex justify-center">
+  <img src="/docs/getting-started/continue-watching.png" width="750px" alt="Screenshot of the Continue Watching section of the home page where videos are displayed that are in progress. The section below it, Giant Bomb, displays videos that have been marked as 'Watched'" />
+</div>
+
+#### Mark a video as watched
+
+Select desired video(s), right-click, then select "Set as watched".
+
+#### Reset video progress
+
+Select desired video(s), right-click, then select "Reset progress".
+
+### Notifications
+
+Notifications will appear when relevant events occur, such as when a followed
+playlist is deleted.
+
+Notifications can be deleted by clicking the 'X' in the upper right-hand corner
+of the notification.
+
+## Reporting Issues
+
+If you notice an issue with the website, please let us know so we can
+investigate and address it. Click your avatar in the upper right hand corner and
+select "Report Issue" from the drop-down. Fill out the form with as much
+information about the issue you encountered as possible, then click "Submit
+Report".
+
+In the event that the bug report form is broken, please click the "Contact"
+button at the bottom of the website to email us. Please include the following
+information in your report:
+
+- Description of what happened when you encountered the issue
+- Steps to reproduce the issue
+- (Optional) Screenshots of the issue
+
+<div class="mt-8">
+<a class="w-32" href="/">
+<Button class="mb-4 flex gap-2 cursor-pointer" >
+<MoveLeft /> Bombastic
+</Button>
+</a>
+</div>

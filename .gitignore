@@ -1,0 +1,70 @@
+# Dependencies
+node_modules/
+.pnpm/
+
+# Build outputs
+.svelte-kit/
+build/
+dist/
+.output/
+.vercel/
+
+# Environment variables
+.env
+.env.local
+.env.production
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Coverage and test outputs
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+playwright/.cache/
+.auth
+
+# Cache directories
+.cache/
+.parcel-cache/
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+
+# Temporary folders
+tmp/
+temp/
+
+# CDK
+cdk.out/
+*.js.map
+
+# Supabase
+supabase/.branches
+supabase/.temp
+supabase/config.toml.backup
+
+# Trigger.dev
+.trigger/
+
+# ESLint cache
+.eslintcache

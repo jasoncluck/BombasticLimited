@@ -1,0 +1,143 @@
+<svelte:head>
+
+  <title>Cookie Policy - Bombastic</title>
+  <meta
+    name="description"
+    content="Cookie Policy for Bombastic - How we use cookies and similar technologies."
+  />
+</svelte:head>
+
+# Bombastic - Cookie Policy
+
+_Last updated: September 2025_
+
+## Introduction
+
+This Cookie Policy explains how Bombastic Limited ("we", "our", or "us") uses
+cookies and similar technologies on our website. This policy should be read
+alongside our [Privacy Policy](/privacy).
+
+## What Are Cookies?
+
+Cookies are small text files that are stored on your device when you visit a
+website. They help websites remember information about your visit, which can
+make your next visit easier and the website more useful to you.
+
+## How We Use Cookies
+
+We use cookies for essential functionality and to improve your user experience.
+**We do not use cookies for advertising tracking or non-essential analytics.**
+
+### Essential Cookies
+
+These cookies are necessary for the website to function properly and cannot be
+disabled:
+
+| Cookie Name            | Purpose                               | Duration        | Type      |
+| ---------------------- | ------------------------------------- | --------------- | --------- |
+| `sb-*` (Supabase Auth) | Authentication and session management | Session/30 days | Essential |
+
+### Functional Cookies
+
+These cookies enhance your experience but are not strictly necessary:
+
+| Cookie Name     | Purpose                                   | Duration | Type       |
+| --------------- | ----------------------------------------- | -------- | ---------- |
+| `sidebar:state` | UI preferences (collapsed/expanded state) | 7 days   | Functional |
+
+## Third-Party Services and Cookies
+
+### PostHog Analytics
+
+- **Status**: Configured in **cookieless mode**
+- **Purpose**: Anonymous usage analytics and error tracking
+- **Cookies**: None
+- **Data**: Only anonymous, aggregated statistics
+
+### YouTube/Twitch Embeds
+
+- **Purpose**: Video and stream content display
+- **Cookies**: May be set by embedded content
+- **Control**: Only loaded when you interact with embedded content
+
+## GDPR Compliance
+
+Our cookie usage is designed to be **GDPR compliant without requiring a cookie
+banner** because:
+
+1. **Essential cookies only**: Authentication and basic functionality
+2. **No tracking cookies**: PostHog operates in cookieless mode
+3. **Functional cookies**: Sidebar preferences enhance user experience
+4. **Third-party embeds**: Only load when you interact with content
+
+## Managing Cookies
+
+### Browser Settings
+
+You can control cookies through your browser settings:
+
+- **Chrome**: Settings > Privacy and Security > Cookies
+- **Firefox**: Settings > Privacy & Security > Cookies
+- **Safari**: Preferences > Privacy > Cookies
+- **Edge**: Settings > Cookies and Site Permissions
+
+### Disabling Cookies
+
+While you can disable cookies, please note:
+
+- **Essential cookies**: Disabling these will prevent login and core
+  functionality
+- **Functional cookies**: Disabling these will reset UI preferences on each
+  visit
+
+## Cookie Categories We Don't Use
+
+To be transparent about what we **don't** do:
+
+- ❌ **Marketing/Advertising cookies**: We don't track you for ads
+- ❌ **Social media tracking**: No social media tracking pixels
+- ❌ **Cross-site tracking**: No tracking across other websites
+- ❌ **Persistent analytics**: PostHog is cookieless
+- ❌ **Behavioral profiling**: No individual user profiling
+
+## How Long We Keep Cookies
+
+| Cookie Type            | Retention Period                    |
+| ---------------------- | ----------------------------------- |
+| Session cookies        | Deleted when you close your browser |
+| Authentication cookies | Up to 30 days or until logout       |
+| Functional cookies     | 7 days                              |
+
+## Your Rights
+
+Under GDPR, you have the right to:
+
+- Be informed about cookie usage (this policy)
+- Access information about cookies stored
+- Object to non-essential cookie processing
+- Withdraw consent (where applicable)
+
+Since we only use essential and functional cookies, and third-party services
+handle their own consent, most cookies are necessary for basic website
+operation.
+
+## Updates to This Policy
+
+We may update this Cookie Policy occasionally. Changes will be posted on this
+page with an updated "Last updated" date. Continued use of our website after
+changes constitutes acceptance of the updated policy.
+
+## Contact Us
+
+If you have questions about our use of cookies, please contact us:
+
+- **Email**: privacy@bombastic.ltd
+- **Website**: https://bombastic.ltd
+
+For more information about your privacy rights, see our
+[Privacy Policy](/privacy).
+
+---
+
+_This policy complies with EU Cookie Law, GDPR, and other applicable privacy
+regulations._

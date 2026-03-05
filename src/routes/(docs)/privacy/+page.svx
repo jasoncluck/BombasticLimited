@@ -1,0 +1,138 @@
+<svelte:head>
+
+  <title>Privacy Policy - Bombastic</title>
+  <meta
+    name="description"
+    content="Privacy Policy for Bombastic - How we collect, use, and protect your personal information."
+  />
+</svelte:head>
+
+# Bombastic - Privacy Policy
+
+_Last updated: September 2025_
+
+## Introduction
+
+Bombastic Limited ("we", "our", or "us") is committed to protecting your
+privacy. This Privacy Policy explains how we collect, use, disclose, and
+safeguard your information when you visit our website and use our services.
+
+## Information We Collect
+
+### Personal Information
+
+- **Account Information**: Username, email address, and password (encrypted)
+- **Profile Information**: Any optional profile details you choose to provide
+- **Authentication Data**: Session tokens and authentication cookies for secure
+  login
+
+### Usage Information
+
+- **Playlist Data**: Playlists you create, modify, or interact with
+- **User Preferences**: UI settings such as sidebar state
+- **Video Interaction Data**: Which videos you watch, watch duration, and
+  playback preferences
+- **Technical Data**: Error reports, performance metrics (collected anonymously
+  via PostHog in cookieless mode)
+
+### Automatically Collected Information
+
+- **Device Information**: Browser type, operating system, screen resolution
+- **Usage Analytics**: Page views, feature usage (anonymized via PostHog)
+- **Error Tracking**: Technical errors for debugging purposes (no personal data
+  included)
+
+## How We Use Your Information
+
+We use your information to:
+
+- Provide, maintain, and improve our services
+- Process your account registration and authentication
+- Store and manage your playlists and preferences
+- Track video interactions to improve recommendations and user experience
+- Analyze usage patterns to enhance user experience (anonymized)
+- Respond to customer support inquiries
+- Ensure security and prevent fraud
+
+## Information Sharing
+
+We do not sell, trade, or rent your personal information to third parties. We
+may share your information only in the following circumstances:
+
+- **With your consent**: When you explicitly agree to sharing
+- **Service providers**: With trusted third-party services that help us operate
+  (Supabase for data storage)
+- **Legal compliance**: When required by law or to protect our rights
+- **Business transfers**: In the event of a merger or acquisition (users will be
+  notified)
+
+## Data Storage and Security
+
+We implement comprehensive security measures to protect your personal
+information:
+
+- **Data Storage**: Your data is stored securely using Supabase with encryption
+  at rest
+- **Data Location**: Data is processed and stored in accordance with our service
+  providers' data centers
+- **Security Measures**: We implement industry-standard security measures
+  including encryption, secure authentication, and regular security audits
+- **Data Retention**: We retain your data as long as your account is active or
+  as needed to provide services
+
+## Cookies and Tracking
+
+For detailed information about our use of cookies and tracking technologies,
+please see our [Cookie Policy](/cookies).
+
+## Your Data Protection Rights
+
+Under applicable data protection laws (including GDPR), you have rights
+regarding your personal data, including the right to access, rectify, erase,
+restrict processing, data portability, and object to processing. To exercise any
+of these rights, please contact us at privacy@bombastic.ltd. You can also delete
+your account directly through your account settings.
+
+## Third-Party Services
+
+We use the following third-party services:
+
+- **Supabase**: Database and authentication services
+- **PostHog**: Analytics and error tracking (configured in cookieless mode)
+- **YouTube API**: Video content integration
+- **Twitch API**: Stream content integration
+
+Each service operates under their own privacy policies.
+
+## Children's Privacy
+
+Our services are not intended for children under 13. We do not knowingly collect
+personal information from children under 13. If you become aware that a child
+has provided us with personal information, please contact us.
+
+## International Data Transfers
+
+Your information may be transferred to and processed in countries other than
+your own. We ensure appropriate safeguards are in place for such transfers.
+
+## Changes to This Policy
+
+We may update this Privacy Policy from time to time. We will notify you of any
+material changes by posting the new policy on this page and updating the "Last
+updated" date.
+
+## Contact Us
+
+If you have any questions about this Privacy Policy, please contact us at:
+
+**Email**: privacy@bombastic.ltd
+
+**Website**: https://bombastic.ltd
+
+For data protection inquiries, you may also contact your local data protection
+authority.
+
+---
+
+_This policy is effective as of the date listed above and applies to all users
+of Bombastic services._

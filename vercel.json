@@ -1,0 +1,18 @@
+{
+  "buildCommand": "npm run build:vercel",
+  "devCommand": "npm run dev",
+  "installCommand": "npm ci",
+  "framework": "sveltekit",
+  "regions": ["iad1"],
+  "git": {
+    "deploymentEnabled": {
+      "copilot*": false
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/webhooks/twitch",
+      "destination": "/api/twitch/webhook"
+    }
+  ]
+}
