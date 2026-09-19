@@ -10,6 +10,7 @@ import type { UserProfile } from '$lib/supabase/user-profiles';
 import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
 import type { NotificationWithMeta } from '$lib/supabase/notifications';
+import { getRandomVideoId } from '$lib/supabase/videos';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -58,6 +59,7 @@ export interface NavigationState {
   // Navigation state
   activeRoute: string;
   isNavigating: boolean;
+  isLoadingRandomVideo: boolean;
   navigationItems: NavigationItem[];
 
   // Search state - separated into input value and URL value
@@ -88,6 +90,7 @@ export interface NavigationState {
   handleSearch: (e: Event) => void;
   handleHomeNavigation: (event: Event, href?: string) => Promise<void>;
   handleNavigation: (event: Event, item: NavigationItem) => Promise<void>;
+  handleRandomVideo: () => Promise<void>;
 
   // Search methods
   setSearchInputValue: (value: string) => void;
@@ -174,6 +177,7 @@ export class NavigationStateClass implements NavigationState {
   // Core navigation state
   activeRoute = $state<string>('');
   isNavigating = $state(false);
+  isLoadingRandomVideo = $state(false);
 
   // Navigation items configuration
   navigationItems = $state<NavigationItem[]>([]);
@@ -490,6 +494,35 @@ export class NavigationStateClass implements NavigationState {
       this.isNavigating = false;
     }
   }
+
+  /**
+   * Navigate to a random video, scoped to the user's enabled sources if
+   * they've customized them (see profiles.sources / sidebar.svelte).
+   */
+  handleRandomVideo = async (): Promise<void> => {
+    if (!browser || !this.supabase || this.isLoadingRandomVideo) return;
+
+    this.isLoadingRandomVideo = true;
+
+    try {
+      const { videoId, error } = await getRandomVideoId({
+        supabase: this.supabase,
+        sources: this.userProfile?.sources,
+      });
+
+      if (error || !videoId) {
+        showToast('Could not find a random video', 'error');
+        return;
+      }
+
+      await goto(`/video/${videoId}`);
+    } catch (error) {
+      console.error('Random video navigation error:', error);
+      showToast('Could not find a random video', 'error');
+    } finally {
+      this.isLoadingRandomVideo = false;
+    }
+  };
 
   /**
    * Handle logout functionality
@@ -918,6 +951,7 @@ export class NavigationStateClass implements NavigationState {
     this.#initialized = false;
     this.#hasLoadedOnce = false;
     this.isNavigating = false;
+    this.isLoadingRandomVideo = false;
     this.isSearching = false;
     this.searchInputValue = '';
     this.searchQuery = '';

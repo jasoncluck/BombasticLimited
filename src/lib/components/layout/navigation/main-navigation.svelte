@@ -1,6 +1,6 @@
 <script lang="ts">
   import { page } from '$app/stores';
-  import { House } from '@lucide/svelte';
+  import { House, Shuffle } from '@lucide/svelte';
   import { Button } from '$lib/components/ui/button';
   import SideDrawer from '$lib/components/side-drawer.svelte';
   import SearchInput from './search-input.svelte';
@@ -105,6 +105,20 @@ import type { AppSession as Session } from '$lib/types/session';
         <span class="sr-only">{homeNavItem.label}</span>
       </Button>
     {/if}
+
+    <!-- Random Video Button (Desktop Only) -->
+    <Button
+      variant="outline"
+      size="icon"
+      class="hidden rounded-full hover:scale-105 sm:flex"
+      data-testid="random-video-button"
+      title="Random video"
+      disabled={navigationState.isLoadingRandomVideo}
+      onclick={() => navigationState.handleRandomVideo()}
+    >
+      <Shuffle size={18} />
+      <span class="sr-only">Random video</span>
+    </Button>
 
     <!-- Search Input -->
     <SearchInput />

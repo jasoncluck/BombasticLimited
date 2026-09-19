@@ -970,6 +970,12 @@ export type Database = {
           youtube_id: string;
         }[];
       };
+      get_random_video: {
+        Args: {
+          p_sources?: Database['public']['Enums']['source'][];
+        };
+        Returns: string;
+      };
       get_unread_notification_count: {
         Args: Record<PropertyKey, never>;
         Returns: number;

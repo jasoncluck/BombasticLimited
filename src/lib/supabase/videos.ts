@@ -356,6 +356,29 @@ export function incrementVideoView({
   });
 }
 
+/**
+ * Picks a random video id, optionally scoped to a set of sources (e.g. a
+ * user's enabled channels). Returns null if there are no matching videos.
+ */
+export async function getRandomVideoId({
+  supabase,
+  sources,
+}: {
+  supabase: NeonPostgrestClient<Database>;
+  sources?: Source[] | null;
+}): Promise<{ videoId: string | null; error: PostgrestError | null }> {
+  const { data, error } = await supabase.rpc('get_random_video', {
+    p_sources: sources && sources.length > 0 ? sources : undefined,
+  });
+
+  if (error) {
+    console.error('Error fetching random video:', error);
+    return { videoId: null, error };
+  }
+
+  return { videoId: (data as string | null) ?? null, error: null };
+}
+
 export function isVideoWithTimestamp(
   video?: Video
 ): video is VideoWithTimestamp {
