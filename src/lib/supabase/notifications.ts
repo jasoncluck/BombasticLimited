@@ -1,4 +1,5 @@
-import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database, Json } from './database.types';
 
 // Infer types from Supabase RPC functions
@@ -185,7 +186,7 @@ export async function getNotifications({
   supabase,
   filters = {},
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   filters?: NotificationFilters;
 }): Promise<{
   notifications: NotificationWithMeta[];
@@ -225,7 +226,7 @@ export async function getNotifications({
 export async function getUnreadCount({
   supabase,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }): Promise<{ data: number; error: PostgrestError | null }> {
   const { data, error } = await supabase.rpc('get_unread_notification_count');
 
@@ -246,7 +247,7 @@ export async function getUnreadCount({
 export async function getNotificationCounts({
   supabase,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }): Promise<{
   data: NotificationCounts;
   error: PostgrestError | null;
@@ -295,7 +296,7 @@ export async function markAsRead({
   supabase,
   notificationIds,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   notificationIds?: number[]; // Made optional since function can mark all as read
 }): Promise<{ error: PostgrestError | null }> {
   const { error } = await supabase.rpc('mark_notifications_as_read', {
@@ -319,7 +320,7 @@ export async function createNotification({
   supabase,
   params,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   params: CreateNotificationParams & {
     start_datetime?: string;
     end_datetime?: string;
@@ -363,7 +364,7 @@ export async function deleteNotifications({
   supabase,
   notificationIds,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   notificationIds: number[];
 }): Promise<{ data: number | null; error: PostgrestError | null }> {
   const { data, error } = await supabase.rpc('remove_user_notification', {
@@ -387,7 +388,7 @@ export async function createNotificationForAllUsers({
   supabase,
   params,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   params: {
     type: NotificationType;
     title: string;

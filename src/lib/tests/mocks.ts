@@ -1,5 +1,5 @@
 import { vi } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import {
   createMockSession,
   createMockUserProfile,
@@ -10,7 +10,7 @@ import {
 /**
  * Create a mocked Supabase client with common methods
  */
-export function createMockSupabaseClient() {
+export function createMockNeonPostgrestClient() {
   const mockSession = createMockSession();
   return {
     auth: {
@@ -73,7 +73,7 @@ export function createMockSupabaseClient() {
         error: null,
       }),
     })),
-  } as unknown as SupabaseClient;
+  } as unknown as NeonPostgrestClient;
 }
 
 /**

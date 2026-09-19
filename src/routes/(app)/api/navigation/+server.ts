@@ -1,14 +1,14 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getProfile } from '$lib/supabase/user-profiles';
+import { getProfileById } from '$lib/supabase/user-profiles';
 import { getNotifications } from '$lib/supabase/notifications';
 
 export const GET: RequestHandler = async ({ locals }) => {
-  const { supabase } = locals;
+  const { supabase, userId } = locals;
 
   // For navigation, we mainly need user profile for personalization
   const [{ profile: userProfile }, { notifications }] = await Promise.all([
-    getProfile({ supabase }),
+    getProfileById({ userId }),
     getNotifications({ supabase }),
   ]);
 

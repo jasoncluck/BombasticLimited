@@ -11,16 +11,12 @@
   import { page } from '$app/state';
   import { loginSchema, type LoginSchema } from '$lib/schema/auth-schema';
   import { goto } from '$app/navigation';
-  import type { SupabaseClient } from '@supabase/supabase-js';
-  import type { Database } from '$lib/supabase/database.types';
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   let {
     form,
-    supabase,
   }: {
     form: SuperValidated<LoginSchema>;
-    supabase: SupabaseClient<Database>;
   } = $props();
 
   const flash = getFlash(page);
@@ -57,11 +53,7 @@
     <Card.Content class="grid gap-4">
       <div class="flex">
         <Button
-          onclick={async () => {
-            await supabase.auth.signInWithOAuth({
-              provider: 'discord',
-            });
-          }}
+          onclick={() => goto('/auth/discord/signin')}
           variant="outline"
           type="button"
           class="w-full cursor-pointer"

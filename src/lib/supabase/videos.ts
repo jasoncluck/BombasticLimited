@@ -7,7 +7,8 @@ import {
 } from '$lib/components/content/content-filter';
 import type { Source } from '$lib/constants/source';
 import type { Tables } from '$lib/supabase/database.types';
-import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from './database.types';
 import { getFullImageUrl, type PlaylistVideo } from './playlists';
 
@@ -59,7 +60,7 @@ export type SourceVideosCount = Record<Source, number | null>;
 // Transform functions for different RPC responses
 function transformVideoFromGetVideosWithTimestamps(
   rpcData: GetVideosWithTimestampsResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
@@ -67,7 +68,7 @@ function transformVideoFromGetVideosWithTimestamps(
     title: rpcData.title,
     description: rpcData.description,
     image_url:
-      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.thumbnail_url,
+      getFullImageUrl(rpcData.image_url) ?? rpcData.thumbnail_url,
     thumbnail_url: rpcData.thumbnail_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
@@ -85,7 +86,7 @@ function transformVideoFromGetVideosWithTimestamps(
 
 function transformVideoFromSearchVideos(
   rpcData: SearchVideosResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
@@ -93,7 +94,7 @@ function transformVideoFromSearchVideos(
     title: rpcData.title,
     description: rpcData.description,
     image_url:
-      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
+      getFullImageUrl(rpcData.image_url) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
@@ -111,7 +112,7 @@ function transformVideoFromSearchVideos(
 
 function transformVideoFromGetInProgressVideos(
   rpcData: GetInProgressVideosResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
@@ -119,7 +120,7 @@ function transformVideoFromGetInProgressVideos(
     title: rpcData.title,
     description: rpcData.description,
     image_url:
-      getFullImageUrl(rpcData.image_url, supabase) ?? rpcData.image_url,
+      getFullImageUrl(rpcData.image_url) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
@@ -136,7 +137,8 @@ function transformVideoFromGetInProgressVideos(
 }
 
 interface VideoQueryCommonProps {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId?: string | null;
 }
 
 interface VideoQuerySingleProps extends VideoQueryCommonProps {
@@ -164,6 +166,7 @@ export async function getVideos({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   searchString,
   supabase,
+  userId,
   preferredImageFormat = 'avif',
 }: VideoQueryMultipleProps<Video> & {
   preferredImageFormat: string;
@@ -172,12 +175,19 @@ export async function getVideos({
   count: number | null;
   error: PostgrestError | null;
 }> {
+  // p_source is passed as an RPC parameter, not a chained .eq('source', ...)
+  // filter — Neon's Data API computes count: 'exact' from the RPC's
+  // unfiltered result set when the source filter is applied as an outer
+  // .eq() instead of an argument to the function itself, so pagination
+  // counts were including every source's videos, not just this one.
   const query = searchString
     ? supabase.rpc(
         'search_videos',
         {
           search_term: searchString,
           p_preferred_image_format: preferredImageFormat,
+          p_user_id: userId ?? undefined,
+          p_source: source ?? undefined,
         },
         { count: 'exact' }
       )
@@ -185,6 +195,8 @@ export async function getVideos({
         'get_videos_with_timestamps',
         {
           p_preferred_image_format: preferredImageFormat,
+          p_user_id: userId ?? undefined,
+          p_source: source ?? undefined,
         },
         { count: 'exact' }
       );
@@ -203,10 +215,6 @@ export async function getVideos({
     const startIndex = (currentPage - 1) * limit;
     const endIndex = startIndex + limit - 1;
     query.range(startIndex, endIndex);
-  }
-
-  if (source) {
-    query.eq('source', source);
   }
 
   const { data: videos, count, error } = await query;
@@ -237,11 +245,13 @@ export async function getVideos({
 export async function getVideo({
   videoId,
   supabase,
+  userId,
   preferredImageFormat = 'avif',
 }: VideoQuerySingleProps & { preferredImageFormat?: string }) {
   const { data: video, error } = await supabase
     .rpc('get_videos_with_timestamps', {
       p_preferred_image_format: preferredImageFormat,
+      p_user_id: userId ?? undefined,
     })
     .eq('id', videoId)
     .single();
@@ -269,6 +279,7 @@ export async function getInProgressVideos({
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   contentFilter,
   supabase,
+  userId,
   preferredImageFormat = 'avif',
 }: VideoQueryMultipleProps<VideoWithTimestamp> & {
   preferredImageFormat?: string;
@@ -284,6 +295,7 @@ export async function getInProgressVideos({
       'get_in_progress_videos_with_timestamps',
       {
         p_preferred_image_format: preferredImageFormat,
+        p_user_id: userId ?? undefined,
       },
       { count: 'exact' }
     )
@@ -337,7 +349,7 @@ export function incrementVideoView({
   supabase,
 }: {
   videoId: string;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }) {
   supabase.rpc('increment_video_views', {
     video_id: videoId,

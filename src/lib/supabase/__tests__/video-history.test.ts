@@ -1,6 +1,7 @@
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 import { VideoWatchTimeTracker } from '$lib/supabase/video-history';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 
 // Mock Supabase client
 const mockSupabase = {
@@ -23,7 +24,7 @@ const mockSupabase = {
       error: null,
     }),
   }),
-} as unknown as SupabaseClient;
+} as unknown as NeonPostgrestClient;
 
 // Mock session
 const mockSession = {

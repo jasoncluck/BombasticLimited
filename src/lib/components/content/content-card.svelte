@@ -117,6 +117,7 @@
           playlist,
           contentFilter,
           supabase,
+          userId: session?.user.id,
           setDraggedAsSelected: false,
           clearSelection: true,
           onVideosUpdate,

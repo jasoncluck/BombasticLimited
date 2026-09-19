@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../database.types';
 import {
   getNotifications,
@@ -25,7 +25,7 @@ const mockSupabase = {
       eq: vi.fn(() => ({ select: vi.fn() })),
     })),
   })),
-} as unknown as SupabaseClient<Database>;
+} as unknown as NeonPostgrestClient<Database>;
 
 describe('notifications module', () => {
   beforeEach(() => {

@@ -13,7 +13,7 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { supabase, userId },
   url,
   depends,
   parent,
@@ -52,6 +52,7 @@ export const load: PageServerLoad = async ({
           limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
           contentFilter: sourceVideosContentFilters,
           supabase,
+          userId,
           preferredImageFormat,
         });
         return { source, videos };
@@ -62,6 +63,7 @@ export const load: PageServerLoad = async ({
       contentFilter: continueWatchingContentFilters,
       limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
       supabase,
+      userId,
       preferredImageFormat,
     }).then((result) => result.videos),
   ]);

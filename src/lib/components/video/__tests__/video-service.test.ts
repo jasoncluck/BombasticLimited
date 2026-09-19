@@ -12,7 +12,8 @@ import {
   recordCompleteVideoHistory,
   getVideoSecondsOffset,
 } from '../video-service';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from '$lib/supabase/database.types';
 
 // Mock external dependencies
@@ -42,11 +43,11 @@ vi.mock('$lib/supabase/video-history', () => ({
 }));
 
 describe('video service module', () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: NeonPostgrestClient<Database>;
   let mockSession: Session;
 
   beforeEach(() => {
-    mockSupabase = {} as SupabaseClient<Database>;
+    mockSupabase = {} as NeonPostgrestClient<Database>;
     mockSession = { user: { id: 'user123' } } as Session;
     vi.clearAllMocks();
   });

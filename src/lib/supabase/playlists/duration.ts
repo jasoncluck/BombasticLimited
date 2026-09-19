@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import { videoDurationToSeconds } from '$lib/components/video/video-service';
 
 /**
@@ -8,7 +8,7 @@ export async function getPlaylistTotalDuration({
   supabase,
   playlistId,
 }: {
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
   playlistId: number;
 }): Promise<{ hours: number; minutes: number; seconds: number }> {
   // First, get all video IDs in the playlist

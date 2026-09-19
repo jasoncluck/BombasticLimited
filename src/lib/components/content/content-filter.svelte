@@ -24,7 +24,8 @@
   } from '$lib/supabase/playlists';
   import type { ContentView } from './content';
   import { handleUpdatePlaylistSort } from '../playlist/playlist-service';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
@@ -40,7 +41,7 @@
     contentFilter: CombinedContentFilter;
     view?: ContentView;
     playlist?: Playlist;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 

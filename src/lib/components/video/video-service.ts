@@ -1,11 +1,9 @@
 import { type Video } from '$lib/supabase/videos';
 import { showToast } from '$lib/state/notifications.svelte';
 import { showNotification } from '$lib/supabase/notifications';
-import type {
-  PostgrestError,
-  Session,
-  SupabaseClient,
-} from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from '$lib/supabase/database.types';
 import { goto, invalidate } from '$app/navigation';
 import {
@@ -27,7 +25,7 @@ export async function handleAddVideoTimestamp({
 }: {
   videoTimestamp: TimestampWithVideoId;
   session: Session | null;
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
 }): Promise<{ error?: PostgrestError }> {
   // Save and get back updated video data
   const { error } = await saveVideoTimestamp({
@@ -46,7 +44,7 @@ export async function handleAddVideoTimestamps({
 }: {
   videoTimestamps: TimestampWithVideoId[];
   session: Session | null;
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
 }): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
   // Save and get back updated video data
   const { videos: updatedVideos, error } = await saveVideoTimestamps({
@@ -70,7 +68,7 @@ export async function handleDeleteVideosTimestamp({
 }: {
   videos: Video[];
   isContinueVideos?: boolean;
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
   session: Session | null;
 }): Promise<{ updatedVideos: Video[]; error?: PostgrestError }> {
   if (!session) {
@@ -146,7 +144,7 @@ export function createVideoWatchTimeTracker({
   session,
 }: {
   videoId: string;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session: Session | null;
 }): VideoWatchTimeTracker {
   return new VideoWatchTimeTracker(videoId, supabase, session);
@@ -163,7 +161,7 @@ export async function startSimpleVideoHistory({
 }: {
   videoId: string;
   sessionStartTime?: Date;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session: Session | null;
 }): Promise<{ success: boolean; error?: PostgrestError | null }> {
   if (!session?.user) {
@@ -206,7 +204,7 @@ export async function endSimpleVideoHistory({
   videoId: string;
   sessionStartTime: Date; // Added this required parameter
   sessionEndTime?: Date;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session: Session | null;
 }): Promise<{ success: boolean; error?: PostgrestError | null }> {
   if (!session?.user) {
@@ -251,7 +249,7 @@ export async function recordCompleteVideoHistory({
   videoId: string;
   sessionStartTime?: Date;
   sessionEndTime?: Date;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session: Session | null;
 }): Promise<{
   success: boolean;

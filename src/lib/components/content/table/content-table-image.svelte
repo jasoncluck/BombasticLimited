@@ -5,12 +5,12 @@
   import { Check } from '@lucide/svelte';
   import LazyImage from '../LazyImage.svelte';
 
-  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { Database } from '$lib/supabase/database.types';
 
   type ContentCardProps = {
     video: Video;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     index?: number;
   };
 

@@ -1,0 +1,7 @@
+-- Migration: 15_bug_reports_storage.sql (Neon adaptation — emptied)
+-- Purpose (original): RLS policies on storage.objects for the
+-- bug-report-images bucket.
+--
+-- storage.objects doesn't exist on Neon (Supabase Storage is Supabase-
+-- internal). Bug report image storage moves to S3 in a later phase, where
+-- access control is IAM-based, not SQL RLS policies. Nothing to apply here.

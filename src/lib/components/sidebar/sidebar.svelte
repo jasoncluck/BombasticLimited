@@ -1,13 +1,13 @@
 <script lang="ts">
   import { ListVideo, Plus } from '@lucide/svelte';
-  import { type SupabaseClient, type Session } from '@supabase/supabase-js';
+  import { type NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
   import { invalidate } from '$app/navigation';
   import { getContentState } from '$lib/state/content.svelte';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { page } from '$app/state';
-  import { updateProfileSources } from '$lib/supabase/user-profiles';
   import { showToast } from '$lib/state/notifications.svelte';
   import { getSourceState } from '$lib/state/source.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
@@ -24,7 +24,7 @@
     isSidebarCollapsed,
     refreshSidebar,
   }: {
-    supabase: SupabaseClient;
+    supabase: NeonPostgrestClient;
     session: Session | null;
     isSidebarCollapsed: boolean;
     refreshSidebar?: () => Promise<void>;
@@ -172,9 +172,10 @@
       if (session?.user.id) {
         try {
           // Update server in background
-          await updateProfileSources({
-            sources: orderedSources,
-            supabase,
+          await fetch('/api/profile/sources', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sources: orderedSources }),
           });
 
           // Refresh sidebar to get updated profile

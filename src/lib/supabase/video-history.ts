@@ -3,11 +3,9 @@
  * This is separate from timestamps which track "where user left off"
  * Video history tracks actual viewing sessions and analytics
  */
-import type {
-  SupabaseClient,
-  Session,
-  PostgrestError,
-} from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from './database.types';
 import type { Source } from '$lib/constants/source';
 
@@ -119,7 +117,7 @@ function transformVideoAnalytics(
 }
 
 interface VideoHistoryCommonProps {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session?: Session | null;
 }
 
@@ -390,7 +388,7 @@ export async function getVideoAnalytics({
  */
 export class VideoWatchTimeTracker {
   private videoId: string;
-  private supabase: SupabaseClient<Database>;
+  private supabase: NeonPostgrestClient<Database>;
   private session: Session | null;
   private sessionStartTime: Date;
   private isPlaying: boolean = false;
@@ -407,7 +405,7 @@ export class VideoWatchTimeTracker {
 
   constructor(
     videoId: string,
-    supabase: SupabaseClient<Database>,
+    supabase: NeonPostgrestClient<Database>,
     session: Session | null
   ) {
     this.videoId = videoId;

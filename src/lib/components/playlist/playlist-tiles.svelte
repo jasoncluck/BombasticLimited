@@ -1,7 +1,8 @@
 <script lang="ts">
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import PlaylistCard from './playlist-card.svelte';
 
@@ -11,7 +12,7 @@
     session,
   }: {
     playlists: Playlist[];
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     showUsername?: boolean;
     session: Session | null;
   } = $props();

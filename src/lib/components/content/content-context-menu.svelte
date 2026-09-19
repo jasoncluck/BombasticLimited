@@ -6,7 +6,8 @@
   } from '$lib/state/content.svelte';
   import { type Playlist } from '$lib/supabase/playlists';
   import type { Database } from '$lib/supabase/database.types';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import {
     handleAddVideosToPlaylist,
     handleRemoveVideosFromPlaylist,
@@ -38,7 +39,7 @@
     playlists: Playlist[];
     sectionId: string;
     children: Snippet<[]>;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
     variant?: ContentSelectVariant;
     userProfile?: UserProfile;
@@ -313,11 +314,13 @@
         <ContextMenu.Item
           class="p-2"
           onclick={async () => {
+            if (!session) return;
             const { error } = await handleRemoveVideosFromPlaylist({
               videos: frozenOperationVideos,
               sidebarState,
               playlist,
               supabase,
+              userId: session.user.id,
             });
 
             if (!error) {

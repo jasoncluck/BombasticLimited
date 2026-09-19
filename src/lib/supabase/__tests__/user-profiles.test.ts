@@ -1,91 +1,54 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { checkIfUsernameIsUnique, getUserProfile } from '../user-profiles';
-import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../database.types';
 
-// Create a simple mock Supabase client
-const createMockSupabaseClient = () => {
-  const mockRpc = vi.fn();
-  const mockFrom = vi.fn();
-  const mockAuthGetClaims = vi.fn();
+const queryMock = vi.hoisted(() => vi.fn());
+vi.mock('$lib/server/db', () => ({
+  pool: { query: queryMock },
+}));
 
-  return {
-    rpc: mockRpc,
-    from: mockFrom,
-    auth: {
-      getClaims: mockAuthGetClaims,
-    },
-    mockRpc,
-    mockFrom,
-    mockAuthGetClaims,
-  } as unknown as SupabaseClient<Database> & {
-    mockRpc: typeof mockRpc;
-    mockFrom: typeof mockFrom;
-    mockAuthGetClaims: typeof mockAuthGetClaims;
-  };
-};
+const { checkIfUsernameIsUnique, getProfileById } = await import(
+  '../user-profiles'
+);
 
 describe('user-profiles', () => {
-  let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
-
   beforeEach(() => {
-    vi.clearAllMocks();
-    mockSupabase = createMockSupabaseClient();
+    queryMock.mockReset();
   });
 
   describe('checkIfUsernameIsUnique', () => {
     it('should return true for unique username', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: true, error: null });
-
-      const result = await checkIfUsernameIsUnique({
-        username: 'uniqueuser',
-        supabase: mockSupabase,
+      queryMock.mockResolvedValue({
+        rows: [{ is_unique_username: true }],
       });
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('is_unique_username', {
-        p_username: 'uniqueuser',
-      });
+      const result = await checkIfUsernameIsUnique({ username: 'uniqueuser' });
+
+      expect(queryMock).toHaveBeenCalledWith(
+        'SELECT is_unique_username($1) AS is_unique_username',
+        ['uniqueuser']
+      );
       expect(result).toBe(true);
     });
 
     it('should return false for non-unique username', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: false, error: null });
-
-      const result = await checkIfUsernameIsUnique({
-        username: 'existinguser',
-        supabase: mockSupabase,
+      queryMock.mockResolvedValue({
+        rows: [{ is_unique_username: false }],
       });
+
+      const result = await checkIfUsernameIsUnique({ username: 'existinguser' });
 
       expect(result).toBe(false);
     });
 
-    it('should return false when RPC returns null', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: null, error: null });
+    it('should return false when no row is returned', async () => {
+      queryMock.mockResolvedValue({ rows: [] });
 
-      const result = await checkIfUsernameIsUnique({
-        username: 'testuser',
-        supabase: mockSupabase,
-      });
-
-      expect(result).toBe(false);
-    });
-
-    it('should handle database errors gracefully', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({
-        data: null,
-        error: { message: 'Database error', code: '500' },
-      });
-
-      const result = await checkIfUsernameIsUnique({
-        username: 'testuser',
-        supabase: mockSupabase,
-      });
+      const result = await checkIfUsernameIsUnique({ username: 'testuser' });
 
       expect(result).toBe(false);
     });
   });
 
-  describe('getUserProfile', () => {
+  describe('getProfileById', () => {
     it('should get user profile successfully', async () => {
       const mockProfile = {
         id: 'user123',
@@ -99,83 +62,30 @@ describe('user-profiles', () => {
         username_history: [],
       };
 
-      mockSupabase.mockAuthGetClaims.mockResolvedValue({
-        data: { claims: { sub: 'user123' } },
-        error: null,
-      });
+      queryMock.mockResolvedValue({ rows: [mockProfile] });
 
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: mockProfile,
-          error: null,
-        }),
-      };
+      const result = await getProfileById({ userId: 'user123' });
 
-      mockSupabase.mockFrom.mockReturnValue(mockChain);
-
-      const result = await getUserProfile({
-        supabase: mockSupabase,
-      });
-
-      expect(mockSupabase.auth.getClaims).toHaveBeenCalled();
-      expect(mockSupabase.from).toHaveBeenCalledWith('profiles');
-      expect(mockChain.eq).toHaveBeenCalledWith('id', 'user123');
+      expect(queryMock).toHaveBeenCalledWith(
+        'SELECT * FROM profiles WHERE id = $1',
+        ['user123']
+      );
       expect(result.profile).toEqual(mockProfile);
-      expect(result.error).toBeNull();
+      expect(result.error).toBeUndefined();
     });
 
-    it('should handle missing auth claims', async () => {
-      mockSupabase.mockAuthGetClaims.mockResolvedValue({
-        data: { claims: null },
-        error: null,
-      });
+    it('should return null profile for null userId', async () => {
+      const result = await getProfileById({ userId: null });
 
-      const result = await getUserProfile({
-        supabase: mockSupabase,
-      });
-
+      expect(queryMock).not.toHaveBeenCalled();
       expect(result.profile).toBeNull();
-      expect(result.error).toBeNull();
-    });
-
-    it('should handle auth claims error', async () => {
-      const authError = { message: 'Auth failed', code: '401' };
-      mockSupabase.mockAuthGetClaims.mockResolvedValue({
-        data: null,
-        error: authError,
-      });
-
-      const result = await getUserProfile({
-        supabase: mockSupabase,
-      });
-
-      expect(result.profile).toBeNull();
-      expect(result.error).toBe(authError);
     });
 
     it('should handle profile fetch errors', async () => {
-      mockSupabase.mockAuthGetClaims.mockResolvedValue({
-        data: { claims: { sub: 'user123' } },
-        error: null,
-      });
+      const dbError = new Error('Profile not found');
+      queryMock.mockRejectedValue(dbError);
 
-      const dbError = { message: 'Profile not found', code: '404' };
-      const mockChain = {
-        select: vi.fn().mockReturnThis(),
-        eq: vi.fn().mockReturnThis(),
-        single: vi.fn().mockResolvedValue({
-          data: null,
-          error: dbError,
-        }),
-      };
-
-      mockSupabase.mockFrom.mockReturnValue(mockChain);
-
-      const result = await getUserProfile({
-        supabase: mockSupabase,
-      });
+      const result = await getProfileById({ userId: 'user123' });
 
       expect(result.profile).toBeNull();
       expect(result.error).toBe(dbError);

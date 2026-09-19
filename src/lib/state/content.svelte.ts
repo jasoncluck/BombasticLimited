@@ -2,7 +2,8 @@
 
 import type { Video } from '$lib/supabase/videos';
 import type { Playlist } from '$lib/supabase/playlists';
-import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '$lib/supabase/database.types';
 import { getContext, setContext } from 'svelte';
 import { createDragImage } from '$lib/utils/dragdrop';
@@ -44,7 +45,8 @@ export interface DragDropOptions {
   videosCount?: number | null;
   playlist?: Playlist;
   contentFilter?: CombinedContentFilter;
-  supabase?: SupabaseClient<Database>;
+  supabase?: NeonPostgrestClient<Database>;
+  userId?: string | null;
   onVideosUpdate?: (videos: Video[]) => void;
   setDraggedAsSelected?: boolean;
   clearSelection?: boolean;
@@ -903,11 +905,14 @@ export class ContentState {
           throw new Error('Invalid content filter, expected playlist filter');
         }
 
+        if (!options.userId) return;
+
         handleUpdatePlaylistVideoPosition({
           videos: sortedVideosToMove,
           position: newPosition,
           playlist: options.playlist,
           supabase: options.supabase,
+          userId: options.userId,
         });
       }
 

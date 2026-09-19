@@ -19,7 +19,8 @@
     getUserInitials,
     handleUpdateProfileContentDisplay,
   } from '$lib/components/profile/profile-service';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
@@ -34,7 +35,7 @@
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     openAccountDrawer: boolean;
   } = $props();
 
@@ -86,8 +87,6 @@
               contentState.resetState();
               handleUpdateProfileContentDisplay({
                 contentDisplay: 'TILES',
-                supabase,
-                session,
               });
             }
           }}
@@ -104,8 +103,6 @@
               contentState.resetState();
               handleUpdateProfileContentDisplay({
                 contentDisplay: 'TABLE',
-                supabase,
-                session,
               });
             }
           }}
@@ -275,7 +272,7 @@
 {/if}
 
 <!-- Bug Report Dialog (Desktop) -->
-<BugReportDialog bind:open={bugReportDialogOpen} {supabase} {session} />
+<BugReportDialog bind:open={bugReportDialogOpen} {session} />
 
 <!-- Bug Report Drawer (Mobile) -->
-<BugReportDrawer bind:open={bugReportDrawerOpen} {supabase} {session} />
+<BugReportDrawer bind:open={bugReportDrawerOpen} {session} />

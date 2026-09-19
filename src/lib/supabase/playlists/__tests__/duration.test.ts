@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { getPlaylistTotalDuration } from '../duration';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 
 // Mock the video service module
 vi.mock('$lib/components/video/video-service', () => ({
@@ -20,7 +20,7 @@ vi.mock('$lib/components/video/video-service', () => ({
 }));
 
 describe('playlist duration module', () => {
-  let mockSupabase: SupabaseClient;
+  let mockSupabase: NeonPostgrestClient;
   let mockFrom: any;
   let mockSelect: any;
   let mockEq: any;

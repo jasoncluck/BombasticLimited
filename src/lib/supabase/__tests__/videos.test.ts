@@ -11,7 +11,7 @@ import {
   type Video,
   type VideoWithTimestamp,
 } from '../videos';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../database.types';
 
 // Mock the content filter module
@@ -36,9 +36,9 @@ vi.mock('../playlists', () => ({
 }));
 
 describe('videos module', () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: NeonPostgrestClient<Database>;
 
-  const createMockSupabaseClient = () => {
+  const createMockNeonPostgrestClient = () => {
     const mockRpc = vi.fn();
     const mockLimit = vi.fn();
     const mockOrder = vi.fn();
@@ -70,7 +70,7 @@ describe('videos module', () => {
   };
 
   beforeEach(() => {
-    mockSupabase = createMockSupabaseClient();
+    mockSupabase = createMockNeonPostgrestClient();
   });
 
   describe('getVideos', () => {

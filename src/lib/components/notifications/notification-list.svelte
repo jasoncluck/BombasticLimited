@@ -2,7 +2,7 @@
   import { Button } from '$lib/components/ui/button';
   import { ScrollArea } from '$lib/components/ui/scroll-area';
   import { X, Bell } from '@lucide/svelte';
-  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { Database } from '$lib/supabase/database.types';
   import {
     type NotificationWithMeta,
@@ -21,7 +21,7 @@
     filterType,
     onNotificationClick,
   }: {
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     filterType?: NotificationType;
     onNotificationClick?: () => void;
   } = $props();

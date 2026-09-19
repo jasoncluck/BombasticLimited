@@ -9,7 +9,7 @@ import {
   type TimestampWithVideoId,
   type VideoTimestamp,
 } from '../timestamps';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from '../database.types';
 import type { VideoWithTimestamp } from '../videos';
 
@@ -47,26 +47,9 @@ const createMockSupabaseClient = () => {
 };
 
 const createMockSession = (): Session => ({
-  access_token: 'mock-token',
-  token_type: 'bearer',
-  expires_in: 3600,
-  expires_at: Date.now() / 1000 + 3600,
-  refresh_token: 'mock-refresh',
   user: {
     id: 'user-123',
-    aud: 'authenticated',
-    role: 'authenticated',
     email: 'test@example.com',
-    email_confirmed_at: '2023-01-01T00:00:00Z',
-    phone: '',
-    confirmed_at: '2023-01-01T00:00:00Z',
-    last_sign_in_at: '2023-01-01T00:00:00Z',
-    app_metadata: {},
-    user_metadata: {},
-    identities: [],
-    created_at: '2023-01-01T00:00:00Z',
-    updated_at: '2023-01-01T00:00:00Z',
-    is_anonymous: false,
   },
 });
 
@@ -225,6 +208,7 @@ describe('timestamps utilities', () => {
         p_playlist_id: 456,
         p_sorted_by: 'title',
         p_sort_order: 'ascending',
+        p_user_id: 'user-123',
       });
       expect(result.videos).toEqual(mockVideos);
       expect(result.error).toBeUndefined();
@@ -275,6 +259,7 @@ describe('timestamps utilities', () => {
         p_playlist_id: undefined,
         p_sorted_by: undefined,
         p_sort_order: undefined,
+        p_user_id: 'user-123',
       });
       expect(result.videos).toEqual(mockVideos);
     });
@@ -340,6 +325,7 @@ describe('timestamps utilities', () => {
         p_video_ids: ['video-1', 'video-2'],
         p_video_start_seconds: [300, 600],
         p_watched_at: ['2023-01-01T12:00:00.000Z', '2023-01-01T13:00:00.000Z'],
+        p_user_id: 'user-123',
       });
       expect(result.videos).toEqual(mockVideos);
       expect(result.error).toBeUndefined();
@@ -407,6 +393,7 @@ describe('timestamps utilities', () => {
         p_video_ids: ['video-1', 'video-2'],
         p_video_start_seconds: [null, 150],
         p_watched_at: [null, '2023-01-01T14:00:00.000Z'],
+        p_user_id: 'user-123',
       });
       expect(result.videos).toEqual(mockVideos);
     });
@@ -428,6 +415,7 @@ describe('timestamps utilities', () => {
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('delete_timestamps', {
         p_video_ids: ['video-1', 'video-2'],
+        p_user_id: 'user-123',
       });
       expect(result.videos).toEqual(mockVideos);
       expect(result.error).toBeUndefined();

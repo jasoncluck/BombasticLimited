@@ -9,7 +9,8 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import { type Video } from '$lib/supabase/videos';
   import { getContentState } from '$lib/state/content.svelte';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { CombinedContentFilter } from '../content-filter';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
@@ -23,7 +24,7 @@
     isContinueVideos?: boolean;
     allowVideoReorder?: boolean;
     sectionId: string;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
     videosCount?: number | null;
     handleDragStart?: (
@@ -41,6 +42,7 @@
     allowVideoReorder = false,
     videosCount,
     supabase,
+    session,
   }: DataTableProps<TValue> = $props();
 
   const contentState = getContentState();
@@ -67,6 +69,7 @@
       clearSelection: mediaQueryState.canHover ? false : true,
 
       supabase,
+      userId: session?.user.id,
       onVideosUpdate: (updatedVideos) => {
         videos = updatedVideos;
       },

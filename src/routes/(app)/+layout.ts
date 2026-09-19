@@ -1,60 +1,53 @@
-import {
-  createBrowserClient,
-  createServerClient,
-  isBrowser,
-} from '@supabase/ssr';
-import {
-  PUBLIC_SUPABASE_ANON_KEY,
-  PUBLIC_SUPABASE_URL,
-} from '$env/static/public';
+import { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import { browser } from '$app/environment';
+import { PUBLIC_NEON_DATA_API_URL } from '$env/static/public';
 import type { LayoutLoad } from './$types';
 import type { CombinedContentFilter } from '$lib/components/content/content-filter';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import type { ImageFormat } from '$lib/utils/image-format-detection';
+import type { AppSession } from '$lib/types/session';
+import type { Database } from '$lib/supabase/database.types';
+import { ID_TOKEN_CLIENT_COOKIE } from '$lib/constants/auth-cookies';
+
+function getClientIdToken(): string | null {
+  const match = document.cookie.match(
+    new RegExp(`(?:^|; )${ID_TOKEN_CLIENT_COOKIE}=([^;]*)`)
+  );
+  return match ? decodeURIComponent(match[1]) : null;
+}
 
 export const load: LayoutLoad = async ({ data, depends, fetch }) => {
-  /**
-   * Declare a dependency so the layout can be invalidated, for example, on
-   * session refresh.
-   */
-  depends('supabase:auth');
+  depends('app:profile');
 
-  const supabase = isBrowser()
-    ? createBrowserClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-        global: {
-          fetch,
-        },
-      })
-    : createServerClient(PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_ANON_KEY, {
-        global: {
-          fetch,
-        },
-        cookies: {
-          getAll() {
-            return data.cookies || [];
-          },
-          setAll() {
-            // Server-side cookie setting is handled by the server load function
-            // This is a no-op for the client load function
-          },
-        },
-      });
+  // Only the browser instance is ever actually queried (this universal load
+  // reruns client-side right after hydration) — the readable ID-token
+  // mirror cookie only exists for the browser to read, so the server-side
+  // instance here is effectively inert and stays unauthenticated.
+  const idToken = browser ? getClientIdToken() : null;
 
-  let session = null;
+  const supabase = new NeonPostgrestClient<Database>({
+    dataApiUrl: PUBLIC_NEON_DATA_API_URL,
+    options: {
+      global: {
+        fetch,
+        ...(idToken && { headers: { Authorization: `Bearer ${idToken}` } }),
+      },
+    },
+  });
 
-  const { data: sessionData } = await supabase.auth.getSession();
-  session = sessionData.session;
-
-  // Destructure the simplified data without complex caching
   const {
+    userId,
     userProfile = null,
     contentFilter,
     preferredImageFormat,
   }: {
+    userId?: string | null;
     userProfile?: UserProfile | null;
     contentFilter?: CombinedContentFilter;
     preferredImageFormat: ImageFormat;
   } = data;
+
+  const session: AppSession | null = userId ? { user: { id: userId } } : null;
 
   return {
     session,

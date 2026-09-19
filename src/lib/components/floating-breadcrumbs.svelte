@@ -7,7 +7,8 @@
   import { getPageState } from '$lib/state/page.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
   import ContentSelect from './content/content-select.svelte';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { Video } from '$lib/supabase/videos';
   import type { CombinedContentFilter } from './content/content-filter';
@@ -21,7 +22,7 @@
     contentFilter?: CombinedContentFilter;
     playlist?: Playlist;
     userProfile: UserProfile | null;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
   }
   const {

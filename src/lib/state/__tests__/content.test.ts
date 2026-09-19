@@ -59,19 +59,7 @@ describe('ContentState', () => {
     mockSession = createMockSession({
       user: {
         id: 'user-1',
-        aud: 'authenticated',
-        role: 'authenticated',
         email: 'test@example.com',
-        email_confirmed_at: '2023-01-01T00:00:00Z',
-        phone: '',
-        confirmed_at: '2023-01-01T00:00:00Z',
-        last_sign_in_at: '2023-01-01T00:00:00Z',
-        app_metadata: {},
-        user_metadata: {},
-        identities: [],
-        created_at: '2023-01-01T00:00:00Z',
-        updated_at: '2023-01-01T00:00:00Z',
-        is_anonymous: false,
       },
     });
 

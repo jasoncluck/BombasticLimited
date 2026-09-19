@@ -1,4 +1,5 @@
-import type { PostgrestError, SupabaseClient } from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../database.types';
 import type {
   PlaylistVideosFilter,
@@ -35,6 +36,7 @@ export async function getPlaylistData({
   currentPage = 1,
   limit = DEFAULT_NUM_VIDEOS_PAGINATION,
   supabase,
+  userId,
   preferredImageFormat,
 }: {
   shortId?: string;
@@ -42,7 +44,8 @@ export async function getPlaylistData({
   contentFilter?: PlaylistVideosFilter;
   currentPage?: number;
   limit?: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId?: string | null;
   preferredImageFormat: string;
 }): Promise<{
   playlist: Playlist | null;
@@ -72,6 +75,7 @@ export async function getPlaylistData({
     p_sort_key: sortKey ?? 'playlistOrder',
     p_sort_order: sortOrder ?? 'ascending',
     p_preferred_image_format: preferredImageFormat,
+    p_user_id: userId ?? undefined,
   });
 
   if (error) {
@@ -142,13 +146,15 @@ export async function getPlaylistDataByYoutubeId({
   currentPage = 1,
   limit = DEFAULT_NUM_VIDEOS_OVERVIEW,
   supabase,
+  userId,
   preferredImageFormat,
 }: {
   youtubeId: string;
   contentFilter?: PlaylistVideosFilter;
   currentPage?: number;
   limit?: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId?: string | null;
   preferredImageFormat: string;
 }) {
   return getPlaylistData({
@@ -157,6 +163,7 @@ export async function getPlaylistDataByYoutubeId({
     currentPage,
     limit,
     supabase,
+    userId,
     preferredImageFormat,
   });
 }
@@ -174,7 +181,7 @@ export async function getPlaylistsForUsername({
   username: string;
   currentPage?: number;
   limit?: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   preferredImageFormat: string;
 }): Promise<{
   playlists: (Playlist & {
@@ -212,7 +219,7 @@ export async function getPlaylistsForUsername({
     short_id: playlist.short_id,
     created_by: playlist.created_by,
     description: playlist.description,
-    image_url: getFullImageUrl(playlist.image_url, supabase), // Convert to full URL
+    image_url: getFullImageUrl(playlist.image_url), // Convert to full URL
     image_processing_status:
       playlist.image_processing_status as Playlist['image_processing_status'],
     type: playlist.type,
@@ -237,7 +244,7 @@ export async function getPlaylistByYoutubeId({
   preferredImageFormat,
 }: {
   youtubeId: string;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   preferredImageFormat: string;
 }) {
   const { data, error } = await supabase
@@ -264,13 +271,15 @@ export async function getPlaylistVideoContext({
   videoId,
   contentFilter,
   supabase,
+  userId,
   contextLimit = 5,
   preferredImageFormat,
 }: {
   shortId: string;
   videoId: string;
   contentFilter: PlaylistVideosFilter;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId?: string | null;
   contextLimit?: number;
   preferredImageFormat: string;
 }): Promise<{
@@ -290,6 +299,7 @@ export async function getPlaylistVideoContext({
     p_preferred_image_format: preferredImageFormat,
     p_sorted_by: contentFilter.sort.key,
     p_sort_order: contentFilter.sort.order,
+    p_user_id: userId ?? undefined,
   });
 
   const { data, error } = await query;
@@ -343,7 +353,7 @@ export async function getPlaylistVideoContext({
     short_id: metadataRow.playlist_short_id,
     created_by: metadataRow.playlist_created_by,
     description: metadataRow.playlist_description,
-    image_url: getFullImageUrl(metadataRow.playlist_image_url, supabase),
+    image_url: getFullImageUrl(metadataRow.playlist_image_url),
     type: metadataRow.playlist_type,
     image_properties: metadataRow.playlist_image_properties,
     youtube_id: metadataRow.playlist_youtube_id,
@@ -391,25 +401,21 @@ export async function getPlaylistVideoContext({
  */
 export async function getUserPlaylists({
   supabase,
+  userId,
   preferredImageFormat,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId?: string | null;
   preferredImageFormat: string;
 }): Promise<{
   userPlaylists: UserPlaylist[];
   count: number | null;
   error: PostgrestError | null;
 }> {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-
-  if (!claimsData?.claims || claimsError) {
-    return { userPlaylists: [], count: null, error: null };
-  }
-
   const { data, count, error } = await supabase
     .rpc('get_user_playlists', {
       p_preferred_image_format: preferredImageFormat,
+      p_user_id: userId ?? undefined,
     })
     .order('playlist_position', { ascending: false });
 
@@ -434,11 +440,13 @@ export async function searchPlaylists({
   currentPage = 1,
   preferredImageFormat,
   supabase,
+  userId,
 }: {
   searchString: string;
   limit?: number;
   currentPage?: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId?: string | null;
   preferredImageFormat: string;
 }): Promise<{
   playlists: Playlist[];
@@ -455,6 +463,7 @@ export async function searchPlaylists({
       {
         search_term: searchString,
         p_preferred_image_format: preferredImageFormat,
+        p_user_id: userId ?? undefined,
       },
       { count: 'exact' }
     )
@@ -472,7 +481,7 @@ export async function searchPlaylists({
     short_id: playlist.short_id,
     created_by: playlist.created_by,
     description: playlist.description,
-    image_url: getFullImageUrl(playlist.image_url, supabase), // Convert to full URL
+    image_url: getFullImageUrl(playlist.image_url), // Convert to full URL
     image_processing_status: playlist.image_processing_status,
     type: playlist.type,
     image_properties: playlist.image_properties,

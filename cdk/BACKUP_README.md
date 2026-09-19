@@ -1,5 +1,11 @@
 # Database Backup Infrastructure
 
+> **Status: disabled, not migrated.** This describes the Supabase-era backup
+> setup. `BackupStack` is commented out in `lib/stack/app-stack.ts` and the
+> Lambda code (`lib/lambda/database-backup.ts`/`database-restore.ts`) still
+> targets a Supabase project that no longer exists — it would need a rewrite
+> against Neon before it's usable again. Kept for reference only.
+
 This directory contains AWS CDK infrastructure for automated database backups to
 S3.
 

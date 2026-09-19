@@ -12,7 +12,7 @@ import {
   unfollowPlaylist,
   updatePlaylistSort,
 } from '../mutations';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../../database.types';
 
 // Mock invalidate function
@@ -26,13 +26,10 @@ vi.mock('$lib/components/playlist/playlist', () => ({
 }));
 
 describe('playlist mutations module', () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: NeonPostgrestClient<Database>;
 
   beforeEach(() => {
     mockSupabase = {
-      auth: {
-        getClaims: vi.fn(),
-      },
       rpc: vi.fn(),
       from: vi.fn(),
     } as any;
@@ -50,11 +47,6 @@ describe('playlist mutations module', () => {
         type: 'Private',
       };
 
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'user123' } },
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         single: vi.fn().mockResolvedValue({
           data: mockPlaylistData,
@@ -65,6 +57,7 @@ describe('playlist mutations module', () => {
       const result = await createPlaylist({
         name: 'New Playlist',
         supabase: mockSupabase,
+        userId: 'user123',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('insert_playlist', {
@@ -77,11 +70,6 @@ describe('playlist mutations module', () => {
     });
 
     it('should create playlist without name', async () => {
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'user456' } },
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         single: vi.fn().mockResolvedValue({
           data: { id: 2, name: 'Untitled Playlist' },
@@ -91,6 +79,7 @@ describe('playlist mutations module', () => {
 
       await createPlaylist({
         supabase: mockSupabase,
+        userId: 'user456',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('insert_playlist', {
@@ -100,27 +89,8 @@ describe('playlist mutations module', () => {
       });
     });
 
-    it('should handle authentication errors', async () => {
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: null,
-        error: { message: 'Unauthenticated' },
-      });
-
-      await expect(
-        createPlaylist({
-          name: 'Test Playlist',
-          supabase: mockSupabase,
-        })
-      ).rejects.toThrow('Unable to create playlist, invalid authentication');
-    });
-
     it('should handle RPC errors', async () => {
       const mockError = { message: 'Database error', code: '500' };
-
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'user123' } },
-        error: null,
-      });
 
       (mockSupabase.rpc as any).mockReturnValue({
         single: vi.fn().mockResolvedValue({
@@ -132,6 +102,7 @@ describe('playlist mutations module', () => {
       const result = await createPlaylist({
         name: 'Test Playlist',
         supabase: mockSupabase,
+        userId: 'user123',
       });
 
       expect(result.playlist).toBeNull();
@@ -149,6 +120,7 @@ describe('playlist mutations module', () => {
         playlistId: 1,
         position: 5,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith(
@@ -156,6 +128,7 @@ describe('playlist mutations module', () => {
         {
           p_playlist_id: 1,
           p_new_position: 5,
+          p_user_id: 'test-user-id',
         }
       );
       expect(result.error).toBeNull();
@@ -171,6 +144,7 @@ describe('playlist mutations module', () => {
         playlistId: 2,
         position: 10,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -186,10 +160,12 @@ describe('playlist mutations module', () => {
       const result = await deletePlaylist({
         playlistId: 3,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('delete_playlist', {
         p_playlist_id: 3,
+        p_user_id: 'test-user-id',
       });
       expect(result.error).toBeNull();
     });
@@ -203,6 +179,7 @@ describe('playlist mutations module', () => {
       const result = await deletePlaylist({
         playlistId: 999,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -219,11 +196,13 @@ describe('playlist mutations module', () => {
         playlistId: 1,
         videoIds: ['video1', 'video2', 'video3'],
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('insert_playlist_videos', {
         p_playlist_id: 1,
         p_video_ids: ['video1', 'video2', 'video3'],
+        p_user_id: 'test-user-id',
       });
       expect(result.error).toBeNull();
     });
@@ -238,6 +217,7 @@ describe('playlist mutations module', () => {
         playlistId: 2,
         videoIds: ['video4'],
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -255,6 +235,7 @@ describe('playlist mutations module', () => {
         videoIds: ['video1', 'video2'],
         position: 3,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith(
@@ -263,6 +244,7 @@ describe('playlist mutations module', () => {
           p_playlist_id: 1,
           p_video_ids: ['video1', 'video2'],
           p_new_position: 3,
+          p_user_id: 'test-user-id',
         }
       );
       expect(result.error).toBeNull();
@@ -279,6 +261,7 @@ describe('playlist mutations module', () => {
         videoIds: ['video1'],
         position: -1,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -303,11 +286,13 @@ describe('playlist mutations module', () => {
         playlistId: 1,
         videoIds: ['video1', 'video2'],
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('delete_playlist_videos', {
         p_playlist_id: 1,
         p_video_ids: ['video1', 'video2'],
+        p_user_id: 'test-user-id',
       });
       expect(result.error).toBeNull();
     });
@@ -329,6 +314,7 @@ describe('playlist mutations module', () => {
         playlistId: 1,
         videoIds: ['nonexistent'],
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -526,10 +512,12 @@ describe('playlist mutations module', () => {
       const result = await followPlaylist({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('follow_playlist', {
         p_playlist_id: 1,
+        p_user_id: 'test-user-id',
       });
       expect(result.error).toBeNull();
     });
@@ -545,11 +533,12 @@ describe('playlist mutations module', () => {
       await followPlaylist({
         playlistId: 2,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('follow_playlist', {
         p_playlist_id: 2,
-        p_playlist_position: undefined,
+        p_user_id: 'test-user-id',
       });
     });
 
@@ -565,6 +554,7 @@ describe('playlist mutations module', () => {
       const result = await followPlaylist({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -583,10 +573,12 @@ describe('playlist mutations module', () => {
       const result = await unfollowPlaylist({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(mockSupabase.rpc).toHaveBeenCalledWith('unfollow_playlist', {
         p_playlist_id: 1,
+        p_user_id: 'test-user-id',
       });
       expect(result.error).toBeNull();
     });
@@ -603,6 +595,7 @@ describe('playlist mutations module', () => {
       const result = await unfollowPlaylist({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);

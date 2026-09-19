@@ -5,7 +5,8 @@ import ContentTableTitle from './content-table-title.svelte';
 import ContentTableActions from './content-table-actions.svelte';
 import ContentTableImage from './content-table-image.svelte';
 import type { Database } from '$lib/supabase/database.types';
-import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Playlist } from '$lib/supabase/playlists';
 import ContentTableDescription from './content-table-description.svelte';
 import ContentTablePlay from './content-table-play.svelte';
@@ -31,7 +32,7 @@ export function createContentColumns({
   getContentFilter: () => CombinedContentFilter;
   sectionId: string;
   session: Session | null;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }): ColumnDef<Video>[] {
   return [
     ...(getCanHover()

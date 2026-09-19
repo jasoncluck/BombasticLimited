@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database, Json } from '../database.types';
 import { invalidate } from '$app/navigation';
 import {
@@ -18,19 +18,15 @@ import { playlistImagePropertiesToJson } from '$lib/components/playlist/playlist
 export async function createPlaylist({
   name,
   supabase,
+  userId,
 }: {
   name?: string;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  if (!claimsData?.claims || claimsError) {
-    throw new Error('Unable to create playlist, invalid authentication');
-  }
-
   const { data: playlist, error } = await supabase
     .rpc('insert_playlist', {
-      p_created_by: claimsData.claims.sub,
+      p_created_by: userId,
       p_name: name,
       p_type: 'Private',
     })
@@ -50,14 +46,17 @@ export async function updatePlaylistPosition({
   playlistId,
   position,
   supabase,
+  userId,
 }: {
   playlistId: number;
   position: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase.rpc('update_playlist_position', {
     p_playlist_id: playlistId,
     p_new_position: position,
+    p_user_id: userId,
   });
 
   if (error) {
@@ -73,12 +72,15 @@ export async function updatePlaylistPosition({
 export async function deletePlaylist({
   playlistId,
   supabase,
+  userId,
 }: {
   playlistId: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase.rpc('delete_playlist', {
     p_playlist_id: playlistId,
+    p_user_id: userId,
   });
 
   if (error) {
@@ -97,15 +99,18 @@ export async function addVideosToPlaylist({
   playlistId,
   videoIds,
   supabase,
+  userId,
 }: {
   playlistId: number;
   videoIds: string[];
   position?: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase.rpc('insert_playlist_videos', {
     p_playlist_id: playlistId,
     p_video_ids: videoIds,
+    p_user_id: userId,
   });
 
   if (error) {
@@ -124,16 +129,19 @@ export async function updatePlaylistVideoPosition({
   playlistId,
   position,
   supabase,
+  userId,
 }: {
   playlistId: number;
   videoIds: string[];
   position: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase.rpc('update_playlist_videos_positions', {
     p_playlist_id: playlistId,
     p_video_ids: videoIds,
     p_new_position: position,
+    p_user_id: userId,
   });
 
   if (error) {
@@ -150,15 +158,18 @@ export async function deleteVideosFromPlaylist({
   playlistId,
   videoIds,
   supabase,
+  userId,
 }: {
   playlistId: number;
   videoIds: string[];
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase
     .rpc('delete_playlist_videos', {
       p_playlist_id: playlistId,
       p_video_ids: videoIds,
+      p_user_id: userId,
     })
     .select();
 
@@ -186,7 +197,7 @@ export async function updatePlaylistInfo({
   description: string | null;
   imageProperties: PlaylistImageProperties | null;
   type: PlaylistType;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }) {
   const { data: updatedPlaylist, error } = await supabase
     .from('playlists')
@@ -219,7 +230,7 @@ export async function updatePlaylistThumbnail({
   playlistId: number;
   thumbnailUrl: string | null;
   imageProperties: PlaylistImageProperties | null;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }) {
   const isResetImage = !thumbnailUrl;
 
@@ -268,13 +279,16 @@ export async function updatePlaylistThumbnail({
 export async function followPlaylist({
   playlistId,
   supabase,
+  userId,
 }: {
   playlistId: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase
     .rpc('follow_playlist', {
       p_playlist_id: playlistId,
+      p_user_id: userId,
     })
     .select();
 
@@ -291,13 +305,16 @@ export async function followPlaylist({
 export async function unfollowPlaylist({
   playlistId,
   supabase,
+  userId,
 }: {
   playlistId: number;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
+  userId: string;
 }) {
   const { error } = await supabase
     .rpc('unfollow_playlist', {
       p_playlist_id: playlistId,
+      p_user_id: userId,
     })
     .select();
 
@@ -320,7 +337,7 @@ export async function updatePlaylistSort({
   playlistId: number;
   sortedBy: SortKey<PlaylistVideo>;
   sortOrder: SortOrder;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }) {
   const { data: updatedPlaylist, error } = await supabase
     .from('user_playlists')

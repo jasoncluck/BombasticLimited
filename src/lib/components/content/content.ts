@@ -2,7 +2,8 @@ import { SOURCES } from '$lib/constants/source';
 import type { Database } from '$lib/supabase/database.types';
 import { isUserPlaylist, type Playlist } from '$lib/supabase/playlists';
 import { isVideoWithPlaylistTimestamp, type Video } from '$lib/supabase/videos';
-import type { Session, SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import {
   getSortKeysForView,
   isPlaylistVideosFilter,
@@ -57,7 +58,7 @@ export interface ContentDisplayProps {
   readonly contentFilter: CombinedContentFilter;
   readonly playlistContentFilter?: PlaylistVideosFilter;
   readonly sectionId?: string;
-  readonly supabase: SupabaseClient<Database>;
+  readonly supabase: NeonPostgrestClient<Database>;
   readonly session: Session | null;
 }
 

@@ -8,7 +8,7 @@ import {
   getUserPlaylists,
   searchPlaylists,
 } from '../queries';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../../database.types';
 
 // Mock the transforms module
@@ -90,7 +90,7 @@ vi.mock('../playlists/transforms', () => ({
 }));
 
 describe('playlist queries module', () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: NeonPostgrestClient<Database>;
 
   beforeEach(() => {
     mockSupabase = {
@@ -724,11 +724,6 @@ describe('playlist queries module', () => {
         },
       ];
 
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'current_user' } },
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         order: vi.fn().mockResolvedValue({
           data: mockUserPlaylistsData,
@@ -750,29 +745,8 @@ describe('playlist queries module', () => {
       expect(result.count).toBe(1);
     });
 
-    it('should handle unauthenticated user', async () => {
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: null,
-        error: { message: 'Unauthenticated' },
-      });
-
-      const result = await getUserPlaylists({
-        supabase: mockSupabase,
-        preferredImageFormat: 'webp',
-      });
-
-      expect(result.userPlaylists).toEqual([]);
-      expect(result.count).toBeNull();
-      expect(result.error).toBeNull();
-    });
-
     it('should handle RPC errors', async () => {
       const mockError = { message: 'Database error', code: '500' };
-
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'current_user' } },
-        error: null,
-      });
 
       (mockSupabase.rpc as any).mockReturnValue({
         order: vi.fn().mockResolvedValue({
@@ -832,12 +806,6 @@ describe('playlist queries module', () => {
           profile_avatar_url: null,
         },
       ];
-
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'current_user' } },
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         range: vi.fn().mockResolvedValue({
           data: mockSearchData,
@@ -868,11 +836,6 @@ describe('playlist queries module', () => {
     });
 
     it('should handle unauthenticated search', async () => {
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: null,
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         range: vi.fn().mockResolvedValue({
           data: [],
@@ -899,11 +862,6 @@ describe('playlist queries module', () => {
     });
 
     it('should handle pagination in search', async () => {
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'user' } },
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         range: vi.fn().mockResolvedValue({
           data: [],
@@ -926,12 +884,6 @@ describe('playlist queries module', () => {
 
     it('should handle search errors', async () => {
       const mockError = { message: 'Search failed', code: '500' };
-
-      (mockSupabase.auth.getClaims as any).mockResolvedValue({
-        data: { claims: { sub: 'user' } },
-        error: null,
-      });
-
       (mockSupabase.rpc as any).mockReturnValue({
         range: vi.fn().mockResolvedValue({
           data: null,

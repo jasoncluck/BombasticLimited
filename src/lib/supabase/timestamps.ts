@@ -1,8 +1,6 @@
-import type {
-  SupabaseClient,
-  Session,
-  PostgrestError,
-} from '@supabase/supabase-js';
+import type { PostgrestError } from '@supabase/postgrest-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from './database.types';
 import type {
   SortKey,
@@ -57,7 +55,7 @@ export async function saveVideoTimestamp({
   session,
 }: {
   videoTimestamp: TimestampWithVideoId;
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
   session: Session | null;
 }) {
   let error: PostgrestError | undefined;
@@ -71,6 +69,7 @@ export async function saveVideoTimestamp({
         p_playlist_id: videoTimestamp.playlistId,
         p_sorted_by: videoTimestamp.sortedBy,
         p_sort_order: videoTimestamp.sortOrder,
+        p_user_id: session.user.id,
       })
       .select();
 
@@ -90,7 +89,7 @@ export async function saveVideoTimestamps({
   session,
 }: {
   videoTimestamps: TimestampWithVideoId[];
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
   session: Session | null;
 }) {
   let error: PostgrestError | undefined;
@@ -111,6 +110,7 @@ export async function saveVideoTimestamps({
         p_video_ids: video_ids,
         p_video_start_seconds: video_start_seconds,
         p_watched_at: watched_at,
+        p_user_id: session.user.id,
       })
       .select();
 
@@ -130,7 +130,7 @@ export async function deleteVideoTimestamps({
   session,
 }: {
   videoIds: string[];
-  supabase: SupabaseClient;
+  supabase: NeonPostgrestClient;
   session: Session | null;
 }) {
   let error: PostgrestError | undefined;
@@ -139,6 +139,7 @@ export async function deleteVideoTimestamps({
     const { data: videos, error: deleteError } = await supabase
       .rpc('delete_timestamps', {
         p_video_ids: videoIds,
+        p_user_id: session.user.id,
       })
       .select();
 
@@ -158,7 +159,7 @@ export async function getLatestTimestamp({
   session,
 }: {
   videoId: string;
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
   let error: PostgrestError | undefined;

@@ -7,3 +7,6 @@ node_modules
 # CDK asset staging directory
 .cdk.staging
 cdk.out
+
+# Staged Lambda deployment package (built by scripts/prepare-web-lambda.sh)
+lib/web-lambda/dist

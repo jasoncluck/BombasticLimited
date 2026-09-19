@@ -6,7 +6,7 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 export const load: PageServerLoad = async ({
   parent,
   url,
-  locals: { supabase },
+  locals: { supabase, userId },
   depends,
 }) => {
   depends('supabase:db:videos');
@@ -30,6 +30,7 @@ export const load: PageServerLoad = async ({
     currentPage,
     contentFilter,
     supabase,
+    userId,
     preferredImageFormat,
   });
 

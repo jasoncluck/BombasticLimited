@@ -15,8 +15,7 @@
   import { setPageState } from '$lib/state/page.svelte';
   import { setSourceState } from '$lib/state/source.svelte';
   import { setNavigationState } from '$lib/state/navigation.svelte';
-  import { afterNavigate, invalidate } from '$app/navigation';
-  import type { Session } from '@supabase/supabase-js';
+  import { afterNavigate, invalidate, invalidateAll } from '$app/navigation';
   import '../../app.css';
   import {
     useLayoutEffects,
@@ -117,7 +116,7 @@
     try {
       // Step 1: Invalidate auth first if requested
       if (session && includeAuth) {
-        await invalidate('supabase:auth');
+        await invalidate('app:profile');
       }
 
       if (session) {
@@ -143,7 +142,7 @@
     } catch (error) {
       console.error(`Failed to perform data refresh - ${reason}:`, error);
 
-      // Handle 403 auth errors with cleanup and retry
+      // Handle 401/403 auth errors with cleanup and retry
       const cleanupPerformed = await handleAuthError(
         error,
         `performDataRefresh - ${reason}`
@@ -169,12 +168,14 @@
     }
   }
 
-  // Centralized auth error handler with cleanup and retry logic
+  // Centralized auth error handler with cleanup and retry logic.
+  // Cognito's session lives in httpOnly cookies (no client-side SDK to ask
+  // "am I still logged in?"), so on a 401/403 we just clear cookies via the
+  // server and invalidate — the next server load re-derives the true state.
   async function handleAuthError(
     error: unknown,
     context: string
   ): Promise<boolean> {
-    // Type guard for error object
     const errorObj = error as {
       status?: number;
       code?: number;
@@ -182,120 +183,49 @@
       response?: { status?: number };
     };
 
-    // Check if this is a 403 auth error
-    const is403Error =
+    const isAuthError =
+      errorObj?.status === 401 ||
       errorObj?.status === 403 ||
+      errorObj?.code === 401 ||
       errorObj?.code === 403 ||
+      errorObj?.message?.includes('401') ||
       errorObj?.message?.includes('403') ||
+      errorObj?.response?.status === 401 ||
       errorObj?.response?.status === 403;
 
-    if (is403Error) {
+    if (isAuthError) {
       console.warn(
-        `Auth 403 error detected in ${context}, cleaning up auth state:`,
+        `Auth error detected in ${context}, cleaning up auth state:`,
         error
       );
 
       try {
-        // Clean up auth state using signOut
-        await supabase.auth.signOut();
-
-        // Update our tracking state to reflect signed out state
+        await fetch('/auth/signout', { method: 'POST' });
         lastKnownAuthState = false;
-
-        // Invalidate auth to ensure fresh state
-        await invalidate('supabase:auth');
-
-        return true; // Indicate successful cleanup
+        await invalidate('app:profile');
+        return true;
       } catch (cleanupError) {
         console.error(
-          `Failed to clean up auth state after 403 error in ${context}:`,
+          `Failed to clean up auth state after error in ${context}:`,
           cleanupError
         );
         return false;
       }
     }
 
-    return false; // Not a 403 error, no cleanup performed
+    return false;
   }
 
-  // Auth state change handler using Supabase events with enhanced error handling
-  async function handleSupabaseAuthStateChange(
-    event: string,
-    session: Session | null
-  ): Promise<void> {
-    const isAuthenticated = !!session;
-
-    // Update our tracking state
-    lastKnownAuthState = isAuthenticated;
-
-    try {
-      // Perform data refresh with auth invalidation to ensure latest session
-      await performDataRefresh(`supabase auth: ${event}`, true);
-    } catch (error) {
-      console.error(
-        `Failed to handle Supabase auth state change - ${event}:`,
-        error
-      );
-
-      // Handle potential auth errors during state change
-      await handleAuthError(error, `handleSupabaseAuthStateChange - ${event}`);
-    }
-  }
-
-  // Enhanced visibility change handler with auth state checking and 403 error handling
+  // On visibility restore, re-fetch server-derived session state (cookies
+  // are httpOnly, there's no cheap client-side check) rather than trying to
+  // detect whether auth changed while the tab was hidden.
   async function handleVisibilityChange(): Promise<void> {
     if (document.hidden) {
-      // Tab became hidden
       wasTabHidden = true;
     } else if (wasTabHidden) {
-      // Tab became visible again after being hidden
-
-      let authStateChanged = false;
-      let authErrorOccurred = false;
-
-      try {
-        // Get current session from Supabase to check if auth state changed
-        const { data: claimsData } = await supabase.auth.getClaims();
-        const currentAuthState = !!claimsData?.claims;
-
-        // Check if auth state has changed
-        if (lastKnownAuthState !== currentAuthState) {
-          authStateChanged = true;
-
-          // Update our tracking state
-          lastKnownAuthState = currentAuthState;
-        }
-      } catch (error) {
-        console.error(
-          'Failed to check auth state on visibility change:',
-          error
-        );
-
-        // Handle 403 auth errors with cleanup
-        const cleanupPerformed = await handleAuthError(
-          error,
-          'handleVisibilityChange'
-        );
-
-        if (cleanupPerformed) {
-          authErrorOccurred = true;
-          authStateChanged = true; // Auth state definitely changed after cleanup
-        } else {
-          // If we can't check auth state and it's not a 403 error, assume it might have changed for safety
-          authStateChanged = true;
-        }
-      }
-
-      // Always refresh navigation and sidebar data, but only invalidate auth if it changed
-      const refreshReason = authErrorOccurred
-        ? 'visibility change - 403 error handled'
-        : authStateChanged
-          ? 'visibility change - auth state changed'
-          : 'visibility change';
-
-      await performDataRefresh(refreshReason, authStateChanged);
-
       wasTabHidden = false;
+      await invalidateAll();
+      await performDataRefresh('visibility change', false);
     }
   }
 
@@ -395,23 +325,11 @@
         console.error('Failed to initialize layout effects:', error);
       });
 
-    // Set up Supabase auth state change listener
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        handleSupabaseAuthStateChange(event, session);
-      }
-    );
-
-    // Set up visibility change listener for data refresh and auth state checking
+    // Set up visibility change listener for data refresh
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     // Return cleanup function
     return () => {
-      // Clean up Supabase auth listener
-      if (authListener?.subscription) {
-        authListener.subscription.unsubscribe();
-      }
-
       // Clean up visibility change listener
       document.removeEventListener('visibilitychange', handleVisibilityChange);
 

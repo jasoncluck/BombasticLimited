@@ -26,7 +26,7 @@ import { getProfileById } from '$lib/supabase/user-profiles';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { supabase, userId },
   url,
   parent,
   params,
@@ -60,6 +60,7 @@ export const load: PageServerLoad = async ({
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
       preferredImageFormat,
       supabase,
+      userId,
     });
 
   if (!playlist) {
@@ -84,7 +85,7 @@ export const load: PageServerLoad = async ({
       zod(playlistSchema)
     ),
     // Load creator profile for all playlists to ensure avatar is available
-    getProfileById({ userId: playlist.created_by, supabase }).then(
+    getProfileById({ userId: playlist.created_by }).then(
       (result) => result.profile
     ),
   ]);
@@ -156,13 +157,11 @@ function imagePropertiesChanged(
 export const actions: Actions = {
   default: async ({
     request,
-    locals: { supabase },
+    locals: { supabase, userId },
     cookies,
     params,
   }: RequestEvent) => {
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
-    if (!claimsData?.claims || claimsError) {
+    if (!userId) {
       redirect(302, '/auth/login');
     }
 
@@ -222,6 +221,7 @@ export const actions: Actions = {
       limit: 1,
       preferredImageFormat: 'avif',
       supabase,
+      userId,
     });
 
     if (!currentPlaylist) {

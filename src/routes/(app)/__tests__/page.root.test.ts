@@ -70,10 +70,6 @@ vi.mock('$lib/components/content/content', () => ({
   ],
 }));
 
-vi.mock('@supabase/ssr', () => ({
-  isBrowser: vi.fn(() => false),
-}));
-
 describe('+page.svelte Logic Tests', () => {
   const createMockData = (overrides = {}) => ({
     sourceVideos: createMockSourceVideos(),

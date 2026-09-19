@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { dataURLtoFile, deletePlaylistImage } from '../image-upload';
+
+const deleteObjectMock = vi.hoisted(() => vi.fn());
+vi.mock('$lib/server/s3', () => ({
+  CONTENT_IMAGES_BUCKET: 'content-images',
+  deleteObject: deleteObjectMock,
+}));
+
+const { dataURLtoFile, deletePlaylistImage } = await import('../image-upload');
 
 // Mock global dependencies
 global.atob = vi.fn();
@@ -107,59 +114,28 @@ describe('image-upload', () => {
   });
 
   describe('deletePlaylistImage', () => {
-    let mockSupabase: any;
-
     beforeEach(() => {
-      mockSupabase = {
-        storage: {
-          from: vi.fn().mockReturnThis(),
-          remove: vi.fn(),
-        },
-      };
+      deleteObjectMock.mockReset();
     });
 
     it('should successfully delete an image', async () => {
-      mockSupabase.storage.remove.mockResolvedValue({ error: null });
+      deleteObjectMock.mockResolvedValue(undefined);
 
       const result = await deletePlaylistImage({
         imagePath: 'test-image.jpg',
-        supabase: mockSupabase,
       });
 
       expect(result.success).toBe(true);
       expect(result.error).toBeUndefined();
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('content-images');
-      expect(mockSupabase.storage.remove).toHaveBeenCalledWith([
-        'test-image.jpg',
-      ]);
-    });
-
-    it('should handle storage deletion errors', async () => {
-      const storageError = { message: 'Storage error occurred' };
-      mockSupabase.storage.remove.mockResolvedValue({ error: storageError });
-
-      const consoleSpy = vi
-        .spyOn(console, 'error')
-        .mockImplementation(() => {});
-
-      const result = await deletePlaylistImage({
-        imagePath: 'test-image.jpg',
-        supabase: mockSupabase,
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Storage error occurred');
-      expect(consoleSpy).toHaveBeenCalledWith(
-        'Storage deletion error:',
-        storageError
+      expect(deleteObjectMock).toHaveBeenCalledWith(
+        'content-images',
+        'test-image.jpg'
       );
-
-      consoleSpy.mockRestore();
     });
 
     it('should handle network or unexpected errors', async () => {
       const networkError = new Error('Network connection failed');
-      mockSupabase.storage.remove.mockRejectedValue(networkError);
+      deleteObjectMock.mockRejectedValue(networkError);
 
       const consoleSpy = vi
         .spyOn(console, 'error')
@@ -167,7 +143,6 @@ describe('image-upload', () => {
 
       const result = await deletePlaylistImage({
         imagePath: 'test-image.jpg',
-        supabase: mockSupabase,
       });
 
       expect(result.success).toBe(false);
@@ -178,7 +153,7 @@ describe('image-upload', () => {
     });
 
     it('should handle unknown error types', async () => {
-      mockSupabase.storage.remove.mockRejectedValue('String error');
+      deleteObjectMock.mockRejectedValue('String error');
 
       const consoleSpy = vi
         .spyOn(console, 'error')
@@ -186,7 +161,6 @@ describe('image-upload', () => {
 
       const result = await deletePlaylistImage({
         imagePath: 'test-image.jpg',
-        supabase: mockSupabase,
       });
 
       expect(result.success).toBe(false);
@@ -196,7 +170,7 @@ describe('image-upload', () => {
     });
 
     it('should work with different image paths', async () => {
-      mockSupabase.storage.remove.mockResolvedValue({ error: null });
+      deleteObjectMock.mockResolvedValue(undefined);
 
       const imagePaths = [
         'folder/subfolder/image.jpg',
@@ -205,37 +179,23 @@ describe('image-upload', () => {
       ];
 
       for (const imagePath of imagePaths) {
-        const result = await deletePlaylistImage({
-          imagePath,
-          supabase: mockSupabase,
-        });
+        const result = await deletePlaylistImage({ imagePath });
 
         expect(result.success).toBe(true);
-        expect(mockSupabase.storage.remove).toHaveBeenCalledWith([imagePath]);
+        expect(deleteObjectMock).toHaveBeenCalledWith(
+          'content-images',
+          imagePath
+        );
       }
     });
 
     it('should handle empty image path', async () => {
-      mockSupabase.storage.remove.mockResolvedValue({ error: null });
+      deleteObjectMock.mockResolvedValue(undefined);
 
-      const result = await deletePlaylistImage({
-        imagePath: '',
-        supabase: mockSupabase,
-      });
+      const result = await deletePlaylistImage({ imagePath: '' });
 
-      expect(mockSupabase.storage.remove).toHaveBeenCalledWith(['']);
+      expect(deleteObjectMock).toHaveBeenCalledWith('content-images', '');
       expect(result.success).toBe(true);
-    });
-
-    it('should use correct storage bucket', async () => {
-      mockSupabase.storage.remove.mockResolvedValue({ error: null });
-
-      await deletePlaylistImage({
-        imagePath: 'test-image.jpg',
-        supabase: mockSupabase,
-      });
-
-      expect(mockSupabase.storage.from).toHaveBeenCalledWith('content-images');
     });
   });
 

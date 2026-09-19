@@ -3,7 +3,7 @@
  * Use these functions when you need to send notifications to all users programmatically
  */
 
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { NotificationType } from '$lib/supabase/notifications';
 
@@ -12,7 +12,7 @@ import type { NotificationType } from '$lib/supabase/notifications';
  * This is the preferred way to send global notifications from the application
  */
 export async function sendGlobalNotification(
-  supabase: SupabaseClient<Database>,
+  supabase: NeonPostgrestClient<Database>,
   type: NotificationType,
   title: string,
   message: string,
@@ -90,7 +90,7 @@ export const NOTIFICATION_TEMPLATES = {
  * Send a notification using a predefined template
  */
 export async function sendTemplateNotification(
-  supabase: SupabaseClient<Database>,
+  supabase: NeonPostgrestClient<Database>,
   templateName: keyof typeof NOTIFICATION_TEMPLATES,
   customizations?: {
     title?: string;

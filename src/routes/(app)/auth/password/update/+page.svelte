@@ -3,13 +3,11 @@
 
   import * as Alert from '$lib/components/ui/alert/index.js';
   import * as Card from '$lib/components/ui/card';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
   import {
-    passwordConfirmationSchema,
-    type PasswordConfirmationSchema,
+    resetPasswordConfirmSchema,
+    type ResetPasswordConfirmSchema,
   } from '$lib/schema/auth-schema';
-  import type { Database } from '$lib/supabase/database.types';
   import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import * as Form from '$lib/components/ui/form';
@@ -27,16 +25,14 @@
     data,
   }: {
     data: {
-      form: SuperValidated<PasswordConfirmationSchema>;
-      supabase: SupabaseClient<Database>;
-      session: Session;
+      form: SuperValidated<ResetPasswordConfirmSchema>;
     };
   } = $props();
 
   const flash = getFlash(page);
 
   const form = superForm(data.form, {
-    validators: zodClient(passwordConfirmationSchema),
+    validators: zodClient(resetPasswordConfirmSchema),
 
     onSubmit() {
       isSubmitting = true;
@@ -69,13 +65,48 @@
         <Card.Header>
           <Card.Title class="text-2xl">Update Password</Card.Title>
           <Card.Description
-            >Enter your new password and confirm it</Card.Description
+            >Enter the code emailed to you and your new password</Card.Description
           >
         </Card.Header>
 
         <form method="POST" action="?/updatePassword" use:enhance>
           <Card.Content class="grid gap-4">
             <div class="mb-4 flex flex-col gap-4">
+              <Form.Field {form} name="email">
+                <div class="flex flex-wrap items-center gap-2">
+                  <Form.Control>
+                    {#snippet children({ props })}
+                      <Form.Label class="text-right">Email</Form.Label>
+                      <Input
+                        {...props}
+                        class="col-span-3"
+                        bind:value={$formData.email}
+                        type="email"
+                        autocomplete="email"
+                      />
+                    {/snippet}
+                  </Form.Control>
+                </div>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
+
+              <Form.Field {form} name="code">
+                <div class="flex flex-wrap items-center gap-2">
+                  <Form.Control>
+                    {#snippet children({ props })}
+                      <Form.Label class="text-right">Code</Form.Label>
+                      <Input
+                        {...props}
+                        class="col-span-3"
+                        bind:value={$formData.code}
+                        autocomplete="one-time-code"
+                      />
+                    {/snippet}
+                  </Form.Control>
+                </div>
+                <Form.FieldErrors class="text-xs" />
+              </Form.Field>
+
               <Form.Field {form} name="password">
                 <div class=" flex flex-wrap items-center gap-2">
                   <Form.Control>

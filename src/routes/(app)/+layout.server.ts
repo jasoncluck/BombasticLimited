@@ -1,6 +1,6 @@
 import type { ContentView } from '$lib/components/content/content';
 import { getFilterOptionFromQueryParams } from '$lib/components/content/content-filter';
-import { getProfile } from '$lib/supabase/user-profiles';
+import { getProfileById } from '$lib/supabase/user-profiles';
 import { MAIN_ROUTES } from '$lib/constants/routes';
 import type { LayoutServerLoad } from './$types';
 import { loadFlash } from 'sveltekit-flash-message/server';
@@ -8,17 +8,14 @@ import { detectOptimalImageFormat } from '$lib/supabase/images';
 
 export const load: LayoutServerLoad = loadFlash(
   async ({
-    locals: { supabase },
+    locals: { userId, userEmail },
     request,
-    cookies,
     url,
     isDataRequest,
     setHeaders,
     depends,
   }) => {
-    depends('supabase:db:profiles');
-
-    const claimsPromise = supabase.auth.getClaims();
+    depends('app:profile');
 
     const preferredImageFormat = detectOptimalImageFormat(
       request.headers.get('Accept') ?? 'image/*'
@@ -40,12 +37,10 @@ export const load: LayoutServerLoad = loadFlash(
       view,
     });
 
-    const { data: claimsData } = await claimsPromise;
-
     // Simple cache headers for static assets only
     if (!isDataRequest && !url.pathname.startsWith('/api/')) {
       try {
-        const cacheControl = claimsData?.claims
+        const cacheControl = userId
           ? 'private, max-age=300, must-revalidate'
           : 'public, max-age=600, s-maxage=1200';
 
@@ -58,16 +53,12 @@ export const load: LayoutServerLoad = loadFlash(
       }
     }
 
-    const [{ profile: userProfile }] = await Promise.all([
-      getProfile({
-        supabase,
-      }),
-    ]);
+    const { profile: userProfile } = await getProfileById({ userId });
 
     return {
-      claims: claimsData?.claims,
+      userId,
+      userEmail,
       contentFilter,
-      cookies: cookies.getAll(),
       userProfile,
       preferredImageFormat,
     };

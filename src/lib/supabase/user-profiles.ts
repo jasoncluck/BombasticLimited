@@ -1,136 +1,70 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { pool } from '$lib/server/db';
 import type { Database, Tables } from './database.types';
 import type { ContentDisplay } from '$lib/components/content/content';
 
-// Infer types from Supabase RPC functions
-type IsUniqueUsernameResponse =
-  Database['public']['Functions']['is_unique_username']['Returns'];
-
 export type UserProfile = Tables<'profiles'>;
-
-// Transform function if needed (profiles are simple table queries, so probably not needed)
-function transformProfileFromTable(profile: Tables<'profiles'>): UserProfile {
-  return profile;
-}
 
 export async function checkIfUsernameIsUnique({
   username,
-  supabase,
 }: {
   username: string;
-  supabase: SupabaseClient<Database>;
 }): Promise<boolean> {
-  const { data: isUnique } = await supabase.rpc('is_unique_username', {
-    p_username: username,
-  });
-
-  return (isUnique as IsUniqueUsernameResponse) ?? false;
-}
-
-export async function getUserProfile({
-  supabase,
-}: {
-  supabase: SupabaseClient<Database>;
-}) {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  if (!claimsData?.claims || claimsError) {
-    return { profile: null, error: claimsError };
-  }
-
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select()
-    .eq('id', claimsData.claims.sub)
-    .single();
-
-  if (error) {
-    console.error(error);
-    return { profile: null, error };
-  }
-
-  return {
-    profile: profile ? transformProfileFromTable(profile) : null,
-    error,
-  };
+  const { rows } = await pool.query<{ is_unique_username: boolean }>(
+    'SELECT is_unique_username($1) AS is_unique_username',
+    [username]
+  );
+  return rows[0]?.is_unique_username ?? false;
 }
 
 export async function getProfileById({
   userId,
-  supabase,
 }: {
   userId: string | null;
-  supabase: SupabaseClient<Database>;
-}) {
+}): Promise<{ profile: UserProfile | null; error?: unknown }> {
   if (!userId) {
     return { profile: null };
   }
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select()
-    .eq('id', userId)
-    .single();
-
-  if (error) {
+  try {
+    const { rows } = await pool.query<UserProfile>(
+      'SELECT * FROM profiles WHERE id = $1',
+      [userId]
+    );
+    return { profile: rows[0] ?? null };
+  } catch (error) {
     console.error(error);
     return { profile: null, error };
   }
-
-  return {
-    profile: profile ? transformProfileFromTable(profile) : null,
-    error,
-  };
 }
 
-export async function getProfile({
-  supabase,
-}: {
-  supabase: SupabaseClient<Database>;
-}) {
-  const { data, error: claimsError } = await supabase.auth.getClaims();
-  if (!data || !data.claims || !data.claims.sub || claimsError) {
-    return { profile: null, error: claimsError };
-  }
+/** Alias kept for existing call sites — same thing as getProfileById. */
+export const getProfile = getProfileById;
+export const getUserProfile = getProfileById;
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', data.claims.sub)
-    .single();
-
-  if (error) {
-    console.error(error);
-    return { profile: null, error };
-  }
-
-  return {
-    profile: profile ? transformProfileFromTable(profile) : null,
-    error,
-  };
+interface DiscordIdentity {
+  provider: 'discord';
+  userSub: string;
 }
 
 export async function getUserDiscordIdentity({
-  supabase,
+  userId,
 }: {
-  supabase: SupabaseClient<Database>;
-}) {
+  userId: string | null;
+}): Promise<{ identity: DiscordIdentity | null; error: string | null }> {
+  if (!userId) {
+    return { identity: null, error: null };
+  }
+
   try {
-    const { data: userIdentities } = await supabase.auth.getUserIdentities();
-
-    if (!userIdentities) {
-      return { identity: null, error: 'No identities found' };
-    }
-
-    const discordIdentity = userIdentities.identities.find(
-      (identity) => identity.provider === 'discord'
+    const { rows } = await pool.query<{ providers: string[] | null }>(
+      'SELECT providers FROM profiles WHERE id = $1',
+      [userId]
     );
-
-    if (!discordIdentity) {
-      return { identity: null, error: null }; // No discord identity is not an error
+    const hasDiscord = rows[0]?.providers?.includes('discord') ?? false;
+    if (!hasDiscord) {
+      return { identity: null, error: null };
     }
-
-    return { identity: discordIdentity, error: null };
+    return { identity: { provider: 'discord', userSub: userId }, error: null };
   } catch (err) {
     return {
       identity: null,
@@ -139,138 +73,141 @@ export async function getUserDiscordIdentity({
   }
 }
 
-export async function linkDiscordIdentity({
-  supabase,
-  redirectTo,
+/**
+ * Records that a user's Discord identity was linked/unlinked. The actual
+ * Cognito federation call (AdminLinkProviderForUser) happens in the
+ * /auth/discord/link route — this just keeps `profiles` in sync, replacing
+ * the old `auth.identities`-trigger-based sync (dropped, that table doesn't
+ * exist on Neon).
+ */
+export async function syncDiscordIdentity({
+  userId,
+  linked,
+  avatarUrl,
 }: {
-  supabase: SupabaseClient<Database>;
-  redirectTo: string;
-}) {
-  const { data, error } = await supabase.auth.linkIdentity({
-    provider: 'discord',
-    options: {
-      redirectTo,
-    },
-  });
-
-  return { data, error };
-}
-
-export async function unlinkDiscordIdentity({
-  supabase,
-}: {
-  supabase: SupabaseClient<Database>;
-}) {
+  userId: string;
+  linked: boolean;
+  avatarUrl?: string | null;
+}): Promise<{ error: Error | null }> {
   try {
-    const { identity: discordIdentity, error } = await getUserDiscordIdentity({
-      supabase,
-    });
-
-    if (error) {
-      return { error: new Error(error) };
+    if (linked) {
+      await pool.query(
+        `UPDATE profiles
+         SET providers = array_append(providers, 'discord'),
+             avatar_url = COALESCE($2, avatar_url)
+         WHERE id = $1 AND NOT ('discord' = ANY(providers))`,
+        [userId, avatarUrl ?? null]
+      );
+    } else {
+      await pool.query(
+        `UPDATE profiles
+         SET providers = array_remove(providers, 'discord')
+         WHERE id = $1`,
+        [userId]
+      );
     }
-
-    if (!discordIdentity) {
-      return { error: new Error('No Discord identity found to unlink') };
-    }
-
-    const { error: unlinkError } =
-      await supabase.auth.unlinkIdentity(discordIdentity);
-
-    return { error: unlinkError };
+    return { error: null };
   } catch (err) {
     return { error: err as Error };
   }
 }
 
 export async function updateProfileContentDisplay({
+  userId,
   contentDisplay,
-  supabase,
 }: {
+  userId: string;
   contentDisplay: ContentDisplay;
-  supabase: SupabaseClient<Database>;
-}) {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  if (!claimsData?.claims || claimsError) {
-    return { profile: null, error: claimsError };
-  }
-
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .update({ content_display: contentDisplay })
-    .eq('id', claimsData.claims.sub)
-    .select()
-    .single();
-
-  if (error) {
+}): Promise<{ profile: UserProfile | null; error?: unknown }> {
+  try {
+    const { rows } = await pool.query<UserProfile>(
+      'UPDATE profiles SET content_display = $2 WHERE id = $1 RETURNING *',
+      [userId, contentDisplay]
+    );
+    return { profile: rows[0] ?? null };
+  } catch (error) {
     console.error(error);
     return { profile: null, error };
   }
-
-  return {
-    profile: profile ? transformProfileFromTable(profile) : null,
-    error,
-  };
 }
 
 export async function updateProfileSources({
+  userId,
   sources,
-  supabase,
 }: {
+  userId: string;
   sources: Database['public']['Enums']['source'][];
-  supabase: SupabaseClient<Database>;
-}) {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  if (!claimsData?.claims || claimsError) {
-    return { profile: null, error: claimsError };
-  }
-
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .update({ sources })
-    .eq('id', claimsData.claims.sub)
-    .select()
-    .single();
-
-  if (error) {
+}): Promise<{ profile: UserProfile | null; error?: unknown }> {
+  try {
+    const { rows } = await pool.query<UserProfile>(
+      'UPDATE profiles SET sources = $2 WHERE id = $1 RETURNING *',
+      [userId, sources]
+    );
+    return { profile: rows[0] ?? null };
+  } catch (error) {
     console.error(error);
     return { profile: null, error };
   }
-
-  return {
-    profile: profile ? transformProfileFromTable(profile) : null,
-    error,
-  };
 }
 
-/**
- * Get the linked identity providers for a user
- * This information is managed automatically by database triggers
- * but can be useful for UI display purposes
- */
 export async function getUserProviders({
-  supabase,
+  userId,
 }: {
-  supabase: SupabaseClient<Database>;
-}) {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  if (!claimsData?.claims || claimsError) {
-    return { providers: [], error: null };
+  userId: string | null;
+}): Promise<{ providers: string[]; error?: unknown }> {
+  if (!userId) {
+    return { providers: [] };
   }
 
-  const { data: profile, error } = await supabase
-    .from('profiles')
-    .select('providers')
-    .eq('id', claimsData.claims.sub)
-    .single();
-
-  if (error) {
+  try {
+    const { rows } = await pool.query<{ providers: string[] | null }>(
+      'SELECT providers FROM profiles WHERE id = $1',
+      [userId]
+    );
+    return { providers: rows[0]?.providers ?? [] };
+  } catch (error) {
     console.error('Error fetching user providers:', error);
     return { providers: [], error };
   }
+}
 
-  return { providers: profile?.providers || [], error: null };
+export async function updateUsername({
+  userId,
+  username,
+}: {
+  userId: string;
+  username: string;
+}): Promise<{ profile: UserProfile | null; error?: unknown }> {
+  try {
+    const { rows: current } = await pool.query<{
+      username: string;
+      username_history: unknown;
+    }>('SELECT username, username_history FROM profiles WHERE id = $1', [
+      userId,
+    ]);
+
+    const history = Array.isArray(current[0]?.username_history)
+      ? (current[0].username_history as Array<Record<string, unknown>>)
+      : [];
+    const now = new Date().toISOString();
+    const closedHistory = history.map((entry) =>
+      entry.used_until === null ? { ...entry, used_until: now } : entry
+    );
+    const updatedHistory = [
+      ...closedHistory,
+      { username, used_from: now, used_until: null },
+    ];
+
+    const { rows } = await pool.query<UserProfile>(
+      `UPDATE profiles
+       SET username = $2, username_history = $3::jsonb
+       WHERE id = $1
+       RETURNING *`,
+      [userId, username, JSON.stringify(updatedHistory)]
+    );
+    return { profile: rows[0] ?? null };
+  } catch (error) {
+    console.error(error);
+    return { profile: null, error };
+  }
 }

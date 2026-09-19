@@ -17,7 +17,7 @@
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
-  import type { Session } from '@supabase/supabase-js';
+  import type { AppSession as Session } from '$lib/types/session';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { invalidate } from '$app/navigation';

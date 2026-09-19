@@ -5,13 +5,14 @@ import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad } from './$types';
 import { signupSchema } from '$lib/schema/auth-schema';
 import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
+import { ensureProfileExists } from '$lib/server/profile';
+import { signUp } from '$lib/server/cognito';
 import { Filter } from 'bad-words';
 
-export const load: PageServerLoad = async ({ locals: { supabase } }) => {
+export const load: PageServerLoad = async ({ locals: { userId } }) => {
   const signupForm = await superValidate(zod(signupSchema));
 
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (claimsData?.claims) {
+  if (userId) {
     redirect(303, '/');
   }
 
@@ -21,14 +22,14 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 };
 
 export const actions: Actions = {
-  signup: async ({ request, cookies, locals: { supabase } }) => {
+  signup: async ({ request, cookies }) => {
     const form = await superValidate(request, zod(signupSchema));
     const { email, username, password } = form.data;
 
     // Run profanity check and username uniqueness check in parallel
     const [filter, isUnique] = await Promise.all([
       Promise.resolve(new Filter()),
-      checkIfUsernameIsUnique({ username, supabase }),
+      checkIfUsernameIsUnique({ username }),
     ]);
 
     if (filter.isProfane(username)) {
@@ -54,20 +55,11 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          username,
-        },
-      },
-    });
+    const { userSub, error } = await signUp({ email, password });
 
     if (error) {
       setFlash({ type: 'error', message: error.message }, cookies);
 
-      // Update this message to differentiate a bit more from 'username'
       if (error.code === 'user_already_exists') {
         setFlash(
           { type: 'error', message: 'Email address already registered.' },
@@ -75,12 +67,14 @@ export const actions: Actions = {
         );
       }
       return fail(400, { form });
-    } else {
-      redirect(
-        `/auth/verify?email=${email}`,
-        { type: 'success', message: 'Account created successfully' },
-        cookies
-      );
     }
+
+    await ensureProfileExists({ userId: userSub!, email, usernameHint: username });
+
+    redirect(
+      `/auth/verify?email=${email}`,
+      { type: 'success', message: 'Account created successfully' },
+      cookies
+    );
   },
 };

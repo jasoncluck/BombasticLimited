@@ -1,5 +1,9 @@
 # Database Backup Infrastructure Deployment Validation
 
+> **Status: disabled, not migrated.** See `BACKUP_README.md` — this
+> references a Supabase project that no longer exists. Kept for reference
+> only.
+
 ## Infrastructure Components Created
 
 ### ✅ S3 Bucket Configuration

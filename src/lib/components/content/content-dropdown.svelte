@@ -11,7 +11,8 @@
     getContentState,
   } from '$lib/state/content.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
   import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
@@ -58,7 +59,7 @@
     sectionId?: string;
     contentFilter?: CombinedContentFilter;
     userProfile?: UserProfile;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
     preserveSelectionAfterAction?: boolean;
@@ -436,11 +437,13 @@
           <DropdownMenu.Item
             class="p-2"
             onclick={async () => {
+              if (!session) return;
               const { error } = await handleRemoveVideosFromPlaylist({
                 videos: frozenOperationVideos,
                 sidebarState,
                 playlist,
                 supabase,
+                userId: session.user.id,
               });
 
               if (!error) {

@@ -10,7 +10,7 @@
     type ImageFile,
   } from './bug-report';
   import {
-    uploadBugReportImageToSupabase,
+    uploadBugReportImage,
     createImagePreview,
     revokeImagePreview,
     validateImageFile,
@@ -24,17 +24,14 @@
   } from '$lib/schema/bug-report-schema';
   import { toast } from 'svelte-sonner';
   import { untrack } from 'svelte';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { ZodError } from 'zod';
 
   let {
     open = $bindable(false),
-    supabase,
     session,
   }: {
     open: boolean;
-    supabase: SupabaseClient<Database>;
     session: Session | null;
   } = $props();
 
@@ -82,7 +79,7 @@
       // Only delete uploaded images if not keeping them (i.e., on submission failure or drawer close)
       if (!keepUploaded && img.uploaded && img.uploadPath) {
         try {
-          await deleteBugReportImage({ path: img.uploadPath, supabase });
+          await deleteBugReportImage({ path: img.uploadPath });
         } catch (error) {
           console.error('Error cleaning up uploaded image:', error);
         }
@@ -143,13 +140,9 @@
       imageFiles = [...imageFiles, imageFile];
       imageUploadProgress[imageFile.id] = true;
 
-      // Upload image to Supabase storage
+      // Upload image to S3
       try {
-        const result = await uploadBugReportImageToSupabase({
-          file,
-          supabase,
-          session,
-        });
+        const result = await uploadBugReportImage({ file });
 
         if (result.success && result.url) {
           // Update the image file object with upload info
@@ -194,7 +187,7 @@
       // Clean up uploaded image from storage if it was uploaded
       if (imageFile.uploaded && imageFile.uploadPath) {
         try {
-          await deleteBugReportImage({ path: imageFile.uploadPath, supabase });
+          await deleteBugReportImage({ path: imageFile.uploadPath });
         } catch (error) {
           console.error('Error deleting uploaded image:', error);
         }

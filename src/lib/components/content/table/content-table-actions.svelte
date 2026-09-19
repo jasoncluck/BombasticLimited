@@ -2,7 +2,8 @@
   import type { Database } from '$lib/supabase/database.types';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Video } from '$lib/supabase/videos';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import ContentDropdown from '../content-dropdown.svelte';
   import {
     DEFAULT_SECTION_ID,
@@ -22,7 +23,7 @@
     videos: Video[];
     playlist?: Playlist;
     sectionId?: string;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 

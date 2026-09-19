@@ -1,19 +1,116 @@
 import { youtube, youtube_v3 } from '@googleapis/youtube';
-import { createClient } from '@supabase/supabase-js';
+import { Client } from 'pg';
+import {
+  CognitoIdentityProviderClient,
+  AdminGetUserCommand,
+  AdminCreateUserCommand,
+  AdminSetUserPasswordCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
+import { randomBytes } from 'crypto';
 import { CHANNEL_INFO, ChannelSource } from '../channel';
 
 const MAX_RESULTS = 5; // Reduced from 50 since playlists are not added frequently
 
+const cognitoClient = new CognitoIdentityProviderClient({
+  region: process.env.COGNITO_REGION,
+});
+
 /**
- * Queue image processing for a playlist thumbnail using database jobs
- * This follows the same pattern as the main app's image processing system
+ * Gets (or creates) the Cognito user representing a channel source, and
+ * ensures it has a matching `profiles` row. Playlists auto-synced from
+ * YouTube need a `created_by` (FK to profiles.id) — these are synthetic
+ * "channel" accounts, never actually signed into.
+ *
+ * Replaces the old Supabase `create_user()` RPC, which wrote directly to
+ * GoTrue's internal tables (dropped — doesn't exist on Neon/Cognito).
  */
-async function queuePlaylistThumbnailProcessing(
-  supabaseClient: any, // Use any to avoid complex typing issues in Lambda context
-  playlistId: number,
-  thumbnailUrl: string | null,
-  priority: number = 100
-): Promise<void> {
+async function getOrCreateChannelProfile({
+  client,
+  source,
+}: {
+  client: Client;
+  source: ChannelSource;
+}): Promise<string> {
+  const userPoolId = process.env.COGNITO_USER_POOL_ID!;
+  const email = `${source}@bombastic.ltd`;
+
+  let userSub: string | undefined;
+  try {
+    const existing = await cognitoClient.send(
+      new AdminGetUserCommand({ UserPoolId: userPoolId, Username: email })
+    );
+    userSub = existing.UserAttributes?.find((a) => a.Name === 'sub')?.Value;
+  } catch (err) {
+    if ((err as { name?: string }).name !== 'UserNotFoundException') throw err;
+  }
+
+  if (!userSub) {
+    const created = await cognitoClient.send(
+      new AdminCreateUserCommand({
+        UserPoolId: userPoolId,
+        Username: email,
+        UserAttributes: [
+          { Name: 'email', Value: email },
+          { Name: 'email_verified', Value: 'true' },
+        ],
+        MessageAction: 'SUPPRESS',
+      })
+    );
+    userSub = created.User?.Attributes?.find((a) => a.Name === 'sub')?.Value;
+    if (!userSub) {
+      throw new Error(`Failed to get sub for newly created channel user: ${email}`);
+    }
+
+    // Set a permanent password so the account isn't stuck in
+    // FORCE_CHANGE_PASSWORD — never actually used to sign in.
+    await cognitoClient.send(
+      new AdminSetUserPasswordCommand({
+        UserPoolId: userPoolId,
+        Username: email,
+        Password: `Ch${randomBytes(18).toString('base64url')}1`,
+        Permanent: true,
+      })
+    );
+  }
+
+  // Mirrors $lib/server/profile.ts's ensureProfileExists — kept in sync
+  // manually since this Lambda can't import from the SvelteKit app package.
+  const { rows } = await client.query('SELECT id FROM profiles WHERE id = $1', [
+    userSub,
+  ]);
+  if (rows.length === 0) {
+    const { rows: usernameRows } = await client.query<{
+      generate_unique_username: string;
+    }>('SELECT generate_unique_username($1) AS generate_unique_username', [
+      source,
+    ]);
+    const username = usernameRows[0]?.generate_unique_username ?? source;
+    const usernameHistory = JSON.stringify([
+      { username, used_from: new Date().toISOString(), used_until: null },
+    ]);
+
+    await client.query(
+      `INSERT INTO profiles (id, username, providers, account_type, username_history)
+       VALUES ($1, $2, $3, $4, $5::jsonb)
+       ON CONFLICT (id) DO NOTHING`,
+      [userSub, username, ['email'], 'default', usernameHistory]
+    );
+  }
+
+  return userSub;
+}
+
+async function queuePlaylistThumbnailProcessing({
+  client,
+  playlistId,
+  thumbnailUrl,
+  priority = 100,
+}: {
+  client: Client;
+  playlistId: number;
+  thumbnailUrl: string | null;
+  priority?: number;
+}): Promise<void> {
   if (!thumbnailUrl) {
     console.log(
       JSON.stringify({
@@ -35,30 +132,11 @@ async function queuePlaylistThumbnailProcessing(
   );
 
   try {
-    const { data: jobId, error } = await supabaseClient.rpc(
-      'queue_image_processing_job',
-      {
-        p_entity_type: 'playlist',
-        p_entity_id: playlistId.toString(),
-        p_image_type: 'playlist_image',
-        p_source_url: thumbnailUrl,
-        p_priority: priority,
-      }
+    const { rows } = await client.query<{ queue_image_processing_job: string }>(
+      `SELECT queue_image_processing_job($1, $2, $3, $4, NULL, $5) AS queue_image_processing_job`,
+      ['playlist', playlistId.toString(), 'playlist_image', thumbnailUrl, priority]
     );
-
-    if (error) {
-      console.error(
-        JSON.stringify({
-          stage: 'queue_image_processing',
-          error,
-          message: `Failed to queue image processing for playlist ${playlistId}`,
-          playlistId,
-          thumbnailUrl,
-        })
-      );
-      // Don't throw here - image processing failure shouldn't break playlist sync
-      return;
-    }
+    const jobId = rows[0]?.queue_image_processing_job;
 
     if (jobId) {
       console.log(
@@ -119,16 +197,6 @@ export const populatePlaylists = async ({
 }: {
   source: ChannelSource;
 }) => {
-  const supabaseApiKey = process.env.SUPABASE_SERVICE_API_KEY;
-  const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-  if (!supabaseApiKey || !supabaseUrl) {
-    const errMsg = 'Could not find Supabase env.';
-    console.error(JSON.stringify({ stage: 'init', error: errMsg }));
-    throw new Error(errMsg);
-  }
-
-  const supabaseClient = createClient(supabaseUrl, supabaseApiKey);
-
   if (!source) {
     const errMsg = 'Request body must contain the source of the content.';
     console.error(JSON.stringify({ stage: 'init', error: errMsg }));
@@ -148,22 +216,14 @@ export const populatePlaylists = async ({
     throw new Error(errMsg);
   }
 
+  const client = new Client({ connectionString: process.env.NEON_DATABASE_URL });
+  await client.connect();
+
   try {
-    const email = `${source}@bombastic.ltd`;
-    const username = source;
-    const defaultPassword = 'temp_password_123'; // You may want to generate a random password
-
-    // Call the create_user function which handles both creation and existing user cases
-    const { data: userId, error: createUserError } = await supabaseClient.rpc(
-      'create_user',
-      {
-        email,
-        password: defaultPassword,
-        username,
-      }
-    );
-
-    if (createUserError) {
+    let userId: string;
+    try {
+      userId = await getOrCreateChannelProfile({ client, source });
+    } catch (createUserError) {
       console.error(
         JSON.stringify({
           stage: 'create_or_get_user',
@@ -173,20 +233,12 @@ export const populatePlaylists = async ({
         })
       );
       throw new Error(
-        `Failed to create or get user for source: ${source}: ${createUserError.message}`
+        `Failed to create or get user for source: ${source}: ${
+          createUserError instanceof Error
+            ? createUserError.message
+            : createUserError
+        }`
       );
-    }
-
-    if (!userId) {
-      console.error(
-        JSON.stringify({
-          stage: 'create_or_get_user',
-          source,
-          error: 'No user ID returned',
-          message: `No user ID returned for source: ${source}`,
-        })
-      );
-      throw new Error(`No user ID returned for source: ${source}`);
     }
 
     console.log(
@@ -265,31 +317,36 @@ export const populatePlaylists = async ({
         totalPlaylistsProcessed++;
 
         // Check if playlist already exists
-        const { data: existingPlaylist } = await supabaseClient
-          .from('playlists')
-          .select('id, created_by')
-          .eq('youtube_id', item.id)
-          .single();
+        const { rows: existingRows } = await client.query<{
+          id: number;
+          created_by: string | null;
+        }>('SELECT id, created_by FROM public.playlists WHERE youtube_id = $1', [
+          item.id,
+        ]);
+        const existingPlaylist = existingRows[0];
 
-        let upsertedPlaylist;
+        const thumbnailUrl = removeLiveSuffix(
+          getBestThumbnailUrl(item.snippet?.thumbnails)
+        );
+
+        let upsertedPlaylistId: number;
         if (existingPlaylist) {
           // Update existing playlist but keep the original created_by
-          const { data, error: playlistError } = await supabaseClient
-            .from('playlists')
-            .update({
-              name: item.snippet?.title ?? 'Untitled',
-              thumbnail_url: removeLiveSuffix(
-                getBestThumbnailUrl(item.snippet?.thumbnails)
-              ),
-              created_at: item.snippet?.publishedAt,
-              type: 'Public',
-            })
-            .eq('youtube_id', item.id)
-            .select()
-            .single();
-
-          upsertedPlaylist = data;
-          if (playlistError) {
+          try {
+            const { rows } = await client.query<{ id: number }>(
+              `UPDATE public.playlists
+               SET name = $1, thumbnail_url = $2, created_at = $3, type = 'Public'
+               WHERE youtube_id = $4
+               RETURNING id`,
+              [
+                item.snippet?.title ?? 'Untitled',
+                thumbnailUrl,
+                item.snippet?.publishedAt,
+                item.id,
+              ]
+            );
+            upsertedPlaylistId = rows[0].id;
+          } catch (playlistError) {
             console.error(
               JSON.stringify({
                 stage: 'update_playlist',
@@ -307,28 +364,26 @@ export const populatePlaylists = async ({
               message: `Updated existing playlist ${item.snippet?.title}`,
               source,
               playlistId: item.id,
-              internalId: upsertedPlaylist.id,
+              internalId: upsertedPlaylistId,
             })
           );
         } else {
           // Insert new playlist with the correct created_by
-          const { data, error: playlistError } = await supabaseClient
-            .from('playlists')
-            .insert({
-              youtube_id: item.id,
-              name: item.snippet?.title ?? 'Untitled',
-              created_by: userId,
-              thumbnail_url: removeLiveSuffix(
-                getBestThumbnailUrl(item.snippet?.thumbnails)
-              ),
-              created_at: item.snippet?.publishedAt,
-              type: 'Public',
-            })
-            .select()
-            .single();
-
-          upsertedPlaylist = data;
-          if (playlistError) {
+          try {
+            const { rows } = await client.query<{ id: number }>(
+              `INSERT INTO public.playlists (youtube_id, name, created_by, thumbnail_url, created_at, type)
+               VALUES ($1, $2, $3, $4, $5, 'Public')
+               RETURNING id`,
+              [
+                item.id,
+                item.snippet?.title ?? 'Untitled',
+                userId,
+                thumbnailUrl,
+                item.snippet?.publishedAt,
+              ]
+            );
+            upsertedPlaylistId = rows[0].id;
+          } catch (playlistError) {
             console.error(
               JSON.stringify({
                 stage: 'insert_playlist',
@@ -346,25 +401,19 @@ export const populatePlaylists = async ({
               message: `Created new playlist ${item.snippet?.title}`,
               source,
               playlistId: item.id,
-              internalId: upsertedPlaylist.id,
+              internalId: upsertedPlaylistId,
             })
           );
         }
 
         // Queue image processing for the playlist thumbnail
-        // This will process the YouTube thumbnail and upload it to Supabase storage
-        // The processed image path will be stored in image_webp_url column
-        const thumbnailUrl = removeLiveSuffix(
-          getBestThumbnailUrl(item.snippet?.thumbnails)
-        );
-
         if (thumbnailUrl) {
-          await queuePlaylistThumbnailProcessing(
-            supabaseClient,
-            upsertedPlaylist.id,
+          await queuePlaylistThumbnailProcessing({
+            client,
+            playlistId: upsertedPlaylistId,
             thumbnailUrl,
-            50 // Higher priority for playlist thumbnails during sync
-          );
+            priority: 50, // Higher priority for playlist thumbnails during sync
+          });
         }
 
         // Now fetch video IDs for this playlist from YouTube
@@ -416,19 +465,20 @@ export const populatePlaylists = async ({
         }
 
         // Get existing playlist_videos for this playlist to identify what to delete
-        const { data: existingPlaylistVideos, error: existingError } =
-          await supabaseClient
-            .from('playlist_videos')
-            .select('video_id')
-            .eq('playlist_id', upsertedPlaylist.id);
-
-        if (existingError) {
+        let existingVideoIds: string[];
+        try {
+          const { rows } = await client.query<{ video_id: string }>(
+            'SELECT video_id FROM public.playlist_videos WHERE playlist_id = $1',
+            [upsertedPlaylistId]
+          );
+          existingVideoIds = rows.map((r) => r.video_id);
+        } catch (existingError) {
           console.error(
             JSON.stringify({
               stage: 'fetch_existing_playlist_videos',
               source,
               playlistId: item.id,
-              internalPlaylistId: upsertedPlaylist.id,
+              internalPlaylistId: upsertedPlaylistId,
               error: existingError,
             })
           );
@@ -436,33 +486,19 @@ export const populatePlaylists = async ({
         }
 
         // Find videos to remove (exist in DB but not in YouTube)
-        const existingVideoIds = (existingPlaylistVideos || []).map(
-          (pv) => pv.video_id
-        );
         const videosToRemove = existingVideoIds.filter(
           (videoId) => !allVideoIds.includes(videoId)
         );
 
         // Remove playlist_videos that are no longer in YouTube
         if (videosToRemove.length > 0) {
-          const { error: deleteError } = await supabaseClient
-            .from('playlist_videos')
-            .delete()
-            .eq('playlist_id', upsertedPlaylist.id)
-            .in('video_id', videosToRemove);
-
-          if (deleteError) {
-            console.error(
-              JSON.stringify({
-                stage: 'delete_stale_playlist_videos',
-                source,
-                playlistId: item.id,
-                internalPlaylistId: upsertedPlaylist.id,
-                videosToRemove,
-                error: deleteError,
-              })
+          try {
+            await client.query(
+              `DELETE FROM public.playlist_videos
+               WHERE playlist_id = $1 AND video_id = ANY($2::text[])`,
+              [upsertedPlaylistId, videosToRemove]
             );
-          } else {
+
             console.log(
               JSON.stringify({
                 stage: 'delete_stale_playlist_videos',
@@ -472,26 +508,31 @@ export const populatePlaylists = async ({
                 removedVideoIds: videosToRemove,
               })
             );
+          } catch (deleteError) {
+            console.error(
+              JSON.stringify({
+                stage: 'delete_stale_playlist_videos',
+                source,
+                playlistId: item.id,
+                internalPlaylistId: upsertedPlaylistId,
+                videosToRemove,
+                error: deleteError,
+              })
+            );
           }
         }
 
         // Insert/update current playlist_videos
         let videoPosition = 1;
         for (const videoId of allVideoIds) {
-          const { error: insertError } = await supabaseClient
-            .from('playlist_videos')
-            .upsert(
-              {
-                playlist_id: upsertedPlaylist.id,
-                video_id: videoId,
-                video_position: videoPosition,
-              },
-              {
-                onConflict: 'playlist_id,video_id',
-              }
+          try {
+            await client.query(
+              `INSERT INTO public.playlist_videos (playlist_id, video_id, video_position)
+               VALUES ($1, $2, $3)
+               ON CONFLICT (playlist_id, video_id) DO UPDATE SET video_position = EXCLUDED.video_position`,
+              [upsertedPlaylistId, videoId, videoPosition]
             );
-
-          if (insertError) {
+          } catch (insertError) {
             console.error(
               JSON.stringify({
                 stage: 'upsert_playlist_video',
@@ -519,16 +560,19 @@ export const populatePlaylists = async ({
     } while (pageToken);
 
     // Step 2: Handle playlists that no longer exist on YouTube (excluding uploads playlist)
-    // Get all playlists for this user that are "Public" type, excluding uploads playlist
-    const { data: existingPlaylists, error: existingPlaylistsError } =
-      await supabaseClient
-        .from('playlists')
-        .select('id, youtube_id, name')
-        .eq('created_by', userId)
-        .eq('type', 'Public')
-        .neq('youtube_id', uploadPlaylistId); // Exclude uploads playlist from cleanup
-
-    if (existingPlaylistsError) {
+    let existingPlaylists: { id: number; youtube_id: string; name: string }[];
+    try {
+      const { rows } = await client.query<{
+        id: number;
+        youtube_id: string;
+        name: string;
+      }>(
+        `SELECT id, youtube_id, name FROM public.playlists
+         WHERE created_by = $1 AND type = 'Public' AND youtube_id != $2`,
+        [userId, uploadPlaylistId]
+      );
+      existingPlaylists = rows;
+    } catch (existingPlaylistsError) {
       console.error(
         JSON.stringify({
           stage: 'fetch_existing_playlists',
@@ -540,7 +584,7 @@ export const populatePlaylists = async ({
     }
 
     // Find playlists to remove (exist in DB but not in YouTube, excluding uploads playlist)
-    const playlistsToRemove = (existingPlaylists || []).filter(
+    const playlistsToRemove = existingPlaylists.filter(
       (playlist) =>
         playlist.youtube_id && !youtubePlaylistIds.has(playlist.youtube_id)
     );
@@ -548,12 +592,12 @@ export const populatePlaylists = async ({
     if (playlistsToRemove.length > 0) {
       // First, delete all playlist_videos for these playlists
       for (const playlist of playlistsToRemove) {
-        const { error: deletePlaylistVideosError } = await supabaseClient
-          .from('playlist_videos')
-          .delete()
-          .eq('playlist_id', playlist.id);
-
-        if (deletePlaylistVideosError) {
+        try {
+          await client.query(
+            'DELETE FROM public.playlist_videos WHERE playlist_id = $1',
+            [playlist.id]
+          );
+        } catch (deletePlaylistVideosError) {
           console.error(
             JSON.stringify({
               stage: 'delete_playlist_videos_for_removed_playlist',
@@ -568,21 +612,12 @@ export const populatePlaylists = async ({
 
       // Then delete the playlists themselves
       const playlistIdsToRemove = playlistsToRemove.map((p) => p.id);
-      const { error: deletePlaylistsError } = await supabaseClient
-        .from('playlists')
-        .delete()
-        .in('id', playlistIdsToRemove);
-
-      if (deletePlaylistsError) {
-        console.error(
-          JSON.stringify({
-            stage: 'delete_removed_playlists',
-            source,
-            playlistIdsToRemove,
-            error: deletePlaylistsError,
-          })
+      try {
+        await client.query(
+          'DELETE FROM public.playlists WHERE id = ANY($1::bigint[])',
+          [playlistIdsToRemove]
         );
-      } else {
+
         console.log(
           JSON.stringify({
             stage: 'delete_removed_playlists',
@@ -593,6 +628,15 @@ export const populatePlaylists = async ({
               name: p.name,
               youtube_id: p.youtube_id,
             })),
+          })
+        );
+      } catch (deletePlaylistsError) {
+        console.error(
+          JSON.stringify({
+            stage: 'delete_removed_playlists',
+            source,
+            playlistIdsToRemove,
+            error: deletePlaylistsError,
           })
         );
       }
@@ -619,5 +663,7 @@ export const populatePlaylists = async ({
       })
     );
     throw e; // Rethrow to signal Lambda failure
+  } finally {
+    await client.end();
   }
 };

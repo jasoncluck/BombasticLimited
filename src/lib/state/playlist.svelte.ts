@@ -1,5 +1,6 @@
 import type { Playlist } from '$lib/supabase/playlists';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from '$lib/supabase/database.types';
 import { getContext, setContext } from 'svelte';
 import { createDragImage } from '$lib/utils/dragdrop';
@@ -13,7 +14,7 @@ import type { SidebarState } from './sidebar.svelte';
 
 export interface PlaylistDragDropOptions {
   playlists: Playlist[];
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
   session: Session | null;
   onPlaylistsUpdate?: (playlists: Playlist[]) => void;
 }

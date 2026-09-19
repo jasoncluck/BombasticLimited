@@ -5,7 +5,6 @@
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import { MAIN_ROUTES } from '$lib/constants/routes.js';
 
-  import { isBrowser } from '@supabase/ssr';
   import type { Snapshot } from './$types.js';
   import { getContentState } from '$lib/state/content.svelte.js';
   import type { Video } from '$lib/supabase/videos.js';

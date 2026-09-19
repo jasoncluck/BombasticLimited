@@ -11,7 +11,8 @@ import {
   handleUnfollowPlaylist,
   handleUpdatePlaylistSort,
 } from '../playlist-service';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from '$lib/supabase/database.types';
 
 // Mock modules
@@ -46,7 +47,7 @@ vi.mock('$lib/state/notifications.svelte', () => ({
 }));
 
 describe('playlist service module', () => {
-  let mockSupabase: SupabaseClient<Database>;
+  let mockSupabase: NeonPostgrestClient<Database>;
   let mockSession: Session;
   let mockSidebarState: any;
 
@@ -77,7 +78,10 @@ describe('playlist service module', () => {
         supabase: mockSupabase,
       });
 
-      expect(createPlaylist).toHaveBeenCalledWith({ supabase: mockSupabase });
+      expect(createPlaylist).toHaveBeenCalledWith({
+        supabase: mockSupabase,
+        userId: 'user123',
+      });
       expect(showToast).toHaveBeenCalledWith('Created Playlist: Test Playlist');
       expect(mockSidebarState.refreshData).toHaveBeenCalled();
       expect(result.playlist).toEqual(mockPlaylist);
@@ -140,6 +144,7 @@ describe('playlist service module', () => {
       expect(deletePlaylist).toHaveBeenCalledWith({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'user123',
       });
       expect(showNotification).toHaveBeenCalledWith(
         'Deleted Test Playlist.',
@@ -215,6 +220,7 @@ describe('playlist service module', () => {
         videoIds: ['video1', 'video2'],
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'user123',
       });
       expect(showNotification).toHaveBeenCalledWith(
         'Added videos to Test Playlist'
@@ -329,12 +335,14 @@ describe('playlist service module', () => {
         sidebarState: mockSidebarState,
         playlist: mockPlaylist as any,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(deleteVideosFromPlaylist).toHaveBeenCalledWith({
         videoIds: ['video1', 'video2'],
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
       expect(showNotification).toHaveBeenCalledWith(
         'Removed video from Test Playlist.'
@@ -359,6 +367,7 @@ describe('playlist service module', () => {
         sidebarState: mockSidebarState,
         playlist: {} as any,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(showNotification).toHaveBeenCalledWith(
@@ -434,6 +443,7 @@ describe('playlist service module', () => {
         position: 5,
         videos: mockVideos as any,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(updatePlaylistVideoPosition).toHaveBeenCalledWith({
@@ -441,6 +451,7 @@ describe('playlist service module', () => {
         position: 5,
         videoIds: ['video1'],
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
       expect(result.error).toBeNull();
     });
@@ -459,6 +470,7 @@ describe('playlist service module', () => {
         position: 1,
         videos: [] as any,
         supabase: mockSupabase,
+        userId: 'test-user-id',
       });
 
       expect(result.error).toEqual(mockError);
@@ -484,6 +496,7 @@ describe('playlist service module', () => {
         playlistId: 1,
         position: 3,
         supabase: mockSupabase,
+        userId: 'user123',
       });
     });
 
@@ -524,6 +537,7 @@ describe('playlist service module', () => {
       expect(followPlaylist).toHaveBeenCalledWith({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'user123',
       });
       expect(showNotification).toHaveBeenCalledWith(
         'Followed playlist: Test Playlist ',
@@ -605,6 +619,7 @@ describe('playlist service module', () => {
       expect(unfollowPlaylist).toHaveBeenCalledWith({
         playlistId: 1,
         supabase: mockSupabase,
+        userId: 'user123',
       });
       expect(showNotification).toHaveBeenCalledWith(
         'Unfollowed playlist: Test Playlist ',

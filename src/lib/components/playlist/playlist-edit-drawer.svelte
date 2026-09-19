@@ -15,7 +15,7 @@
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import Checkbox from '$lib/components/ui/checkbox/checkbox.svelte';
   import type { Snippet } from 'svelte';
-  import type { Session } from '@supabase/supabase-js';
+  import type { AppSession as Session } from '$lib/types/session';
   import { page } from '$app/state';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';

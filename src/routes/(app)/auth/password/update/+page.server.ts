@@ -2,11 +2,13 @@ import { type Actions } from '@sveltejs/kit';
 import { setFlash } from 'sveltekit-flash-message/server';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { zod4 as zod } from 'sveltekit-superforms/adapters';
-import { passwordConfirmationSchema } from '$lib/schema/auth-schema';
+import { resetPasswordConfirmSchema } from '$lib/schema/auth-schema';
+import { confirmForgotPassword } from '$lib/server/cognito';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
-  const form = await superValidate(zod(passwordConfirmationSchema));
+export const load: PageServerLoad = async ({ url }) => {
+  const email = url.searchParams.get('email') ?? '';
+  const form = await superValidate({ email }, zod(resetPasswordConfirmSchema));
 
   return {
     form,
@@ -14,37 +16,39 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-  updatePassword: async ({ request, cookies, locals: { supabase } }) => {
-    const form = await superValidate(request, zod(passwordConfirmationSchema));
+  updatePassword: async ({ request, cookies }) => {
+    const form = await superValidate(request, zod(resetPasswordConfirmSchema));
 
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
-    if (!claimsData?.claims || claimsError) {
-      throw new Error(`Could not find valid claims for user`);
+    if (!form.valid) {
+      return fail(400, { form });
     }
 
-    const { error } = await supabase.auth.updateUser({
-      password: form.data.password,
+    const { email, code, password } = form.data;
+
+    const { error } = await confirmForgotPassword({
+      email,
+      code,
+      newPassword: password,
     });
+
     if (error) {
       setFlash(
         { type: 'error', message: error.message, field: 'password' },
         cookies
       );
-      console.error(error);
       return fail(400, { form });
-    } else {
-      setFlash(
-        {
-          type: 'success',
-          message: `Password updated successfully`,
-          field: 'password',
-        },
-        cookies
-      );
-      return {
-        form,
-      };
     }
+
+    setFlash(
+      {
+        type: 'success',
+        message: `Password updated successfully`,
+        field: 'password',
+      },
+      cookies
+    );
+    return {
+      form,
+    };
   },
 };

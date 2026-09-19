@@ -1,10 +1,10 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from './database.types';
 
 export async function getActiveStreams({
   supabase,
 }: {
-  supabase: SupabaseClient<Database>;
+  supabase: NeonPostgrestClient<Database>;
 }) {
   const { data, error } = await supabase
     .from('active_streams')

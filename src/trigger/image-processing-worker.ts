@@ -1,18 +1,24 @@
 import { task } from '@trigger.dev/sdk/v3';
 import sharp from 'sharp';
-import { createClient } from '@supabase/supabase-js';
-import { IMAGES_BUCKET } from '$lib/constants/images';
+import { Pool } from 'pg';
+import {
+  uploadObject,
+  downloadObject,
+  listObjects,
+  deleteObjects,
+} from '$lib/server/s3';
 import {
   calculateDynamicCropDimensions,
   validateAndAdjustCropDimensions,
 } from '$lib/utils/dynamic-crop-dimensions';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
-const supabaseUrl = process.env.PUBLIC_SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const IMAGES_BUCKET = process.env.CONTENT_IMAGES_BUCKET!;
 
-// Supabase client setup
-const supabase = createClient(supabaseUrl!, supabaseServiceRoleKey!);
+// This worker runs as a backend job (Trigger.dev), not inside a user
+// request, so it talks to Neon directly over `pg` (bypassing the Data
+// API/RLS as the database owner) rather than going through Cognito auth.
+const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL });
 
 // Configuration constants
 const PROCESSING_TIMEOUT = 25000;
@@ -90,15 +96,7 @@ async function downloadImage(sourceUrl: string): Promise<Buffer> {
     sourceUrl.startsWith('playlists/') ||
     sourceUrl.startsWith('thumbnails/')
   ) {
-    const { data, error } = await supabase.storage
-      .from(IMAGES_BUCKET)
-      .download(sourceUrl);
-
-    if (error) {
-      throw new Error(`Failed to download from storage: ${error.message}`);
-    }
-
-    return Buffer.from(await data.arrayBuffer());
+    return downloadObject(IMAGES_BUCKET, sourceUrl);
   }
 
   const controller = new AbortController();
@@ -135,14 +133,14 @@ async function getPlaylistCropProperties(
   imageHeight: number
 ): Promise<PlaylistImageProperties> {
   // Get playlist image_properties from database
-  const { data: playlist, error } = await supabase
-    .from('playlists')
-    .select('image_properties')
-    .eq('id', playlistId)
-    .maybeSingle();
-
-  if (error) {
-    console.warn(`Failed to get playlist crop properties: ${error.message}`);
+  let imageProperties: PlaylistImageProperties | null = null;
+  try {
+    const { rows } = await pool.query<{
+      image_properties: PlaylistImageProperties | null;
+    }>('SELECT image_properties FROM playlists WHERE id = $1', [playlistId]);
+    imageProperties = rows[0]?.image_properties ?? null;
+  } catch (error) {
+    console.warn(`Failed to get playlist crop properties: ${error}`);
   }
 
   // Check if we have custom crop properties
@@ -150,8 +148,8 @@ async function getPlaylistCropProperties(
   const imageArea = imageWidth * imageHeight;
   const isSmallThumbnail = imageArea <= 100000;
 
-  if (playlist?.image_properties && !isSmallThumbnail) {
-    const props = playlist.image_properties as PlaylistImageProperties;
+  if (imageProperties && !isSmallThumbnail) {
+    const props = imageProperties;
     if (
       typeof props.x === 'number' &&
       typeof props.y === 'number' &&
@@ -336,38 +334,28 @@ async function processImageFormats(
   }
 }
 
-// Upload processed images to Supabase Storage
+// Upload processed images to S3
 async function uploadToStorage(
   webpBuffer: Buffer,
   avifBuffer: Buffer,
   webpPath: string,
   avifPath: string
 ): Promise<StoragePaths> {
-  // Upload WebP
-  const { error: webpError } = await supabase.storage
-    .from(IMAGES_BUCKET)
-    .upload(webpPath, webpBuffer, {
-      contentType: 'image/webp',
-      cacheControl: '31536000',
-      upsert: false, // Don't overwrite - use unique timestamps
-    });
+  await uploadObject({
+    bucket: IMAGES_BUCKET,
+    key: webpPath,
+    body: webpBuffer,
+    contentType: 'image/webp',
+    cacheControl: 'public, max-age=31536000, immutable',
+  });
 
-  if (webpError) {
-    throw new Error(`Failed to upload WebP image: ${webpError.message}`);
-  }
-
-  // Upload AVIF
-  const { error: avifError } = await supabase.storage
-    .from(IMAGES_BUCKET)
-    .upload(avifPath, avifBuffer, {
-      contentType: 'image/avif',
-      cacheControl: '31536000',
-      upsert: false, // Don't overwrite - use unique timestamps
-    });
-
-  if (avifError) {
-    throw new Error(`Failed to upload AVIF image: ${avifError.message}`);
-  }
+  await uploadObject({
+    bucket: IMAGES_BUCKET,
+    key: avifPath,
+    body: avifBuffer,
+    contentType: 'image/avif',
+    cacheControl: 'public, max-age=31536000, immutable',
+  });
 
   return { webpPath, avifPath };
 }
@@ -386,25 +374,22 @@ async function deleteExistingOptimizedImages(
         ? `thumbnails/${entityId}/`
         : `playlists/${entityId}/`;
 
-    const { data: existingFiles, error: listError } = await supabase.storage
-      .from(IMAGES_BUCKET)
-      .list(folderPrefix.replace(/\/$/, ''), {
-        limit: 1000, // Increased limit to handle more timestamped files
-      });
-
-    if (listError) {
-      console.warn(`Failed to list existing files: ${listError.message}`);
+    let existingKeys: string[];
+    try {
+      existingKeys = await listObjects(IMAGES_BUCKET, folderPrefix);
+    } catch (error) {
+      console.warn(`Failed to list existing files: ${error}`);
       return;
     }
 
-    if (!existingFiles || existingFiles.length === 0) {
+    if (existingKeys.length === 0) {
       console.log(`No existing files found in ${folderPrefix}`);
       return;
     }
 
     // Filter for image files (webp, avif, and any other formats)
-    const imageFiles = existingFiles.filter((file) => {
-      const name = file.name.toLowerCase();
+    const filesToDelete = existingKeys.filter((key) => {
+      const name = key.toLowerCase();
       return (
         name.endsWith('.webp') ||
         name.endsWith('.avif') ||
@@ -413,53 +398,35 @@ async function deleteExistingOptimizedImages(
       );
     });
 
-    if (imageFiles.length === 0) {
+    if (filesToDelete.length === 0) {
       console.log(`No image files found to delete in ${folderPrefix}`);
       return;
     }
 
-    // Create full paths for deletion
-    const filesToDelete = imageFiles.map(
-      (file) => `${folderPrefix}${file.name}`
-    );
-
     console.log(`Deleting ${filesToDelete.length} files:`, filesToDelete);
 
-    const { error: deleteError } = await supabase.storage
-      .from(IMAGES_BUCKET)
-      .remove(filesToDelete);
-
-    if (deleteError) {
-      console.warn(`Failed to delete some files: ${deleteError.message}`);
-    } else {
+    try {
+      await deleteObjects(IMAGES_BUCKET, filesToDelete);
       console.log(`Successfully deleted ${filesToDelete.length} files`);
+    } catch (error) {
+      console.warn(`Failed to delete some files: ${error}`);
     }
 
     // Also clean up database references for playlists
-    if (entityType === 'playlist') {
-      const { error: dbError } = await supabase
-        .from('playlists')
-        .update({
-          image_webp_url: null,
-          image_avif_url: null,
-        })
-        .eq('id', entityId);
-
-      if (dbError) {
-        console.warn(`Failed to clear database references: ${dbError.message}`);
+    try {
+      if (entityType === 'playlist') {
+        await pool.query(
+          'UPDATE playlists SET image_webp_url = NULL, image_avif_url = NULL WHERE id = $1',
+          [entityId]
+        );
+      } else if (entityType === 'video') {
+        await pool.query(
+          'UPDATE videos SET thumbnail_webp_url = NULL, thumbnail_avif_url = NULL WHERE id = $1',
+          [entityId]
+        );
       }
-    } else if (entityType === 'video') {
-      const { error: dbError } = await supabase
-        .from('videos')
-        .update({
-          thumbnail_webp_url: null,
-          thumbnail_avif_url: null,
-        })
-        .eq('id', entityId);
-
-      if (dbError) {
-        console.warn(`Failed to clear database references: ${dbError.message}`);
-      }
+    } catch (error) {
+      console.warn(`Failed to clear database references: ${error}`);
     }
   } catch (error) {
     console.error(`Error during cleanup: ${error}`);
@@ -474,35 +441,48 @@ async function updateEntityWithProcessedImages(
   webpPath: string,
   avifPath: string
 ): Promise<void> {
-  if (entityType === 'playlist') {
-    const { error } = await supabase
-      .from('playlists')
-      .update({
-        image_webp_url: webpPath,
-        image_avif_url: avifPath,
-        image_processing_status: 'completed',
-        image_processing_updated_at: new Date().toISOString(),
-      })
-      .eq('id', entityId);
-
-    if (error) {
-      throw new Error(`Failed to update playlist: ${error.message}`);
+  try {
+    if (entityType === 'playlist') {
+      await pool.query(
+        `UPDATE playlists SET image_webp_url = $1, image_avif_url = $2,
+         image_processing_status = 'completed', image_processing_updated_at = NOW()
+         WHERE id = $3`,
+        [webpPath, avifPath, entityId]
+      );
+    } else if (entityType === 'video') {
+      await pool.query(
+        `UPDATE videos SET thumbnail_webp_url = $1, thumbnail_avif_url = $2,
+         image_processing_status = 'completed', image_processing_updated_at = NOW()
+         WHERE id = $3`,
+        [webpPath, avifPath, entityId]
+      );
     }
-  } else if (entityType === 'video') {
-    const { error } = await supabase
-      .from('videos')
-      .update({
-        thumbnail_webp_url: webpPath,
-        thumbnail_avif_url: avifPath,
-        image_processing_status: 'completed',
-        image_processing_updated_at: new Date().toISOString(),
-      })
-      .eq('id', entityId);
-
-    if (error) {
-      throw new Error(`Failed to update video: ${error.message}`);
-    }
+  } catch (error) {
+    throw new Error(`Failed to update ${entityType}: ${error}`);
   }
+}
+
+async function completeImageProcessingJob(
+  jobId: string,
+  webpPath?: string,
+  avifPath?: string
+): Promise<boolean> {
+  const { rows } = await pool.query<{ complete_image_processing_job: boolean }>(
+    'SELECT public.complete_image_processing_job(job_id := $1, webp_path := $2, avif_path := $3) AS complete_image_processing_job',
+    [jobId, webpPath ?? null, avifPath ?? null]
+  );
+  return rows[0]?.complete_image_processing_job ?? false;
+}
+
+async function failImageProcessingJob(
+  jobId: string,
+  errorMsg: string
+): Promise<boolean> {
+  const { rows } = await pool.query<{ fail_image_processing_job: boolean }>(
+    'SELECT public.fail_image_processing_job($1, $2) AS fail_image_processing_job',
+    [jobId, errorMsg]
+  );
+  return rows[0]?.fail_image_processing_job ?? false;
 }
 
 // Main image processing task
@@ -535,14 +515,8 @@ export const processImageWebhook = task({
       );
       if (jobId) {
         try {
-          const { data: completionResult, error: completionError } =
-            await supabase.rpc('complete_image_processing_job', {
-              job_id: jobId,
-            });
-          console.log('Job completion result:', {
-            completionResult,
-            completionError,
-          });
+          const completionResult = await completeImageProcessingJob(jobId);
+          console.log('Job completion result:', { completionResult });
         } catch (error) {
           console.warn(`Failed to complete job ${jobId}:`, error);
         }
@@ -584,14 +558,8 @@ export const processImageWebhook = task({
       console.log(`No processing needed for ${entityType} ${record.id}`);
       if (jobId) {
         try {
-          const { data: completionResult, error: completionError } =
-            await supabase.rpc('complete_image_processing_job', {
-              job_id: jobId,
-            });
-          console.log('Job completion result:', {
-            completionResult,
-            completionError,
-          });
+          const completionResult = await completeImageProcessingJob(jobId);
+          console.log('Job completion result:', { completionResult });
         } catch (error) {
           console.warn(`Failed to complete job ${jobId}:`, error);
         }
@@ -646,23 +614,13 @@ export const processImageWebhook = task({
             webpPath,
             avifPath,
           });
-          const { data: completionResult, error: completionError } =
-            await supabase.rpc('complete_image_processing_job', {
-              job_id: jobId,
-              webp_path: webpPath,
-              avif_path: avifPath,
-            });
+          const completionResult = await completeImageProcessingJob(
+            jobId,
+            webpPath,
+            avifPath
+          );
 
-          console.log('Job completion result:', {
-            completionResult,
-            completionError,
-          });
-
-          if (completionError) {
-            throw new Error(
-              `Job completion failed: ${completionError.message}`
-            );
-          }
+          console.log('Job completion result:', { completionResult });
 
           if (!completionResult) {
             throw new Error(
@@ -713,14 +671,8 @@ export const processImageWebhook = task({
           const errorMessage =
             error instanceof Error ? error.message : 'Unknown error';
           console.log(`Failing job ${jobId} with error: ${errorMessage}`);
-          const { data: failResult, error: failError } = await supabase.rpc(
-            'fail_image_processing_job',
-            {
-              job_id: jobId,
-              error_msg: errorMessage,
-            }
-          );
-          console.log('Job failure result:', { failResult, failError });
+          const failResult = await failImageProcessingJob(jobId, errorMessage);
+          console.log('Job failure result:', { failResult });
         } catch (failError) {
           console.error(`Failed to mark job ${jobId} as failed:`, failError);
         }

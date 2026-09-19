@@ -71,10 +71,6 @@ vi.mock('$lib/components/content/content', () => ({
   ],
 }));
 
-vi.mock('@supabase/ssr', () => ({
-  isBrowser: vi.fn(() => false),
-}));
-
 const mockGoto = vi.mocked(goto);
 
 describe('+page.svelte Component Logic', () => {

@@ -12,9 +12,6 @@
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { signupSchema, type SignupSchema } from '$lib/schema/auth-schema';
   import { goto } from '$app/navigation';
-  import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
-  import type { SupabaseClient } from '@supabase/supabase-js';
-  import type { Database } from '$lib/supabase/database.types';
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   let {
@@ -22,11 +19,8 @@
   }: {
     data: {
       form: SuperValidated<SignupSchema>;
-      supabase: SupabaseClient<Database>;
     };
   } = $props();
-
-  const { supabase } = $derived(data);
 
   const flash = getFlash(page);
 
@@ -61,17 +55,13 @@
 
       timeoutId = setTimeout(async () => {
         try {
-          const result = await checkIfUsernameIsUnique({
-            username: currentUsername,
-            supabase,
-          });
+          const response = await fetch(
+            `/api/username-available?username=${encodeURIComponent(currentUsername)}`
+          );
+          const { available } = await response.json();
 
           if (currentUsername === $formData.username) {
-            if (typeof result === 'boolean') {
-              isUsernameUnique = result;
-            } else {
-              isUsernameUnique = false;
-            }
+            isUsernameUnique = available === true;
           }
         } catch {
           if (currentUsername === $formData.username) {
@@ -108,14 +98,7 @@
     <Card.Content class="mb-4 grid gap-4">
       <div class="flex">
         <Button
-          onclick={async () => {
-            const { error } = await supabase.auth.signInWithOAuth({
-              provider: 'discord',
-            });
-            if (error) {
-              console.error(error);
-            }
-          }}
+          onclick={() => goto('/auth/discord/signin')}
           variant="outline"
           type="button"
           class="flex w-full cursor-pointer items-center justify-center gap-2"

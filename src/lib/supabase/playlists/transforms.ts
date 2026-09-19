@@ -1,7 +1,7 @@
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../database.types';
 import type { Source } from '$lib/constants/source';
-import { IMAGES_BUCKET } from '$lib/constants/images';
+import { PUBLIC_CONTENT_IMAGES_URL } from '$env/static/public';
 import type {
   Playlist,
   UserPlaylist,
@@ -12,19 +12,11 @@ import type {
 } from './types';
 
 /**
- * Convert storage path to full public URL
+ * Convert an S3 key to a full public URL
  */
-export function getFullImageUrl(
-  storagePath: string | null,
-  supabase: SupabaseClient<Database>
-): string | null {
+export function getFullImageUrl(storagePath: string | null): string | null {
   if (!storagePath) return null;
-
-  const { data } = supabase.storage
-    .from(IMAGES_BUCKET)
-    .getPublicUrl(storagePath);
-
-  return data.publicUrl;
+  return `${PUBLIC_CONTENT_IMAGES_URL}/${storagePath}`;
 }
 
 /**
@@ -32,7 +24,7 @@ export function getFullImageUrl(
  */
 export function transformPlaylistFromRPC(
   rpcData: GetPlaylistDataResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): Playlist {
   return {
     id: rpcData.playlist_id,
@@ -41,7 +33,7 @@ export function transformPlaylistFromRPC(
     short_id: rpcData.playlist_short_id,
     created_by: rpcData.playlist_created_by,
     description: rpcData.playlist_description,
-    image_url: getFullImageUrl(rpcData.playlist_image_url, supabase),
+    image_url: getFullImageUrl(rpcData.playlist_image_url),
     image_processing_status: rpcData.playlist_image_processing_status,
     type: rpcData.playlist_type,
     image_properties: rpcData.playlist_image_properties,
@@ -62,7 +54,7 @@ export function transformPlaylistFromRPC(
  */
 export function transformUserPlaylistFromRPC(
   rpcData: GetUserPlaylistsResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): UserPlaylist {
   return {
     id: rpcData.id,
@@ -71,7 +63,7 @@ export function transformUserPlaylistFromRPC(
     short_id: rpcData.short_id,
     created_by: rpcData.created_by,
     description: rpcData.description,
-    image_url: getFullImageUrl(rpcData.image_url, supabase),
+    image_url: getFullImageUrl(rpcData.image_url),
     image_processing_status: rpcData.image_processing_status,
     type: rpcData.type,
     image_properties: rpcData.image_properties,
@@ -93,7 +85,7 @@ export function transformUserPlaylistFromRPC(
  */
 export function transformVideoFromRPC(
   rpcData: GetPlaylistDataResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): PlaylistVideoWithTimestamp {
   return {
     id: rpcData.video_id,
@@ -103,7 +95,7 @@ export function transformVideoFromRPC(
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
     image_url: rpcData.video_image_url
-      ? getFullImageUrl(rpcData.video_image_url, supabase)
+      ? getFullImageUrl(rpcData.video_image_url)
       : rpcData.video_thumbnail_url,
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
@@ -119,7 +111,7 @@ export function transformVideoFromRPC(
  */
 export function transformVideoFromContextRPC(
   rpcData: GetPlaylistVideoContextResponse,
-  supabase: SupabaseClient<Database>
+  supabase: NeonPostgrestClient<Database>
 ): PlaylistVideoWithTimestamp {
   return {
     id: rpcData.video_id,
@@ -128,7 +120,7 @@ export function transformVideoFromContextRPC(
     title: rpcData.video_title,
     description: rpcData.video_description,
     thumbnail_url: rpcData.video_thumbnail_url,
-    image_url: getFullImageUrl(rpcData.video_image_url, supabase),
+    image_url: getFullImageUrl(rpcData.video_image_url),
     published_at: rpcData.video_published_at,
     duration: rpcData.video_duration,
     video_start_seconds: rpcData.video_start_seconds,

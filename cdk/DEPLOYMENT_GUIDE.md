@@ -1,5 +1,9 @@
 # Database Backup Infrastructure - Deployment Guide
 
+> **Status: disabled, not migrated.** See `BACKUP_README.md` — this
+> references a Supabase project that no longer exists. Kept for reference
+> only.
+
 ## Prerequisites
 
 Before deploying the backup infrastructure, ensure you have:

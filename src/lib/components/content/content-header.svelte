@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { BreadcrumbItem } from '../breadcrumb-layout.svelte';
   import type { CombinedContentFilter } from './content-filter';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import SharedContentHeader from './shared-content-header.svelte';
   import { SOURCE_INFO, type Source } from '$lib/constants/source';
@@ -35,7 +36,7 @@
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     source?: Source;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     heading: string;
     subHeading?: string;
     subHeadingHref?: string;

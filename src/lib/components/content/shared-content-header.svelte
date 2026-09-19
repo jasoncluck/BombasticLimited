@@ -5,7 +5,8 @@
   import IntersectionObserver from '$lib/components/intersection-observer.svelte';
   import ContentSelect from '$lib/components/content/content-select.svelte';
   import type { Playlist, UserPlaylist } from '$lib/supabase/playlists';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
@@ -38,7 +39,7 @@
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     userProfile: UserProfile | null;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     videos: Video[];
     view: ContentView;
   }

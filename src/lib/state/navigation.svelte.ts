@@ -3,8 +3,9 @@ import { goto } from '$app/navigation';
 import { invalidateAll } from '$app/navigation';
 import { showToast } from '$lib/state/notifications.svelte.js';
 import debounce from 'debounce';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '$lib/supabase/database.types';
+import type { AppSession as Session } from '$lib/types/session';
 import type { UserProfile } from '$lib/supabase/user-profiles';
 import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
@@ -69,7 +70,7 @@ export interface NavigationState {
   // User context
   session: Session | null;
   userProfile: UserProfile | null;
-  supabase: SupabaseClient<Database> | null;
+  supabase: NeonPostgrestClient<Database> | null;
 
   // Account drawer state
   openAccountDrawer: boolean;
@@ -116,7 +117,7 @@ export interface NavigationState {
   updateContext: (updates: {
     session?: Session | null;
     userProfile?: UserProfile | null;
-    supabase?: SupabaseClient<Database>;
+    supabase?: NeonPostgrestClient<Database>;
   }) => void;
   updateActiveRoute: (pathname: string) => void;
   updateConfig: (updates: Partial<NavigationConfig>) => void;
@@ -200,7 +201,7 @@ export class NavigationStateClass implements NavigationState {
   // User context - now properly reactive
   session = $state<Session | null>(null);
   userProfile = $state<UserProfile | null>(null);
-  supabase = $state<SupabaseClient<Database> | null>(null);
+  supabase = $state<NeonPostgrestClient<Database> | null>(null);
 
   // Account drawer state (shared with user menu)
   openAccountDrawer = $state(false);
@@ -408,7 +409,7 @@ export class NavigationStateClass implements NavigationState {
   updateContext(updates: {
     session?: Session | null;
     userProfile?: UserProfile | null;
-    supabase?: SupabaseClient<Database>;
+    supabase?: NeonPostgrestClient<Database>;
   }): void {
     if (updates.session !== undefined) {
       this.session = updates.session;
@@ -494,19 +495,14 @@ export class NavigationStateClass implements NavigationState {
    * Handle logout functionality
    */
   async handleLogout(): Promise<void> {
-    if (!this.supabase) {
-      console.error('Supabase client not available for logout');
-      return;
-    }
-
     try {
       // Stop refresh interval on logout
       this.stopRefreshInterval();
 
-      const { error } = await this.supabase.auth.signOut();
+      const response = await fetch('/auth/signout', { method: 'POST' });
 
-      if (error) {
-        console.error('Error signing out:', error);
+      if (!response.ok) {
+        console.error('Error signing out');
         showToast('Error logging out', 'error');
         return;
       }

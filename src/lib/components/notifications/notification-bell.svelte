@@ -6,7 +6,7 @@
   import * as Drawer from '$lib/components/ui/drawer';
   import NotificationList from './notification-list.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { Database } from '$lib/supabase/database.types';
   import { markAsRead } from '$lib/supabase/notifications';
   import { getNavigationState } from '$lib/state/navigation.svelte';
@@ -14,7 +14,7 @@
   let {
     supabase,
   }: {
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
   } = $props();
 
   const mediaQueryState = getMediaQueryState();

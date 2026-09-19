@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Database } from '$lib/supabase/database.types';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import { type CarouselState, type TilesDisplay } from './content';
   import {
     DEFAULT_NUM_VIDEOS_PAGINATION,
@@ -48,7 +49,7 @@
     userProfile: UserProfile | null;
     sectionId?: string;
     tilesDisplay: TilesDisplay;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
     form?: import('sveltekit-superforms').SuperValidated<PlaylistSchema>;
   };

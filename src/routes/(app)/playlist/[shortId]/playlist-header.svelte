@@ -4,7 +4,8 @@
   import type { BreadcrumbItem } from '$lib/components/breadcrumb-layout.svelte';
   import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
   import { type Playlist, type UserPlaylist } from '$lib/supabase/playlists';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import SharedContentHeader from '$lib/components/content/shared-content-header.svelte';
@@ -32,7 +33,7 @@
     videosCount: number;
     userProfile: UserProfile | null;
     currentPage: number;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
   }
 

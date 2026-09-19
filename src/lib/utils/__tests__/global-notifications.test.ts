@@ -4,26 +4,26 @@ import {
   sendTemplateNotification,
   NOTIFICATION_TEMPLATES,
 } from '../global-notifications';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '$lib/supabase/database.types';
 import type { NotificationType } from '$lib/supabase/notifications';
 
 // Mock Supabase client
-const createMockSupabaseClient = () => {
+const createMockNeonPostgrestClient = () => {
   const mockRpc = vi.fn();
 
   return {
     rpc: mockRpc,
     mockRpc,
-  } as unknown as SupabaseClient<Database> & { mockRpc: typeof mockRpc };
+  } as unknown as NeonPostgrestClient<Database> & { mockRpc: typeof mockRpc };
 };
 
 describe('global-notifications', () => {
-  let mockSupabase: ReturnType<typeof createMockSupabaseClient>;
+  let mockSupabase: ReturnType<typeof createMockNeonPostgrestClient>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase = createMockSupabaseClient();
+    mockSupabase = createMockNeonPostgrestClient();
   });
 
   describe('sendGlobalNotification', () => {

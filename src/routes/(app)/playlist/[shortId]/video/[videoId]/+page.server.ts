@@ -9,7 +9,7 @@ import type { PageServerLoad } from './$types';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { supabase, userId },
   depends,
   params,
   parent,
@@ -31,6 +31,7 @@ export const load: PageServerLoad = async ({
     videoId,
     contentFilter,
     supabase,
+    userId,
     contextLimit: 5,
     preferredImageFormat,
   });

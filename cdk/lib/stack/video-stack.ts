@@ -8,6 +8,7 @@ import * as targets from 'aws-cdk-lib/aws-events-targets';
 import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
 import * as stepfunctions from 'aws-cdk-lib/aws-stepfunctions';
 import * as sfnTasks from 'aws-cdk-lib/aws-stepfunctions-tasks';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { RestApi } from 'aws-cdk-lib/aws-apigateway';
 import { CHANNEL_SOURCES } from '../channel';
 
@@ -15,9 +16,10 @@ interface VideoStackProps extends StackProps {
   stage: 'Production' | 'Staging';
   environmentVariables: {
     GOOGLE_API_KEY?: string;
-    PUBLIC_SUPABASE_URL?: string;
-    SUPABASE_SERVICE_API_KEY?: string;
+    NEON_DATABASE_URL?: string;
   };
+  cognitoUserPoolId: string;
+  cognitoRegion: string;
 }
 
 export class VideoStack extends Stack {
@@ -26,7 +28,8 @@ export class VideoStack extends Stack {
   constructor(scope: Construct, id: string, props: VideoStackProps) {
     super(scope, id, props);
 
-    const { stage, environmentVariables } = props;
+    const { stage, environmentVariables, cognitoUserPoolId, cognitoRegion } =
+      props;
 
     // Enable deletion protection for production
     if (stage === 'Production') {
@@ -38,13 +41,8 @@ export class VideoStack extends Stack {
       throw new Error(`Missing Google API key for ${stage} environment.`);
     }
 
-    if (
-      !environmentVariables.SUPABASE_SERVICE_API_KEY ||
-      !environmentVariables.PUBLIC_SUPABASE_URL
-    ) {
-      throw new Error(
-        `Could not find Supabase environment variables for ${stage}.`
-      );
+    if (!environmentVariables.NEON_DATABASE_URL) {
+      throw new Error(`Missing NEON_DATABASE_URL for ${stage} environment.`);
     }
 
     // Create environment-specific function names
@@ -63,9 +61,7 @@ export class VideoStack extends Stack {
         timeout: Duration.minutes(15),
         environment: {
           GOOGLE_API_KEY: environmentVariables.GOOGLE_API_KEY,
-          SUPABASE_SERVICE_API_KEY:
-            environmentVariables.SUPABASE_SERVICE_API_KEY,
-          PUBLIC_SUPABASE_URL: environmentVariables.PUBLIC_SUPABASE_URL,
+          NEON_DATABASE_URL: environmentVariables.NEON_DATABASE_URL,
           ENVIRONMENT: stage,
         },
       }
@@ -101,12 +97,29 @@ export class VideoStack extends Stack {
         timeout: Duration.minutes(15),
         environment: {
           GOOGLE_API_KEY: environmentVariables.GOOGLE_API_KEY,
-          SUPABASE_SERVICE_API_KEY:
-            environmentVariables.SUPABASE_SERVICE_API_KEY,
-          PUBLIC_SUPABASE_URL: environmentVariables.PUBLIC_SUPABASE_URL,
+          NEON_DATABASE_URL: environmentVariables.NEON_DATABASE_URL,
+          COGNITO_USER_POOL_ID: cognitoUserPoolId,
+          COGNITO_REGION: cognitoRegion,
           ENVIRONMENT: stage,
         },
       }
+    );
+
+    // Channel-source "user" accounts (one per YouTube channel) are
+    // synthetic Cognito users created on demand so auto-synced playlists
+    // have a created_by — see getOrCreateChannelProfile in
+    // populate-playlists.ts.
+    populatePlaylistsLambda.addToRolePolicy(
+      new iam.PolicyStatement({
+        actions: [
+          'cognito-idp:AdminGetUser',
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminSetUserPassword',
+        ],
+        resources: [
+          `arn:aws:cognito-idp:${cognitoRegion}:${this.account}:userpool/${cognitoUserPoolId}`,
+        ],
+      })
     );
 
     // CloudWatch Alarm for Playlists Lambda Errors

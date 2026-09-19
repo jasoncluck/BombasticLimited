@@ -4,7 +4,7 @@ import {
   getUserPlaylists,
   parseImageProperties,
 } from '$lib/supabase/playlists';
-import { getProfile } from '$lib/supabase/user-profiles';
+import { getProfileById } from '$lib/supabase/user-profiles';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 import { getActiveStreams } from '$lib/supabase/streams';
@@ -14,7 +14,7 @@ interface RequestBody {
 }
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-  const { supabase } = locals;
+  const { supabase, userId } = locals;
 
   // Parse the request body
   const body: RequestBody = await request.json();
@@ -22,9 +22,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     body.preferredImageFormat ??
     detectOptimalFormat(request.headers.get('accept') || '');
 
-  const { data: claimsData } = await supabase.auth.getClaims();
-
-  if (!claimsData?.claims) {
+  if (!userId) {
     const [{ sources }] = await Promise.all([getActiveStreams({ supabase })]);
     return json({
       playlists: [],
@@ -39,8 +37,8 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     { profile: userProfile },
     { sources },
   ] = await Promise.all([
-    getUserPlaylists({ supabase, preferredImageFormat }),
-    getProfile({ supabase }),
+    getUserPlaylists({ supabase, userId, preferredImageFormat }),
+    getProfileById({ userId }),
     getActiveStreams({ supabase }),
   ]);
 

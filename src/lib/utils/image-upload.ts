@@ -1,6 +1,4 @@
-import { IMAGES_BUCKET } from '$lib/constants/images';
-import type { Database } from '$lib/supabase/database.types';
-import type { SupabaseClient } from '@supabase/supabase-js';
+import { CONTENT_IMAGES_BUCKET, deleteObject } from '$lib/server/s3';
 
 /**
  * Converts a data URL to a File object
@@ -20,31 +18,18 @@ export function dataURLtoFile(dataURL: string, filename: string): File {
 }
 
 /**
- * Deletes a playlist image from Supabase Storage
+ * Deletes a playlist image from S3 (content-images bucket)
  */
 export async function deletePlaylistImage({
   imagePath,
-  supabase,
 }: {
   imagePath: string;
-  supabase: SupabaseClient<Database>;
 }): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
-    const { error } = await supabase.storage
-      .from(IMAGES_BUCKET)
-      .remove([imagePath]);
-
-    if (error) {
-      console.error('Storage deletion error:', error);
-      return {
-        success: false,
-        error: error.message,
-      };
-    }
-
+    await deleteObject(CONTENT_IMAGES_BUCKET, imagePath);
     return { success: true };
   } catch (err) {
     console.error('Deletion error:', err);

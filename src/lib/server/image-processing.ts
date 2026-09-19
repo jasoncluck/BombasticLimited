@@ -1,7 +1,7 @@
 import sharp from 'sharp';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { validateAndAdjustCropDimensions } from '$lib/utils/dynamic-crop-dimensions';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { PUBLIC_CONTENT_IMAGES_URL } from '$env/static/public';
 import type { PlaylistImageProperties } from '$lib/supabase/playlists';
 
 // **SPEED-BALANCED** image processing configuration
@@ -23,7 +23,7 @@ const ALLOWED_DOMAINS = [
   'i3.ytimg.com',
   'i4.ytimg.com',
   'static-cdn.jtvnw.net',
-  PUBLIC_SUPABASE_URL,
+  new URL(PUBLIC_CONTENT_IMAGES_URL).hostname,
 ];
 
 // Validate URL domain for security

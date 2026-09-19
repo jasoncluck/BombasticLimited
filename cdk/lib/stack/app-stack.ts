@@ -6,17 +6,18 @@ interface AppStackProps extends cdk.StackProps {
   stage: 'Production' | 'Staging';
   environmentVariables: {
     GOOGLE_API_KEY?: string;
-    PUBLIC_SUPABASE_URL?: string;
-    SUPABASE_SERVICE_API_KEY?: string;
-    // SUPABASE_DB_URL?: string;
+    NEON_DATABASE_URL?: string;
   };
+  cognitoUserPoolId: string;
+  cognitoRegion: string;
 }
 
 export class AppStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AppStackProps) {
     super(scope, id, props);
 
-    const { stage, environmentVariables } = props;
+    const { stage, environmentVariables, cognitoUserPoolId, cognitoRegion } =
+      props;
 
     // Enable deletion protection for production
     if (stage === 'Production') {
@@ -27,6 +28,8 @@ export class AppStack extends cdk.Stack {
       stackName: `VideoStack-${stage}`,
       stage,
       environmentVariables,
+      cognitoUserPoolId,
+      cognitoRegion,
     });
 
     if (stage === 'Production') {

@@ -1,9 +1,7 @@
 <script lang="ts">
-  import type {
-    PostgrestError,
-    Session,
-    SupabaseClient,
-  } from '@supabase/supabase-js';
+  import type { PostgrestError } from '@supabase/postgrest-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+  import type { AppSession as Session } from '$lib/types/session';
   import { onMount, onDestroy } from 'svelte';
   import VideoEmbed from '$lib/components/video/video-embed.svelte';
   import {
@@ -37,7 +35,7 @@
     contentFilter,
   }: {
     video: Video;
-    supabase: SupabaseClient;
+    supabase: NeonPostgrestClient;
     session: Session | null;
     durationSeconds: number;
     contentFilter?: CombinedContentFilter;

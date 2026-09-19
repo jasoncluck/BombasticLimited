@@ -1,10 +1,7 @@
 import type { ImageUploadResult } from './bug-report';
 import { browser } from '$app/environment';
-import type { Session, SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '$lib/supabase/database.types';
 
 // Configuration
-const BUG_REPORTS_BUCKET = 'bug-report-images';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 
@@ -81,29 +78,14 @@ async function compressImage(
 }
 
 /**
- * Generate a unique filename for the bug report image
+ * Upload image to S3 for a bug report. Gets a presigned PUT URL (and a
+ * presigned GET URL for display) from the server, then uploads directly
+ * to S3 from the browser.
  */
-function generateImageFilename(originalName: string, userId?: string): string {
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-  const userPrefix = userId ? `user-${userId}` : 'anonymous';
-  const extension = originalName.split('.').pop()?.toLowerCase() || 'jpg';
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
-
-  return `${userPrefix}/${timestamp}-${randomSuffix}.${extension}`;
-}
-
-/**
- * Upload image to Supabase storage for bug report
- * This approach uploads to a dedicated bucket with proper file sanitization via server-side processing
- */
-export async function uploadBugReportImageToSupabase({
+export async function uploadBugReportImage({
   file,
-  session,
-  supabase,
 }: {
   file: File;
-  supabase: SupabaseClient;
-  session: Session | null;
 }): Promise<ImageUploadResult> {
   try {
     if (!browser) {
@@ -135,53 +117,34 @@ export async function uploadBugReportImageToSupabase({
       };
     }
 
-    const filename = generateImageFilename(file.name, session?.user.id);
-
-    // Upload to Supabase storage
-    const { data, error } = await supabase.storage
-      .from(BUG_REPORTS_BUCKET)
-      .upload(filename, processedFile, {
-        cacheControl: '3600',
-        upsert: false,
+    const urlResponse = await fetch('/api/bug-report/upload', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        filename: file.name,
         contentType: processedFile.type,
-      });
+      }),
+    });
 
-    if (error) {
-      console.error('Supabase storage error:', error);
-      return {
-        success: false,
-        error: `Upload failed: ${error.message}`,
-      };
+    if (!urlResponse.ok) {
+      return { success: false, error: 'Failed to prepare upload' };
     }
 
-    // Create a signed URL with 1 month expiry for the uploaded image
-    const expiresIn = 30 * 24 * 60 * 60; // 30 days in seconds
-    const { data: signedUrlData, error: signedUrlError } =
-      await supabase.storage
-        .from(BUG_REPORTS_BUCKET)
-        .createSignedUrl(data.path, expiresIn);
+    const { putUrl, getUrl, key } = await urlResponse.json();
 
-    if (signedUrlError) {
-      console.error('Error creating signed URL:', signedUrlError);
-      // Fallback to public URL if signed URL creation fails
-      const { data: publicUrlData } = supabase.storage
-        .from(BUG_REPORTS_BUCKET)
-        .getPublicUrl(data.path);
+    const putResponse = await fetch(putUrl, {
+      method: 'PUT',
+      headers: { 'Content-Type': processedFile.type },
+      body: processedFile,
+    });
 
-      return {
-        success: true,
-        url: publicUrlData.publicUrl,
-        path: data.path,
-      };
+    if (!putResponse.ok) {
+      return { success: false, error: 'Upload failed' };
     }
 
-    return {
-      success: true,
-      url: signedUrlData.signedUrl,
-      path: data.path,
-    };
+    return { success: true, url: getUrl, path: key };
   } catch (error) {
-    console.error('Error uploading image to Supabase:', error);
+    console.error('Error uploading bug report image:', error);
     return {
       success: false,
       error: error instanceof Error ? error.message : 'Failed to upload image',
@@ -190,31 +153,26 @@ export async function uploadBugReportImageToSupabase({
 }
 
 /**
- * Delete an uploaded image from Supabase storage
- * Used for cleanup if bug report submission fails
+ * Delete an uploaded image from S3.
+ * Used for cleanup if bug report submission fails.
  */
 export async function deleteBugReportImage({
   path,
-  supabase,
 }: {
   path: string;
-  supabase: SupabaseClient<Database>;
 }): Promise<boolean> {
   try {
     if (!browser) {
       return false;
     }
 
-    const { error } = await supabase.storage
-      .from(BUG_REPORTS_BUCKET)
-      .remove([path]);
+    const response = await fetch('/api/bug-report/upload', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: path }),
+    });
 
-    if (error) {
-      console.error('Error deleting image:', error);
-      return false;
-    }
-
-    return true;
+    return response.ok;
   } catch (error) {
     console.error('Error deleting image:', error);
     return false;
@@ -243,5 +201,4 @@ export const IMAGE_UPLOAD_CONFIG = {
   allowedTypes: ALLOWED_TYPES,
   maxImages: 3,
   maxFileSizeMB: MAX_FILE_SIZE / (1024 * 1024),
-  bucket: BUG_REPORTS_BUCKET,
 } as const;

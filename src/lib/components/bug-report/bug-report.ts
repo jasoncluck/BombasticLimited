@@ -1,6 +1,6 @@
 import posthog from 'posthog-js';
 import { browser } from '$app/environment';
-import type { Session } from '@supabase/supabase-js';
+import type { AppSession as Session } from '$lib/types/session';
 import type {
   BugReportFormData,
   BugReportMetadata,

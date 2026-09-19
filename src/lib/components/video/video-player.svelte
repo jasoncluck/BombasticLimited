@@ -5,7 +5,8 @@
   import { page } from '$app/state';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Video } from '$lib/supabase/videos';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { CombinedContentFilter } from '../content/content-filter';
   import ContentDropdown from '../content/content-dropdown.svelte';
   import { Ellipsis } from '@lucide/svelte';
@@ -29,7 +30,7 @@
     video: Video;
     playlist?: Playlist | null;
     contentFilter: CombinedContentFilter;
-    supabase: SupabaseClient;
+    supabase: NeonPostgrestClient;
     session: Session | null;
   } = $props();
 

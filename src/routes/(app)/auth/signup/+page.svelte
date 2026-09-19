@@ -2,7 +2,7 @@
   import type { SuperValidated } from 'sveltekit-superforms';
   import type { SignupSchema } from '$lib/schema/auth-schema';
   import SignupForm from './signup-form.svelte';
-  import type { SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { Database } from '$lib/supabase/database.types';
   import { Alert, AlertDescription } from '$lib/components/ui/alert';
   import { AlertTriangle } from '@lucide/svelte';
@@ -12,7 +12,7 @@
   }: {
     data: {
       signupForm: SuperValidated<SignupSchema>;
-      supabase: SupabaseClient<Database>;
+      supabase: NeonPostgrestClient<Database>;
       isBombasticDomain: boolean;
     };
   } = $props();

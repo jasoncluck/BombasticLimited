@@ -5,7 +5,7 @@
 /// <reference lib="DOM.Iterable" />
 
 import { build, files, version } from '$service-worker';
-import { PUBLIC_SUPABASE_URL } from '$env/static/public';
+import { PUBLIC_CONTENT_IMAGES_URL } from '$env/static/public';
 
 const sw = self as unknown as ServiceWorkerGlobalScope;
 
@@ -45,6 +45,8 @@ const STATIC_ASSETS: readonly string[] = [...build, ...files];
 const STATIC_EXTENSIONS =
   /\.(js|css|woff2?|ttf|eot|jpg|jpeg|png|gif|svg|webp|ico|avif)$/;
 
+const CONTENT_IMAGES_HOSTNAME = new URL(PUBLIC_CONTENT_IMAGES_URL).hostname;
+
 // Image domains
 const IMAGE_DOMAINS = [
   'i.ytimg.com',
@@ -54,16 +56,8 @@ const IMAGE_DOMAINS = [
   'i3.ytimg.com',
   'i4.ytimg.com',
   'static-cdn.jtvnw.net',
+  CONTENT_IMAGES_HOSTNAME,
 ] as const;
-
-// Supabase hostname
-const SUPABASE_HOSTNAME: string | null = (() => {
-  try {
-    return new URL(PUBLIC_SUPABASE_URL).hostname;
-  } catch {
-    return null;
-  }
-})();
 
 // Simplified request tracking for better performance
 interface TrackedRequest {
@@ -144,13 +138,6 @@ const updateNavigation = (referrer: string): void => {
   }
 };
 
-const isSupabaseImageUrl = (url: URL): boolean => {
-  if (!SUPABASE_HOSTNAME) return false;
-  return (
-    url.hostname === SUPABASE_HOSTNAME && url.pathname.includes('/storage/')
-  );
-};
-
 const isImageUrl = (url: URL): boolean => {
   return STATIC_EXTENSIONS.test(url.pathname);
 };
@@ -159,7 +146,7 @@ const shouldCacheAsImage = (url: URL): boolean => {
   const isKnownImageDomain = (IMAGE_DOMAINS as readonly string[]).includes(
     url.hostname
   );
-  return (isKnownImageDomain && isImageUrl(url)) || isSupabaseImageUrl(url);
+  return isKnownImageDomain && isImageUrl(url);
 };
 
 // Optimized cache key creation with better normalization
@@ -202,7 +189,7 @@ const createCachedResponse = (originalResponse: Response): Response => {
 };
 
 const createCorsRequest = (originalRequest: Request): Request => {
-  if (isSupabaseImageUrl(new URL(originalRequest.url))) {
+  if (new URL(originalRequest.url).hostname === CONTENT_IMAGES_HOSTNAME) {
     const headers = new Headers();
     headers.set('Accept', originalRequest.headers.get('Accept') || 'image/*');
 

@@ -3,66 +3,33 @@ import {
   handleUpdateProfileContentDisplay,
   getUserInitials,
 } from '../profile-service';
-import type { SupabaseClient, Session } from '@supabase/supabase-js';
-import type { Database } from '$lib/supabase/database.types';
 
 // Mock modules
-vi.mock('$lib/supabase/user-profiles', () => ({
-  updateProfileContentDisplay: vi.fn(),
-}));
-
 vi.mock('$app/navigation', () => ({
   invalidateAll: vi.fn(),
 }));
 
 describe('profile service module', () => {
-  let mockSupabase: SupabaseClient<Database>;
-  let mockSession: Session;
-
   beforeEach(() => {
-    mockSupabase = {} as any;
-    mockSession = { user: { id: 'user123' } } as any;
+    global.fetch = vi.fn().mockResolvedValue({ ok: true });
     vi.clearAllMocks();
   });
 
   describe('handleUpdateProfileContentDisplay', () => {
     it('should update profile content display and invalidate cache', async () => {
-      const { updateProfileContentDisplay } = await import(
-        '$lib/supabase/user-profiles'
-      );
       const { invalidateAll } = await import('$app/navigation');
 
       await handleUpdateProfileContentDisplay({
         contentDisplay: 'TILES',
-        supabase: mockSupabase,
-        session: mockSession,
       });
 
-      expect(updateProfileContentDisplay).toHaveBeenCalledWith({
-        contentDisplay: 'TILES',
-        supabase: mockSupabase,
-        session: mockSession,
-      });
-      expect(invalidateAll).toHaveBeenCalled();
-    });
-
-    it('should handle null session', async () => {
-      const { updateProfileContentDisplay } = await import(
-        '$lib/supabase/user-profiles'
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/profile/content-display',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ contentDisplay: 'TILES' }),
+        })
       );
-      const { invalidateAll } = await import('$app/navigation');
-
-      await handleUpdateProfileContentDisplay({
-        contentDisplay: 'TABLE',
-        supabase: mockSupabase,
-        session: null,
-      });
-
-      expect(updateProfileContentDisplay).toHaveBeenCalledWith({
-        contentDisplay: 'TABLE',
-        supabase: mockSupabase,
-        session: null,
-      });
       expect(invalidateAll).toHaveBeenCalled();
     });
   });

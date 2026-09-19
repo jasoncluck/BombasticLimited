@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Playlist } from '$lib/supabase/playlists';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import {
     DEFAULT_SECTION_ID,
@@ -26,7 +27,7 @@
     displayLabel: boolean;
     contentFilter?: CombinedContentFilter;
     sectionId?: string;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 

@@ -6,8 +6,7 @@ import {
   getUserProfile,
   checkIfUsernameIsUnique,
   getUserDiscordIdentity,
-  linkDiscordIdentity,
-  unlinkDiscordIdentity,
+  syncDiscordIdentity,
 } from '$lib/supabase/user-profiles';
 
 // Mock dependencies
@@ -28,6 +27,27 @@ vi.mock('sveltekit-flash-message/server', () => ({
   }),
   setFlash: vi.fn(),
 }));
+
+// Stub the Cognito/Neon server modules so this suite never makes a real
+// network call (previously hung the whole test run — these mocks don't
+// attempt to replicate real Cognito behavior, see TODO below).
+vi.mock('$lib/server/cognito', () => ({
+  updateEmailAttribute: vi.fn().mockResolvedValue({}),
+  verifyEmailAttribute: vi.fn().mockResolvedValue({}),
+  forgotPassword: vi.fn().mockResolvedValue({}),
+  adminDeleteUser: vi.fn().mockResolvedValue({}),
+}));
+vi.mock('$lib/server/profile', () => ({
+  deleteUserData: vi.fn().mockResolvedValue(undefined),
+}));
+vi.mock('$lib/server/session', () => ({
+  clearSessionCookies: vi.fn(),
+}));
+// TODO: this suite still asserts against the old Supabase-based
+// implementation (supabase.auth.*, supabase.rpc('delete_user')) and
+// pre-dates the zod4 migration (mocks only `zod`, not `zod4`, which
+// `+page.server.ts` now imports) — it compiles but doesn't meaningfully
+// test the current Cognito-based actions. Needs a real rewrite.
 
 // Import the mocked redirect from sveltekit-flash-message/server
 import { redirect as flashRedirect } from 'sveltekit-flash-message/server';

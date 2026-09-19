@@ -9,12 +9,10 @@ import { adminNotificationSchema } from '$lib/schema/admin-notification-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase },
+  locals: { supabase, userId },
   parent,
 }) => {
-  const { data: claimsData, error: claimsError } =
-    await supabase.auth.getClaims();
-  if (!claimsData?.claims || claimsError) {
+  if (!userId) {
     throw redirect(302, '/auth/login');
   }
 
@@ -51,11 +49,9 @@ export const actions: Actions = {
   sendGlobalNotification: async ({
     request,
     cookies,
-    locals: { supabase },
+    locals: { supabase, userId },
   }) => {
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
-    if (!claimsData?.claims || claimsError) {
+    if (!userId) {
       return fail(401, { error: 'Not authenticated' });
     }
 
@@ -80,7 +76,7 @@ export const actions: Actions = {
         is_test: false, // Production notification
         metadata: {
           source: 'admin_panel',
-          created_by: claimsData.claims.sub,
+          created_by: userId,
           created_at: new Date().toISOString(),
         },
         start_datetime: startDatetimeUtc,
@@ -118,10 +114,12 @@ export const actions: Actions = {
     };
   },
 
-  sendTestNotification: async ({ request, cookies, locals: { supabase } }) => {
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
-    if (!claimsData?.claims || claimsError) {
+  sendTestNotification: async ({
+    request,
+    cookies,
+    locals: { supabase, userId },
+  }) => {
+    if (!userId) {
       return fail(401, { error: 'Not authenticated' });
     }
 
@@ -152,10 +150,10 @@ export const actions: Actions = {
           title,
           message,
           is_test: true, // Test notification
-          user_id: claimsData.claims.sub,
+          user_id: userId,
           metadata: {
             source: 'admin_test',
-            created_by: claimsData.claims.sub,
+            created_by: userId,
             created_at: new Date().toISOString(),
           },
           start_datetime: startDatetimeUtc,
@@ -204,10 +202,8 @@ export const actions: Actions = {
     }
   },
 
-  manualCleanup: async ({ cookies, locals: { supabase } }) => {
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
-    if (!claimsData?.claims || claimsError) {
+  manualCleanup: async ({ cookies, locals: { supabase, userId } }) => {
+    if (!userId) {
       return fail(401, { error: 'Not authenticated' });
     }
 
@@ -254,10 +250,12 @@ export const actions: Actions = {
     }
   },
 
-  cancelNotification: async ({ request, cookies, locals: { supabase } }) => {
-    const { data: claimsData, error: claimsError } =
-      await supabase.auth.getClaims();
-    if (!claimsData?.claims || claimsError) {
+  cancelNotification: async ({
+    request,
+    cookies,
+    locals: { supabase, userId },
+  }) => {
+    if (!userId) {
       return fail(401, { error: 'Not authenticated' });
     }
 

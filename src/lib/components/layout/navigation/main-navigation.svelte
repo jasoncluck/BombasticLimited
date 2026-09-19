@@ -5,7 +5,8 @@
   import SideDrawer from '$lib/components/side-drawer.svelte';
   import SearchInput from './search-input.svelte';
   import UserMenu from './user-menu.svelte';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { UserProfile } from '$lib/supabase/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
@@ -20,7 +21,7 @@
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     openAccountDrawer: boolean;
   } = $props();
 

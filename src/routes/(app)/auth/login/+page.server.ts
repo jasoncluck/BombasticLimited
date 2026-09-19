@@ -3,11 +3,17 @@ import { fail, superValidate } from 'sveltekit-superforms';
 import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import { loginSchema } from '$lib/schema/auth-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
+import {
+  signInWithPassword,
+  resendConfirmationCode,
+  verifyIdToken,
+} from '$lib/server/cognito';
+import { setSessionCookies } from '$lib/server/session';
+import { ensureProfileExists } from '$lib/server/profile';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { supabase } }) => {
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (claimsData?.claims) {
+export const load: PageServerLoad = async ({ locals: { userId } }) => {
+  if (userId) {
     redirect(303, '/');
   }
 
@@ -19,21 +25,15 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 };
 
 export const actions: Actions = {
-  login: async ({ request, cookies, locals: { supabase } }) => {
+  login: async ({ request, cookies }) => {
     const form = await superValidate(request, zod(loginSchema));
     const { email, password } = form.data;
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { tokens, error } = await signInWithPassword({ email, password });
 
     if (error) {
       if (error.code === 'email_not_confirmed') {
-        await supabase.auth.resend({
-          type: 'signup',
-          email,
-        });
+        await resendConfirmationCode({ email });
 
         redirect(
           `/auth/verify?email=${email}`,
@@ -47,8 +47,15 @@ export const actions: Actions = {
 
       setFlash({ type: 'error', message: error.message }, cookies);
       return fail(400, { form });
-    } else {
-      redirect(303, '/');
     }
+
+    setSessionCookies(cookies, tokens!);
+
+    const claims = await verifyIdToken(tokens!.idToken);
+    if (claims) {
+      await ensureProfileExists({ userId: claims.sub, email });
+    }
+
+    redirect(303, '/');
   },
 };

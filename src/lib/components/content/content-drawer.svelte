@@ -6,7 +6,8 @@
   import * as Drawer from '$lib/components/ui/drawer';
   import { type Playlist } from '$lib/supabase/playlists';
   import type { Database } from '$lib/supabase/database.types';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import {
     handleAddVideosToPlaylist,
     handleRemoveVideosFromPlaylist,
@@ -51,7 +52,7 @@
     playlists: Playlist[];
     sectionId?: string;
     children: Snippet<[]>;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
     form?: SuperValidated<PlaylistSchema>;
@@ -141,6 +142,7 @@
         position: newPosition,
         videos: [item as Video],
         supabase,
+        userId: session.user.id,
       });
     } catch (error) {
       console.error('Error updating video position:', error);
@@ -359,11 +361,13 @@
             class="drawer-button justify-start"
             variant="ghost"
             onclick={() => {
+              if (!session) return;
               handleRemoveVideosFromPlaylist({
                 videos: operationVideos,
                 sidebarState,
                 playlist,
                 supabase,
+                userId: session.user.id,
               });
 
               contentState.openDrawerSection = null;

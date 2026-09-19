@@ -15,18 +15,7 @@
   } from '$lib/components/ui/button/button.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
-  import type {
-    Session,
-    SupabaseClient,
-    UserIdentity,
-  } from '@supabase/supabase-js';
-  import {
-    checkIfUsernameIsUnique,
-    linkDiscordIdentity,
-    unlinkDiscordIdentity,
-    type UserProfile,
-  } from '$lib/supabase/user-profiles';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { UserProfile } from '$lib/supabase/user-profiles';
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import * as Dialog from '$lib/components/ui/dialog/index.js';
@@ -34,23 +23,26 @@
   import DiscordIcon from '$lib/assets/icons/DiscordIcon.svelte';
 
   import Label from '$lib/components/ui/label/label.svelte';
-  import { goto, invalidate } from '$app/navigation';
-  import { showNotification } from '$lib/supabase/notifications';
+  import { goto } from '$app/navigation';
+
+  interface DiscordIdentity {
+    provider: 'discord';
+    userSub: string;
+  }
 
   let {
     data,
   }: {
     data: {
       profile: UserProfile;
-      discordIdentity: UserIdentity;
+      discordIdentity: DiscordIdentity | null;
       emailForm: SuperValidated<EmailSchema>;
       usernameForm: SuperValidated<UsernameSchema>;
-      supabase: SupabaseClient<Database>;
-      session: Session;
+      userEmail: string | null;
     };
   } = $props();
 
-  const { profile, discordIdentity, supabase, session } = $derived(data);
+  const { profile, discordIdentity, userEmail } = $derived(data);
 
   const flash = getFlash(page);
 
@@ -111,17 +103,13 @@
 
       timeoutId = setTimeout(async () => {
         try {
-          const result = await checkIfUsernameIsUnique({
-            username: currentUsername,
-            supabase,
-          });
+          const response = await fetch(
+            `/api/username-available?username=${encodeURIComponent(currentUsername)}`
+          );
+          const { available } = await response.json();
 
           if (currentUsername === $usernameFormData.username) {
-            if (typeof result === 'boolean') {
-              isUsernameUnique = result;
-            } else {
-              isUsernameUnique = false;
-            }
+            isUsernameUnique = available === true;
           }
         } catch {
           if (currentUsername === $usernameFormData.username) {
@@ -170,7 +158,7 @@
                 type="submit"
                 variant="secondary"
                 class="w-full cursor-pointer @lg:max-w-24"
-                disabled={$emailFormData.email === session.user.email}
+                disabled={$emailFormData.email === userEmail}
               >
                 Update
               </Button>
@@ -315,33 +303,20 @@
               <DiscordIcon size={20} class="text-[#5865F2]" />
             {/if}
             <div class="flex-1">
-              <p class="text-sm font-medium">
-                {discordIdentity.identity_data?.full_name ||
-                  discordIdentity.identity_data?.username ||
-                  'Discord User'}
-              </p>
+              <p class="text-sm font-medium">Discord</p>
               <p class="text-muted-foreground text-xs">Account linked</p>
             </div>
           </div>
           {#if profile.providers.length > 1}
-            <Button
-              type="submit"
-              variant="destructive"
-              class="w-full cursor-pointer @lg:w-auto"
-              onclick={async (e) => {
-                e.preventDefault();
-                const { error } = await unlinkDiscordIdentity({
-                  supabase,
-                });
-
-                if (error) {
-                  showNotification(error.message, 'error');
-                }
-                invalidate('supabase:db:profiles');
-              }}
-            >
-              Unlink
-            </Button>
+            <form method="POST" action="?/unlinkDiscord" use:enhance>
+              <Button
+                type="submit"
+                variant="destructive"
+                class="w-full cursor-pointer @lg:w-auto"
+              >
+                Unlink
+              </Button>
+            </form>
           {/if}
         </div>
       {:else}
@@ -355,24 +330,10 @@
             <span class="text-sm">No Discord account linked</span>
           </div>
           <Button
-            type="submit"
+            type="button"
             variant="secondary"
             class="w-full cursor-pointer @lg:w-auto"
-            onclick={async (e) => {
-              e.preventDefault();
-              const { data, error } = await linkDiscordIdentity({
-                supabase,
-                redirectTo: `${page.url.origin}/account`,
-              });
-
-              if (error) {
-                showNotification(error.message, 'error');
-              }
-
-              if (data.url) {
-                goto(data.url);
-              }
-            }}
+            onclick={() => goto('/auth/discord/link')}
           >
             <DiscordIcon size={16} class="mr-2 text-[#5865F2]" />
             Link Discord

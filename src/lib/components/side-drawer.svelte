@@ -17,14 +17,14 @@
     handleCreatePlaylist,
     handleUpdatePlaylistPosition,
   } from './playlist/playlist-service';
-  import type { Session, SupabaseClient } from '@supabase/supabase-js';
+  import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
+import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import { fade } from 'svelte/transition';
   import type { Playlist } from '$lib/supabase/playlists';
   import ScrollArea from './ui/scroll-area/scroll-area.svelte';
   import { page } from '$app/state';
   import { flip } from 'svelte/animate';
-  import { updateProfileSources } from '$lib/supabase/user-profiles';
   import Badge from './ui/badge/badge.svelte';
   import EditListDrawer from './content/drawer/edit-list-drawer.svelte';
   import EditSourceDrawer from './content/drawer/edit-source-drawer.svelte';
@@ -37,7 +37,7 @@
     supabase,
   }: {
     handleLogout: () => void;
-    supabase: SupabaseClient<Database>;
+    supabase: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 
@@ -87,9 +87,10 @@
     };
 
     try {
-      await updateProfileSources({
-        sources,
-        supabase,
+      await fetch('/api/profile/sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sources }),
       });
     } catch (error) {
       console.error('Error updating source positions:', error);

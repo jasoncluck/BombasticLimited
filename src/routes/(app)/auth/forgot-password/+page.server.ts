@@ -3,13 +3,13 @@ import { fail, superValidate } from 'sveltekit-superforms';
 import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import { forgotPasswordSchema } from '$lib/schema/auth-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
+import { forgotPassword } from '$lib/server/cognito';
 import type { PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals: { supabase } }) => {
+export const load: PageServerLoad = async ({ locals: { userId } }) => {
   const form = await superValidate(zod(forgotPasswordSchema));
 
-  const { data: claimsData } = await supabase.auth.getClaims();
-  if (claimsData?.claims) {
+  if (userId) {
     redirect(303, '/');
   }
 
@@ -19,7 +19,7 @@ export const load: PageServerLoad = async ({ locals: { supabase } }) => {
 };
 
 export const actions: Actions = {
-  resetPassword: async ({ request, cookies, locals: { supabase } }) => {
+  resetPassword: async ({ request, cookies }) => {
     const form = await superValidate(request, zod(forgotPasswordSchema));
     const { email } = form.data;
 
@@ -27,23 +27,20 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `/auth/password/update`,
-    });
+    const { error } = await forgotPassword({ email });
 
     if (error) {
       setFlash({ type: 'error', message: error.message }, cookies);
       return fail(400, { form });
     }
 
-    setFlash(
+    redirect(
+      `/auth/password/update?email=${encodeURIComponent(email)}`,
       {
         type: 'success',
-        message: 'Password reset email sent - check your inbox.',
+        message: 'Password reset code sent - check your inbox.',
       },
       cookies
     );
-
-    return { form };
   },
 };
