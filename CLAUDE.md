@@ -158,8 +158,20 @@ metadata.
 
 ### Image Processing
 
+Playlist thumbnails only, as of September 2026 — video thumbnails render
+straight from `thumbnail_url` (YouTube's own JPEG); they used to go through
+the same WebP/AVIF pipeline but it was removed (custom cropping/sizing is
+only needed for playlists, and video thumbnails have a much higher volume,
+which was burning through Trigger.dev's compute quota).
+
 - `src/lib/server/image-processing.ts` — Server-side Sharp processing
 - `src/trigger/image-processing-worker.ts` — Trigger.dev background job
+  (crop/resize/encode a playlist thumbnail to WebP+AVIF, upload to S3).
+  Triggered by `cdk/lib/lambda/process-images.ts`, an EventBridge-scheduled
+  queue orchestrator that polls the `image_processing_jobs` table.
+- `scripts/process-images-locally.ts` — drains that same queue in-process
+  (no Trigger.dev) for when Trigger.dev compute is exhausted; run with
+  `npx tsx scripts/process-images-locally.ts`
 - `DISABLE_IMAGE_PROCESSING=true` env var disables processing in dev
 
 ### Testing Conventions
