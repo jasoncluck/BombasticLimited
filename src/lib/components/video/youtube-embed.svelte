@@ -23,7 +23,6 @@
   } from './video-service';
   import { getContentState } from '$lib/state/content.svelte';
   import { getPodcastPlayerState } from '$lib/state/podcast-player.svelte';
-  import { SOURCE_INFO } from '$lib/constants/source';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -83,9 +82,9 @@
 
   // Get content state for tracking pending operations
   const contentState = getContentState();
-  // Shared with the podcast player bar: starting this video pauses a
-  // playing podcast, and the bar shows this video's title/length while
-  // it's playing (see podcast-player.svelte.ts for the coordination logic).
+  // Video plays through YouTube's own default controls — the podcast
+  // player bar is podcast-only. This just keeps the two from ever making
+  // sound at once (see podcast-player.svelte.ts for the coordination logic).
   const podcastPlayerState = getPodcastPlayerState();
 
   let queryParamTimestamp = $state(0);
@@ -105,7 +104,6 @@
   // Cleanup tracking
   let cleanupFunctions: (() => void)[] = [];
   let seekDetectionInterval: ReturnType<typeof setInterval> | null = null;
-  let videoProgressInterval: ReturnType<typeof setInterval> | null = null;
 
   // Watch for URL parameter changes
   $effect(() => {
@@ -330,22 +328,6 @@
     isPlayerReady = true;
   }
 
-  // Reports this video's play/pause state and progress to the shared
-  // podcast/video player-bar coordinator. Starting playback here pauses a
-  // playing podcast (see PodcastPlayerStateClass.updateVideoState).
-  function reportVideoState(): void {
-    if (!player) return;
-
-    podcastPlayerState.updateVideoState({
-      id: video.id,
-      title: video.title,
-      channelName: SOURCE_INFO[video.source].displayName,
-      currentTime: player.getCurrentTime() || 0,
-      duration: player.getDuration() || 0,
-      isPlaying: player.getPlayerState() === 1,
-    });
-  }
-
   // Handle YouTube player state changes for video history tracking
   function onPlayerStateChange(event: YouTubeStateChangeEvent): void {
     if (!event.target) {
@@ -366,21 +348,20 @@
           watchTimeTracker.onPlay(currentTime);
         }
         isActuallyPlaying = true;
-        reportVideoState();
+        // Pauses any playing podcast — the two shouldn't play at once.
+        podcastPlayerState.notifyVideoPlaying();
         break;
       case 2: // Paused
         if (watchTimeTracker) {
           watchTimeTracker.onPause(currentTime);
         }
         isActuallyPlaying = false;
-        reportVideoState();
         break;
       case 0: // Ended
         if (watchTimeTracker) {
           watchTimeTracker.onPause(currentTime);
         }
         isActuallyPlaying = false;
-        reportVideoState();
         break;
       case 3: // Buffering
         // Don't change isActuallyPlaying state during buffering
@@ -416,24 +397,6 @@
       if (seekDetectionInterval) {
         clearInterval(seekDetectionInterval);
         seekDetectionInterval = null;
-      }
-    };
-  });
-
-  // Keeps the player bar's progress display in sync while playing —
-  // separate from the tracker above since this should work whether or not
-  // the viewer is logged in.
-  $effect(() => {
-    if (!player || !isActuallyPlaying || videoProgressInterval) {
-      return;
-    }
-
-    videoProgressInterval = setInterval(reportVideoState, 1000);
-
-    return () => {
-      if (videoProgressInterval) {
-        clearInterval(videoProgressInterval);
-        videoProgressInterval = null;
       }
     };
   });
@@ -515,12 +478,6 @@
             origin: window.location.origin,
             hl: 'en',
             iv_load_policy: 1,
-            // Native chrome + YouTube's own keyboard shortcuts are both
-            // off — playback now goes entirely through the persistent
-            // player bar (play/pause/seek/skip) and the global h/j/k/l
-            // shortcuts, shared with the podcast player.
-            controls: 0,
-            disablekb: 1,
           },
           events: {
             onReady: onPlayerReady,
@@ -529,14 +486,7 @@
         });
 
         podcastPlayerState.registerVideoController({
-          play: () => player?.playVideo(),
           pause: () => player?.pauseVideo(),
-          seek: (delta) => {
-            if (player) {
-              player.seekTo(player.getCurrentTime() + delta);
-            }
-          },
-          seekTo: (seconds) => player?.seekTo(seconds),
         });
       }
       window.addEventListener('beforeunload', handleBeforeUnload);
@@ -550,9 +500,8 @@
           handleVisibilityChange
         );
         // Leaving the video page — it can no longer be paused from the
-        // player bar, and it's gone, so the bar shouldn't show it anymore.
+        // player bar.
         podcastPlayerState.registerVideoController(null);
-        podcastPlayerState.updateVideoState(null);
       };
 
       cleanupFunctions.push(cleanup);
@@ -587,10 +536,6 @@
       clearInterval(seekDetectionInterval);
       seekDetectionInterval = null;
     }
-    if (videoProgressInterval) {
-      clearInterval(videoProgressInterval);
-      videoProgressInterval = null;
-    }
 
     if (typeof window !== 'undefined') {
       const savePromise = saveCurrentTime();
@@ -613,24 +558,4 @@
 
 <AspectRatio ratio={16 / 9} class="mx-auto flex w-full max-w-[1100px] ">
   <VideoEmbed divId="player" />
-  <!-- Sits on top of the iframe: without it, clicking the video would
-       focus the (cross-origin) YouTube iframe, and once focused it
-       swallows keydown events before they ever reach our global h/j/k/l
-       handler in the player bar. Doubles as click-anywhere-to-toggle now
-       that the native YouTube controls are hidden. -->
-  <button
-    type="button"
-    class="absolute top-0 left-0 h-full w-full cursor-pointer bg-transparent"
-    aria-label="Toggle play/pause"
-    onclick={() => podcastPlayerState.toggleVideoPlayPause()}
-  ></button>
-  <!-- YouTube still renders its own thin progress bar along the bottom
-       edge even with controls=0 (a longstanding IFrame API quirk with no
-       playerVars override) — we already show progress in the player bar,
-       so mask the native one. Can't reach into the iframe (cross-origin),
-       just cover it. -->
-  <div
-    class="pointer-events-none absolute right-0 bottom-0 left-0 h-2 bg-black"
-    aria-hidden="true"
-  ></div>
 </AspectRatio>

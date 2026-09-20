@@ -222,8 +222,7 @@ import type { AppSession as Session } from '$lib/types/session';
         </div>
       </div>
       <footer
-        class="mt-10 px-4 pb-8 text-center {podcastPlayerState.currentEpisode ||
-        podcastPlayerState.activeMedia === 'video'
+        class="mt-10 px-4 pb-8 text-center {podcastPlayerState.currentEpisode
           ? 'pb-24'
           : ''}"
       >

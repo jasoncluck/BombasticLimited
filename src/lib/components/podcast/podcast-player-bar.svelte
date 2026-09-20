@@ -27,28 +27,18 @@
   // keeps the effect below from fighting normal playback progress.
   const SEEK_THRESHOLD_SECONDS = 0.75;
 
-  // Local scrub position for each slider, decoupled from the real
-  // playback time while the user is actively dragging. Without this, the
-  // slider's bound value gets fought over: podcast currentTime is
-  // rewritten by ontimeupdate every ~250ms, and video currentTime by the
-  // 1s polling interval in youtube-embed.svelte, so a drag gesture keeps
-  // snapping back to the real (pre-seek) position instead of tracking the
-  // pointer. Real position only flows into these while NOT dragging;
-  // dragging only flows out, on release, via onValueCommit.
+  // Local scrub position, decoupled from the real playback time while the
+  // user is actively dragging. Without this, the slider's bound value gets
+  // fought over — currentTime is rewritten by ontimeupdate every ~250ms,
+  // so a drag gesture keeps snapping back to the real (pre-seek) position
+  // instead of tracking the pointer. Real position only flows in while NOT
+  // dragging; dragging only flows out, on release, via onValueCommit.
   let podcastScrubTime = $state(0);
   let isScrubbingPodcast = $state(false);
-  let videoScrubTime = $state(0);
-  let isScrubbingVideo = $state(false);
 
   $effect(() => {
     if (!isScrubbingPodcast) {
       podcastScrubTime = playerState.currentTime;
-    }
-  });
-
-  $effect(() => {
-    if (!isScrubbingVideo) {
-      videoScrubTime = playerState.nowPlayingVideo?.currentTime ?? 0;
     }
   });
 
@@ -142,10 +132,10 @@
     );
   });
 
-  // Global playback shortcuts, shared between podcasts and video (matches
-  // YouTube's own j/k/l convention, which used to come from YouTube's
-  // native controls — now hidden in favor of this bar): j/l seek ±10s,
-  // k toggles play/pause. h is intentionally unmapped.
+  // Global podcast playback shortcuts (matches YouTube's own j/k/l
+  // convention): j/l seek ±10s, k toggles play/pause. h is intentionally
+  // unmapped. Video plays through YouTube's own default controls/shortcuts
+  // instead, so these only apply while a podcast is loaded.
   function handleGlobalKeydown(event: KeyboardEvent): void {
     const target = event.target as HTMLElement | null;
     const isTypingTarget =
@@ -158,7 +148,7 @@
       event.metaKey ||
       event.ctrlKey ||
       event.altKey ||
-      (playerState.activeMedia !== 'video' && !playerState.currentEpisode)
+      !playerState.currentEpisode
     ) {
       return;
     }
@@ -166,27 +156,15 @@
     switch (event.key.toLowerCase()) {
       case 'j':
         event.preventDefault();
-        if (playerState.activeMedia === 'video') {
-          playerState.skipVideo(-10);
-        } else {
-          playerState.skip(-10);
-        }
+        playerState.skip(-10);
         break;
       case 'l':
         event.preventDefault();
-        if (playerState.activeMedia === 'video') {
-          playerState.skipVideo(10);
-        } else {
-          playerState.skip(10);
-        }
+        playerState.skip(10);
         break;
       case 'k':
         event.preventDefault();
-        if (playerState.activeMedia === 'video') {
-          playerState.toggleVideoPlayPause();
-        } else {
-          playerState.togglePlayPause();
-        }
+        playerState.togglePlayPause();
         break;
       default:
         break;
@@ -234,86 +212,7 @@
   preload="metadata"
 ></audio>
 
-{#if playerState.activeMedia === 'video' && playerState.nowPlayingVideo}
-  {@const video = playerState.nowPlayingVideo}
-  <div
-    class="bg-background fixed right-0 bottom-0 left-0 z-50 border-t shadow-lg"
-    data-testid="video-player-bar"
-  >
-    <div
-      class="mx-auto flex max-w-[1400px] items-center gap-3 px-3 py-2 sm:gap-4 sm:px-4"
-    >
-      <div class="flex min-w-0 flex-1 items-center gap-3">
-        <div class="min-w-0">
-          <p class="truncate text-sm font-medium" title={video.title}>
-            {video.title}
-          </p>
-          <p class="text-muted-foreground truncate text-xs">
-            {video.channelName}
-          </p>
-        </div>
-      </div>
-
-      <div class="flex flex-1 flex-col items-center gap-1">
-        <div class="flex items-center gap-1 sm:gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            class="hidden cursor-pointer sm:inline-flex"
-            title="Back 15 seconds"
-            onclick={() => playerState.skipVideo(-15)}
-          >
-            <SkipBack size={18} />
-          </Button>
-          <Button
-            variant="secondary"
-            size="icon"
-            class="cursor-pointer rounded-full"
-            title={video.isPlaying ? 'Pause' : 'Play'}
-            onclick={() => playerState.toggleVideoPlayPause()}
-          >
-            {#if video.isPlaying}
-              <Pause size={18} />
-            {:else}
-              <Play size={18} />
-            {/if}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="hidden cursor-pointer sm:inline-flex"
-            title="Forward 15 seconds"
-            onclick={() => playerState.skipVideo(15)}
-          >
-            <SkipForward size={18} />
-          </Button>
-        </div>
-        <div class="hidden w-full max-w-md items-center gap-2 sm:flex">
-          <span class="text-muted-foreground w-10 text-right text-xs">
-            {formatEpisodeDuration(videoScrubTime)}
-          </span>
-          <Slider
-            type="single"
-            bind:value={videoScrubTime}
-            max={video.duration || 1}
-            step={1}
-            onValueChange={() => (isScrubbingVideo = true)}
-            onValueCommit={(seconds) => {
-              isScrubbingVideo = false;
-              playerState.seekVideoTo(seconds);
-            }}
-            class="flex-1"
-          />
-          <span class="text-muted-foreground w-10 text-xs">
-            {formatEpisodeDuration(video.duration)}
-          </span>
-        </div>
-      </div>
-
-      <div class="flex flex-1 justify-end"></div>
-    </div>
-  </div>
-{:else if playerState.currentEpisode}
+{#if playerState.currentEpisode}
   {@const episode = playerState.currentEpisode}
   <div
     class="bg-background fixed right-0 bottom-0 left-0 z-50 border-t shadow-lg"
