@@ -1,6 +1,7 @@
 import type { PostgrestError } from '@supabase/postgrest-js';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { Database } from '../database.types';
+import type { Source } from '$lib/constants/source';
 import type {
   PlaylistVideosFilter,
   SortKey,
@@ -441,6 +442,7 @@ export async function searchPlaylists({
   preferredImageFormat,
   supabase,
   userId,
+  enabledSources,
 }: {
   searchString: string;
   limit?: number;
@@ -448,6 +450,12 @@ export async function searchPlaylists({
   supabase: NeonPostgrestClient<Database>;
   userId?: string | null;
   preferredImageFormat: string;
+  /**
+   * Restricts "official" playlists (ones owned by a seed source profile,
+   * e.g. giantbomb) to these sources — unofficial/user-created playlists are
+   * never filtered. Omit or pass null/undefined for no restriction.
+   */
+  enabledSources?: Source[] | null;
 }): Promise<{
   playlists: Playlist[];
   error: PostgrestError | null;
@@ -464,6 +472,7 @@ export async function searchPlaylists({
         search_term: searchString,
         p_preferred_image_format: preferredImageFormat,
         p_user_id: userId ?? undefined,
+        p_enabled_sources: enabledSources ?? undefined,
       },
       { count: 'exact' }
     )

@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({
   depends('supabase:db:videos');
   depends('supabase:db:profiles');
 
-  const { contentFilter, preferredImageFormat } = await parent();
+  const { contentFilter, preferredImageFormat, userProfile } = await parent();
   const searchString = params.query;
 
   if (!isVideoFilter(contentFilter)) {
@@ -55,6 +55,7 @@ export const load: PageServerLoad = async ({
       supabase,
       userId,
       preferredImageFormat,
+      enabledSources: userProfile?.sources,
     }),
   ]);
 

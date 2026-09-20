@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({
     searchParams: url.searchParams,
   });
 
-  const { preferredImageFormat } = await parent();
+  const { preferredImageFormat, userProfile } = await parent();
 
   const searchString = params.query;
 
@@ -30,6 +30,7 @@ export const load: PageServerLoad = async ({
       supabase,
       userId,
       preferredImageFormat,
+      enabledSources: userProfile?.sources,
     });
 
   // Return playlists directly with optimized image paths from database

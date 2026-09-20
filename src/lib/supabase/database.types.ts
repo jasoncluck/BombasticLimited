@@ -1256,7 +1256,12 @@ export type Database = {
         }[];
       };
       search_playlists: {
-        Args: { p_preferred_image_format?: string; search_term: string };
+        Args: {
+          p_enabled_sources?: Database['public']['Enums']['source'][];
+          p_preferred_image_format?: string;
+          p_user_id?: string;
+          search_term: string;
+        };
         Returns: {
           created_at: string;
           created_by: string;
