@@ -624,4 +624,13 @@
     aria-label="Toggle play/pause"
     onclick={() => podcastPlayerState.toggleVideoPlayPause()}
   ></button>
+  <!-- YouTube still renders its own thin progress bar along the bottom
+       edge even with controls=0 (a longstanding IFrame API quirk with no
+       playerVars override) — we already show progress in the player bar,
+       so mask the native one. Can't reach into the iframe (cross-origin),
+       just cover it. -->
+  <div
+    class="pointer-events-none absolute right-0 bottom-0 left-0 h-2 bg-black"
+    aria-hidden="true"
+  ></div>
 </AspectRatio>

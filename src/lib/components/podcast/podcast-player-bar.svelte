@@ -27,6 +27,31 @@
   // keeps the effect below from fighting normal playback progress.
   const SEEK_THRESHOLD_SECONDS = 0.75;
 
+  // Local scrub position for each slider, decoupled from the real
+  // playback time while the user is actively dragging. Without this, the
+  // slider's bound value gets fought over: podcast currentTime is
+  // rewritten by ontimeupdate every ~250ms, and video currentTime by the
+  // 1s polling interval in youtube-embed.svelte, so a drag gesture keeps
+  // snapping back to the real (pre-seek) position instead of tracking the
+  // pointer. Real position only flows into these while NOT dragging;
+  // dragging only flows out, on release, via onValueCommit.
+  let podcastScrubTime = $state(0);
+  let isScrubbingPodcast = $state(false);
+  let videoScrubTime = $state(0);
+  let isScrubbingVideo = $state(false);
+
+  $effect(() => {
+    if (!isScrubbingPodcast) {
+      podcastScrubTime = playerState.currentTime;
+    }
+  });
+
+  $effect(() => {
+    if (!isScrubbingVideo) {
+      videoScrubTime = playerState.nowPlayingVideo?.currentTime ?? 0;
+    }
+  });
+
   // Loads the current episode (if it changed) and syncs play/pause — kept
   // as ONE effect so switching episodes while playing loads the new src and
   // issues play() in the same synchronous pass, rather than splitting that
@@ -265,14 +290,18 @@
         </div>
         <div class="hidden w-full max-w-md items-center gap-2 sm:flex">
           <span class="text-muted-foreground w-10 text-right text-xs">
-            {formatEpisodeDuration(video.currentTime)}
+            {formatEpisodeDuration(videoScrubTime)}
           </span>
           <Slider
             type="single"
-            value={video.currentTime}
+            bind:value={videoScrubTime}
             max={video.duration || 1}
             step={1}
-            onValueCommit={(seconds) => playerState.seekVideoTo(seconds)}
+            onValueChange={() => (isScrubbingVideo = true)}
+            onValueCommit={(seconds) => {
+              isScrubbingVideo = false;
+              playerState.seekVideoTo(seconds);
+            }}
             class="flex-1"
           />
           <span class="text-muted-foreground w-10 text-xs">
@@ -351,13 +380,18 @@
         </div>
         <div class="hidden w-full max-w-md items-center gap-2 sm:flex">
           <span class="text-muted-foreground w-10 text-right text-xs">
-            {formatEpisodeDuration(playerState.currentTime)}
+            {formatEpisodeDuration(podcastScrubTime)}
           </span>
           <Slider
             type="single"
-            bind:value={playerState.currentTime}
+            bind:value={podcastScrubTime}
             max={playerState.duration || 1}
             step={1}
+            onValueChange={() => (isScrubbingPodcast = true)}
+            onValueCommit={(seconds) => {
+              isScrubbingPodcast = false;
+              playerState.seekTo(seconds);
+            }}
             class="flex-1"
           />
           <span class="text-muted-foreground w-10 text-xs">
