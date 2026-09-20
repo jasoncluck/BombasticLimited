@@ -12,10 +12,17 @@ import type {
 } from './types';
 
 /**
- * Convert an S3 key to a full public URL
+ * Convert an S3 key to a full public URL. Video thumbnails pass through
+ * their raw external YouTube URL here too (image_url == thumbnail_url for
+ * videos, since only playlist thumbnails go through the S3
+ * crop/resize/WebP-AVIF pipeline) — already-absolute URLs are returned
+ * unchanged instead of being prefixed with the S3 bucket URL.
  */
 export function getFullImageUrl(storagePath: string | null): string | null {
   if (!storagePath) return null;
+  if (storagePath.startsWith('http://') || storagePath.startsWith('https://')) {
+    return storagePath;
+  }
   return `${PUBLIC_CONTENT_IMAGES_URL}/${storagePath}`;
 }
 

@@ -84,14 +84,12 @@ export async function processImageServer({
   acceptHeader = null,
   options = {},
   isCropped = false,
-  contentType = 'video',
 }: {
   imageUrl: string | null;
   imageProperties?: PlaylistImageProperties | null;
   acceptHeader?: string | null;
   options?: ImageProcessingOptions;
   isCropped?: boolean;
-  contentType?: 'playlist' | 'video';
 }) {
   if (!imageUrl) {
     return null;
@@ -307,79 +305,7 @@ export async function getCroppedPlaylistImageUrlServer({
     acceptHeader,
     options,
     isCropped: true,
-    contentType: 'playlist',
   });
-}
-
-// **SPEED-BALANCED** video thumbnail processing
-export async function getVideoThumbnailWebpUrlServer({
-  thumbnailUrl,
-  options = {},
-  acceptHeader = null,
-}: {
-  thumbnailUrl: string | null;
-  options?: ImageProcessingOptions;
-  acceptHeader?: string | null;
-}) {
-  if (!thumbnailUrl) return null;
-
-  // **SPEED-BALANCED: Better dimensions for video thumbnails**
-  const balancedOptions = {
-    ...options,
-    width: Math.min(options.width || 400, 400), // **IMPROVED: Better than 320px**
-    height: Math.min(options.height || 400, 400),
-  };
-
-  return processImageServer({
-    imageUrl: thumbnailUrl,
-    acceptHeader,
-    options: balancedOptions,
-    isCropped: false,
-    contentType: 'video',
-  });
-}
-
-// **BALANCED: Improved progressive image generation**
-export async function generateProgressiveImages(
-  thumbnailUrl: string,
-  sizes: Array<{ width: number; height: number; quality?: number }>,
-  acceptHeader: string | null = null
-): Promise<Array<{ size: string; dataUrl: string | null }>> {
-  const results: Array<{ size: string; dataUrl: string | null }> = [];
-
-  // **BALANCED: Process reasonable number of sizes**
-  const limitedSizes = sizes.slice(0, 4);
-
-  for (const size of limitedSizes) {
-    try {
-      const dataUrl = await getVideoThumbnailWebpUrlServer({
-        thumbnailUrl,
-        options: {
-          width: Math.min(size.width, 500), // **BALANCED: Allow larger sizes**
-          height: Math.min(size.height, 500),
-          quality: Math.min(size.quality || 82, 87), // **IMPROVED: Better default quality**
-          format: 'webp',
-        },
-        acceptHeader,
-      });
-
-      results.push({
-        size: `${size.width}x${size.height}`,
-        dataUrl,
-      });
-    } catch (error) {
-      console.error(
-        `Failed to generate ${size.width}x${size.height} image:`,
-        error
-      );
-      results.push({
-        size: `${size.width}x${size.height}`,
-        dataUrl: null,
-      });
-    }
-  }
-
-  return results;
 }
 
 // **SPEED-BALANCED: Faster fetch with reasonable timeouts**
@@ -438,26 +364,4 @@ export function generatePlaylistImageUrl({
   // **SPEED: Return original URL directly for fastest response**
   // Background processing system handles optimization separately
   return thumbnailUrl;
-}
-
-// **BALANCED: Better batch processing for video thumbnails**
-export async function getVideoThumbnailWebpUrlsBatch(
-  thumbnailData: Array<{ url: string }>
-): Promise<string[]> {
-  const results = await Promise.all(
-    thumbnailData.map(async ({ url }) => {
-      try {
-        return await getVideoThumbnailWebpUrlServer({
-          thumbnailUrl: url,
-          acceptHeader: 'image/webp,image/jpeg,*/*',
-          options: { format: 'webp', quality: 83 }, // **IMPROVED: Better quality for batch**
-        });
-      } catch (error) {
-        console.warn(`Failed to process video thumbnail ${url}:`, error);
-        return null;
-      }
-    })
-  );
-
-  return results.filter((result): result is string => result !== null);
 }

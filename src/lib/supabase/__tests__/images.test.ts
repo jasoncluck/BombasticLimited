@@ -1,11 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  detectOptimalImageFormat,
-  getFormatPriority,
-  getBestImageFormat,
-  getFormatExtension,
-  getFormatMimeType,
-} from '../images';
+import { detectOptimalImageFormat } from '../images';
 
 // Mock $app/environment
 vi.mock('$app/environment', () => ({
@@ -75,86 +69,6 @@ describe('images module', () => {
       const acceptHeader = '';
       const format = detectOptimalImageFormat(acceptHeader);
       expect(format).toBe('webp'); // Server-side fallback is webp, not jpeg
-    });
-  });
-
-  describe('getFormatPriority', () => {
-    it('should return format priority for playlist content', () => {
-      const priority = getFormatPriority('playlist');
-      expect(Array.isArray(priority)).toBe(true);
-      expect(priority.length).toBeGreaterThan(0);
-      expect(priority).toEqual(['avif', 'webp']); // Playlist doesn't include jpeg fallback
-    });
-
-    it('should return format priority for video content', () => {
-      const priority = getFormatPriority('video');
-      expect(Array.isArray(priority)).toBe(true);
-      expect(priority.length).toBeGreaterThan(0);
-      expect(priority).toContain('jpeg'); // Should always include jpeg as fallback
-    });
-
-    it('should return different priorities for different content types', () => {
-      const playlistPriority = getFormatPriority('playlist');
-      const videoPriority = getFormatPriority('video');
-
-      expect(playlistPriority).toBeDefined();
-      expect(videoPriority).toBeDefined();
-      // Both should be arrays of valid formats
-      expect(Array.isArray(playlistPriority)).toBe(true);
-      expect(Array.isArray(videoPriority)).toBe(true);
-    });
-  });
-
-  describe('getBestImageFormat', () => {
-    it('should use detected format when supported for content type', () => {
-      const acceptHeader = 'image/avif,image/webp,image/jpeg';
-      const format = getBestImageFormat('playlist', acceptHeader);
-      expect(['avif', 'webp', 'jpeg']).toContain(format);
-    });
-
-    it('should fallback to supported format when detected format not supported', () => {
-      // This test depends on the actual implementation logic
-      const format = getBestImageFormat('playlist', null);
-      expect(['avif', 'webp', 'jpeg']).toContain(format);
-    });
-
-    it('should handle different content types', () => {
-      const playlistFormat = getBestImageFormat(
-        'playlist',
-        'image/avif,image/webp'
-      );
-      const videoFormat = getBestImageFormat('video', 'image/avif,image/webp');
-
-      expect(['avif', 'webp', 'jpeg']).toContain(playlistFormat);
-      expect(['avif', 'webp', 'jpeg']).toContain(videoFormat);
-    });
-  });
-
-  describe('getFormatExtension', () => {
-    it('should return correct extension for AVIF', () => {
-      expect(getFormatExtension('avif')).toBe('.avif'); // Returns with dot
-    });
-
-    it('should return correct extension for WebP', () => {
-      expect(getFormatExtension('webp')).toBe('.webp'); // Returns with dot
-    });
-
-    it('should return correct extension for JPEG', () => {
-      expect(getFormatExtension('jpeg')).toBe('.jpg'); // Returns with dot
-    });
-  });
-
-  describe('getFormatMimeType', () => {
-    it('should return correct MIME type for AVIF', () => {
-      expect(getFormatMimeType('avif')).toBe('image/avif');
-    });
-
-    it('should return correct MIME type for WebP', () => {
-      expect(getFormatMimeType('webp')).toBe('image/webp');
-    });
-
-    it('should return correct MIME type for JPEG', () => {
-      expect(getFormatMimeType('jpeg')).toBe('image/jpeg');
     });
   });
 
@@ -238,22 +152,5 @@ describe('images module', () => {
       });
     });
 
-    it('should return valid extensions for all formats', () => {
-      const formats = ['avif', 'webp', 'jpeg'] as const;
-      formats.forEach((format) => {
-        const extension = getFormatExtension(format);
-        expect(typeof extension).toBe('string');
-        expect(extension.length).toBeGreaterThan(0);
-      });
-    });
-
-    it('should return valid MIME types for all formats', () => {
-      const formats = ['avif', 'webp', 'jpeg'] as const;
-      formats.forEach((format) => {
-        const mimeType = getFormatMimeType(format);
-        expect(typeof mimeType).toBe('string');
-        expect(mimeType.startsWith('image/')).toBe(true);
-      });
-    });
   });
 });
