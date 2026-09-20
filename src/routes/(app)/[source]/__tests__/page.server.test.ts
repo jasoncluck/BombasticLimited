@@ -29,11 +29,6 @@ vi.mock('$lib/server/image-processing', () => ({
   generatePlaylistImageUrl: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/podcasts/queries', () => ({
-  getPodcastEpisodes: vi.fn().mockResolvedValue({ episodes: [], error: null }),
-  DEFAULT_NUM_PODCAST_EPISODES_OVERVIEW: 5,
-}));
-
 vi.mock('$lib/constants/source', () => ({
   isSource: vi.fn((source: string) =>
     ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'].includes(source)
@@ -496,7 +491,6 @@ describe('[source]/+page.server.ts load function', () => {
             ...mockSourcePlaylists[0],
           },
         ],
-        podcastEpisodes: [],
         source: 'giantbomb',
         contentFilter: {
           sort: { key: 'datePublished', order: 'descending' },

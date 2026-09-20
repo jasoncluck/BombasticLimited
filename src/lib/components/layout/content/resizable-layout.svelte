@@ -7,13 +7,12 @@
   import LoadingOverlay from './loading-overlay.svelte';
   import { getPageState } from '$lib/state/page.svelte.js';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { Snippet } from 'svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
-  import { getPodcastPlayerState } from '$lib/state/podcast-player.svelte';
   import { onMount, onDestroy } from 'svelte';
 
   let {
@@ -34,7 +33,6 @@ import type { AppSession as Session } from '$lib/types/session';
   const sidebarState = getSidebarState();
   const mediaQueryState = getMediaQueryState();
   const contentState = getContentState();
-  const podcastPlayerState = getPodcastPlayerState();
 
   // Use the navigation state's sidebar collapsed state
   const isSidebarCollapsed = $derived(sidebarState.isSidebarCollapsed);
@@ -221,11 +219,7 @@ import type { AppSession as Session } from '$lib/types/session';
           </div>
         </div>
       </div>
-      <footer
-        class="mt-10 px-4 pb-8 text-center {podcastPlayerState.currentEpisode
-          ? 'pb-24'
-          : ''}"
-      >
+      <footer class="mt-10 px-4 pb-8 text-center">
         <div class="mx-auto max-w-4xl">
           <div class="border-t border-gray-200 pt-8 dark:border-gray-700">
             <nav class="mb-4 flex justify-center gap-8">

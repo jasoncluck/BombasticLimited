@@ -39,9 +39,6 @@ interface WebStackProps extends cdk.StackProps {
   discordBotToken: string;
   /** Email that gets account_type='admin' at profile creation. */
   adminEmail: string;
-  /** Symmetric key for pgcrypto encrypt/decrypt of premium podcast feed
-   * URLs at rest — needed here for the /api/podcasts/premium-feed route. */
-  podcastFeedEncryptionKey: string;
 }
 
 export class WebStack extends cdk.Stack {
@@ -57,7 +54,6 @@ export class WebStack extends cdk.Stack {
       originVerifySecret,
       discordBotToken,
       adminEmail,
-      podcastFeedEncryptionKey,
     } = props;
 
     const stagedAppDir = path.join(__dirname, '../web-lambda/dist');
@@ -86,7 +82,6 @@ export class WebStack extends cdk.Stack {
         ORIGIN_VERIFY_SECRET: originVerifySecret,
         DISCORD_BOT_TOKEN: discordBotToken,
         ADMIN_EMAIL: adminEmail,
-        PODCAST_FEED_ENCRYPTION_KEY: podcastFeedEncryptionKey,
       },
     });
 
@@ -191,9 +186,7 @@ export class WebStack extends cdk.Stack {
       destinationBucket: staticAssetsBucket,
       destinationKeyPrefix: '_app',
       cacheControl: [
-        s3deploy.CacheControl.fromString(
-          'public, max-age=31536000, immutable'
-        ),
+        s3deploy.CacheControl.fromString('public, max-age=31536000, immutable'),
       ],
       prune: true,
     });
@@ -219,7 +212,8 @@ export class WebStack extends cdk.Stack {
       this,
       'FixNamedActionQueryString',
       {
-        comment: 'Percent-encode leading / in query string keys for Lambda Function URL compatibility',
+        comment:
+          'Percent-encode leading / in query string keys for Lambda Function URL compatibility',
         code: cloudfront.FunctionCode.fromInline(`
 function handler(event) {
     var request = event.request;
@@ -260,9 +254,8 @@ function handler(event) {
       },
       additionalBehaviors: {
         '/_app/*': {
-          origin: origins.S3BucketOrigin.withOriginAccessControl(
-            staticAssetsBucket
-          ),
+          origin:
+            origins.S3BucketOrigin.withOriginAccessControl(staticAssetsBucket),
           viewerProtocolPolicy:
             cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,

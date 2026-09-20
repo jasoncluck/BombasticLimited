@@ -22,7 +22,6 @@
     createVideoWatchTimeTracker,
   } from './video-service';
   import { getContentState } from '$lib/state/content.svelte';
-  import { getPodcastPlayerState } from '$lib/state/podcast-player.svelte';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -82,10 +81,6 @@
 
   // Get content state for tracking pending operations
   const contentState = getContentState();
-  // Video plays through YouTube's own default controls — the podcast
-  // player bar is podcast-only. This just keeps the two from ever making
-  // sound at once (see podcast-player.svelte.ts for the coordination logic).
-  const podcastPlayerState = getPodcastPlayerState();
 
   let queryParamTimestamp = $state(0);
   let savedTimestamp = $state(0);
@@ -348,8 +343,6 @@
           watchTimeTracker.onPlay(currentTime);
         }
         isActuallyPlaying = true;
-        // Pauses any playing podcast — the two shouldn't play at once.
-        podcastPlayerState.notifyVideoPlaying();
         break;
       case 2: // Paused
         if (watchTimeTracker) {
@@ -484,10 +477,6 @@
             onStateChange: onPlayerStateChange,
           },
         });
-
-        podcastPlayerState.registerVideoController({
-          pause: () => player?.pauseVideo(),
-        });
       }
       window.addEventListener('beforeunload', handleBeforeUnload);
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -499,9 +488,6 @@
           'visibilitychange',
           handleVisibilityChange
         );
-        // Leaving the video page — it can no longer be paused from the
-        // player bar.
-        podcastPlayerState.registerVideoController(null);
       };
 
       cleanupFunctions.push(cleanup);

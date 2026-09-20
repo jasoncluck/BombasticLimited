@@ -15,7 +15,6 @@ interface CronStackProps extends StackProps {
   twitchClientSecret: string;
   triggerSecretKey: string;
   contentImagesBucket: string;
-  podcastFeedEncryptionKey: string;
 }
 
 /**
@@ -34,7 +33,6 @@ export class CronStack extends Stack {
       twitchClientSecret,
       triggerSecretKey,
       contentImagesBucket,
-      podcastFeedEncryptionKey,
     } = props;
 
     const commonProps = {
@@ -50,7 +48,8 @@ export class CronStack extends Stack {
       {
         ...commonProps,
         functionName: `BombasticPollTwitchStreams-${stage}`,
-        description: 'Polls Twitch for active streams (was pg_cron, every minute)',
+        description:
+          'Polls Twitch for active streams (was pg_cron, every minute)',
         entry: path.join(__dirname, '../lambda/poll-twitch-streams.ts'),
         handler: 'handler',
         environment: {
@@ -79,23 +78,6 @@ export class CronStack extends Stack {
       }
     );
 
-    const pollPodcastFeedsFn = new nodejs.NodejsFunction(
-      this,
-      'PollPodcastFeedsFunction',
-      {
-        ...commonProps,
-        functionName: `BombasticPollPodcastFeeds-${stage}`,
-        description:
-          'Fetches podcast RSS feeds (free + per-user premium) and upserts episodes, every 30 min',
-        entry: path.join(__dirname, '../lambda/poll-podcast-feeds.ts'),
-        handler: 'handler',
-        environment: {
-          NEON_DATABASE_URL: neonDatabaseUrl,
-          PODCAST_FEED_ENCRYPTION_KEY: podcastFeedEncryptionKey,
-        },
-      }
-    );
-
     const cleanupPlaylistsFn = new nodejs.NodejsFunction(
       this,
       'CleanupPlaylistsFunction',
@@ -115,7 +97,8 @@ export class CronStack extends Stack {
       {
         ...commonProps,
         functionName: `BombasticCleanupNotifications-${stage}`,
-        description: 'Deletes expired notifications (was pg_cron, daily 2am UTC)',
+        description:
+          'Deletes expired notifications (was pg_cron, daily 2am UTC)',
         entry: path.join(__dirname, '../lambda/cleanup-notifications.ts'),
         handler: 'handler',
         environment: { NEON_DATABASE_URL: neonDatabaseUrl },
@@ -132,11 +115,6 @@ export class CronStack extends Stack {
       targets: [new targets.LambdaFunction(processImagesFn)],
     });
 
-    new events.Rule(this, 'PollPodcastFeedsRule', {
-      schedule: events.Schedule.rate(Duration.minutes(30)),
-      targets: [new targets.LambdaFunction(pollPodcastFeedsFn)],
-    });
-
     new events.Rule(this, 'CleanupPlaylistsRule', {
       schedule: events.Schedule.expression('cron(0 * * * ? *)'),
       targets: [new targets.LambdaFunction(cleanupPlaylistsFn)],
@@ -150,7 +128,6 @@ export class CronStack extends Stack {
     for (const [name, fn] of [
       ['PollTwitchStreams', pollTwitchStreamsFn],
       ['ProcessImages', processImagesFn],
-      ['PollPodcastFeeds', pollPodcastFeedsFn],
       ['CleanupPlaylists', cleanupPlaylistsFn],
       ['CleanupNotifications', cleanupNotificationsFn],
     ] as const) {

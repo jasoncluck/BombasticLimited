@@ -949,34 +949,6 @@ export type Database = {
           youtube_id: string;
         }[];
       };
-      get_podcast_episodes: {
-        Args: {
-          p_limit?: number;
-          p_offset?: number;
-          p_source: Database['public']['Enums']['source'];
-          p_user_id?: string;
-        };
-        Returns: {
-          audio_url: string;
-          description: string;
-          duration_seconds: number;
-          feed_id: number;
-          guid: string;
-          id: number;
-          image_url: string;
-          is_premium: boolean;
-          published_at: string;
-          source: Database['public']['Enums']['source'];
-          title: string;
-        }[];
-      };
-      get_podcast_episodes_count: {
-        Args: {
-          p_source: Database['public']['Enums']['source'];
-          p_user_id?: string;
-        };
-        Returns: number;
-      };
       get_random_video: {
         Args: {
           p_sources?: Database['public']['Enums']['source'][];

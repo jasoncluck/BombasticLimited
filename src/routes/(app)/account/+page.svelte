@@ -88,86 +88,6 @@
     await sidebarState.refreshData();
   }
 
-  // Premium podcast feeds: one optional RSS URL per source the user has
-  // enabled. Loaded lazily per-source (GET /api/podcasts/premium-feed) since
-  // the URL is sensitive and only ever decrypted for its owner — never
-  // included in the page's own server-rendered data.
-  let premiumFeedUrls = $state<Partial<Record<Source, string>>>({});
-  let premiumFeedInputs = $state<Partial<Record<Source, string>>>({});
-  let savingFeedSource = $state<Source | null>(null);
-
-  onMount(async () => {
-    await Promise.all(
-      enabledSources.map(async (source) => {
-        try {
-          const response = await fetch(
-            `/api/podcasts/premium-feed?source=${source}`
-          );
-          if (!response.ok) return;
-          const { feedUrl } = await response.json();
-          if (feedUrl) {
-            premiumFeedUrls[source] = feedUrl;
-            premiumFeedInputs[source] = feedUrl;
-          }
-        } catch (error) {
-          console.error(`Failed to load premium feed for ${source}:`, error);
-        }
-      })
-    );
-  });
-
-  async function handleSavePremiumFeed(source: Source): Promise<void> {
-    const feedUrl = (premiumFeedInputs[source] ?? '').trim();
-    if (!feedUrl) return;
-
-    savingFeedSource = source;
-    try {
-      const response = await fetch('/api/podcasts/premium-feed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source, feedUrl }),
-      });
-
-      if (!response.ok) {
-        showToast('Failed to save premium feed', 'error');
-        return;
-      }
-
-      premiumFeedUrls[source] = feedUrl;
-      showToast('Premium feed saved', 'success');
-    } catch (error) {
-      console.error('Failed to save premium feed:', error);
-      showToast('Failed to save premium feed', 'error');
-    } finally {
-      savingFeedSource = null;
-    }
-  }
-
-  async function handleRemovePremiumFeed(source: Source): Promise<void> {
-    savingFeedSource = source;
-    try {
-      const response = await fetch('/api/podcasts/premium-feed', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ source }),
-      });
-
-      if (!response.ok) {
-        showToast('Failed to remove premium feed', 'error');
-        return;
-      }
-
-      delete premiumFeedUrls[source];
-      premiumFeedInputs[source] = '';
-      showToast('Premium feed removed', 'success');
-    } catch (error) {
-      console.error('Failed to remove premium feed:', error);
-      showToast('Failed to remove premium feed', 'error');
-    } finally {
-      savingFeedSource = null;
-    }
-  }
-
   const emailForm = superForm(data.emailForm, {
     validators: zodClient(emailSchema),
     resetForm: false,
@@ -407,8 +327,8 @@
     <div class="mt-8 border-t pt-8">
       <h2 class="mb-1 text-lg font-semibold">Content Sources</h2>
       <p class="text-muted-foreground mb-4 text-sm">
-        Choose which sources show up in your sidebar, home feed, search, and
-        the random video button. All sources are enabled by default.
+        Choose which sources show up in your sidebar, home feed, search, and the
+        random video button. All sources are enabled by default.
       </p>
       <div class="flex flex-col gap-1">
         {#each SOURCES as source (source)}
@@ -430,53 +350,6 @@
               disabled={togglingSource === source}
               onCheckedChange={(checked) => handleToggleSource(source, checked)}
             />
-          </div>
-        {/each}
-      </div>
-    </div>
-
-    <!-- Podcast Feeds Section -->
-    <div class="mt-8 border-t pt-8">
-      <h2 class="mb-1 text-lg font-semibold">Podcast Feeds</h2>
-      <p class="text-muted-foreground mb-4 text-sm">
-        Add your own premium RSS feed for a source to see those episodes on
-        its Podcasts section — only you can see them. Leave blank to just get
-        the free-tier episodes.
-      </p>
-      <div class="flex flex-col gap-4">
-        {#each enabledSources as source (source)}
-          <div class="flex flex-col gap-2">
-            <Label class="text-sm">{SOURCE_INFO[source].displayName}</Label>
-            <div class="flex w-full flex-wrap items-center gap-2 @lg:flex-nowrap">
-              <Input
-                type="url"
-                placeholder="https://..."
-                class="min-w-[240px] flex-1"
-                bind:value={premiumFeedInputs[source]}
-              />
-              <Button
-                type="button"
-                variant="secondary"
-                class="cursor-pointer"
-                disabled={savingFeedSource === source ||
-                  !premiumFeedInputs[source]?.trim() ||
-                  premiumFeedInputs[source] === premiumFeedUrls[source]}
-                onclick={() => handleSavePremiumFeed(source)}
-              >
-                Save
-              </Button>
-              {#if premiumFeedUrls[source]}
-                <Button
-                  type="button"
-                  variant="ghost"
-                  class="text-destructive cursor-pointer"
-                  disabled={savingFeedSource === source}
-                  onclick={() => handleRemovePremiumFeed(source)}
-                >
-                  Remove
-                </Button>
-              {/if}
-            </div>
           </div>
         {/each}
       </div>
