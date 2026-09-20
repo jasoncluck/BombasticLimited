@@ -38,16 +38,19 @@ const cognitoAnonUserPassword = process.env.COGNITO_ANON_USER_PASSWORD_PROD;
 const originVerifySecret = process.env.ORIGIN_VERIFY_SECRET_PROD;
 const discordBotToken = process.env.DISCORD_BOT_TOKEN_PROD;
 const adminEmail = process.env.ADMIN_EMAIL_PROD;
+const webStackPodcastFeedEncryptionKey =
+  process.env.PODCAST_FEED_ENCRYPTION_KEY_PROD;
 if (
   !webStackNeonDatabaseUrl ||
   !cognitoAnonUserEmail ||
   !cognitoAnonUserPassword ||
   !originVerifySecret ||
   !discordBotToken ||
-  !adminEmail
+  !adminEmail ||
+  !webStackPodcastFeedEncryptionKey
 ) {
   console.error(
-    '❌ Missing NEON_DATABASE_URL_PROD / COGNITO_ANON_USER_EMAIL_PROD / COGNITO_ANON_USER_PASSWORD_PROD / ORIGIN_VERIFY_SECRET_PROD / DISCORD_BOT_TOKEN_PROD / ADMIN_EMAIL_PROD for WebStack'
+    '❌ Missing NEON_DATABASE_URL_PROD / COGNITO_ANON_USER_EMAIL_PROD / COGNITO_ANON_USER_PASSWORD_PROD / ORIGIN_VERIFY_SECRET_PROD / DISCORD_BOT_TOKEN_PROD / ADMIN_EMAIL_PROD / PODCAST_FEED_ENCRYPTION_KEY_PROD for WebStack'
   );
   process.exit(1);
 }
@@ -64,6 +67,7 @@ new WebStack(app, 'BombasticWebStack', {
   originVerifySecret,
   discordBotToken,
   adminEmail,
+  podcastFeedEncryptionKey: webStackPodcastFeedEncryptionKey,
   env: { region: 'us-east-1' },
 });
 
@@ -100,9 +104,15 @@ new AuthStack(app, 'BombasticAuthStack', {
 const neonDatabaseUrl = process.env.NEON_DATABASE_URL_PROD;
 const twitchClientId = process.env.TWITCH_CLIENT_ID_PROD;
 const twitchClientSecret = process.env.TWITCH_CLIENT_SECRET_PROD;
-if (!neonDatabaseUrl || !twitchClientId || !twitchClientSecret) {
+const podcastFeedEncryptionKey = process.env.PODCAST_FEED_ENCRYPTION_KEY_PROD;
+if (
+  !neonDatabaseUrl ||
+  !twitchClientId ||
+  !twitchClientSecret ||
+  !podcastFeedEncryptionKey
+) {
   console.error(
-    '❌ Missing NEON_DATABASE_URL_PROD / TWITCH_CLIENT_ID_PROD / TWITCH_CLIENT_SECRET_PROD for CronStack'
+    '❌ Missing NEON_DATABASE_URL_PROD / TWITCH_CLIENT_ID_PROD / TWITCH_CLIENT_SECRET_PROD / PODCAST_FEED_ENCRYPTION_KEY_PROD for CronStack'
   );
   process.exit(1);
 }
@@ -117,5 +127,6 @@ new CronStack(app, 'BombasticCronStack', {
   // without it. See the TODO in cdk/.env.
   triggerSecretKey: process.env.TRIGGER_SECRET_KEY_PROD ?? '',
   contentImagesBucket: 'bombify-content-images-production',
+  podcastFeedEncryptionKey,
   env: { region: 'us-east-1' },
 });

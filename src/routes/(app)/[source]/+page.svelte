@@ -15,6 +15,7 @@
     type SourceWithStateKeys,
   } from '$lib/components/content/content';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
+  import PodcastEpisodeList from '$lib/components/podcast/podcast-episode-list.svelte';
 
   let { data } = $props();
   const {
@@ -27,6 +28,7 @@
     source,
     contentFilter,
     sourcePlaylists = [],
+    podcastEpisodes = [],
   } = $derived(data);
 
   const contentState = getContentState();
@@ -188,5 +190,18 @@
         {session}
       />
     </div>
+    {#if podcastEpisodes.length > 0}
+      <div data-testid="podcasts-section">
+        <a
+          href={`/${source}/podcasts`}
+          class={getContentView(mediaQueryState, userProfile) === 'TABLE'
+            ? 'header-link-sticky'
+            : 'header-link'}
+        >
+          Podcasts
+        </a>
+        <PodcastEpisodeList episodes={podcastEpisodes} />
+      </div>
+    {/if}
   </div>
 </div>

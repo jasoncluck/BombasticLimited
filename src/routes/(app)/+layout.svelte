@@ -24,6 +24,8 @@
   import { dev } from '$app/environment';
   import { setSidebarState } from '$lib/state/sidebar.svelte.js';
   import { createVisibilityAwareInterval } from '$lib/utils/tab-visibility.js';
+  import { setPodcastPlayerState } from '$lib/state/podcast-player.svelte.js';
+  import PodcastPlayerBar from '$lib/components/podcast/podcast-player-bar.svelte';
 
   let { data, children } = $props();
   let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
@@ -34,6 +36,7 @@
   const mediaQueryState = setMediaQueryState();
   const sidebarState = setSidebarState();
   const navigationState = setNavigationState();
+  setPodcastPlayerState();
   setPlaylistState(pageState, contentState, sidebarState);
 
   setSourceState(pageState);
@@ -397,5 +400,6 @@
     >
       {@render children()}
     </ResizableLayout>
+    <PodcastPlayerBar />
   {/if}
 </div>

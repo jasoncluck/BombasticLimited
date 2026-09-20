@@ -11,6 +11,10 @@ import {
   getPlaylistsForUsername,
   parseImageProperties,
 } from '$lib/supabase/playlists';
+import {
+  DEFAULT_NUM_PODCAST_EPISODES_OVERVIEW,
+  getPodcastEpisodes,
+} from '$lib/supabase/podcasts/queries';
 import type { PageServerLoad } from './$types';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
@@ -40,7 +44,7 @@ export const load: PageServerLoad = async ({
   };
 
   // Run all major operations in parallel
-  const [videos, highlightPlaylistsResults, sourcePlaylistsData] =
+  const [videos, highlightPlaylistsResults, sourcePlaylistsData, podcastEpisodes] =
     await Promise.all([
       // Get videos for the source
       getVideos({
@@ -82,6 +86,15 @@ export const load: PageServerLoad = async ({
         supabase,
         preferredImageFormat,
       }),
+
+      // Latest podcast episodes for this source (free-tier + the caller's
+      // own premium episodes, if any — enforced by RLS)
+      getPodcastEpisodes({
+        source,
+        userId,
+        limit: DEFAULT_NUM_PODCAST_EPISODES_OVERVIEW,
+        supabase,
+      }).then((result) => result.episodes),
     ]);
 
   // Filter out null results from highlight playlists
@@ -109,6 +122,7 @@ export const load: PageServerLoad = async ({
     highlightPlaylists,
     playlistContentFilter,
     sourcePlaylists: sourcePlaylists,
+    podcastEpisodes,
     source,
     contentFilter,
   };
