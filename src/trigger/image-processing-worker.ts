@@ -23,9 +23,12 @@ const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL });
 // Configuration constants
 const PROCESSING_TIMEOUT = 25000;
 
+// Playlist thumbnails only — video thumbnails are rendered straight from
+// YouTube's own thumbnail_url (no cropping/custom sizing needed), so there's
+// nothing to process for them. Removed September 2026.
 interface WebhookPayload {
   type: 'INSERT' | 'UPDATE';
-  table: 'videos' | 'playlists';
+  table: 'playlists';
   record: {
     id: string;
     thumbnail_url?: string;
@@ -42,14 +45,12 @@ interface WebhookPayload {
 interface ProcessingResult {
   processed: boolean;
   reason?: string;
-  entityType?: string;
   entityId?: string;
   webpPath?: string;
   avifPath?: string;
   webpSize?: number;
   avifSize?: number;
   jobId?: string;
-  skippedDuplicate?: boolean;
 }
 
 interface StoragePaths {
@@ -63,39 +64,17 @@ interface ProcessedImages {
 }
 
 // Generate storage paths for optimized images (WITH timestamp for versioning)
-function generateStoragePaths(
-  entityType: string,
-  entityId: string,
-  timestamp?: string
-): StoragePaths {
-  // Use provided timestamp or create a new one
+function generateStoragePaths(entityId: string, timestamp?: string): StoragePaths {
   const ts = timestamp || new Date().toISOString().replace(/[:.]/g, '-');
-
-  if (entityType === 'video') {
-    return {
-      webpPath: `thumbnails/${entityId}/thumbnail-${entityId}-${ts}.webp`,
-      avifPath: `thumbnails/${entityId}/thumbnail-${entityId}-${ts}.avif`,
-    };
-  } else if (entityType === 'playlist') {
-    return {
-      webpPath: `playlists/${entityId}/playlist-${entityId}-${ts}.webp`,
-      avifPath: `playlists/${entityId}/playlist-${entityId}-${ts}.avif`,
-    };
-  } else {
-    return {
-      webpPath: `${entityType}s/${entityId}/${entityType}-${entityId}-${ts}.webp`,
-      avifPath: `${entityType}s/${entityId}/${entityType}-${entityId}-${ts}.avif`,
-    };
-  }
+  return {
+    webpPath: `playlists/${entityId}/playlist-${entityId}-${ts}.webp`,
+    avifPath: `playlists/${entityId}/playlist-${entityId}-${ts}.avif`,
+  };
 }
 
 // Download image from source URL
 async function downloadImage(sourceUrl: string): Promise<Buffer> {
-  // Check if it's a Supabase Storage path
-  if (
-    sourceUrl.startsWith('playlists/') ||
-    sourceUrl.startsWith('thumbnails/')
-  ) {
+  if (sourceUrl.startsWith('playlists/')) {
     return downloadObject(IMAGES_BUCKET, sourceUrl);
   }
 
@@ -171,12 +150,11 @@ async function getPlaylistCropProperties(
   return cropProperties;
 }
 
-// Process image formats with compression
+// Crop, resize, and compress a playlist thumbnail into WebP + AVIF
 async function processImageFormats(
   buffer: Buffer,
-  entityType?: string,
-  playlistId?: string,
-  sourceUrl?: string
+  playlistId: string,
+  sourceUrl: string
 ): Promise<ProcessedImages> {
   const sharpInstance = sharp(buffer, {
     failOnError: false,
@@ -190,101 +168,63 @@ async function processImageFormats(
   const sourceHeight = metadata.height || 1080;
 
   try {
-    let pipeline = sharpInstance;
-    let finalOutputSize = { width: sourceWidth, height: sourceHeight };
+    const cropProps = await getPlaylistCropProperties(
+      playlistId,
+      sourceWidth,
+      sourceHeight
+    );
 
-    if (entityType === 'playlist' && playlistId && sourceUrl) {
-      // Apply cropping for playlists
-      const cropProps = await getPlaylistCropProperties(
-        playlistId,
-        sourceWidth,
-        sourceHeight
-      );
+    const imageType =
+      sourceWidth === 1280 && sourceHeight === 720 ? 'maxres' : 'standard';
+    const validatedCropProps = validateAndAdjustCropDimensions(
+      cropProps,
+      sourceWidth,
+      sourceHeight,
+      imageType,
+      null
+    );
 
-      const imageType =
-        sourceWidth === 1280 && sourceHeight === 720 ? 'maxres' : 'standard';
-      const validatedCropProps = validateAndAdjustCropDimensions(
-        cropProps,
-        sourceWidth,
-        sourceHeight,
-        imageType,
-        null
-      );
+    let pipeline = sharpInstance.extract({
+      left: validatedCropProps.x,
+      top: validatedCropProps.y,
+      width: validatedCropProps.width,
+      height: validatedCropProps.height,
+    });
 
-      pipeline = pipeline.extract({
-        left: validatedCropProps.x,
-        top: validatedCropProps.y,
-        width: validatedCropProps.width,
-        height: validatedCropProps.height,
-      });
+    // Determine output size based on crop
+    const cropSize = Math.min(
+      validatedCropProps.width,
+      validatedCropProps.height
+    );
+    let outputSize: number;
 
-      // Determine output size based on crop
-      const cropSize = Math.min(
-        validatedCropProps.width,
-        validatedCropProps.height
-      );
-      let outputSize: number;
-
-      if (cropSize <= 180) {
-        outputSize = 256;
-      } else if (cropSize <= 360) {
-        outputSize = 512;
-      } else {
-        outputSize = 768;
-      }
-
-      finalOutputSize = { width: outputSize, height: outputSize };
-
-      pipeline = pipeline
-        .resize(outputSize, outputSize, {
-          fit: 'cover',
-          withoutEnlargement: false,
-          kernel: sharp.kernel.lanczos3,
-        })
-        .sharpen({
-          sigma: 0.8,
-          m1: 1.0,
-          m2: 1.8,
-          x1: 2.0,
-          y2: 8.0,
-          y3: 15.0,
-        });
+    if (cropSize <= 180) {
+      outputSize = 256;
+    } else if (cropSize <= 360) {
+      outputSize = 512;
     } else {
-      // For videos, apply smart resizing
-      const maxDimension = Math.max(sourceWidth, sourceHeight);
-      let targetSize: number;
-
-      if (maxDimension > 1920) {
-        targetSize = 1920;
-      } else if (maxDimension > 1280) {
-        targetSize = 1280;
-      } else if (maxDimension > 640) {
-        targetSize = 640;
-      } else {
-        targetSize = maxDimension;
-      }
-
-      if (targetSize < maxDimension) {
-        const aspectRatio = sourceWidth / sourceHeight;
-        const newWidth =
-          aspectRatio >= 1 ? targetSize : Math.round(targetSize * aspectRatio);
-        const newHeight =
-          aspectRatio >= 1 ? Math.round(targetSize / aspectRatio) : targetSize;
-
-        finalOutputSize = { width: newWidth, height: newHeight };
-
-        pipeline = pipeline.resize(newWidth, newHeight, {
-          fit: 'inside',
-          withoutEnlargement: true,
-          kernel: sharp.kernel.lanczos3,
-        });
-      }
+      outputSize = 768;
     }
+
+    pipeline = pipeline
+      .resize(outputSize, outputSize, {
+        fit: 'cover',
+        withoutEnlargement: false,
+        kernel: sharp.kernel.lanczos3,
+      })
+      .sharpen({
+        sigma: 0.8,
+        m1: 1.0,
+        m2: 1.8,
+        x1: 2.0,
+        y2: 8.0,
+        y3: 15.0,
+      });
 
     // Apply color space conversion
     pipeline = pipeline.toColourspace('srgb');
 
-    const pixelCount = finalOutputSize.width * finalOutputSize.height;
+    const pixelCount = outputSize * outputSize;
     const isLargeImage = pixelCount > 300000;
 
     // Compression settings
@@ -360,19 +300,12 @@ async function uploadToStorage(
   return { webpPath, avifPath };
 }
 
-// Comprehensive cleanup of all existing optimized images
-async function deleteExistingOptimizedImages(
-  entityType: string,
-  entityId: string
-): Promise<void> {
+// Comprehensive cleanup of all existing optimized images for a playlist
+async function deleteExistingOptimizedImages(entityId: string): Promise<void> {
   try {
-    console.log(`Starting cleanup for ${entityType} ${entityId}`);
+    console.log(`Starting cleanup for playlist ${entityId}`);
 
-    // Get all files in the entity's folder
-    const folderPrefix =
-      entityType === 'video'
-        ? `thumbnails/${entityId}/`
-        : `playlists/${entityId}/`;
+    const folderPrefix = `playlists/${entityId}/`;
 
     let existingKeys: string[];
     try {
@@ -412,19 +345,11 @@ async function deleteExistingOptimizedImages(
       console.warn(`Failed to delete some files: ${error}`);
     }
 
-    // Also clean up database references for playlists
     try {
-      if (entityType === 'playlist') {
-        await pool.query(
-          'UPDATE playlists SET image_webp_url = NULL, image_avif_url = NULL WHERE id = $1',
-          [entityId]
-        );
-      } else if (entityType === 'video') {
-        await pool.query(
-          'UPDATE videos SET thumbnail_webp_url = NULL, thumbnail_avif_url = NULL WHERE id = $1',
-          [entityId]
-        );
-      }
+      await pool.query(
+        'UPDATE playlists SET image_webp_url = NULL, image_avif_url = NULL WHERE id = $1',
+        [entityId]
+      );
     } catch (error) {
       console.warn(`Failed to clear database references: ${error}`);
     }
@@ -436,29 +361,19 @@ async function deleteExistingOptimizedImages(
 
 // Update database with processed image URLs
 async function updateEntityWithProcessedImages(
-  entityType: string,
   entityId: string,
   webpPath: string,
   avifPath: string
 ): Promise<void> {
   try {
-    if (entityType === 'playlist') {
-      await pool.query(
-        `UPDATE playlists SET image_webp_url = $1, image_avif_url = $2,
-         image_processing_status = 'completed', image_processing_updated_at = NOW()
-         WHERE id = $3`,
-        [webpPath, avifPath, entityId]
-      );
-    } else if (entityType === 'video') {
-      await pool.query(
-        `UPDATE videos SET thumbnail_webp_url = $1, thumbnail_avif_url = $2,
-         image_processing_status = 'completed', image_processing_updated_at = NOW()
-         WHERE id = $3`,
-        [webpPath, avifPath, entityId]
-      );
-    }
+    await pool.query(
+      `UPDATE playlists SET image_webp_url = $1, image_avif_url = $2,
+       image_processing_status = 'completed', image_processing_updated_at = NOW()
+       WHERE id = $3`,
+      [webpPath, avifPath, entityId]
+    );
   } catch (error) {
-    throw new Error(`Failed to update ${entityType}: ${error}`);
+    throw new Error(`Failed to update playlist: ${error}`);
   }
 }
 
@@ -485,6 +400,168 @@ async function failImageProcessingJob(
   return rows[0]?.fail_image_processing_job ?? false;
 }
 
+// Does the actual crop/resize/encode/upload work for one playlist job.
+// Exported so it can also be called directly (no Trigger.dev involved) by
+// scripts/process-images-locally.ts, e.g. when Trigger.dev compute is
+// exhausted and the job queue needs to be drained by hand.
+export async function processImageJob(
+  payload: WebhookPayload
+): Promise<ProcessingResult> {
+  const { type, record, old_record, jobId, timestamp } = payload;
+
+  console.log(`Starting image processing for playlist ${record.id}`, {
+    type,
+    jobId,
+    timestamp,
+    thumbnailUrl: record.thumbnail_url,
+  });
+
+  // Early validation
+  if (!record.thumbnail_url) {
+    console.log(`No thumbnail URL for playlist ${record.id}, completing job`);
+    if (jobId) {
+      try {
+        const completionResult = await completeImageProcessingJob(jobId);
+        console.log('Job completion result:', { completionResult });
+      } catch (error) {
+        console.warn(`Failed to complete job ${jobId}:`, error);
+      }
+    }
+    return { processed: false, reason: 'No thumbnail URL provided' };
+  }
+
+  // Determine if we need to process
+  let shouldProcess = false;
+  let sourceUrl: string | null = null;
+
+  if (type === 'INSERT') {
+    if (record.thumbnail_url) {
+      shouldProcess = true;
+      sourceUrl = record.thumbnail_url;
+    }
+  } else if (type === 'UPDATE') {
+    const thumbnailChanged = record.thumbnail_url !== old_record?.thumbnail_url;
+    const imagePropertiesChanged =
+      JSON.stringify(record.image_properties) !==
+      JSON.stringify(old_record?.image_properties);
+
+    console.log(`UPDATE: playlist ${record.id}`, {
+      thumbnailChanged,
+      imagePropertiesChanged,
+      oldThumbnail: old_record?.thumbnail_url,
+      newThumbnail: record.thumbnail_url,
+    });
+
+    if (thumbnailChanged || imagePropertiesChanged) {
+      shouldProcess = true;
+      sourceUrl = record.thumbnail_url || null;
+    }
+  }
+
+  if (!shouldProcess || !sourceUrl) {
+    console.log(`No processing needed for playlist ${record.id}`);
+    if (jobId) {
+      try {
+        const completionResult = await completeImageProcessingJob(jobId);
+        console.log('Job completion result:', { completionResult });
+      } catch (error) {
+        console.warn(`Failed to complete job ${jobId}:`, error);
+      }
+    }
+    return { processed: false, reason: 'No changes requiring processing' };
+  }
+
+  try {
+    console.log(`Processing playlist ${record.id} with source: ${sourceUrl}`);
+
+    // CRITICAL: Delete ALL existing optimized images first
+    console.log(`Deleting existing optimized images for playlist ${record.id}`);
+    await deleteExistingOptimizedImages(record.id);
+
+    // Download source image
+    console.log(`Downloading image from: ${sourceUrl}`);
+    const imageBuffer = await downloadImage(sourceUrl);
+    console.log(`Downloaded ${imageBuffer.length} bytes`);
+
+    // Process image
+    console.log(`Processing image for playlist ${record.id}`);
+    const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
+      imageBuffer,
+      record.id,
+      sourceUrl
+    );
+    console.log(
+      `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
+    );
+
+    // Generate storage paths with timestamp for versioning
+    const { webpPath, avifPath } = generateStoragePaths(record.id, timestamp);
+
+    // Upload to storage with unique timestamped filenames
+    console.log(`Uploading optimized images for playlist ${record.id}`);
+    await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
+    console.log(`Uploaded images to storage:`, { webpPath, avifPath });
+
+    // Complete job or update database
+    if (jobId) {
+      try {
+        console.log(`Completing job ${jobId} with paths:`, { webpPath, avifPath });
+        const completionResult = await completeImageProcessingJob(
+          jobId,
+          webpPath,
+          avifPath
+        );
+
+        console.log('Job completion result:', { completionResult });
+
+        if (!completionResult) {
+          throw new Error(
+            'Job completion returned false - job may not exist or update failed'
+          );
+        }
+
+        console.log(`Successfully completed job ${jobId}`);
+      } catch (error) {
+        console.error(`Failed to complete job ${jobId}:`, error);
+        console.log('Attempting fallback database update...');
+        await updateEntityWithProcessedImages(record.id, webpPath, avifPath);
+        console.log('Fallback database update completed');
+      }
+    } else {
+      console.log(`No job ID, updating playlist ${record.id} directly`);
+      await updateEntityWithProcessedImages(record.id, webpPath, avifPath);
+      console.log('Direct database update completed');
+    }
+
+    console.log(`Successfully processed playlist ${record.id}`);
+
+    return {
+      processed: true,
+      entityId: record.id,
+      webpPath,
+      avifPath,
+      webpSize: Math.round(webpBuffer.length / 1024),
+      avifSize: Math.round(avifBuffer.length / 1024),
+      jobId,
+    };
+  } catch (error) {
+    console.error(`Failed to process playlist ${record.id}:`, error);
+
+    if (jobId) {
+      try {
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        console.log(`Failing job ${jobId} with error: ${errorMessage}`);
+        const failResult = await failImageProcessingJob(jobId, errorMessage);
+        console.log('Job failure result:', { failResult });
+      } catch (failError) {
+        console.error(`Failed to mark job ${jobId} as failed:`, failError);
+      }
+    }
+
+    throw error;
+  }
+}
+
 // Main image processing task
 export const processImageWebhook = task({
   id: 'process-image-webhook',
@@ -496,189 +573,5 @@ export const processImageWebhook = task({
     maxTimeoutInMs: 10000,
     randomize: false,
   },
-  run: async (payload: WebhookPayload): Promise<ProcessingResult> => {
-    const { type, table, record, old_record, jobId, timestamp } = payload;
-    const entityType = table === 'playlists' ? 'playlist' : 'video';
-
-    console.log(`Starting image processing for ${entityType} ${record.id}`, {
-      type,
-      table,
-      jobId,
-      timestamp,
-      thumbnailUrl: record.thumbnail_url,
-    });
-
-    // Early validation
-    if (!record.thumbnail_url) {
-      console.log(
-        `No thumbnail URL for ${entityType} ${record.id}, completing job`
-      );
-      if (jobId) {
-        try {
-          const completionResult = await completeImageProcessingJob(jobId);
-          console.log('Job completion result:', { completionResult });
-        } catch (error) {
-          console.warn(`Failed to complete job ${jobId}:`, error);
-        }
-      }
-      return { processed: false, reason: 'No thumbnail URL provided' };
-    }
-
-    // Determine if we need to process
-    let shouldProcess = false;
-    let sourceUrl: string | null = null;
-
-    if (type === 'INSERT') {
-      if (record.thumbnail_url) {
-        shouldProcess = true;
-        sourceUrl = record.thumbnail_url;
-      }
-    } else if (type === 'UPDATE') {
-      const thumbnailChanged =
-        record.thumbnail_url !== old_record?.thumbnail_url;
-      const imagePropertiesChanged =
-        table === 'playlists' &&
-        JSON.stringify(record.image_properties) !==
-          JSON.stringify(old_record?.image_properties);
-
-      console.log(`UPDATE: ${entityType} ${record.id}`, {
-        thumbnailChanged,
-        imagePropertiesChanged,
-        oldThumbnail: old_record?.thumbnail_url,
-        newThumbnail: record.thumbnail_url,
-      });
-
-      if (thumbnailChanged || imagePropertiesChanged) {
-        shouldProcess = true;
-        sourceUrl = record.thumbnail_url || null;
-      }
-    }
-
-    if (!shouldProcess || !sourceUrl) {
-      console.log(`No processing needed for ${entityType} ${record.id}`);
-      if (jobId) {
-        try {
-          const completionResult = await completeImageProcessingJob(jobId);
-          console.log('Job completion result:', { completionResult });
-        } catch (error) {
-          console.warn(`Failed to complete job ${jobId}:`, error);
-        }
-      }
-      return { processed: false, reason: 'No changes requiring processing' };
-    }
-
-    try {
-      console.log(
-        `Processing ${entityType} ${record.id} with source: ${sourceUrl}`
-      );
-
-      // CRITICAL: Delete ALL existing optimized images first
-      console.log(
-        `Deleting existing optimized images for ${entityType} ${record.id}`
-      );
-      await deleteExistingOptimizedImages(entityType, record.id);
-
-      // Download source image
-      console.log(`Downloading image from: ${sourceUrl}`);
-      const imageBuffer = await downloadImage(sourceUrl);
-      console.log(`Downloaded ${imageBuffer.length} bytes`);
-
-      // Process image
-      console.log(`Processing image for ${entityType} ${record.id}`);
-      const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
-        imageBuffer,
-        entityType,
-        entityType === 'playlist' ? record.id : undefined,
-        sourceUrl
-      );
-      console.log(
-        `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
-      );
-
-      // Generate storage paths with timestamp for versioning
-      const { webpPath, avifPath } = generateStoragePaths(
-        entityType,
-        record.id,
-        timestamp // Use the webhook timestamp for consistency
-      );
-
-      // Upload to storage with unique timestamped filenames
-      console.log(`Uploading optimized images for ${entityType} ${record.id}`);
-      await uploadToStorage(webpBuffer, avifBuffer, webpPath, avifPath);
-      console.log(`Uploaded images to storage:`, { webpPath, avifPath });
-
-      // Complete job or update database
-      if (jobId) {
-        try {
-          console.log(`Completing job ${jobId} with paths:`, {
-            webpPath,
-            avifPath,
-          });
-          const completionResult = await completeImageProcessingJob(
-            jobId,
-            webpPath,
-            avifPath
-          );
-
-          console.log('Job completion result:', { completionResult });
-
-          if (!completionResult) {
-            throw new Error(
-              'Job completion returned false - job may not exist or update failed'
-            );
-          }
-
-          console.log(`Successfully completed job ${jobId}`);
-        } catch (error) {
-          console.error(`Failed to complete job ${jobId}:`, error);
-          console.log('Attempting fallback database update...');
-          await updateEntityWithProcessedImages(
-            entityType,
-            record.id,
-            webpPath,
-            avifPath
-          );
-          console.log('Fallback database update completed');
-        }
-      } else {
-        console.log(`No job ID, updating ${entityType} ${record.id} directly`);
-        await updateEntityWithProcessedImages(
-          entityType,
-          record.id,
-          webpPath,
-          avifPath
-        );
-        console.log('Direct database update completed');
-      }
-
-      console.log(`Successfully processed ${entityType} ${record.id}`);
-
-      return {
-        processed: true,
-        entityType,
-        entityId: record.id,
-        webpPath,
-        avifPath,
-        webpSize: Math.round(webpBuffer.length / 1024),
-        avifSize: Math.round(avifBuffer.length / 1024),
-        jobId,
-      };
-    } catch (error) {
-      console.error(`Failed to process ${entityType} ${record.id}:`, error);
-
-      if (jobId) {
-        try {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          console.log(`Failing job ${jobId} with error: ${errorMessage}`);
-          const failResult = await failImageProcessingJob(jobId, errorMessage);
-          console.log('Job failure result:', { failResult });
-        } catch (failError) {
-          console.error(`Failed to mark job ${jobId} as failed:`, failError);
-        }
-      }
-
-      throw error;
-    }
-  },
+  run: processImageJob,
 });

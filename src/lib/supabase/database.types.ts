@@ -550,17 +550,11 @@ export type Database = {
           description: string;
           duration: string | null;
           id: string;
-          image_processing_status:
-            | Database['public']['Enums']['image_processing_status']
-            | null;
-          image_processing_updated_at: string | null;
           pending_delete: boolean | null;
           published_at: string;
           search_vector: unknown | null;
           source: Database['public']['Enums']['source'];
-          thumbnail_avif_url: string | null;
           thumbnail_url: string;
-          thumbnail_webp_url: string | null;
           title: string;
           views: number;
         };
@@ -568,17 +562,11 @@ export type Database = {
           description: string;
           duration?: string | null;
           id: string;
-          image_processing_status?:
-            | Database['public']['Enums']['image_processing_status']
-            | null;
-          image_processing_updated_at?: string | null;
           pending_delete?: boolean | null;
           published_at?: string;
           search_vector?: unknown | null;
           source: Database['public']['Enums']['source'];
-          thumbnail_avif_url?: string | null;
           thumbnail_url: string;
-          thumbnail_webp_url?: string | null;
           title: string;
           views?: number;
         };
@@ -586,17 +574,11 @@ export type Database = {
           description?: string;
           duration?: string | null;
           id?: string;
-          image_processing_status?:
-            | Database['public']['Enums']['image_processing_status']
-            | null;
-          image_processing_updated_at?: string | null;
           pending_delete?: boolean | null;
           published_at?: string;
           search_vector?: unknown | null;
           source?: Database['public']['Enums']['source'];
-          thumbnail_avif_url?: string | null;
           thumbnail_url?: string;
-          thumbnail_webp_url?: string | null;
           title?: string;
           views?: number;
         };
@@ -795,8 +777,6 @@ export type Database = {
           description: string;
           duration: string;
           id: string;
-          image_processing_status: Database['public']['Enums']['image_processing_status'];
-          image_processing_updated_at: string;
           image_url: string;
           playlist_name: string;
           playlist_short_id: string;
@@ -888,7 +868,6 @@ export type Database = {
           video_description: string;
           video_duration: string;
           video_id: string;
-          video_image_processing_status: Database['public']['Enums']['image_processing_status'];
           video_image_url: string;
           video_position: number;
           video_published_at: string;
@@ -1093,8 +1072,6 @@ export type Database = {
           description: string;
           duration: string;
           id: string;
-          image_processing_status: Database['public']['Enums']['image_processing_status'];
-          image_processing_updated_at: string;
           image_url: string;
           playlist_id: number;
           playlist_name: string;
@@ -1278,8 +1255,6 @@ export type Database = {
           description: string;
           duration: string;
           id: string;
-          image_processing_status: Database['public']['Enums']['image_processing_status'];
-          image_processing_updated_at: string;
           image_url: string;
           playlist_name: string;
           playlist_short_id: string;

@@ -102,14 +102,20 @@ import type { AppSession as Session } from '$lib/types/session';
 </script>
 
 <div class="flex flex-col">
-  <YoutubeEmbed
-    {supabase}
-    {session}
-    {video}
-    {contentFilter}
-    {playlist}
-    durationSeconds={videoDurationToSeconds(video?.duration)}
-  />
+  <!-- Keyed on video.id: YoutubeEmbed does all its setup (YT.Player creation,
+       saved-timestamp fetch, watch-time tracking session) in onMount, which
+       doesn't rerun on a client-side navigation to a different video unless
+       the component is destroyed and recreated. -->
+  {#key video.id}
+    <YoutubeEmbed
+      {supabase}
+      {session}
+      {video}
+      {contentFilter}
+      {playlist}
+      durationSeconds={videoDurationToSeconds(video?.duration)}
+    />
+  {/key}
 
   <!-- Improved header section with better wrapping -->
   <div

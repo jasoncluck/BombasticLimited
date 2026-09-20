@@ -6,13 +6,16 @@ import { tasks } from '@trigger.dev/sdk/v3';
 // jobs as processing and triggers the Trigger.dev task that does the real
 // work (src/trigger/image-processing-worker.ts, a separate workspace this
 // CDK package deliberately doesn't import from — see WebhookPayload below).
+//
+// Playlist thumbnails only (as of September 2026) — video thumbnails render
+// straight from thumbnail_url and are never queued here.
 
 // Mirrors the WebhookPayload type in src/trigger/image-processing-worker.ts.
 // Kept as a local duplicate rather than a cross-workspace import: that file
 // pulls in SvelteKit `$lib/*` path aliases the CDK tsconfig can't resolve.
 interface WebhookPayload {
   type: 'UPDATE';
-  table: 'videos' | 'playlists';
+  table: 'playlists';
   record: Record<string, unknown>;
   jobId: string;
   timestamp: string;
@@ -129,26 +132,16 @@ async function checkEntityExists(
   client: Client,
   job: JobRow
 ): Promise<Record<string, unknown> | null> {
-  if (job.entity_type === 'playlist') {
-    const { rows } = await client.query(
-      'SELECT image_properties, thumbnail_url FROM playlists WHERE id = $1',
-      [job.entity_id]
-    );
-    if (!rows[0]) return null;
-    return {
-      id: job.entity_id,
-      thumbnail_url: rows[0].thumbnail_url,
-      image_properties: rows[0].image_properties,
-    };
-  } else if (job.entity_type === 'video') {
-    const { rows } = await client.query(
-      'SELECT thumbnail_url FROM videos WHERE id = $1',
-      [job.entity_id]
-    );
-    if (!rows[0]) return null;
-    return { id: job.entity_id, thumbnail_url: rows[0].thumbnail_url };
-  }
-  throw new Error(`Unknown entity type: ${job.entity_type}`);
+  const { rows } = await client.query(
+    'SELECT image_properties, thumbnail_url FROM playlists WHERE id = $1',
+    [job.entity_id]
+  );
+  if (!rows[0]) return null;
+  return {
+    id: job.entity_id,
+    thumbnail_url: rows[0].thumbnail_url,
+    image_properties: rows[0].image_properties,
+  };
 }
 
 async function resetStuckJob(client: Client, job: JobRow): Promise<void> {
@@ -197,7 +190,7 @@ async function processJob(
 
   const webhookPayload: WebhookPayload = {
     type: 'UPDATE',
-    table: job.entity_type === 'video' ? 'videos' : 'playlists',
+    table: 'playlists',
     record: entity,
     jobId: job.id,
     timestamp: new Date().toISOString(),
@@ -224,7 +217,7 @@ export const handler = async (): Promise<ApiResponse> => {
       `SELECT id, entity_type, entity_id, image_type, source_url, attempts,
               max_attempts, created_at, updated_at, processing_started_at, status
        FROM image_processing_jobs
-       WHERE status IN ('pending', 'failed', 'processing')
+       WHERE entity_type = 'playlist' AND status IN ('pending', 'failed', 'processing')
        ORDER BY status ASC, priority ASC, created_at ASC
        LIMIT 200`
     );
