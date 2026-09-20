@@ -515,6 +515,12 @@
             origin: window.location.origin,
             hl: 'en',
             iv_load_policy: 1,
+            // Native chrome + YouTube's own keyboard shortcuts are both
+            // off — playback now goes entirely through the persistent
+            // player bar (play/pause/seek/skip) and the global h/j/k/l
+            // shortcuts, shared with the podcast player.
+            controls: 0,
+            disablekb: 1,
           },
           events: {
             onReady: onPlayerReady,
@@ -530,6 +536,7 @@
               player.seekTo(player.getCurrentTime() + delta);
             }
           },
+          seekTo: (seconds) => player?.seekTo(seconds),
         });
       }
       window.addEventListener('beforeunload', handleBeforeUnload);
@@ -606,4 +613,15 @@
 
 <AspectRatio ratio={16 / 9} class="mx-auto flex w-full max-w-[1100px] ">
   <VideoEmbed divId="player" />
+  <!-- Sits on top of the iframe: without it, clicking the video would
+       focus the (cross-origin) YouTube iframe, and once focused it
+       swallows keydown events before they ever reach our global h/j/k/l
+       handler in the player bar. Doubles as click-anywhere-to-toggle now
+       that the native YouTube controls are hidden. -->
+  <button
+    type="button"
+    class="absolute top-0 left-0 h-full w-full cursor-pointer bg-transparent"
+    aria-label="Toggle play/pause"
+    onclick={() => podcastPlayerState.toggleVideoPlayPause()}
+  ></button>
 </AspectRatio>

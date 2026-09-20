@@ -27,6 +27,7 @@ interface VideoController {
   play: () => void;
   pause: () => void;
   seek: (deltaSeconds: number) => void;
+  seekTo: (seconds: number) => void;
 }
 
 export interface PodcastPlayerState {
@@ -50,6 +51,7 @@ export interface PodcastPlayerState {
   updateVideoState: (video: NowPlayingVideo | null) => void;
   toggleVideoPlayPause: () => void;
   skipVideo: (deltaSeconds: number) => void;
+  seekVideoTo: (seconds: number) => void;
 }
 
 const SKIP_SECONDS = 15;
@@ -93,8 +95,11 @@ export class PodcastPlayerStateClass implements PodcastPlayerState {
   };
 
   toggleVideoPlayPause = (): void => {
-    if (!this.nowPlayingVideo) return;
-    if (this.nowPlayingVideo.isPlaying) {
+    // No early return on a missing nowPlayingVideo: that's the state
+    // before the video has ever reported in (e.g. the very first click on
+    // a freshly loaded page, before onStateChange has fired once) — with
+    // native YouTube controls hidden, this is the only way to start it.
+    if (this.nowPlayingVideo?.isPlaying) {
       this.#videoController?.pause();
     } else {
       this.activeMedia = 'video';
@@ -104,6 +109,10 @@ export class PodcastPlayerStateClass implements PodcastPlayerState {
 
   skipVideo = (deltaSeconds: number = SKIP_SECONDS): void => {
     this.#videoController?.seek(deltaSeconds);
+  };
+
+  seekVideoTo = (seconds: number): void => {
+    this.#videoController?.seekTo(Math.max(0, seconds));
   };
 
   /** Starts a new episode, or resumes the current one if it's already loaded. */

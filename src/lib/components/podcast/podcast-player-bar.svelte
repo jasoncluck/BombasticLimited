@@ -4,7 +4,6 @@
   import { SOURCE_INFO } from '$lib/constants/source';
   import Button from '../ui/button/button.svelte';
   import Slider from '../ui/slider/slider.svelte';
-  import Progress from '../ui/progress/progress.svelte';
   import {
     formatEpisodeDuration,
     formatEpisodePublishedDate,
@@ -118,6 +117,62 @@
     );
   });
 
+  // Global playback shortcuts, shared between podcasts and video (matches
+  // YouTube's own j/k/l convention, which used to come from YouTube's
+  // native controls — now hidden in favor of this bar): j/l seek ±10s,
+  // k toggles play/pause. h is intentionally unmapped.
+  function handleGlobalKeydown(event: KeyboardEvent): void {
+    const target = event.target as HTMLElement | null;
+    const isTypingTarget =
+      target?.tagName === 'INPUT' ||
+      target?.tagName === 'TEXTAREA' ||
+      target?.isContentEditable;
+
+    if (
+      isTypingTarget ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.altKey ||
+      (playerState.activeMedia !== 'video' && !playerState.currentEpisode)
+    ) {
+      return;
+    }
+
+    switch (event.key.toLowerCase()) {
+      case 'j':
+        event.preventDefault();
+        if (playerState.activeMedia === 'video') {
+          playerState.skipVideo(-10);
+        } else {
+          playerState.skip(-10);
+        }
+        break;
+      case 'l':
+        event.preventDefault();
+        if (playerState.activeMedia === 'video') {
+          playerState.skipVideo(10);
+        } else {
+          playerState.skip(10);
+        }
+        break;
+      case 'k':
+        event.preventDefault();
+        if (playerState.activeMedia === 'video') {
+          playerState.toggleVideoPlayPause();
+        } else {
+          playerState.togglePlayPause();
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  $effect(() => {
+    window.addEventListener('keydown', handleGlobalKeydown);
+    return () => window.removeEventListener('keydown', handleGlobalKeydown);
+  });
+
   function handleTimeUpdate(): void {
     if (!audioEl) return;
     playerState.currentTime = audioEl.currentTime;
@@ -212,9 +267,12 @@
           <span class="text-muted-foreground w-10 text-right text-xs">
             {formatEpisodeDuration(video.currentTime)}
           </span>
-          <Progress
+          <Slider
+            type="single"
             value={video.currentTime}
             max={video.duration || 1}
+            step={1}
+            onValueCommit={(seconds) => playerState.seekVideoTo(seconds)}
             class="flex-1"
           />
           <span class="text-muted-foreground w-10 text-xs">
