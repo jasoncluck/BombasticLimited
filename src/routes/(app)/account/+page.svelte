@@ -28,6 +28,7 @@
   import { SOURCES, SOURCE_INFO, type Source } from '$lib/constants/source';
   import { handleUpdateProfileSources } from '$lib/components/profile/profile-service';
   import { showToast } from '$lib/state/notifications.svelte';
+  import { getSidebarState } from '$lib/state/sidebar.svelte';
 
   interface DiscordIdentity {
     provider: 'discord';
@@ -55,6 +56,12 @@
   const enabledSources = $derived(profile.sources ?? SOURCES);
   let togglingSource = $state<Source | null>(null);
 
+  // sidebarState.userProfile is fetched independently via /api/sidebar
+  // (not through SvelteKit's load/invalidate system), so it needs an
+  // explicit refresh — same as the sidebar's own drag-to-reorder handler
+  // does after writing profiles.sources.
+  const sidebarState = getSidebarState();
+
   async function handleToggleSource(source: Source, checked: boolean) {
     const current = enabledSources;
 
@@ -75,7 +82,10 @@
 
     if (error) {
       showToast('Failed to update sources', 'error');
+      return;
     }
+
+    await sidebarState.refreshData();
   }
 
   const emailForm = superForm(data.emailForm, {
