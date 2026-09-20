@@ -2,26 +2,54 @@ import { getContext, setContext } from 'svelte';
 import type { PodcastEpisode } from '$lib/supabase/podcasts/types';
 
 /**
- * Global "now playing" state for the persistent podcast player bar
- * (podcast-player-bar.svelte, mounted once in (app)/+layout.svelte). This
- * class is the source of truth; the single shared <audio> element in the bar
- * reacts to it (and writes playback progress back into it) so starting an
- * episode from any page keeps playing across client-side navigation, the
- * same way navigation/sidebar state already survives navigation.
+ * Global "now playing" state for the persistent player bar
+ * (podcast-player-bar.svelte, mounted once in (app)/+layout.svelte).
+ *
+ * Coordinates two things that can't both make sound at once: podcast
+ * episodes (played entirely through this class + the bar's <audio>
+ * element, so they survive client-side navigation) and the YouTube video
+ * player (which only exists while youtube-embed.svelte is mounted on a
+ * video page — it registers itself here via registerVideoController so
+ * starting a podcast can pause it, and reports its own play/pause/time via
+ * updateVideoState so starting the video can pause the podcast and the bar
+ * can show the video's title/length while it's playing).
  */
+export interface NowPlayingVideo {
+  id: string;
+  title: string;
+  channelName: string;
+  currentTime: number;
+  duration: number;
+  isPlaying: boolean;
+}
+
+interface VideoController {
+  play: () => void;
+  pause: () => void;
+  seek: (deltaSeconds: number) => void;
+}
+
 export interface PodcastPlayerState {
   currentEpisode: PodcastEpisode | null;
   isPlaying: boolean;
   currentTime: number;
   duration: number;
   volume: number;
+  nowPlayingVideo: NowPlayingVideo | null;
+  activeMedia: 'podcast' | 'video' | null;
 
   play: (episode: PodcastEpisode) => void;
   togglePlayPause: () => void;
+  pause: () => void;
   seekTo: (seconds: number) => void;
   skip: (deltaSeconds: number) => void;
   setVolume: (volume: number) => void;
   close: () => void;
+
+  registerVideoController: (controller: VideoController | null) => void;
+  updateVideoState: (video: NowPlayingVideo | null) => void;
+  toggleVideoPlayPause: () => void;
+  skipVideo: (deltaSeconds: number) => void;
 }
 
 const SKIP_SECONDS = 15;
@@ -33,8 +61,56 @@ export class PodcastPlayerStateClass implements PodcastPlayerState {
   duration = $state(0);
   volume = $state(1);
 
+  nowPlayingVideo = $state<NowPlayingVideo | null>(null);
+  activeMedia = $state<'podcast' | 'video' | null>(null);
+
+  #videoController: VideoController | null = null;
+
+  registerVideoController = (controller: VideoController | null): void => {
+    this.#videoController = controller;
+  };
+
+  /**
+   * Called by youtube-embed.svelte whenever the video's ready state,
+   * play/pause state, or current time changes. Starting video playback
+   * pauses the podcast, mirroring the other direction in play()/
+   * togglePlayPause() below.
+   */
+  updateVideoState = (video: NowPlayingVideo | null): void => {
+    this.nowPlayingVideo = video;
+
+    if (!video) {
+      if (this.activeMedia === 'video') {
+        this.activeMedia = null;
+      }
+      return;
+    }
+
+    if (video.isPlaying) {
+      this.isPlaying = false;
+      this.activeMedia = 'video';
+    }
+  };
+
+  toggleVideoPlayPause = (): void => {
+    if (!this.nowPlayingVideo) return;
+    if (this.nowPlayingVideo.isPlaying) {
+      this.#videoController?.pause();
+    } else {
+      this.activeMedia = 'video';
+      this.#videoController?.play();
+    }
+  };
+
+  skipVideo = (deltaSeconds: number = SKIP_SECONDS): void => {
+    this.#videoController?.seek(deltaSeconds);
+  };
+
   /** Starts a new episode, or resumes the current one if it's already loaded. */
   play = (episode: PodcastEpisode): void => {
+    this.#videoController?.pause();
+    this.activeMedia = 'podcast';
+
     if (this.currentEpisode?.id === episode.id) {
       this.isPlaying = true;
       return;
@@ -48,7 +124,16 @@ export class PodcastPlayerStateClass implements PodcastPlayerState {
 
   togglePlayPause = (): void => {
     if (!this.currentEpisode) return;
-    this.isPlaying = !this.isPlaying;
+    const next = !this.isPlaying;
+    if (next) {
+      this.#videoController?.pause();
+      this.activeMedia = 'podcast';
+    }
+    this.isPlaying = next;
+  };
+
+  pause = (): void => {
+    this.isPlaying = false;
   };
 
   seekTo = (seconds: number): void => {

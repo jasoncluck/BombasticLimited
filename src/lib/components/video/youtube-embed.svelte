@@ -22,6 +22,8 @@
     createVideoWatchTimeTracker,
   } from './video-service';
   import { getContentState } from '$lib/state/content.svelte';
+  import { getPodcastPlayerState } from '$lib/state/podcast-player.svelte';
+  import { SOURCE_INFO } from '$lib/constants/source';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -46,8 +48,10 @@
   interface YouTubePlayer {
     seekTo: (seconds: number) => void;
     getCurrentTime: () => number;
+    getDuration: () => number;
     getPlayerState: () => number;
     playVideo: () => void;
+    pauseVideo: () => void;
   }
 
   interface YouTubePlayerEvent {
@@ -79,6 +83,10 @@
 
   // Get content state for tracking pending operations
   const contentState = getContentState();
+  // Shared with the podcast player bar: starting this video pauses a
+  // playing podcast, and the bar shows this video's title/length while
+  // it's playing (see podcast-player.svelte.ts for the coordination logic).
+  const podcastPlayerState = getPodcastPlayerState();
 
   let queryParamTimestamp = $state(0);
   let savedTimestamp = $state(0);
@@ -97,6 +105,7 @@
   // Cleanup tracking
   let cleanupFunctions: (() => void)[] = [];
   let seekDetectionInterval: ReturnType<typeof setInterval> | null = null;
+  let videoProgressInterval: ReturnType<typeof setInterval> | null = null;
 
   // Watch for URL parameter changes
   $effect(() => {
@@ -321,6 +330,22 @@
     isPlayerReady = true;
   }
 
+  // Reports this video's play/pause state and progress to the shared
+  // podcast/video player-bar coordinator. Starting playback here pauses a
+  // playing podcast (see PodcastPlayerStateClass.updateVideoState).
+  function reportVideoState(): void {
+    if (!player) return;
+
+    podcastPlayerState.updateVideoState({
+      id: video.id,
+      title: video.title,
+      channelName: SOURCE_INFO[video.source].displayName,
+      currentTime: player.getCurrentTime() || 0,
+      duration: player.getDuration() || 0,
+      isPlaying: player.getPlayerState() === 1,
+    });
+  }
+
   // Handle YouTube player state changes for video history tracking
   function onPlayerStateChange(event: YouTubeStateChangeEvent): void {
     if (!event.target) {
@@ -341,18 +366,21 @@
           watchTimeTracker.onPlay(currentTime);
         }
         isActuallyPlaying = true;
+        reportVideoState();
         break;
       case 2: // Paused
         if (watchTimeTracker) {
           watchTimeTracker.onPause(currentTime);
         }
         isActuallyPlaying = false;
+        reportVideoState();
         break;
       case 0: // Ended
         if (watchTimeTracker) {
           watchTimeTracker.onPause(currentTime);
         }
         isActuallyPlaying = false;
+        reportVideoState();
         break;
       case 3: // Buffering
         // Don't change isActuallyPlaying state during buffering
@@ -388,6 +416,24 @@
       if (seekDetectionInterval) {
         clearInterval(seekDetectionInterval);
         seekDetectionInterval = null;
+      }
+    };
+  });
+
+  // Keeps the player bar's progress display in sync while playing —
+  // separate from the tracker above since this should work whether or not
+  // the viewer is logged in.
+  $effect(() => {
+    if (!player || !isActuallyPlaying || videoProgressInterval) {
+      return;
+    }
+
+    videoProgressInterval = setInterval(reportVideoState, 1000);
+
+    return () => {
+      if (videoProgressInterval) {
+        clearInterval(videoProgressInterval);
+        videoProgressInterval = null;
       }
     };
   });
@@ -475,6 +521,16 @@
             onStateChange: onPlayerStateChange,
           },
         });
+
+        podcastPlayerState.registerVideoController({
+          play: () => player?.playVideo(),
+          pause: () => player?.pauseVideo(),
+          seek: (delta) => {
+            if (player) {
+              player.seekTo(player.getCurrentTime() + delta);
+            }
+          },
+        });
       }
       window.addEventListener('beforeunload', handleBeforeUnload);
       document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -486,6 +542,10 @@
           'visibilitychange',
           handleVisibilityChange
         );
+        // Leaving the video page — it can no longer be paused from the
+        // player bar, and it's gone, so the bar shouldn't show it anymore.
+        podcastPlayerState.registerVideoController(null);
+        podcastPlayerState.updateVideoState(null);
       };
 
       cleanupFunctions.push(cleanup);
@@ -519,6 +579,10 @@
     if (seekDetectionInterval) {
       clearInterval(seekDetectionInterval);
       seekDetectionInterval = null;
+    }
+    if (videoProgressInterval) {
+      clearInterval(videoProgressInterval);
+      videoProgressInterval = null;
     }
 
     if (typeof window !== 'undefined') {

@@ -4,6 +4,7 @@
   import { SOURCE_INFO } from '$lib/constants/source';
   import Button from '../ui/button/button.svelte';
   import Slider from '../ui/slider/slider.svelte';
+  import Progress from '../ui/progress/progress.svelte';
   import {
     formatEpisodeDuration,
     formatEpisodePublishedDate,
@@ -13,27 +14,53 @@
 
   let audioEl: HTMLAudioElement | undefined = $state();
 
+  // Which episode's audio is currently loaded into audioEl, tracked by id
+  // rather than comparing audioEl.src to episode.audio_url — the browser
+  // normalizes the src it reports back (encoding, resolving relative to
+  // absolute, etc.), so that comparison could spuriously mismatch and
+  // re-trigger .load() on every reactive pass, which aborts playback and
+  // reads as the play/pause button flickering.
+  let loadedEpisodeId: number | null = $state(null);
+
   // A seek originating from our own ontimeupdate handler always matches
   // audioEl.currentTime exactly (diff ~0); a genuine external seek (the
   // progress slider, skip buttons, another tile's play click) won't. This
   // keeps the effect below from fighting normal playback progress.
   const SEEK_THRESHOLD_SECONDS = 0.75;
 
+  // Loads the current episode (if it changed) and syncs play/pause — kept
+  // as ONE effect so switching episodes while playing loads the new src and
+  // issues play() in the same synchronous pass, rather than splitting that
+  // across two effects that could race: .load() resets audioEl.paused to
+  // true synchronously, so calling play() right after in the same effect
+  // sees fresh state instead of waiting on a native 'pause' event (fired by
+  // the interrupted old audio) to bounce through a second effect first.
   $effect(() => {
+    if (!audioEl) return;
     const episode = playerState.currentEpisode;
-    if (!audioEl || !episode) return;
 
-    if (audioEl.src !== episode.audio_url) {
+    if (!episode) {
+      if (loadedEpisodeId !== null) {
+        audioEl.removeAttribute('src');
+        audioEl.load();
+        loadedEpisodeId = null;
+      }
+      return;
+    }
+
+    if (loadedEpisodeId !== episode.id) {
+      loadedEpisodeId = episode.id;
       audioEl.src = episode.audio_url;
       audioEl.load();
     }
-  });
-
-  $effect(() => {
-    if (!audioEl || !playerState.currentEpisode) return;
 
     if (playerState.isPlaying && audioEl.paused) {
       audioEl.play().catch((error) => {
+        // A .load() call (e.g. switching episodes again) aborts any
+        // in-flight play() promise — expected, not a real failure.
+        if (error instanceof DOMException && error.name === 'AbortError') {
+          return;
+        }
         console.error('Podcast playback failed:', error);
         playerState.isPlaying = false;
       });
@@ -127,7 +154,79 @@
   preload="metadata"
 ></audio>
 
-{#if playerState.currentEpisode}
+{#if playerState.activeMedia === 'video' && playerState.nowPlayingVideo}
+  {@const video = playerState.nowPlayingVideo}
+  <div
+    class="bg-background fixed right-0 bottom-0 left-0 z-50 border-t shadow-lg"
+    data-testid="video-player-bar"
+  >
+    <div
+      class="mx-auto flex max-w-[1400px] items-center gap-3 px-3 py-2 sm:gap-4 sm:px-4"
+    >
+      <div class="flex min-w-0 flex-1 items-center gap-3">
+        <div class="min-w-0">
+          <p class="truncate text-sm font-medium" title={video.title}>
+            {video.title}
+          </p>
+          <p class="text-muted-foreground truncate text-xs">
+            {video.channelName}
+          </p>
+        </div>
+      </div>
+
+      <div class="flex flex-1 flex-col items-center gap-1">
+        <div class="flex items-center gap-1 sm:gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            class="hidden cursor-pointer sm:inline-flex"
+            title="Back 15 seconds"
+            onclick={() => playerState.skipVideo(-15)}
+          >
+            <SkipBack size={18} />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            class="cursor-pointer rounded-full"
+            title={video.isPlaying ? 'Pause' : 'Play'}
+            onclick={() => playerState.toggleVideoPlayPause()}
+          >
+            {#if video.isPlaying}
+              <Pause size={18} />
+            {:else}
+              <Play size={18} />
+            {/if}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="hidden cursor-pointer sm:inline-flex"
+            title="Forward 15 seconds"
+            onclick={() => playerState.skipVideo(15)}
+          >
+            <SkipForward size={18} />
+          </Button>
+        </div>
+        <div class="hidden w-full max-w-md items-center gap-2 sm:flex">
+          <span class="text-muted-foreground w-10 text-right text-xs">
+            {formatEpisodeDuration(video.currentTime)}
+          </span>
+          <Progress
+            value={video.currentTime}
+            max={video.duration || 1}
+            class="flex-1"
+          />
+          <span class="text-muted-foreground w-10 text-xs">
+            {formatEpisodeDuration(video.duration)}
+          </span>
+        </div>
+      </div>
+
+      <div class="flex flex-1 justify-end"></div>
+    </div>
+  </div>
+{:else if playerState.currentEpisode}
   {@const episode = playerState.currentEpisode}
   <div
     class="bg-background fixed right-0 bottom-0 left-0 z-50 border-t shadow-lg"
