@@ -1,5 +1,6 @@
 import type { ContentDisplay } from '../content/content';
-import { invalidateAll } from '$app/navigation';
+import { invalidateAll, invalidate } from '$app/navigation';
+import type { Source } from '$lib/constants/source';
 
 export async function handleUpdateProfileContentDisplay(props: {
   contentDisplay: ContentDisplay;
@@ -10,6 +11,38 @@ export async function handleUpdateProfileContentDisplay(props: {
     body: JSON.stringify(props),
   });
   invalidateAll();
+}
+
+/**
+ * Persists the user's enabled/ordered source list (profiles.sources) — the
+ * same column the sidebar's drag-to-reorder writes to, so toggling a source
+ * here and reordering in the sidebar stay consistent. Order among enabled
+ * sources is preserved; a newly re-enabled source is appended at the end
+ * rather than restored to its previous position.
+ */
+export async function handleUpdateProfileSources(props: {
+  sources: Source[];
+}): Promise<{ error?: unknown }> {
+  try {
+    const response = await fetch('/api/profile/sources', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(props),
+    });
+
+    if (!response.ok) {
+      return { error: new Error('Failed to update sources') };
+    }
+
+    await Promise.all([
+      invalidate('app:profile'),
+      invalidate('supabase:db:profiles'),
+    ]);
+
+    return {};
+  } catch (error) {
+    return { error };
+  }
 }
 
 export function getUserInitials(username: string | null) {

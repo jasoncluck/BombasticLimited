@@ -24,6 +24,10 @@
 
   import Label from '$lib/components/ui/label/label.svelte';
   import { goto } from '$app/navigation';
+  import { Switch } from '$lib/components/ui/switch';
+  import { SOURCES, SOURCE_INFO, type Source } from '$lib/constants/source';
+  import { handleUpdateProfileSources } from '$lib/components/profile/profile-service';
+  import { showToast } from '$lib/state/notifications.svelte';
 
   interface DiscordIdentity {
     provider: 'discord';
@@ -45,6 +49,34 @@
   const { profile, discordIdentity, userEmail } = $derived(data);
 
   const flash = getFlash(page);
+
+  // profiles.sources doubles as the sidebar's drag-to-reorder order, so an
+  // unset value means "every source, in default order" rather than "none".
+  const enabledSources = $derived(profile.sources ?? SOURCES);
+  let togglingSource = $state<Source | null>(null);
+
+  async function handleToggleSource(source: Source, checked: boolean) {
+    const current = enabledSources;
+
+    if (!checked && current.length <= 1) {
+      showToast('At least one source must stay enabled', 'error');
+      return;
+    }
+
+    const nextSources = checked
+      ? [...current, source]
+      : current.filter((s) => s !== source);
+
+    togglingSource = source;
+    const { error } = await handleUpdateProfileSources({
+      sources: nextSources,
+    });
+    togglingSource = null;
+
+    if (error) {
+      showToast('Failed to update sources', 'error');
+    }
+  }
 
   const emailForm = superForm(data.emailForm, {
     validators: zodClient(emailSchema),
@@ -280,6 +312,38 @@
         <Alert.Description>{$flash.message}</Alert.Description>
       </Alert.Root>
     {/if}
+
+    <!-- Content Sources Section -->
+    <div class="mt-8 border-t pt-8">
+      <h2 class="mb-1 text-lg font-semibold">Content Sources</h2>
+      <p class="text-muted-foreground mb-4 text-sm">
+        Choose which sources show up in your sidebar, home feed, search, and
+        the random video button. All sources are enabled by default.
+      </p>
+      <div class="flex flex-col gap-1">
+        {#each SOURCES as source (source)}
+          <div class="flex items-center justify-between gap-4 py-1.5">
+            <div class="flex min-w-0 items-center gap-3">
+              <div class="h-8 w-8 shrink-0 overflow-hidden rounded">
+                <enhanced:img
+                  src={SOURCE_INFO[source].image}
+                  alt={SOURCE_INFO[source].displayName}
+                  class="h-full w-full object-cover"
+                />
+              </div>
+              <span class="truncate text-sm"
+                >{SOURCE_INFO[source].displayName}</span
+              >
+            </div>
+            <Switch
+              checked={enabledSources.includes(source)}
+              disabled={togglingSource === source}
+              onCheckedChange={(checked) => handleToggleSource(source, checked)}
+            />
+          </div>
+        {/each}
+      </div>
+    </div>
 
     <!-- Discord Account Linking Section -->
     <div class="mt-8 border-t pt-8">

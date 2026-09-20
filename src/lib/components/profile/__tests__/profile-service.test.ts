@@ -1,12 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   handleUpdateProfileContentDisplay,
+  handleUpdateProfileSources,
   getUserInitials,
 } from '../profile-service';
 
 // Mock modules
 vi.mock('$app/navigation', () => ({
   invalidateAll: vi.fn(),
+  invalidate: vi.fn(),
 }));
 
 describe('profile service module', () => {
@@ -31,6 +33,47 @@ describe('profile service module', () => {
         })
       );
       expect(invalidateAll).toHaveBeenCalled();
+    });
+  });
+
+  describe('handleUpdateProfileSources', () => {
+    it('should update profile sources and invalidate profile caches', async () => {
+      const { invalidate } = await import('$app/navigation');
+
+      const { error } = await handleUpdateProfileSources({
+        sources: ['giantbomb', 'remap'],
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        '/api/profile/sources',
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify({ sources: ['giantbomb', 'remap'] }),
+        })
+      );
+      expect(invalidate).toHaveBeenCalledWith('app:profile');
+      expect(invalidate).toHaveBeenCalledWith('supabase:db:profiles');
+      expect(error).toBeUndefined();
+    });
+
+    it('should return an error when the request fails', async () => {
+      global.fetch = vi.fn().mockResolvedValue({ ok: false });
+
+      const { error } = await handleUpdateProfileSources({
+        sources: ['giantbomb'],
+      });
+
+      expect(error).toBeInstanceOf(Error);
+    });
+
+    it('should return an error when fetch throws', async () => {
+      global.fetch = vi.fn().mockRejectedValue(new Error('network error'));
+
+      const { error } = await handleUpdateProfileSources({
+        sources: ['giantbomb'],
+      });
+
+      expect(error).toBeInstanceOf(Error);
     });
   });
 
