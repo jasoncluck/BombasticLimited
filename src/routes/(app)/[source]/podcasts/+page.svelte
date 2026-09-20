@@ -11,7 +11,7 @@
   import { DEFAULT_NUM_PODCAST_EPISODES_PAGINATION } from '$lib/supabase/podcasts/queries';
 
   const { data } = $props();
-  const { episodes, episodesCount, source, userProfile } = $derived(data);
+  const { episodes, episodesCount, source } = $derived(data);
 
   const pageFromQueryParams = page.url.searchParams.get(PAGINATION_QUERY_KEY);
   let currentPage = $state(
@@ -49,11 +49,7 @@
     </p>
   </div>
 
-  <PodcastEpisodeList
-    {episodes}
-    {userProfile}
-    emptyMessage="No podcast episodes yet."
-  />
+  <PodcastEpisodeList {episodes} emptyMessage="No podcast episodes yet." />
 
   {#if episodesCount && numPages > 1}
     <Pagination

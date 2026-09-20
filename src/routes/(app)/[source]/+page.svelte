@@ -200,7 +200,7 @@
         >
           Podcasts
         </a>
-        <PodcastEpisodeList episodes={podcastEpisodes} {userProfile} />
+        <PodcastEpisodeList episodes={podcastEpisodes} />
       </div>
     {/if}
   </div>

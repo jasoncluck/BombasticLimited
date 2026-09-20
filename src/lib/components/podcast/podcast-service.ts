@@ -21,3 +21,20 @@ export function formatEpisodePublishedDate(publishedAt: string): string {
     day: 'numeric',
   });
 }
+
+// RSS descriptions are usually a chunk of HTML (links, <br>s, etc.) — this
+// is SSR-safe (no DOM parser), just enough to get a clean text preview.
+export function stripHtmlToText(html: string | null): string {
+  if (!html) return '';
+
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}

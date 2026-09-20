@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Play, Pause } from '@lucide/svelte';
+  import { Play, Pause, Podcast } from '@lucide/svelte';
   import type { PodcastEpisode } from '$lib/supabase/podcasts/types';
   import { getPodcastPlayerState } from '$lib/state/podcast-player.svelte';
   import Button from '../ui/button/button.svelte';
@@ -7,6 +7,7 @@
   import {
     formatEpisodeDuration,
     formatEpisodePublishedDate,
+    stripHtmlToText,
   } from './podcast-service';
 
   const { episode }: { episode: PodcastEpisode } = $props();
@@ -15,8 +16,9 @@
 
   const isCurrent = $derived(playerState.currentEpisode?.id === episode.id);
   const isPlayingThis = $derived(isCurrent && playerState.isPlaying);
+  const descriptionPreview = $derived(stripHtmlToText(episode.description));
 
-  function handlePlayClick(): void {
+  function togglePlayback(): void {
     if (isCurrent) {
       playerState.togglePlayPause();
     } else {
@@ -25,16 +27,26 @@
   }
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
-  class="hover:bg-secondary/50 flex items-center gap-3 rounded-md p-2 transition-colors duration-150"
+  class="hover:bg-secondary/50 flex cursor-pointer items-start gap-3 rounded-md p-2 transition-colors duration-150"
   data-testid="podcast-episode-tile"
+  role="button"
+  tabindex="0"
+  ondblclick={togglePlayback}
+  onkeydown={(e) => {
+    if (e.key === 'Enter') togglePlayback();
+  }}
 >
   <Button
     variant="secondary"
     size="icon"
-    class="shrink-0 cursor-pointer rounded-full"
+    class="mt-0.5 shrink-0 cursor-pointer rounded-full"
     title={isPlayingThis ? 'Pause' : 'Play'}
-    onclick={handlePlayClick}
+    onclick={(e) => {
+      e.stopPropagation();
+      togglePlayback();
+    }}
   >
     {#if isPlayingThis}
       <Pause size={16} />
@@ -50,6 +62,12 @@
       class="h-12 w-12 shrink-0 rounded object-cover"
       loading="lazy"
     />
+  {:else}
+    <div
+      class="bg-muted text-muted-foreground flex h-12 w-12 shrink-0 items-center justify-center rounded"
+    >
+      <Podcast size={20} />
+    </div>
   {/if}
 
   <div class="min-w-0 flex-1">
@@ -69,5 +87,10 @@
         <Badge variant="secondary" class="text-[10px]">Premium</Badge>
       {/if}
     </p>
+    {#if descriptionPreview}
+      <p class="text-muted-foreground mt-1 line-clamp-2 text-xs">
+        {descriptionPreview}
+      </p>
+    {/if}
   </div>
 </div>
