@@ -57,7 +57,7 @@ export class VideoStack extends Stack {
         description: `Populates a table with videos using the YouTube API (${stage})`,
         entry: path.join(__dirname, '../lambda/populate-videos.ts'),
         handler: 'populateVideos',
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         timeout: Duration.minutes(15),
         environment: {
           GOOGLE_API_KEY: environmentVariables.GOOGLE_API_KEY,
@@ -93,7 +93,7 @@ export class VideoStack extends Stack {
         description: `Populates the playlists table using the YouTube API (${stage})`,
         entry: path.join(__dirname, '../lambda/populate-playlists.ts'),
         handler: 'populatePlaylists',
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         timeout: Duration.minutes(15),
         environment: {
           GOOGLE_API_KEY: environmentVariables.GOOGLE_API_KEY,
@@ -216,7 +216,7 @@ export class VideoStack extends Stack {
         description: `Triggers the repopulation Step Function (${stage})`,
         entry: path.join(__dirname, '../lambda/trigger-repopulate.ts'),
         handler: 'handler',
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         timeout: Duration.seconds(30),
         environment: {
           STATE_MACHINE_ARN: repopulateStateMachine.stateMachineArn,

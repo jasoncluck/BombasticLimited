@@ -36,7 +36,7 @@ export class AuthStack extends cdk.Stack {
       'PreTokenGenerationFunction',
       {
         functionName: `BombasticPreTokenGeneration-${stage}`,
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         entry: path.join(__dirname, '../lambda/pre-token-generation.ts'),
         handler: 'handler',
       }

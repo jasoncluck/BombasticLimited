@@ -36,7 +36,7 @@ export class CronStack extends Stack {
     } = props;
 
     const commonProps = {
-      runtime: lambda.Runtime.NODEJS_20_X,
+      runtime: lambda.Runtime.NODEJS_24_X,
       timeout: Duration.minutes(5),
       memorySize: 512,
       logRetention: logs.RetentionDays.ONE_MONTH,

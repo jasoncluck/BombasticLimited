@@ -122,7 +122,7 @@ export class BackupStack extends Stack {
         description: 'Performs database backups to S3',
         entry: path.join(__dirname, '../lambda/database-backup.ts'),
         handler: 'handler',
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         timeout: Duration.minutes(15),
         memorySize: 512,
         role: this.backupRole,
@@ -148,7 +148,7 @@ export class BackupStack extends Stack {
           'Performs database restore operations from S3 backups for disaster recovery',
         entry: path.join(__dirname, '../lambda/database-restore.ts'),
         handler: 'handler',
-        runtime: lambda.Runtime.NODEJS_20_X,
+        runtime: lambda.Runtime.NODEJS_24_X,
         timeout: Duration.minutes(15),
         memorySize: 1024, // More memory for processing large backups
         role: this.backupRole,
