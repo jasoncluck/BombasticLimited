@@ -3,6 +3,7 @@ export const SOURCES: Array<Database['public']['Enums']['source']> = [
   'jeffgerstmann',
   'nextlander',
   'remap',
+  'minnmax',
 ] as const;
 export type Source = (typeof SOURCES)[number];
 import type { Picture } from 'vite-imagetools';
@@ -11,6 +12,7 @@ import nextlanderImage from '$lib/assets/nextlander.jpg?enhanced';
 import giantbombImage from '$lib/assets/giantbomb.jpg?enhanced';
 import jeffgerstmannImage from '$lib/assets/jeffgerstmann.jpg?enhanced';
 import remapImage from '$lib/assets/remap.jpg?enhanced';
+import minnmaxImage from '$lib/assets/minnmax.jpg?enhanced';
 import type { Database } from '$lib/supabase/database.types';
 
 export type HighlightPlaylist = {
@@ -106,6 +108,17 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     ],
     websiteUrlDomain: 'remapradio.com',
     supportUrl: 'https://remapradio.com/signup/',
+  },
+  minnmax: {
+    displayName: 'MinnMax',
+    twitchUserName: 'minnmaxshow',
+    urlParam: 'minnmax',
+    image: minnmaxImage,
+    twitchId: '465794598',
+    youtubeId: 'UCiUhKqsBH-Is2VeC2sykEfg',
+    youtubeUrl: 'https://www.youtube.com/@minnmax',
+    highlightedPlaylists: [],
+    supportUrl: 'https://www.patreon.com/minnmax',
   },
 } as const;
 

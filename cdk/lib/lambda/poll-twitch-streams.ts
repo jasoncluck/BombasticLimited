@@ -1,7 +1,12 @@
 import { Client } from 'pg';
 
 // Ported from supabase/functions/poll-twitch-streams (Supabase Edge Function).
-type Source = 'giantbomb' | 'jeffgerstmann' | 'nextlander' | 'remap';
+type Source =
+  | 'giantbomb'
+  | 'jeffgerstmann'
+  | 'nextlander'
+  | 'remap'
+  | 'minnmax';
 
 interface SourceInfo {
   displayName: string;
@@ -22,9 +27,16 @@ const SOURCE_INFO: Record<Source, SourceInfo> = {
   jeffgerstmann: { displayName: 'Jeff Gerstmann', twitchId: '13831039' },
   nextlander: { displayName: 'Nextlander', twitchId: '689331234' },
   remap: { displayName: 'Remap', twitchId: '913491352' },
+  minnmax: { displayName: 'MinnMax', twitchId: '465794598' },
 };
 
-const SOURCES: Source[] = ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'];
+const SOURCES: Source[] = [
+  'giantbomb',
+  'jeffgerstmann',
+  'nextlander',
+  'remap',
+  'minnmax',
+];
 
 async function getTwitchAppToken(
   clientId: string,
@@ -61,7 +73,10 @@ async function getMultipleStreamStatus(
   const response = await fetch(
     `https://api.twitch.tv/helix/streams?${params.toString()}`,
     {
-      headers: { 'Client-ID': clientId, Authorization: `Bearer ${accessToken}` },
+      headers: {
+        'Client-ID': clientId,
+        Authorization: `Bearer ${accessToken}`,
+      },
     }
   );
 
@@ -99,7 +114,9 @@ export const handler = async (): Promise<PollResponse> => {
     throw new Error('Missing required Twitch environment variables');
   }
 
-  const pgClient = new Client({ connectionString: process.env.NEON_DATABASE_URL });
+  const pgClient = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+  });
   await pgClient.connect();
 
   try {

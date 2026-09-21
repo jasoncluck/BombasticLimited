@@ -74,6 +74,7 @@ export const load: PageServerLoad = async ({
     jeffgerstmann: [],
     nextlander: [],
     remap: [],
+    minnmax: [],
   };
 
   sourceVideosResults.forEach(({ source, videos }) => {

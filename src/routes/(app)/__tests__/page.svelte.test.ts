@@ -360,6 +360,7 @@ describe('+page.svelte Component Logic', () => {
         'jeffgerstmann',
         'nextlander',
         'remap',
+        'minnmax',
       ];
       const actualSources = Object.keys(mockData.sourceVideos);
 

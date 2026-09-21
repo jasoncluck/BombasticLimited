@@ -1396,7 +1396,12 @@ export type Database = {
       playlist_sorted_by: 'title' | 'datePublished' | 'playlistOrder';
       playlist_type: 'Public' | 'Private';
       profile_account_type: 'default' | 'admin';
-      source: 'giantbomb' | 'nextlander' | 'jeffgerstmann' | 'remap';
+      source:
+        | 'giantbomb'
+        | 'nextlander'
+        | 'jeffgerstmann'
+        | 'remap'
+        | 'minnmax';
     };
     CompositeTypes: {
       username_history_entry: {
@@ -1542,7 +1547,7 @@ export const Constants = {
       playlist_sorted_by: ['title', 'datePublished', 'playlistOrder'],
       playlist_type: ['Public', 'Private'],
       profile_account_type: ['default', 'admin'],
-      source: ['giantbomb', 'nextlander', 'jeffgerstmann', 'remap'],
+      source: ['giantbomb', 'nextlander', 'jeffgerstmann', 'remap', 'minnmax'],
     },
   },
 } as const;

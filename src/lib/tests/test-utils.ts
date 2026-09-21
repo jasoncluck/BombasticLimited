@@ -65,7 +65,7 @@ export function createMockUserProfile(
     username: 'testuser',
     avatar_url: null,
     providers: ['email'],
-    sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
+    sources: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap', 'minnmax'],
     username_history: {},
 
     content_display: 'TILES',
@@ -139,6 +139,13 @@ export function createMockSourceVideos() {
     ],
     remap: [
       createMockVideo({ id: 'rm1', title: 'Remap Video 1', source: 'remap' }),
+    ],
+    minnmax: [
+      createMockVideo({
+        id: 'mm1',
+        title: 'MinnMax Video 1',
+        source: 'minnmax',
+      }),
     ],
   };
 }

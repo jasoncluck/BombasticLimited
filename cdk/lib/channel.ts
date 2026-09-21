@@ -5,6 +5,7 @@ export const CHANNEL_SOURCES: Database['public']['Enums']['source'][] = [
   'jeffgerstmann',
   'nextlander',
   'remap',
+  'minnmax',
 ] as const;
 export type ChannelSource = (typeof CHANNEL_SOURCES)[number];
 
@@ -29,6 +30,10 @@ export const CHANNEL_INFO: Record<ChannelSource, ChannelInfo> = {
   remap: {
     id: 'UCpcSq3A3Z4tUJsHKfn8zpnA',
     uploadPlaylistId: 'UUpcSq3A3Z4tUJsHKfn8zpnA',
+  },
+  minnmax: {
+    id: 'UCiUhKqsBH-Is2VeC2sykEfg',
+    uploadPlaylistId: 'UUiUhKqsBH-Is2VeC2sykEfg',
   },
 } as const;
 

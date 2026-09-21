@@ -26,7 +26,7 @@ vi.mock('$lib/supabase/videos', () => ({
 }));
 
 vi.mock('$lib/constants/source', () => ({
-  SOURCES: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap'],
+  SOURCES: ['giantbomb', 'jeffgerstmann', 'nextlander', 'remap', 'minnmax'],
 }));
 
 const mockGetVideos = vi.mocked(getVideos);
@@ -83,7 +83,7 @@ describe('+page.server.ts load function', () => {
     expect(mockDepends).toHaveBeenCalledWith('supabase:db:videos');
 
     // Verify all sources were fetched
-    expect(mockGetVideos).toHaveBeenCalledTimes(4);
+    expect(mockGetVideos).toHaveBeenCalledTimes(SOURCES.length);
     SOURCES.forEach((source) => {
       expect(mockGetVideos).toHaveBeenCalledWith({
         source,
@@ -186,6 +186,7 @@ describe('+page.server.ts load function', () => {
       jeffgerstmann: [],
       nextlander: [],
       remap: [],
+      minnmax: [],
     });
     expect(result.continueWatchingVideos).toEqual([]);
   });
@@ -203,6 +204,7 @@ describe('+page.server.ts load function', () => {
       jeffgerstmann: [],
       nextlander: [],
       remap: [],
+      minnmax: [],
     });
     expect(result.continueWatchingVideos).toEqual([]);
   });
@@ -221,6 +223,7 @@ describe('+page.server.ts load function', () => {
       jeffgerstmann: [],
       nextlander: [],
       remap: [],
+      minnmax: [],
     });
     expect(result.continueWatchingVideos).toEqual([]);
   });

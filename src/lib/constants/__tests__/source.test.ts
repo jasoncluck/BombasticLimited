@@ -16,12 +16,13 @@ describe('Source Constants and Utilities', () => {
         'jeffgerstmann',
         'nextlander',
         'remap',
+        'minnmax',
       ]);
     });
 
     it('should be readonly array', () => {
       expect(Array.isArray(SOURCES)).toBe(true);
-      expect(SOURCES.length).toBe(4);
+      expect(SOURCES.length).toBe(5);
     });
 
     it('should contain only string values', () => {
@@ -289,7 +290,7 @@ describe('Source Constants and Utilities', () => {
     it('should have Sources type as keyof SOURCE_INFO', () => {
       // Compile-time test to ensure Types match SOURCE_INFO keys
       const sourceKeys = Object.keys(SOURCE_INFO) as Sources[];
-      expect(sourceKeys).toHaveLength(4);
+      expect(sourceKeys).toHaveLength(5);
 
       sourceKeys.forEach((key) => {
         expect(SOURCES).toContain(key);
@@ -329,12 +330,16 @@ describe('Source Constants and Utilities', () => {
       });
     });
 
-    it('should have at least one highlighted playlist per source', () => {
-      SOURCES.forEach((source) => {
-        expect(SOURCE_INFO[source].highlightedPlaylists.length).toBeGreaterThan(
-          0
-        );
-      });
+    it('should have at least one highlighted playlist for established sources', () => {
+      // Newly-added sources may not have curated playlists yet.
+      const sourcesWithoutCuration = new Set(['minnmax']);
+      SOURCES.filter((source) => !sourcesWithoutCuration.has(source)).forEach(
+        (source) => {
+          expect(
+            SOURCE_INFO[source].highlightedPlaylists.length
+          ).toBeGreaterThan(0);
+        }
+      );
     });
   });
 });

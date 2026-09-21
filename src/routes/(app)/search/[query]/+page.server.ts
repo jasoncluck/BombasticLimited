@@ -78,6 +78,7 @@ export const load: PageServerLoad = async ({
     jeffgerstmann: [],
     nextlander: [],
     remap: [],
+    minnmax: [],
   };
 
   const sourceVideosCount: SourceVideosCount = {
@@ -85,6 +86,7 @@ export const load: PageServerLoad = async ({
     jeffgerstmann: null,
     nextlander: null,
     remap: null,
+    minnmax: null,
   };
 
   sourceVideosResults.forEach(({ source, videos, count }) => {
