@@ -238,9 +238,8 @@ describe('playlist service module', () => {
         image_url: null, // No existing image
       };
       const mockVideos = [{ id: 'video1', thumbnail_url: 'thumb1.jpg' }];
-      const { addVideosToPlaylist, updatePlaylistThumbnail } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { addVideosToPlaylist, updatePlaylistThumbnail } =
+        await import('$lib/supabase/playlists');
       (addVideosToPlaylist as any).mockResolvedValue({ error: null });
       (updatePlaylistThumbnail as any).mockResolvedValue({ error: null });
 
@@ -323,9 +322,8 @@ describe('playlist service module', () => {
     it('should remove videos from playlist successfully', async () => {
       const mockPlaylist = { id: 1, name: 'Test Playlist' };
       const mockVideos = [{ id: 'video1' }, { id: 'video2' }];
-      const { deleteVideosFromPlaylist } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { deleteVideosFromPlaylist } =
+        await import('$lib/supabase/playlists');
       const { showNotification } = await import('$lib/supabase/notifications');
       const { invalidate } = await import('$app/navigation');
       (deleteVideosFromPlaylist as any).mockResolvedValue({ error: null });
@@ -354,9 +352,8 @@ describe('playlist service module', () => {
 
     it('should handle removal errors', async () => {
       const mockError = { message: 'Database error', code: '500' };
-      const { deleteVideosFromPlaylist } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { deleteVideosFromPlaylist } =
+        await import('$lib/supabase/playlists');
       const { showNotification } = await import('$lib/supabase/notifications');
       (deleteVideosFromPlaylist as any).mockResolvedValue({
         error: mockError,
@@ -380,9 +377,8 @@ describe('playlist service module', () => {
   describe('handleUpdatePlaylistImage', () => {
     it('should update playlist image successfully', async () => {
       const mockPlaylist = { id: 1 };
-      const { updatePlaylistThumbnail } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { updatePlaylistThumbnail } =
+        await import('$lib/supabase/playlists');
       const { invalidate } = await import('$app/navigation');
       (updatePlaylistThumbnail as any).mockResolvedValue({ error: null });
 
@@ -407,9 +403,8 @@ describe('playlist service module', () => {
 
     it('should handle image update errors', async () => {
       const mockError = { message: 'Image update failed', code: '500' };
-      const { updatePlaylistThumbnail } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { updatePlaylistThumbnail } =
+        await import('$lib/supabase/playlists');
       const { showNotification } = await import('$lib/supabase/notifications');
       (updatePlaylistThumbnail as any).mockResolvedValue({
         error: mockError,
@@ -433,9 +428,8 @@ describe('playlist service module', () => {
     it('should update video position successfully', async () => {
       const mockPlaylist = { id: 1 };
       const mockVideos = [{ id: 'video1' }];
-      const { updatePlaylistVideoPosition } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { updatePlaylistVideoPosition } =
+        await import('$lib/supabase/playlists');
       (updatePlaylistVideoPosition as any).mockResolvedValue({ error: null });
 
       const result = await handleUpdatePlaylistVideoPosition({
@@ -458,9 +452,8 @@ describe('playlist service module', () => {
 
     it('should handle position update errors', async () => {
       const mockError = { message: 'Position update failed', code: '500' };
-      const { updatePlaylistVideoPosition } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { updatePlaylistVideoPosition } =
+        await import('$lib/supabase/playlists');
       (updatePlaylistVideoPosition as any).mockResolvedValue({
         error: mockError,
       });
@@ -480,9 +473,8 @@ describe('playlist service module', () => {
   describe('handleUpdatePlaylistPosition', () => {
     it('should update playlist position successfully', async () => {
       const mockPlaylist = { id: 1 };
-      const { updatePlaylistPosition } = await import(
-        '$lib/supabase/playlists'
-      );
+      const { updatePlaylistPosition } =
+        await import('$lib/supabase/playlists');
       (updatePlaylistPosition as any).mockResolvedValue({ error: null });
 
       await handleUpdatePlaylistPosition({

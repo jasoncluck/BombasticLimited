@@ -28,14 +28,20 @@ export const GET: RequestHandler = async ({ url, cookies, locals }) => {
   }
 
   if (!code || !stateParam) {
-    redirect(303, '/auth/error#error_code=missing_code&error_description=Missing authorization code');
+    redirect(
+      303,
+      '/auth/error#error_code=missing_code&error_description=Missing authorization code'
+    );
   }
 
   let state: CallbackState;
   try {
     state = JSON.parse(Buffer.from(stateParam, 'base64url').toString('utf-8'));
   } catch {
-    redirect(303, '/auth/error#error_code=invalid_state&error_description=Invalid state parameter');
+    redirect(
+      303,
+      '/auth/error#error_code=invalid_state&error_description=Invalid state parameter'
+    );
   }
 
   const { tokens, error: exchangeError } = await exchangeCodeForTokens({
@@ -52,7 +58,10 @@ export const GET: RequestHandler = async ({ url, cookies, locals }) => {
 
   const claims = await verifyIdToken(tokens.idToken);
   if (!claims) {
-    redirect(303, '/auth/error#error_code=invalid_token&error_description=Could not verify Discord sign-in');
+    redirect(
+      303,
+      '/auth/error#error_code=invalid_token&error_description=Could not verify Discord sign-in'
+    );
   }
 
   const email = claims.email as string;
@@ -63,8 +72,15 @@ export const GET: RequestHandler = async ({ url, cookies, locals }) => {
     // Only link if the currently-logged-in session matches who requested
     // the link (the /auth/discord/link route already checked this once,
     // but the session could have changed between redirects).
-    if (!locals.userId || !locals.userEmail || locals.userEmail !== state.destinationEmail) {
-      redirect(303, '/auth/error#error_code=link_mismatch&error_description=Please log in and try linking Discord again');
+    if (
+      !locals.userId ||
+      !locals.userEmail ||
+      locals.userEmail !== state.destinationEmail
+    ) {
+      redirect(
+        303,
+        '/auth/error#error_code=link_mismatch&error_description=Please log in and try linking Discord again'
+      );
     }
 
     const { error: linkError } = await adminLinkDiscordIdentity({

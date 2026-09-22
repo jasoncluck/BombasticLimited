@@ -119,6 +119,9 @@ export function mergeObjects<Sources extends readonly MaybeThunk<any>[]>(
     },
 
     ownKeys(): (string | symbol)[] {
+      // Purely local accumulator for this single synchronous trap call —
+      // never stored as reactive state, so a plain Set is correct here.
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity
       const all = new Set<string | symbol>();
       for (const s of sources) {
         const obj = resolve(s);

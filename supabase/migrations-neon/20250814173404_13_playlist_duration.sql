@@ -131,17 +131,13 @@ COMMENT ON FUNCTION public.trigger_update_affected_playlist_durations () IS 'Opt
 DROP TRIGGER IF EXISTS trigger_playlist_duration_from_videos ON public.playlist_videos;
 
 CREATE TRIGGER trigger_playlist_duration_from_videos
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON public.playlist_videos FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON public.playlist_videos FOR EACH ROW
 EXECUTE FUNCTION public.trigger_update_playlist_duration_from_videos ();
 
 DROP TRIGGER IF EXISTS trigger_playlist_duration_from_video_changes ON public.videos;
 
 CREATE TRIGGER trigger_playlist_duration_from_video_changes
-AFTER
-UPDATE OF duration,
+AFTER UPDATE OF duration,
 pending_delete ON public.videos FOR EACH ROW
 EXECUTE FUNCTION public.trigger_update_affected_playlist_durations ();
 

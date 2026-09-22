@@ -14,7 +14,7 @@
   const errorCode = hashParams.get('error_code');
   const errorDescription = hashParams.get('error_description');
 
-  let errorTitle: string = 'An error occurred';
+  let errorTitle: string;
 
   console.log(errorCode);
   switch (errorCode) {

@@ -281,18 +281,14 @@
 >
   <Carousel.Previous
     class={showPreviousButton
-      ? '!bg-secondary visible cursor-pointer opacity-75 \
-      transition-opacity duration-150 hover:scale-105 \
-      hover:opacity-100 hover:brightness-110'
+      ? '!bg-secondary visible cursor-pointer opacity-75 transition-opacity duration-150 hover:scale-105 hover:opacity-100 hover:brightness-110'
       : 'invisible'}
     onclick={handlePreviousButtonClick}
   />
   <Carousel.Next
     onclick={handleNextButtonClick}
     class={showNextButton
-      ? '!bg-secondary visible cursor-pointer opacity-75 \
-      transition-all duration-150 hover:scale-105 \
-      hover:opacity-100 hover:brightness-110'
+      ? '!bg-secondary visible cursor-pointer opacity-75 transition-all duration-150 hover:scale-105 hover:opacity-100 hover:brightness-110'
       : 'invisible'}
   />
   <Carousel.Content class="ml-1">

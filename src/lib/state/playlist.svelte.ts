@@ -1,4 +1,5 @@
 import type { Playlist } from '$lib/supabase/playlists';
+import type { Video } from '$lib/supabase/videos';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';
 import type { Database } from '$lib/supabase/database.types';
@@ -65,7 +66,7 @@ export class PlaylistStateClass {
 
   // Helper to get all selected videos across sections
   getAllSelectedVideos() {
-    const allSelectedVideos: { sectionId: string; videos: any[] }[] = [];
+    const allSelectedVideos: { sectionId: string; videos: Video[] }[] = [];
 
     for (const [sectionId, videos] of Object.entries(
       this.contentState.selectedVideosBySection
@@ -308,9 +309,6 @@ export class PlaylistStateClass {
         if (this.draggedIndex === null || this.draggedIndex < 0) {
           return;
         }
-
-        // Store original state for potential rollback
-        const originalPlaylists = [...options.playlists];
 
         // Update local state immediately for responsive UI
         const updatedPlaylists = [...options.playlists];

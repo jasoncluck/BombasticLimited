@@ -4,13 +4,13 @@
 -- This migration adds triggers for automatic playlist data updates
 -- ============================================================================
 -- Trigger to automatically set short_id on playlist creation
-CREATE OR REPLACE TRIGGER "before_insert_set_short_id" BEFORE INSERT ON "public"."playlists" FOR EACH ROW
+CREATE OR REPLACE TRIGGER "before_insert_set_short_id"
+BEFORE INSERT ON "public"."playlists" FOR EACH ROW
 EXECUTE FUNCTION "public"."set_short_id" ();
 
 -- Trigger to update playlist search vector on insert/update
-CREATE OR REPLACE TRIGGER "update_playlist_search_vector" BEFORE INSERT
-OR
-UPDATE ON "public"."playlists" FOR EACH ROW
+CREATE OR REPLACE TRIGGER "update_playlist_search_vector"
+BEFORE INSERT OR UPDATE ON "public"."playlists" FOR EACH ROW
 EXECUTE FUNCTION "public"."set_playlist_search_vector" ();
 
 CREATE OR REPLACE FUNCTION public.update_playlists_updated_at () RETURNS TRIGGER LANGUAGE plpgsql
@@ -27,8 +27,8 @@ COMMENT ON FUNCTION public.update_playlists_updated_at () IS 'Trigger function t
 -- Create trigger to automatically update updated_at on row changes
 DROP TRIGGER IF EXISTS trigger_playlists_updated_at ON public.playlists;
 
-CREATE TRIGGER trigger_playlists_updated_at BEFORE
-UPDATE ON public.playlists FOR EACH ROW
+CREATE TRIGGER trigger_playlists_updated_at
+BEFORE UPDATE ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.update_playlists_updated_at ();
 
 COMMENT ON TRIGGER trigger_playlists_updated_at ON public.playlists IS 'Automatically update updated_at timestamp when playlist is modified';

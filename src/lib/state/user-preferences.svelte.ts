@@ -8,7 +8,7 @@ interface UserPreferences {
   contentDescription: ContentDescription;
 }
 
-export let userPreferences = $state<UserPreferences>({
+export const userPreferences = $state<UserPreferences>({
   contentDisplay: 'TILES',
   contentDescription: 'BRIEF',
 });

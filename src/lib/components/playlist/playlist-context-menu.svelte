@@ -7,12 +7,9 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Database } from '$lib/supabase/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import PlaylistDeleteAlertDialog from './playlist-delete-alert-dialog.svelte';
-  import {
-    handleDeletePlaylist,
-    handleUnfollowPlaylist,
-  } from '../playlist/playlist-service';
+  import { handleUnfollowPlaylist } from '../playlist/playlist-service';
   import type { Snippet } from 'svelte';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';

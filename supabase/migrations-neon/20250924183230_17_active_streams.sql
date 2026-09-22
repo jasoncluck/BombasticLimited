@@ -26,8 +26,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_active_streams_updated_at BEFORE
-UPDATE ON public.active_streams FOR EACH ROW
+CREATE TRIGGER update_active_streams_updated_at
+BEFORE UPDATE ON public.active_streams FOR EACH ROW
 EXECUTE FUNCTION public.update_active_streams_updated_at ();
 
 -- Insert initial records for all sources
@@ -46,6 +46,7 @@ ALTER TABLE public.active_streams ENABLE ROW LEVEL SECURITY;
 -- Create RLS policies
 -- Allow public read access (since this is public stream data)
 DROP POLICY IF EXISTS "Public read access" ON public.active_streams;
+
 CREATE POLICY "Public read access" ON public.active_streams FOR
 SELECT
   TO PUBLIC USING (TRUE);
@@ -54,7 +55,6 @@ SELECT
 -- Supabase's service_role Postgres role doesn't exist on Neon, and isn't
 -- needed anyway — the Lambda that writes this table (later phase) connects
 -- as the database owner, which bypasses RLS regardless of policies.
-
 -- Create index for performance
 CREATE INDEX IF NOT EXISTS idx_active_streams_updated_at ON public.active_streams (updated_at DESC);
 

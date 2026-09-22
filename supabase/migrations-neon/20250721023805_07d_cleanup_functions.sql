@@ -15,4 +15,3 @@ SET
     DELETE FROM public.videos
     WHERE pending_delete = TRUE;
 END;$$;
-

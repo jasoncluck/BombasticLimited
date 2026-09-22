@@ -30,12 +30,7 @@
     subtitle?: string;
     triggerClass?: string;
     triggerVariant?:
-      | 'default'
-      | 'destructive'
-      | 'outline'
-      | 'secondary'
-      | 'ghost'
-      | 'link';
+      'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
     onClose?: () => void;
     onReorder?: (sources: Source[]) => Promise<void> | void;
     trigger: Snippet;

@@ -14,6 +14,7 @@ ALTER TABLE "public"."playlist_cleanup_queue" ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies for playlist_cleanup_queue
 DROP POLICY IF EXISTS "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_queue";
+
 CREATE POLICY "playlist_cleanup_queue_select" ON "public"."playlist_cleanup_queue" FOR
 SELECT
   USING (
@@ -26,12 +27,13 @@ SELECT
       WHERE
         created_by = (
           SELECT
-            (auth.user_id())::uuid
+            (auth.user_id ())::uuid
         )
     )
   );
 
 DROP POLICY IF EXISTS "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue";
+
 CREATE POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_queue" FOR INSERT TO authenticated
 WITH
   CHECK (
@@ -44,7 +46,7 @@ WITH
       WHERE
         created_by = (
           SELECT
-            (auth.user_id())::uuid
+            (auth.user_id ())::uuid
         )
     )
   );
@@ -724,7 +726,6 @@ $$;
 -- pg_cron + net.http_post trigger removed (Neon adaptation): cron moves to
 -- AWS EventBridge + Lambda (later phase), calling cleanup_deleted_playlists()
 -- directly via a Postgres connection on the same hourly schedule.
-
 -- Helper function to format cleanup time in user's timezone using deleted_at + 14 days (DATE ONLY)
 CREATE OR REPLACE FUNCTION public.format_cleanup_time_for_user (
   p_user_id uuid,
@@ -966,8 +967,7 @@ $$;
 DROP TRIGGER IF EXISTS playlist_deletion_notification_trigger ON public.playlists;
 
 CREATE TRIGGER playlist_deletion_notification_trigger
-AFTER
-UPDATE OF deleted_at ON public.playlists FOR EACH ROW
+AFTER UPDATE OF deleted_at ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.notify_playlist_deletion ();
 
 -- Add documentation
@@ -993,5 +993,4 @@ COMMENT ON POLICY "playlist_cleanup_queue_insert" ON "public"."playlist_cleanup_
 -- delete_user() — 08b's version (playlist cleanup only; the app/Lambda
 -- layer calls Cognito's AdminDeleteUser separately, later phase) is the
 -- one that stands.
-
 COMMIT;

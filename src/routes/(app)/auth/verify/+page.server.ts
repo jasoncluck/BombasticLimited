@@ -53,7 +53,10 @@ export const actions: Actions = {
       return fail(400, { form: confirmForm });
     }
 
-    setFlash({ type: 'success', message: 'Code resent — check your inbox.' }, cookies);
+    setFlash(
+      { type: 'success', message: 'Code resent — check your inbox.' },
+      cookies
+    );
     return { form: confirmForm };
   },
 } satisfies Actions;

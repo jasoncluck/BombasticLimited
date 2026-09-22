@@ -1,7 +1,7 @@
 <script lang="ts">
   import { ListVideo, Plus } from '@lucide/svelte';
   import { type NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source';
   import * as Popover from '$lib/components/ui/popover';
   import { invalidate } from '$app/navigation';

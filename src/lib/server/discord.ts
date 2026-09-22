@@ -24,7 +24,9 @@ export async function fetchDiscordProfile(
   const botToken = process.env.DISCORD_BOT_TOKEN;
   if (!botToken || !identities) return null;
 
-  const discordId = identities.find((i) => i.providerName === 'Discord')?.userId;
+  const discordId = identities.find(
+    (i) => i.providerName === 'Discord'
+  )?.userId;
   if (!discordId) return null;
 
   const res = await fetch(`https://discord.com/api/users/${discordId}`, {

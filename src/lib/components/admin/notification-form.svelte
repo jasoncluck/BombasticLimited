@@ -237,31 +237,29 @@
         <!-- Type Selection -->
         <Form.Field form={adminNotificationForm} name="type">
           <Form.Control>
-            {#snippet children({ props })}
-              <Label for="type" class="text-sm">Type</Label>
-              <Select.Root
-                type="single"
-                bind:value={$formData.type}
-                onValueChange={(v) => {
-                  if (v) {
-                    $formData.type = v as NotificationType;
-                    selectedType =
-                      notificationTypes.find((t) => t.value === v) ||
-                      notificationTypes[0];
-                  }
-                }}
-              >
-                <Select.Trigger class="w-full">
-                  {selectedType?.label || 'Select notification type'}
-                </Select.Trigger>
-                <Select.Content>
-                  {#each notificationTypes as type (type.value)}
-                    <Select.Item value={type.value}>{type.label}</Select.Item>
-                  {/each}
-                </Select.Content>
-              </Select.Root>
-              <input type="hidden" name="type" bind:value={$formData.type} />
-            {/snippet}
+            <Label for="type" class="text-sm">Type</Label>
+            <Select.Root
+              type="single"
+              bind:value={$formData.type}
+              onValueChange={(v) => {
+                if (v) {
+                  $formData.type = v as NotificationType;
+                  selectedType =
+                    notificationTypes.find((t) => t.value === v) ||
+                    notificationTypes[0];
+                }
+              }}
+            >
+              <Select.Trigger class="w-full">
+                {selectedType?.label || 'Select notification type'}
+              </Select.Trigger>
+              <Select.Content>
+                {#each notificationTypes as type (type.value)}
+                  <Select.Item value={type.value}>{type.label}</Select.Item>
+                {/each}
+              </Select.Content>
+            </Select.Root>
+            <input type="hidden" name="type" bind:value={$formData.type} />
           </Form.Control>
           <Form.FieldErrors class="text-xs" />
         </Form.Field>

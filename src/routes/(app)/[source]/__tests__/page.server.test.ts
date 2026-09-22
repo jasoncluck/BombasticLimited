@@ -389,9 +389,8 @@ describe('[source]/+page.server.ts load function', () => {
     });
 
     it('should handle invalid content filter error', async () => {
-      const { isVideoFilter } = await import(
-        '$lib/components/content/content-filter'
-      );
+      const { isVideoFilter } =
+        await import('$lib/components/content/content-filter');
       vi.mocked(isVideoFilter).mockReturnValue(false);
 
       await expect(load(mockLoadEvent)).rejects.toThrow(

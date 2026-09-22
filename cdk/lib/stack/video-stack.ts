@@ -68,22 +68,18 @@ export class VideoStack extends Stack {
     );
 
     // CloudWatch Alarm for Lambda Errors
-    const errorAlarm = new cloudwatch.Alarm(
-      this,
-      'PopulateVideoLambdaErrorAlarm',
-      {
-        alarmName: `PopulateVideoLambdaErrorAlarm-${stage}`,
-        metric: populateVideosLambda.metricErrors({
-          period: Duration.minutes(5),
-        }),
-        threshold: 1,
-        evaluationPeriods: 5,
-        actionsEnabled: false,
-        datapointsToAlarm: 5,
-        alarmDescription: `Alarm if the populate-videos Lambda has any errors in a 5-minute period (${stage})`,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      }
-    );
+    new cloudwatch.Alarm(this, 'PopulateVideoLambdaErrorAlarm', {
+      alarmName: `PopulateVideoLambdaErrorAlarm-${stage}`,
+      metric: populateVideosLambda.metricErrors({
+        period: Duration.minutes(5),
+      }),
+      threshold: 1,
+      evaluationPeriods: 5,
+      actionsEnabled: false,
+      datapointsToAlarm: 5,
+      alarmDescription: `Alarm if the populate-videos Lambda has any errors in a 5-minute period (${stage})`,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
 
     const populatePlaylistsLambda = new nodejs.NodejsFunction(
       this,
@@ -123,22 +119,18 @@ export class VideoStack extends Stack {
     );
 
     // CloudWatch Alarm for Playlists Lambda Errors
-    const playlistsErrorAlarm = new cloudwatch.Alarm(
-      this,
-      'PopulatePlaylistsLambdaErrorAlarm',
-      {
-        alarmName: `PopulatePlaylistsLambdaErrorAlarm-${stage}`,
-        metric: populatePlaylistsLambda.metricErrors({
-          period: Duration.minutes(5),
-        }),
-        threshold: 1,
-        evaluationPeriods: 5,
-        actionsEnabled: false,
-        datapointsToAlarm: 5,
-        alarmDescription: `Alarm if the populate-playlists Lambda has any errors in a 5-minute period (${stage})`,
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      }
-    );
+    new cloudwatch.Alarm(this, 'PopulatePlaylistsLambdaErrorAlarm', {
+      alarmName: `PopulatePlaylistsLambdaErrorAlarm-${stage}`,
+      metric: populatePlaylistsLambda.metricErrors({
+        period: Duration.minutes(5),
+      }),
+      threshold: 1,
+      evaluationPeriods: 5,
+      actionsEnabled: false,
+      datapointsToAlarm: 5,
+      alarmDescription: `Alarm if the populate-playlists Lambda has any errors in a 5-minute period (${stage})`,
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
 
     // Create environment-specific schedules (different schedules for staging vs production)
     // AWS EventBridge cron format: minute hour day-of-month month day-of-week year

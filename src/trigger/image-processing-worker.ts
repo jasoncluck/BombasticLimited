@@ -64,7 +64,10 @@ interface ProcessedImages {
 }
 
 // Generate storage paths for optimized images (WITH timestamp for versioning)
-function generateStoragePaths(entityId: string, timestamp?: string): StoragePaths {
+function generateStoragePaths(
+  entityId: string,
+  timestamp?: string
+): StoragePaths {
   const ts = timestamp || new Date().toISOString().replace(/[:.]/g, '-');
   return {
     webpPath: `playlists/${entityId}/playlist-${entityId}-${ts}.webp`,
@@ -153,11 +156,10 @@ async function getPlaylistCropProperties(
 // Crop, resize, and compress a playlist thumbnail into WebP + AVIF
 async function processImageFormats(
   buffer: Buffer,
-  playlistId: string,
-  sourceUrl: string
+  playlistId: string
 ): Promise<ProcessedImages> {
   const sharpInstance = sharp(buffer, {
-    failOnError: false,
+    failOn: 'none',
     density: 300,
     limitInputPixels: 268402689, // ~16MP limit to prevent OOM
   });
@@ -373,7 +375,7 @@ async function updateEntityWithProcessedImages(
       [webpPath, avifPath, entityId]
     );
   } catch (error) {
-    throw new Error(`Failed to update playlist: ${error}`);
+    throw new Error(`Failed to update playlist: ${error}`, { cause: error });
   }
 }
 
@@ -487,8 +489,7 @@ export async function processImageJob(
     console.log(`Processing image for playlist ${record.id}`);
     const { webp: webpBuffer, avif: avifBuffer } = await processImageFormats(
       imageBuffer,
-      record.id,
-      sourceUrl
+      record.id
     );
     console.log(
       `Processed images: WebP ${webpBuffer.length} bytes, AVIF ${avifBuffer.length} bytes`
@@ -505,7 +506,10 @@ export async function processImageJob(
     // Complete job or update database
     if (jobId) {
       try {
-        console.log(`Completing job ${jobId} with paths:`, { webpPath, avifPath });
+        console.log(`Completing job ${jobId} with paths:`, {
+          webpPath,
+          avifPath,
+        });
         const completionResult = await completeImageProcessingJob(
           jobId,
           webpPath,
@@ -549,7 +553,8 @@ export async function processImageJob(
 
     if (jobId) {
       try {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
         console.log(`Failing job ${jobId} with error: ${errorMessage}`);
         const failResult = await failImageProcessingJob(jobId, errorMessage);
         console.log('Job failure result:', { failResult });

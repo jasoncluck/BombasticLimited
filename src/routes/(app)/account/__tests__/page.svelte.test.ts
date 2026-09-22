@@ -487,7 +487,7 @@ describe('account/+page.svelte Component Logic', () => {
     });
 
     it('should clear timeout on component destroy', () => {
-      let timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(
+      const timeoutId: ReturnType<typeof setTimeout> | null = setTimeout(
         () => {},
         500
       );

@@ -18,7 +18,10 @@ export interface SessionUser {
   email: string;
 }
 
-export function setSessionCookies(cookies: Cookies, tokens: CognitoTokens): void {
+export function setSessionCookies(
+  cookies: Cookies,
+  tokens: CognitoTokens
+): void {
   const common = {
     path: '/',
     httpOnly: true,
@@ -71,7 +74,9 @@ interface ResolvedSession {
  * rewriting cookies) if the ID token is expired but a refresh token is
  * available. Returns null if there's no valid session at all.
  */
-async function resolveSession(cookies: Cookies): Promise<ResolvedSession | null> {
+async function resolveSession(
+  cookies: Cookies
+): Promise<ResolvedSession | null> {
   const idToken = cookies.get(ID_TOKEN_COOKIE);
 
   if (idToken) {
@@ -103,7 +108,9 @@ async function resolveSession(cookies: Cookies): Promise<ResolvedSession | null>
   };
 }
 
-export async function getSessionUser(cookies: Cookies): Promise<SessionUser | null> {
+export async function getSessionUser(
+  cookies: Cookies
+): Promise<SessionUser | null> {
   const session = await resolveSession(cookies);
   return session?.user ?? null;
 }
@@ -112,6 +119,8 @@ export async function getSessionUser(cookies: Cookies): Promise<SessionUser | nu
  * Same resolution as `getSessionUser`, but also returns the raw ID token —
  * used to authenticate the server-side Neon Data API client per request.
  */
-export async function getSession(cookies: Cookies): Promise<ResolvedSession | null> {
+export async function getSession(
+  cookies: Cookies
+): Promise<ResolvedSession | null> {
   return resolveSession(cookies);
 }

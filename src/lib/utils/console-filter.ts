@@ -48,7 +48,7 @@ export function setupConsoleFiltering() {
     /^VM\d+:/,
   ];
 
-  const shouldSuppress = (args: any[]) => {
+  const shouldSuppress = (args: unknown[]) => {
     // Convert all arguments to strings and join them
     const message = args
       .map((arg) => {

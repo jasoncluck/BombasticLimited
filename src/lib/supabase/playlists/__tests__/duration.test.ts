@@ -415,9 +415,8 @@ describe('playlist duration module', () => {
   describe('duration calculation edge cases', () => {
     it('should handle extremely long durations', async () => {
       // Mock a very long duration using the mock
-      const { videoDurationToSeconds } = await import(
-        '$lib/components/video/video-service'
-      );
+      const { videoDurationToSeconds } =
+        await import('$lib/components/video/video-service');
       (videoDurationToSeconds as any).mockReturnValueOnce(86400); // 24 hours
 
       mockEq.mockResolvedValueOnce({

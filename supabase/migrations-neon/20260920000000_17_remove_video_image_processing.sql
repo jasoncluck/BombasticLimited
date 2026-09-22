@@ -5,23 +5,27 @@
 --   cropping/sizing and stay on the pipeline.
 -- Dependencies: 20250823044958_14_image-processing.sql
 -- ============================================================================
-
 -- Stop enqueueing new video image-processing jobs.
 DROP TRIGGER IF EXISTS trigger_videos_queue_image_processing ON public.videos;
-DROP FUNCTION IF EXISTS public.trigger_queue_video_image_processing();
+
+DROP FUNCTION IF EXISTS public.trigger_queue_video_image_processing ();
 
 -- Purge already-queued video jobs (playlist jobs untouched).
-DELETE FROM public.image_processing_jobs WHERE entity_type = 'video';
+DELETE FROM public.image_processing_jobs
+WHERE
+  entity_type = 'video';
 
 -- Drop the video branch from the queue's completion/failure handlers —
 -- dead code now that nothing ever queues a 'video' job, but keep the
 -- functions correct in case someone reads them.
-CREATE OR REPLACE FUNCTION public.complete_image_processing_job(job_id uuid, jpg_path text DEFAULT NULL::text, webp_path text DEFAULT NULL::text, avif_path text DEFAULT NULL::text)
- RETURNS boolean
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO ''
-AS $function$
+CREATE OR REPLACE FUNCTION public.complete_image_processing_job (
+  job_id uuid,
+  jpg_path text DEFAULT NULL::text,
+  webp_path text DEFAULT NULL::text,
+  avif_path text DEFAULT NULL::text
+) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path TO '' AS $function$
 DECLARE
   job_record RECORD;
   entity_exists boolean := FALSE;
@@ -106,12 +110,9 @@ BEGIN
 END;
 $function$;
 
-CREATE OR REPLACE FUNCTION public.fail_image_processing_job(job_id uuid, error_msg text)
- RETURNS boolean
- LANGUAGE plpgsql
- SECURITY DEFINER
- SET search_path TO ''
-AS $function$
+CREATE OR REPLACE FUNCTION public.fail_image_processing_job (job_id uuid, error_msg text) RETURNS boolean LANGUAGE plpgsql SECURITY DEFINER
+SET
+  search_path TO '' AS $function$
 DECLARE
   job_record RECORD;
   new_status text;
@@ -157,15 +158,33 @@ $function$;
 -- thumbnail_url when image_url is null (content-card.svelte), so this is
 -- a no-op for rendering. Return type is changing (dropping two columns),
 -- so these need DROP + CREATE rather than CREATE OR REPLACE.
+DROP FUNCTION IF EXISTS public.get_videos_with_timestamps (text, uuid, source);
 
-DROP FUNCTION IF EXISTS public.get_videos_with_timestamps(text, uuid, source);
-
-CREATE FUNCTION public.get_videos_with_timestamps(p_preferred_image_format text DEFAULT 'avif'::text, p_user_id uuid DEFAULT NULL::uuid, p_source source DEFAULT NULL::source)
- RETURNS TABLE(id text, source source, title text, description text, thumbnail_url text, image_url text, published_at timestamp with time zone, duration text, views bigint, video_start_seconds numeric, watched_at timestamp with time zone, updated_at timestamp with time zone, playlist_id bigint, playlist_name text, playlist_short_id text, playlist_sorted_by playlist_sorted_by, playlist_sort_order playlist_sort_order)
- LANGUAGE sql
- STABLE
- SET search_path TO ''
-AS $function$
+CREATE FUNCTION public.get_videos_with_timestamps (
+  p_preferred_image_format text DEFAULT 'avif'::text,
+  p_user_id uuid DEFAULT NULL::uuid,
+  p_source source DEFAULT NULL::source
+) RETURNS TABLE (
+  id text,
+  source source,
+  title text,
+  description text,
+  thumbnail_url text,
+  image_url text,
+  published_at timestamp with time zone,
+  duration text,
+  views bigint,
+  video_start_seconds numeric,
+  watched_at timestamp with time zone,
+  updated_at timestamp with time zone,
+  playlist_id bigint,
+  playlist_name text,
+  playlist_short_id text,
+  playlist_sorted_by playlist_sorted_by,
+  playlist_sort_order playlist_sort_order
+) LANGUAGE sql STABLE
+SET
+  search_path TO '' AS $function$
     SELECT
         v.id,
         v.source,
@@ -192,14 +211,31 @@ AS $function$
     ORDER BY v.published_at DESC;
 $function$;
 
-DROP FUNCTION IF EXISTS public.get_in_progress_videos_with_timestamps(text, uuid);
+DROP FUNCTION IF EXISTS public.get_in_progress_videos_with_timestamps (text, uuid);
 
-CREATE FUNCTION public.get_in_progress_videos_with_timestamps(p_preferred_image_format text DEFAULT 'avif'::text, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS TABLE(id text, source source, title text, description text, thumbnail_url text, image_url text, published_at timestamp with time zone, duration text, views bigint, video_start_seconds numeric, watched_at timestamp with time zone, updated_at timestamp with time zone, playlist_sorted_by playlist_sorted_by, playlist_sort_order playlist_sort_order, playlist_name text, playlist_short_id text)
- LANGUAGE sql
- STABLE
- SET search_path TO ''
-AS $function$
+CREATE FUNCTION public.get_in_progress_videos_with_timestamps (
+  p_preferred_image_format text DEFAULT 'avif'::text,
+  p_user_id uuid DEFAULT NULL::uuid
+) RETURNS TABLE (
+  id text,
+  source source,
+  title text,
+  description text,
+  thumbnail_url text,
+  image_url text,
+  published_at timestamp with time zone,
+  duration text,
+  views bigint,
+  video_start_seconds numeric,
+  watched_at timestamp with time zone,
+  updated_at timestamp with time zone,
+  playlist_sorted_by playlist_sorted_by,
+  playlist_sort_order playlist_sort_order,
+  playlist_name text,
+  playlist_short_id text
+) LANGUAGE sql STABLE
+SET
+  search_path TO '' AS $function$
     SELECT
         v.id,
         v.source,
@@ -226,14 +262,34 @@ AS $function$
     ORDER BY t.watched_at DESC;
 $function$;
 
-DROP FUNCTION IF EXISTS public.search_videos(text, text, uuid, source);
+DROP FUNCTION IF EXISTS public.search_videos (text, text, uuid, source);
 
-CREATE FUNCTION public.search_videos(search_term text, p_preferred_image_format text DEFAULT 'avif'::text, p_user_id uuid DEFAULT NULL::uuid, p_source source DEFAULT NULL::source)
- RETURNS TABLE(id text, source source, title text, description text, thumbnail_url text, image_url text, published_at timestamp with time zone, duration text, views bigint, video_start_seconds numeric, updated_at timestamp with time zone, watched_at timestamp with time zone, playlist_name text, playlist_short_id text, playlist_sorted_by playlist_sorted_by, playlist_sort_order playlist_sort_order, search_rank real)
- LANGUAGE plpgsql
- STABLE
- SET search_path TO ''
-AS $function$
+CREATE FUNCTION public.search_videos (
+  search_term text,
+  p_preferred_image_format text DEFAULT 'avif'::text,
+  p_user_id uuid DEFAULT NULL::uuid,
+  p_source source DEFAULT NULL::source
+) RETURNS TABLE (
+  id text,
+  source source,
+  title text,
+  description text,
+  thumbnail_url text,
+  image_url text,
+  published_at timestamp with time zone,
+  duration text,
+  views bigint,
+  video_start_seconds numeric,
+  updated_at timestamp with time zone,
+  watched_at timestamp with time zone,
+  playlist_name text,
+  playlist_short_id text,
+  playlist_sorted_by playlist_sorted_by,
+  playlist_sort_order playlist_sort_order,
+  search_rank real
+) LANGUAGE plpgsql STABLE
+SET
+  search_path TO '' AS $function$
 DECLARE
     clean_term text;
     words text[];
@@ -382,11 +438,53 @@ $function$;
 -- get_playlist_video_context also selects video thumbnails (for the
 -- playlist video player's up-next context) but its return type doesn't
 -- expose image_processing_status, so CREATE OR REPLACE is fine here.
-CREATE OR REPLACE FUNCTION public.get_playlist_video_context(p_short_id text, p_video_id text, p_context_limit integer DEFAULT 5, p_preferred_image_format text DEFAULT 'avif'::text, p_sorted_by text DEFAULT NULL::text, p_sort_order text DEFAULT NULL::text, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS TABLE(playlist_id bigint, playlist_created_at timestamp with time zone, playlist_name text, playlist_short_id text, playlist_created_by uuid, playlist_description text, playlist_image_url text, playlist_image_processing_status image_processing_status, playlist_type playlist_type, playlist_image_properties jsonb, playlist_youtube_id text, playlist_thumbnail_url text, playlist_deleted_at timestamp with time zone, profile_username text, profile_avatar_url text, playlist_sorted_by playlist_sorted_by, playlist_sort_order playlist_sort_order, video_id text, video_position smallint, video_source source, video_title text, video_description text, video_thumbnail_url text, video_image_url text, video_published_at timestamp with time zone, video_duration text, video_start_seconds numeric, video_watched_at timestamp with time zone, video_updated_at timestamp with time zone, video_timestamp_playlist_id bigint, video_timestamp_sorted_by playlist_sorted_by, video_timestamp_sort_order playlist_sort_order, is_current_video boolean, total_videos_count bigint, current_video_index smallint)
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
+CREATE OR REPLACE FUNCTION public.get_playlist_video_context (
+  p_short_id text,
+  p_video_id text,
+  p_context_limit integer DEFAULT 5,
+  p_preferred_image_format text DEFAULT 'avif'::text,
+  p_sorted_by text DEFAULT NULL::text,
+  p_sort_order text DEFAULT NULL::text,
+  p_user_id uuid DEFAULT NULL::uuid
+) RETURNS TABLE (
+  playlist_id bigint,
+  playlist_created_at timestamp with time zone,
+  playlist_name text,
+  playlist_short_id text,
+  playlist_created_by uuid,
+  playlist_description text,
+  playlist_image_url text,
+  playlist_image_processing_status image_processing_status,
+  playlist_type playlist_type,
+  playlist_image_properties jsonb,
+  playlist_youtube_id text,
+  playlist_thumbnail_url text,
+  playlist_deleted_at timestamp with time zone,
+  profile_username text,
+  profile_avatar_url text,
+  playlist_sorted_by playlist_sorted_by,
+  playlist_sort_order playlist_sort_order,
+  video_id text,
+  video_position smallint,
+  video_source source,
+  video_title text,
+  video_description text,
+  video_thumbnail_url text,
+  video_image_url text,
+  video_published_at timestamp with time zone,
+  video_duration text,
+  video_start_seconds numeric,
+  video_watched_at timestamp with time zone,
+  video_updated_at timestamp with time zone,
+  video_timestamp_playlist_id bigint,
+  video_timestamp_sorted_by playlist_sorted_by,
+  video_timestamp_sort_order playlist_sort_order,
+  is_current_video boolean,
+  total_videos_count bigint,
+  current_video_index smallint
+) LANGUAGE plpgsql
+SET
+  search_path TO '' AS $function$
 DECLARE
   playlist_record RECORD;
   total_count bigint;
@@ -594,13 +692,63 @@ $function$;
 -- get_playlist_data's return type includes video_image_processing_status,
 -- which is going away, so this needs DROP + CREATE rather than
 -- CREATE OR REPLACE.
-DROP FUNCTION IF EXISTS public.get_playlist_data(text, text, integer, integer, text, text, text, uuid);
+DROP FUNCTION IF EXISTS public.get_playlist_data (
+  text,
+  text,
+  integer,
+  integer,
+  text,
+  text,
+  text,
+  uuid
+);
 
-CREATE FUNCTION public.get_playlist_data(p_short_id text DEFAULT NULL::text, p_youtube_id text DEFAULT NULL::text, p_current_page integer DEFAULT 1, p_limit integer DEFAULT 20, p_sort_key text DEFAULT NULL::text, p_sort_order text DEFAULT NULL::text, p_preferred_image_format text DEFAULT 'avif'::text, p_user_id uuid DEFAULT NULL::uuid)
- RETURNS TABLE(playlist_id bigint, playlist_created_at timestamp with time zone, playlist_name text, playlist_short_id text, playlist_created_by uuid, playlist_description text, playlist_image_url text, playlist_image_processing_status image_processing_status, playlist_type playlist_type, playlist_image_properties jsonb, playlist_youtube_id text, playlist_thumbnail_url text, playlist_deleted_at timestamp with time zone, profile_username text, profile_avatar_url text, playlist_sorted_by playlist_sorted_by, playlist_sort_order playlist_sort_order, playlist_position smallint, video_id text, video_position smallint, video_source source, video_title text, video_description text, video_thumbnail_url text, video_image_url text, video_published_at timestamp with time zone, video_duration text, video_start_seconds numeric, video_watched_at timestamp with time zone, video_updated_at timestamp with time zone, total_videos_count bigint, total_duration_seconds integer, is_duration_row boolean)
- LANGUAGE plpgsql
- SET search_path TO ''
-AS $function$
+CREATE FUNCTION public.get_playlist_data (
+  p_short_id text DEFAULT NULL::text,
+  p_youtube_id text DEFAULT NULL::text,
+  p_current_page integer DEFAULT 1,
+  p_limit integer DEFAULT 20,
+  p_sort_key text DEFAULT NULL::text,
+  p_sort_order text DEFAULT NULL::text,
+  p_preferred_image_format text DEFAULT 'avif'::text,
+  p_user_id uuid DEFAULT NULL::uuid
+) RETURNS TABLE (
+  playlist_id bigint,
+  playlist_created_at timestamp with time zone,
+  playlist_name text,
+  playlist_short_id text,
+  playlist_created_by uuid,
+  playlist_description text,
+  playlist_image_url text,
+  playlist_image_processing_status image_processing_status,
+  playlist_type playlist_type,
+  playlist_image_properties jsonb,
+  playlist_youtube_id text,
+  playlist_thumbnail_url text,
+  playlist_deleted_at timestamp with time zone,
+  profile_username text,
+  profile_avatar_url text,
+  playlist_sorted_by playlist_sorted_by,
+  playlist_sort_order playlist_sort_order,
+  playlist_position smallint,
+  video_id text,
+  video_position smallint,
+  video_source source,
+  video_title text,
+  video_description text,
+  video_thumbnail_url text,
+  video_image_url text,
+  video_published_at timestamp with time zone,
+  video_duration text,
+  video_start_seconds numeric,
+  video_watched_at timestamp with time zone,
+  video_updated_at timestamp with time zone,
+  total_videos_count bigint,
+  total_duration_seconds integer,
+  is_duration_row boolean
+) LANGUAGE plpgsql
+SET
+  search_path TO '' AS $function$
 DECLARE
   playlist_record RECORD;
   video_count bigint;
@@ -788,7 +936,7 @@ $function$;
 -- Drop the now-unused video image columns (auto-drops the dependent index
 -- idx_videos_image_processing_status).
 ALTER TABLE public.videos
-  DROP COLUMN IF EXISTS thumbnail_webp_url,
-  DROP COLUMN IF EXISTS thumbnail_avif_url,
-  DROP COLUMN IF EXISTS image_processing_status,
-  DROP COLUMN IF EXISTS image_processing_updated_at;
+DROP COLUMN IF EXISTS thumbnail_webp_url,
+DROP COLUMN IF EXISTS thumbnail_avif_url,
+DROP COLUMN IF EXISTS image_processing_status,
+DROP COLUMN IF EXISTS image_processing_updated_at;

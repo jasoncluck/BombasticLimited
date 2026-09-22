@@ -45,9 +45,8 @@ async function main() {
   // Imported dynamically so process.env is fully populated (dotenv +
   // the CONTENT_IMAGES_BUCKET default above) before the worker module's
   // top-level `new Pool(...)` / `IMAGES_BUCKET` reads run.
-  const { processImageJob } = await import(
-    '../src/trigger/image-processing-worker.ts'
-  );
+  const { processImageJob } =
+    await import('../src/trigger/image-processing-worker.ts');
 
   const pool = new Pool({ connectionString: NEON_DATABASE_URL });
 
@@ -68,7 +67,9 @@ async function main() {
     let skippedMissingEntity = 0;
 
     for (const [i, job] of jobs.entries()) {
-      console.log(`[${i + 1}/${jobs.length}] playlist ${job.entity_id} (job ${job.id})`);
+      console.log(
+        `[${i + 1}/${jobs.length}] playlist ${job.entity_id} (job ${job.id})`
+      );
 
       const { rows: startRows } = await pool.query<{
         start_image_processing_job: boolean;

@@ -2,11 +2,7 @@ import { Client } from 'pg';
 
 // Ported from supabase/functions/poll-twitch-streams (Supabase Edge Function).
 type Source =
-  | 'giantbomb'
-  | 'jeffgerstmann'
-  | 'nextlander'
-  | 'remap'
-  | 'minnmax';
+  'giantbomb' | 'jeffgerstmann' | 'nextlander' | 'remap' | 'minnmax';
 
 interface SourceInfo {
   displayName: string;

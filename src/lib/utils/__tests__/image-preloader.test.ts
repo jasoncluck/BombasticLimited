@@ -6,12 +6,17 @@ import {
   extractPlaylistImageUrls,
 } from '../image-preloader';
 
-// Mock Image constructor
-global.Image = vi.fn().mockImplementation(() => ({
-  src: '',
-  onload: null,
-  onerror: null,
-})) as any;
+// Mock Image constructor. Uses a regular function (not an arrow function)
+// as the mock implementation since vitest 5's mocked constructors delegate
+// `new` directly to the implementation, and arrow functions aren't
+// constructible.
+global.Image = vi.fn().mockImplementation(function () {
+  return {
+    src: '',
+    onload: null,
+    onerror: null,
+  };
+}) as any;
 
 describe('image-preloader', () => {
   beforeEach(() => {
@@ -26,7 +31,7 @@ describe('image-preloader', () => {
         onerror: null as (() => void) | null,
       };
 
-      (global.Image as any).mockImplementation(() => {
+      (global.Image as any).mockImplementation(function () {
         // Simulate immediate success
         setTimeout(() => {
           if (mockImage.onload) {
@@ -48,7 +53,7 @@ describe('image-preloader', () => {
         onerror: null as (() => void) | null,
       };
 
-      (global.Image as any).mockImplementation(() => {
+      (global.Image as any).mockImplementation(function () {
         // Simulate immediate error
         setTimeout(() => {
           if (mockImage.onerror) {
@@ -78,7 +83,9 @@ describe('image-preloader', () => {
         onerror: null as (() => void) | null,
       };
 
-      (global.Image as any).mockImplementation(() => mockImage);
+      (global.Image as any).mockImplementation(function () {
+        return mockImage;
+      });
 
       const result = await preloadImages(['slow-image.jpg'], 50); // 50ms timeout
 

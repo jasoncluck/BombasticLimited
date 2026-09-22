@@ -69,7 +69,11 @@ export const actions: Actions = {
       return fail(400, { form });
     }
 
-    await ensureProfileExists({ userId: userSub!, email, usernameHint: username });
+    await ensureProfileExists({
+      userId: userSub!,
+      email,
+      usernameHint: username,
+    });
 
     redirect(
       `/auth/verify?email=${email}`,

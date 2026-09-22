@@ -5,7 +5,9 @@ import { Pool, types } from 'pg';
  * Data API/RLS (e.g. account deletion, profile creation at signup) —
  * connects as the database owner, same as the cron Lambdas.
  */
-export const pool = new Pool({ connectionString: process.env.NEON_DATABASE_URL });
+export const pool = new Pool({
+  connectionString: process.env.NEON_DATABASE_URL,
+});
 
 // node-postgres only parses arrays of built-in types out of the box — arrays
 // of custom enum types (e.g. profiles.sources, a source[]) get a

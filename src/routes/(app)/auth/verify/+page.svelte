@@ -67,7 +67,11 @@
           <Form.Control>
             {#snippet children({ props })}
               <Form.Label>Verification code</Form.Label>
-              <Input {...props} bind:value={$formData.code} autocomplete="one-time-code" />
+              <Input
+                {...props}
+                bind:value={$formData.code}
+                autocomplete="one-time-code"
+              />
             {/snippet}
           </Form.Control>
           <Form.FieldErrors class="text-xs" />
@@ -84,7 +88,11 @@
       </Card.Content>
 
       <Card.Footer class="flex flex-col gap-4">
-        <Button class="w-full cursor-pointer" type="submit" disabled={isSubmitting}>
+        <Button
+          class="w-full cursor-pointer"
+          type="submit"
+          disabled={isSubmitting}
+        >
           {#if isSubmitting}
             <Loader class="mr-2 animate-spin" />
           {/if}

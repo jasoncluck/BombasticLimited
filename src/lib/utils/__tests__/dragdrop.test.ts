@@ -19,13 +19,18 @@ const mockDocument = {
   },
 };
 
-global.document = mockDocument as any;
+// document is getter-only on the jsdom window object, so direct
+// assignment throws — use vi.stubGlobal instead.
+vi.stubGlobal('document', mockDocument as any);
 
 // Mock setTimeout
-global.setTimeout = vi.fn((fn) => {
-  fn();
-  return 1;
-}) as any;
+vi.stubGlobal(
+  'setTimeout',
+  vi.fn((fn) => {
+    fn();
+    return 1;
+  }) as any
+);
 
 // Now import the functions
 import { createDragImage, updateElementClasses } from '../dragdrop';

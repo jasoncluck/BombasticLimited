@@ -87,7 +87,11 @@ export async function presignPut(
 ): Promise<string> {
   return getSignedUrl(
     s3,
-    new PutObjectCommand({ Bucket: bucket, Key: key, ContentType: contentType }),
+    new PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      ContentType: contentType,
+    }),
     { expiresIn: expiresInSeconds }
   );
 }

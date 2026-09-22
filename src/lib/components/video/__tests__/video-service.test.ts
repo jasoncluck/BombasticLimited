@@ -212,9 +212,8 @@ describe('video service module', () => {
         { id: 'video2', title: 'Video 2', video_start_seconds: null },
       ];
 
-      const { deleteVideoTimestamps } = await import(
-        '$lib/supabase/timestamps'
-      );
+      const { deleteVideoTimestamps } =
+        await import('$lib/supabase/timestamps');
       const { invalidate } = await import('$app/navigation');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
@@ -241,9 +240,8 @@ describe('video service module', () => {
     });
 
     it('should show different toast message for non-continue videos', async () => {
-      const { deleteVideoTimestamps } = await import(
-        '$lib/supabase/timestamps'
-      );
+      const { deleteVideoTimestamps } =
+        await import('$lib/supabase/timestamps');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (deleteVideoTimestamps as any).mockResolvedValue({
@@ -300,9 +298,8 @@ describe('video service module', () => {
 
     it('should handle deletion errors', async () => {
       const mockError = { message: 'Permission denied', code: '403' };
-      const { deleteVideoTimestamps } = await import(
-        '$lib/supabase/timestamps'
-      );
+      const { deleteVideoTimestamps } =
+        await import('$lib/supabase/timestamps');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (deleteVideoTimestamps as any).mockResolvedValue({
@@ -460,9 +457,8 @@ describe('video service module', () => {
 
   describe('createVideoWatchTimeTracker', () => {
     it('should create VideoWatchTimeTracker instance', async () => {
-      const { VideoWatchTimeTracker } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { VideoWatchTimeTracker } =
+        await import('$lib/supabase/video-history');
       const mockConstructor = vi.fn();
       (VideoWatchTimeTracker as any).mockImplementation(mockConstructor);
 
@@ -482,9 +478,8 @@ describe('video service module', () => {
 
   describe('startSimpleVideoHistory', () => {
     it('should start video history session successfully', async () => {
-      const { startVideoHistorySession } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { startVideoHistorySession } =
+        await import('$lib/supabase/video-history');
       const mockHistory = { id: 'session123', video_id: 'video1' };
 
       (startVideoHistorySession as any).mockResolvedValue({
@@ -526,9 +521,8 @@ describe('video service module', () => {
     });
 
     it('should handle video history start errors', async () => {
-      const { startVideoHistorySession } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { startVideoHistorySession } =
+        await import('$lib/supabase/video-history');
       const { showNotification } = await import('$lib/supabase/notifications');
 
       const mockError = { message: 'Database error', code: '500' };
@@ -554,9 +548,8 @@ describe('video service module', () => {
 
   describe('endSimpleVideoHistory', () => {
     it('should end video history session successfully', async () => {
-      const { updateVideoHistoryEndTime } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { updateVideoHistoryEndTime } =
+        await import('$lib/supabase/video-history');
       const mockHistory = { id: 'session123', seconds_watched: 300 };
 
       (updateVideoHistoryEndTime as any).mockResolvedValue({
@@ -598,9 +591,8 @@ describe('video service module', () => {
     });
 
     it('should handle video history end errors', async () => {
-      const { updateVideoHistoryEndTime } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { updateVideoHistoryEndTime } =
+        await import('$lib/supabase/video-history');
       const { showNotification } = await import('$lib/supabase/notifications');
 
       const mockError = { message: 'Update failed', code: '400' };
@@ -656,9 +648,8 @@ describe('video service module', () => {
     });
 
     it('should use current time when no start time provided', async () => {
-      const { startVideoHistorySession } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { startVideoHistorySession } =
+        await import('$lib/supabase/video-history');
 
       (startVideoHistorySession as any).mockResolvedValue({
         history: { id: 'session123' },
@@ -684,9 +675,8 @@ describe('video service module', () => {
     });
 
     it('should handle start session failure', async () => {
-      const { startVideoHistorySession } = await import(
-        '$lib/supabase/video-history'
-      );
+      const { startVideoHistorySession } =
+        await import('$lib/supabase/video-history');
 
       const mockError = { message: 'Start failed', code: '500' };
       (startVideoHistorySession as any).mockResolvedValue({

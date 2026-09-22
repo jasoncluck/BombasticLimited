@@ -8,7 +8,7 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import ContentSelect from './content/content-select.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { Video } from '$lib/supabase/videos';
   import type { CombinedContentFilter } from './content/content-filter';

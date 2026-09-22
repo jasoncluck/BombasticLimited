@@ -5,9 +5,8 @@ vi.mock('$lib/server/db', () => ({
   pool: { query: queryMock },
 }));
 
-const { checkIfUsernameIsUnique, getProfileById } = await import(
-  '../user-profiles'
-);
+const { checkIfUsernameIsUnique, getProfileById } =
+  await import('../user-profiles');
 
 describe('user-profiles', () => {
   beforeEach(() => {
@@ -34,7 +33,9 @@ describe('user-profiles', () => {
         rows: [{ is_unique_username: false }],
       });
 
-      const result = await checkIfUsernameIsUnique({ username: 'existinguser' });
+      const result = await checkIfUsernameIsUnique({
+        username: 'existinguser',
+      });
 
       expect(result).toBe(false);
     });

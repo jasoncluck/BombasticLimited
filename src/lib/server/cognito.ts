@@ -107,7 +107,10 @@ export async function resendConfirmationCode({
 }): Promise<{ error?: { code: string; message: string } }> {
   try {
     await client.send(
-      new ResendConfirmationCodeCommand({ ClientId: CLIENT_ID, Username: email })
+      new ResendConfirmationCodeCommand({
+        ClientId: CLIENT_ID,
+        Username: email,
+      })
     );
     return {};
   } catch (err) {
@@ -121,7 +124,10 @@ export async function signInWithPassword({
 }: {
   email: string;
   password: string;
-}): Promise<{ tokens?: CognitoTokens; error?: { code: string; message: string } }> {
+}): Promise<{
+  tokens?: CognitoTokens;
+  error?: { code: string; message: string };
+}> {
   try {
     const result = await client.send(
       new InitiateAuthCommand({
@@ -149,7 +155,10 @@ let anonTokenRequest: Promise<string | null> | null = null;
  */
 export async function getAnonymousToken(): Promise<string | null> {
   const REFRESH_BUFFER_MS = 60_000;
-  if (cachedAnonToken && cachedAnonToken.expiresAt - Date.now() > REFRESH_BUFFER_MS) {
+  if (
+    cachedAnonToken &&
+    cachedAnonToken.expiresAt - Date.now() > REFRESH_BUFFER_MS
+  ) {
     return cachedAnonToken.token;
   }
 
@@ -182,7 +191,10 @@ export async function refreshTokens({
   refreshToken,
 }: {
   refreshToken: string;
-}): Promise<{ tokens?: CognitoTokens; error?: { code: string; message: string } }> {
+}): Promise<{
+  tokens?: CognitoTokens;
+  error?: { code: string; message: string };
+}> {
   try {
     const result = await client.send(
       new InitiateAuthCommand({

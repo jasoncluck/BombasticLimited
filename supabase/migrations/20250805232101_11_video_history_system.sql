@@ -84,13 +84,12 @@ END;
 $$;
 
 -- Create triggers
-CREATE TRIGGER "trigger_calculate_seconds_watched" BEFORE INSERT
-OR
-UPDATE ON "public"."video_history" FOR EACH ROW
+CREATE TRIGGER "trigger_calculate_seconds_watched"
+BEFORE INSERT OR UPDATE ON "public"."video_history" FOR EACH ROW
 EXECUTE FUNCTION "public"."calculate_seconds_watched" ();
 
-CREATE TRIGGER "trigger_update_video_history_updated_at" BEFORE
-UPDATE ON "public"."video_history" FOR EACH ROW
+CREATE TRIGGER "trigger_update_video_history_updated_at"
+BEFORE UPDATE ON "public"."video_history" FOR EACH ROW
 EXECUTE FUNCTION "public"."update_video_history_updated_at" ();
 
 -- Optimized function to start video history session
@@ -513,7 +512,5 @@ $$;
 DROP TRIGGER IF EXISTS "trigger_auto_record_video_history" ON "public"."timestamps";
 
 CREATE TRIGGER "trigger_auto_record_video_history"
-AFTER INSERT
-OR
-UPDATE ON "public"."timestamps" FOR EACH ROW
+AFTER INSERT OR UPDATE ON "public"."timestamps" FOR EACH ROW
 EXECUTE FUNCTION "public"."auto_record_video_history" ();

@@ -26,8 +26,13 @@ export class AuthStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AuthStackProps) {
     super(scope, id, props);
 
-    const { stage, discordClientId, discordClientSecret, callbackUrls, logoutUrls } =
-      props;
+    const {
+      stage,
+      discordClientId,
+      discordClientSecret,
+      callbackUrls,
+      logoutUrls,
+    } = props;
 
     // Stamps `role: authenticated` onto every issued ID token — see the
     // comment in pre-token-generation.ts for why this is required.

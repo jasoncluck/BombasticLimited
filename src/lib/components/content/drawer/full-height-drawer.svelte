@@ -22,12 +22,7 @@
     open: boolean;
     triggerClass?: string;
     triggerVariant?:
-      | 'default'
-      | 'destructive'
-      | 'outline'
-      | 'secondary'
-      | 'ghost'
-      | 'link';
+      'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
     handleOnly?: boolean;
     trigger: Snippet;
     header?: Snippet;

@@ -44,6 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_user_playlists_id_covering ON public.user_playlis
 -- 2. VIDEOS TABLE POLICIES
 -- ============================================================================
 DROP POLICY IF EXISTS "Enable read access for all users" ON "public"."videos";
+
 CREATE POLICY "Enable read access for all users" ON "public"."videos" FOR
 SELECT
   USING (TRUE);
@@ -53,13 +54,14 @@ SELECT
 -- ============================================================================
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlists_select" ON "public"."playlists";
+
 CREATE POLICY "playlists_select" ON "public"."playlists" FOR
 SELECT
   USING (
     -- Check user ownership first (most selective for authenticated users)
     created_by = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
     OR
     -- Then check if public (indexed condition)
@@ -68,39 +70,42 @@ SELECT
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlists_insert" ON "public"."playlists";
+
 CREATE POLICY "playlists_insert" ON "public"."playlists" FOR INSERT TO authenticated
 WITH
   CHECK (
     created_by = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
   );
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlists_update" ON "public"."playlists";
+
 CREATE POLICY "playlists_update" ON "public"."playlists"
 FOR UPDATE
   TO authenticated USING (
     created_by = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
   )
 WITH
   CHECK (
     created_by = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
   );
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlists_delete" ON "public"."playlists";
+
 CREATE POLICY "playlists_delete" ON "public"."playlists" FOR DELETE TO authenticated USING (
   created_by = (
     SELECT
-      (auth.user_id())::uuid
+      (auth.user_id ())::uuid
   )
 );
 
@@ -109,6 +114,7 @@ CREATE POLICY "playlists_delete" ON "public"."playlists" FOR DELETE TO authentic
 -- ============================================================================
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlist_videos_select" ON "public"."playlist_videos";
+
 CREATE POLICY "playlist_videos_select" ON "public"."playlist_videos" FOR
 SELECT
   TO authenticated,
@@ -123,7 +129,7 @@ SELECT
         AND (
           p.created_by = (
             SELECT
-              (auth.user_id())::uuid
+              (auth.user_id ())::uuid
           )
           OR p.type = 'Public'
         )
@@ -132,6 +138,7 @@ SELECT
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlist_videos_insert" ON "public"."playlist_videos";
+
 CREATE POLICY "playlist_videos_insert" ON "public"."playlist_videos" FOR INSERT TO authenticated
 WITH
   CHECK (
@@ -144,13 +151,14 @@ WITH
         p.id = playlist_videos.playlist_id
         AND p.created_by = (
           SELECT
-            (auth.user_id())::uuid
+            (auth.user_id ())::uuid
         )
     )
   );
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlist_videos_update" ON "public"."playlist_videos";
+
 CREATE POLICY "playlist_videos_update" ON "public"."playlist_videos"
 FOR UPDATE
   TO authenticated USING (
@@ -163,7 +171,7 @@ FOR UPDATE
         p.id = playlist_videos.playlist_id
         AND p.created_by = (
           SELECT
-            (auth.user_id())::uuid
+            (auth.user_id ())::uuid
         )
     )
   )
@@ -178,13 +186,14 @@ WITH
         p.id = playlist_videos.playlist_id
         AND p.created_by = (
           SELECT
-            (auth.user_id())::uuid
+            (auth.user_id ())::uuid
         )
     )
   );
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "playlist_videos_delete" ON "public"."playlist_videos";
+
 CREATE POLICY "playlist_videos_delete" ON "public"."playlist_videos" FOR DELETE TO authenticated USING (
   EXISTS (
     SELECT
@@ -195,7 +204,7 @@ CREATE POLICY "playlist_videos_delete" ON "public"."playlist_videos" FOR DELETE 
       p.id = playlist_videos.playlist_id
       AND p.created_by = (
         SELECT
-          (auth.user_id())::uuid
+          (auth.user_id ())::uuid
       )
   )
 );
@@ -205,17 +214,18 @@ CREATE POLICY "playlist_videos_delete" ON "public"."playlist_videos" FOR DELETE 
 -- ============================================================================
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "timestamps_user_access" ON "public"."timestamps";
+
 CREATE POLICY "timestamps_user_access" ON "public"."timestamps" FOR ALL TO authenticated USING (
   user_id = (
     SELECT
-      (auth.user_id())::uuid
+      (auth.user_id ())::uuid
   )
 )
 WITH
   CHECK (
     user_id = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
   );
 
@@ -223,18 +233,20 @@ WITH
 -- 6. PROFILES TABLE POLICIES (FIXED)
 -- ============================================================================
 DROP POLICY IF EXISTS "Allow public read access to profiles" ON "public"."profiles";
+
 CREATE POLICY "Allow public read access to profiles" ON "public"."profiles" FOR
 SELECT
   TO public USING (TRUE);
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "Allow update if user owns profile" ON "public"."profiles";
+
 CREATE POLICY "Allow update if user owns profile" ON "public"."profiles"
 FOR UPDATE
   TO authenticated USING (
     (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     ) = profiles.id
   );
 
@@ -243,13 +255,14 @@ FOR UPDATE
 -- ============================================================================
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "user_playlists_select" ON "public"."user_playlists";
+
 CREATE POLICY "user_playlists_select" ON "public"."user_playlists" FOR
 SELECT
   USING (
     -- Check user ownership first (most selective)
     user_id = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
     OR
     -- Then check if playlist is public
@@ -266,12 +279,13 @@ SELECT
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "user_playlists_insert" ON "public"."user_playlists";
+
 CREATE POLICY "user_playlists_insert" ON "public"."user_playlists" FOR INSERT TO authenticated
 WITH
   CHECK (
     user_id = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
     OR EXISTS (
       SELECT
@@ -286,28 +300,30 @@ WITH
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "user_playlists_update" ON "public"."user_playlists";
+
 CREATE POLICY "user_playlists_update" ON "public"."user_playlists"
 FOR UPDATE
   TO authenticated USING (
     user_id = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
   )
 WITH
   CHECK (
     user_id = (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     )
   );
 
 -- Fixed: auth.user_id() wrapped in subquery
 DROP POLICY IF EXISTS "user_playlists_delete" ON "public"."user_playlists";
+
 CREATE POLICY "user_playlists_delete" ON "public"."user_playlists" FOR DELETE TO authenticated USING (
   user_id = (
     SELECT
-      (auth.user_id())::uuid
+      (auth.user_id ())::uuid
   )
 );
 

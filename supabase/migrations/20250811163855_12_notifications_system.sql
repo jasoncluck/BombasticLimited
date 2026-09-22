@@ -106,12 +106,12 @@ END;
 $$;
 
 -- Create triggers
-CREATE TRIGGER update_notifications_updated_at BEFORE
-UPDATE ON public.notifications FOR EACH ROW
+CREATE TRIGGER update_notifications_updated_at
+BEFORE UPDATE ON public.notifications FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column ();
 
-CREATE TRIGGER update_user_notifications_updated_at BEFORE
-UPDATE ON public.user_notifications FOR EACH ROW
+CREATE TRIGGER update_user_notifications_updated_at
+BEFORE UPDATE ON public.user_notifications FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column ();
 
 -- =====================================================

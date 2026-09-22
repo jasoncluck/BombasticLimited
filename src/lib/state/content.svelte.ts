@@ -12,7 +12,6 @@ import {
   type CombinedContentFilter,
 } from '$lib/components/content/content-filter';
 import { handleUpdatePlaylistVideoPosition } from '$lib/components/playlist/playlist-service';
-import type { PageState } from './page.svelte';
 import type {
   ContentDisplay,
   ContentSelectVariant,

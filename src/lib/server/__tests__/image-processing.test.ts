@@ -18,6 +18,7 @@ const mockResize = vi.fn();
 const mockToBuffer = vi.fn();
 const mockMetadata = vi.fn();
 const mockToColourspace = vi.fn();
+const mockSharpen = vi.fn();
 
 // This will be set by the mock factory
 let mockSharpConstructor: typeof sharp;
@@ -33,6 +34,7 @@ vi.mock('sharp', () => {
       jpeg: mockJpeg.mockReturnThis(),
       toBuffer: mockToBuffer,
       toColourspace: mockToColourspace.mockReturnThis(),
+      sharpen: mockSharpen.mockReturnThis(),
     };
     return mockSharpInstance;
   });
@@ -307,7 +309,7 @@ describe('getCroppedPlaylistImageUrlServer', () => {
     expect((globalThis as any).__mockSharpConstructor).toHaveBeenCalledWith(
       mockImageBuffer,
       {
-        failOnError: false,
+        failOn: 'none',
         density: 96,
         pages: 1,
       }

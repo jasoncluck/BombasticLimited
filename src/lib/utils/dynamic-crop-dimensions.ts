@@ -127,7 +127,7 @@ export function validateAndAdjustCropDimensions(
     };
   }
 
-  let scaledProperties = { ...imageProperties };
+  let scaledProperties: PlaylistImageProperties;
 
   // Check if we have actual custom properties (not just defaults)
   const hasCustomProperties =

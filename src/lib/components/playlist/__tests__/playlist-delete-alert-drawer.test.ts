@@ -131,7 +131,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
         });
 
         // Simulate closing drawer
-        let open = false;
+        const open = false;
         if (mockProps.onOpenChange) {
           mockProps.onOpenChange(false);
         }
@@ -177,7 +177,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
         });
 
         // Drawer should still close even on error
-        let open = false;
+        const open = false;
         if (mockProps.onOpenChange) {
           mockProps.onOpenChange(false);
         }
@@ -237,7 +237,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
     it('should close drawer without deletion when cancelled', () => {
       // Simulate the cancelDelete function logic
       const cancelDelete = () => {
-        let open = false;
+        const open = false;
         if (mockProps.onOpenChange) {
           mockProps.onOpenChange(false);
         }
@@ -258,7 +258,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
 
       // Simulate the cancelDelete function logic
       const cancelDelete = () => {
-        let open = false;
+        const open = false;
         if (propsWithoutCallback.onOpenChange) {
           propsWithoutCallback.onOpenChange(false);
         }

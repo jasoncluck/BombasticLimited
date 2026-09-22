@@ -108,12 +108,12 @@ END;
 $$;
 
 -- Create triggers
-CREATE TRIGGER update_notifications_updated_at BEFORE
-UPDATE ON public.notifications FOR EACH ROW
+CREATE TRIGGER update_notifications_updated_at
+BEFORE UPDATE ON public.notifications FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column ();
 
-CREATE TRIGGER update_user_notifications_updated_at BEFORE
-UPDATE ON public.user_notifications FOR EACH ROW
+CREATE TRIGGER update_user_notifications_updated_at
+BEFORE UPDATE ON public.user_notifications FOR EACH ROW
 EXECUTE FUNCTION public.update_updated_at_column ();
 
 -- =====================================================
@@ -137,40 +137,45 @@ $$;
 
 -- RLS Policies
 DROP POLICY IF EXISTS "Admins can manage notifications" ON public.notifications;
+
 CREATE POLICY "Admins can manage notifications" ON public.notifications FOR ALL USING (public.is_admin ())
 WITH
   CHECK (public.is_admin ());
 
 DROP POLICY IF EXISTS "Users can view their own user notifications" ON public.user_notifications;
+
 CREATE POLICY "Users can view their own user notifications" ON public.user_notifications FOR
 SELECT
   USING (
     (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     ) = user_id
   );
 
 DROP POLICY IF EXISTS "Users can update their own user notifications" ON public.user_notifications;
+
 CREATE POLICY "Users can update their own user notifications" ON public.user_notifications
 FOR UPDATE
   USING (
     (
       SELECT
-        (auth.user_id())::uuid
+        (auth.user_id ())::uuid
     ) = user_id
   );
 
 DROP POLICY IF EXISTS "System can insert user notifications" ON public.user_notifications;
+
 CREATE POLICY "System can insert user notifications" ON public.user_notifications FOR INSERT
 WITH
   CHECK (TRUE);
 
 DROP POLICY IF EXISTS "Users can delete their own user notifications" ON public.user_notifications;
+
 CREATE POLICY "Users can delete their own user notifications" ON public.user_notifications FOR DELETE USING (
   (
     SELECT
-      (auth.user_id())::uuid
+      (auth.user_id ())::uuid
   ) = user_id
 );
 
@@ -194,11 +199,13 @@ COMMENT ON TABLE public.system_logs IS 'System operation logs for monitoring and
 ALTER TABLE "public"."system_logs" ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Only admins can read system logs" ON public.system_logs;
+
 CREATE POLICY "Only admins can read system logs" ON public.system_logs FOR
 SELECT
   USING (public.is_admin ());
 
 DROP POLICY IF EXISTS "Only admins can insert system logs" ON public.system_logs;
+
 CREATE POLICY "Only admins can insert system logs" ON public.system_logs FOR INSERT
 WITH
   CHECK (public.is_admin ());
@@ -659,7 +666,6 @@ SET
 -- phase — a 4th cron job alongside poll-twitch-streams/process-images/
 -- cleanup-playlists).
 -- =====================================================
-
 -- Log completion
 INSERT INTO
   public.system_logs (event_type, details, created_at)

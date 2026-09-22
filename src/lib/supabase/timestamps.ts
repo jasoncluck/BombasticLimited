@@ -162,8 +162,6 @@ export async function getLatestTimestamp({
   supabase: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
-  let error: PostgrestError | undefined;
-
   if (session?.user && videoId) {
     const { data: videoTimestamp, error } = await supabase
       .from('timestamps')
@@ -176,7 +174,7 @@ export async function getLatestTimestamp({
     }
     return { videoTimestamp, error };
   }
-  return { error };
+  return { error: undefined };
 }
 
 // Helper function to check if video has playlist timestamp info

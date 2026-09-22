@@ -1,6 +1,5 @@
 import { type Video } from '$lib/supabase/videos';
 import { showToast } from '$lib/state/notifications.svelte';
-import { showNotification } from '$lib/supabase/notifications';
 import type { PostgrestError } from '@supabase/postgrest-js';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';

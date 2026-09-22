@@ -2,10 +2,10 @@
   import type { BreadcrumbItem } from '../breadcrumb-layout.svelte';
   import type { CombinedContentFilter } from './content-filter';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import SharedContentHeader from './shared-content-header.svelte';
-  import { SOURCE_INFO, type Source } from '$lib/constants/source';
+  import type { Source } from '$lib/constants/source';
   import type { ContentView } from './content';
   import type { Video } from '$lib/supabase/videos';
   import type { UserProfile } from '$lib/supabase/user-profiles';

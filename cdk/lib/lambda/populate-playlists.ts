@@ -58,7 +58,9 @@ async function getOrCreateChannelProfile({
     );
     userSub = created.User?.Attributes?.find((a) => a.Name === 'sub')?.Value;
     if (!userSub) {
-      throw new Error(`Failed to get sub for newly created channel user: ${email}`);
+      throw new Error(
+        `Failed to get sub for newly created channel user: ${email}`
+      );
     }
 
     // Set a permanent password so the account isn't stuck in
@@ -134,7 +136,13 @@ async function queuePlaylistThumbnailProcessing({
   try {
     const { rows } = await client.query<{ queue_image_processing_job: string }>(
       `SELECT queue_image_processing_job($1, $2, $3, $4, NULL, $5) AS queue_image_processing_job`,
-      ['playlist', playlistId.toString(), 'playlist_image', thumbnailUrl, priority]
+      [
+        'playlist',
+        playlistId.toString(),
+        'playlist_image',
+        thumbnailUrl,
+        priority,
+      ]
     );
     const jobId = rows[0]?.queue_image_processing_job;
 
@@ -216,7 +224,9 @@ export const populatePlaylists = async ({
     throw new Error(errMsg);
   }
 
-  const client = new Client({ connectionString: process.env.NEON_DATABASE_URL });
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+  });
   await client.connect();
 
   try {
@@ -237,7 +247,8 @@ export const populatePlaylists = async ({
           createUserError instanceof Error
             ? createUserError.message
             : createUserError
-        }`
+        }`,
+        { cause: createUserError }
       );
     }
 
@@ -320,9 +331,10 @@ export const populatePlaylists = async ({
         const { rows: existingRows } = await client.query<{
           id: number;
           created_by: string | null;
-        }>('SELECT id, created_by FROM public.playlists WHERE youtube_id = $1', [
-          item.id,
-        ]);
+        }>(
+          'SELECT id, created_by FROM public.playlists WHERE youtube_id = $1',
+          [item.id]
+        );
         const existingPlaylist = existingRows[0];
 
         const thumbnailUrl = removeLiveSuffix(
@@ -482,7 +494,9 @@ export const populatePlaylists = async ({
               error: existingError,
             })
           );
-          throw new Error('Failed to fetch existing playlist videos');
+          throw new Error('Failed to fetch existing playlist videos', {
+            cause: existingError,
+          });
         }
 
         // Find videos to remove (exist in DB but not in YouTube)
@@ -580,7 +594,9 @@ export const populatePlaylists = async ({
           error: existingPlaylistsError,
         })
       );
-      throw new Error('Failed to fetch existing playlists');
+      throw new Error('Failed to fetch existing playlists', {
+        cause: existingPlaylistsError,
+      });
     }
 
     // Find playlists to remove (exist in DB but not in YouTube, excluding uploads playlist)

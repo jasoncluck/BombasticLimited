@@ -5,8 +5,6 @@
   import NotificationForm from '$lib/components/admin/notification-form.svelte';
   import NotificationInfoPanel from '$lib/components/admin/notification-info-panel.svelte';
   import NotificationList from '$lib/components/admin/notification-list.svelte';
-  import { updateFlash } from 'sveltekit-flash-message';
-  import { page } from '$app/state';
 
   let { data } = $props();
 

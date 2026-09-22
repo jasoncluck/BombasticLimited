@@ -13,7 +13,9 @@ export interface CleanupResponse {
 
 export const handler = async (): Promise<CleanupResponse> => {
   const timestamp = new Date().toISOString();
-  const client = new Client({ connectionString: process.env.NEON_DATABASE_URL });
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+  });
   await client.connect();
 
   try {

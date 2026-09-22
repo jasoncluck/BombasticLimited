@@ -12,7 +12,7 @@
   } from '$lib/state/content.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
   import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';

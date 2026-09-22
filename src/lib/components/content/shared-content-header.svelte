@@ -6,7 +6,7 @@
   import ContentSelect from '$lib/components/content/content-select.svelte';
   import type { Playlist, UserPlaylist } from '$lib/supabase/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
@@ -48,7 +48,11 @@ import type { AppSession as Session } from '$lib/types/session';
     breadcrumbs = [],
     children,
     contentFilter,
+    // Pure pass-through bindables — callers bind to these directly
+    // (see playlist-header.svelte), this component never reads them itself.
+    // eslint-disable-next-line no-useless-assignment
     currentPage = $bindable(),
+    // eslint-disable-next-line no-useless-assignment
     open = $bindable(),
     playlist: profilePlaylist,
     session,

@@ -10,15 +10,34 @@
 -- Dependencies: 20250721023809_08c_video_query_functions.sql (search_videos'
 --   p_source precedent), 20250721023754_01_extensions_and_types.sql (source enum)
 -- ============================================================================
+DROP FUNCTION IF EXISTS public.search_playlists (text, text, uuid);
 
-DROP FUNCTION IF EXISTS public.search_playlists(text, text, uuid);
-
-CREATE FUNCTION public.search_playlists(search_term text, p_preferred_image_format text DEFAULT 'avif'::text, p_user_id uuid DEFAULT NULL::uuid, p_enabled_sources source[] DEFAULT NULL::source[])
- RETURNS TABLE(id bigint, short_id text, name text, description text, image_url text, image_processing_status image_processing_status, image_properties jsonb, created_at timestamp with time zone, created_by uuid, type playlist_type, youtube_id text, playlist_thumbnail_url text, duration_seconds integer, profile_username text, profile_avatar_url text, search_rank real, deleted_at timestamp with time zone)
- LANGUAGE plpgsql
- STABLE
- SET search_path TO ''
-AS $function$
+CREATE FUNCTION public.search_playlists (
+  search_term text,
+  p_preferred_image_format text DEFAULT 'avif'::text,
+  p_user_id uuid DEFAULT NULL::uuid,
+  p_enabled_sources source[] DEFAULT NULL::source[]
+) RETURNS TABLE (
+  id bigint,
+  short_id text,
+  name text,
+  description text,
+  image_url text,
+  image_processing_status image_processing_status,
+  image_properties jsonb,
+  created_at timestamp with time zone,
+  created_by uuid,
+  type playlist_type,
+  youtube_id text,
+  playlist_thumbnail_url text,
+  duration_seconds integer,
+  profile_username text,
+  profile_avatar_url text,
+  search_rank real,
+  deleted_at timestamp with time zone
+) LANGUAGE plpgsql STABLE
+SET
+  search_path TO '' AS $function$
 DECLARE
     clean_term text;
     words text[];

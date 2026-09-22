@@ -42,6 +42,10 @@ export interface MediaQueryState {
 }
 
 export class MediaQueryStateClass implements MediaQueryState {
+  // Internal bookkeeping for MediaQueryList handles (add/removeEventListener
+  // cleanup) — never read reactively; #matches below is the actual reactive
+  // state templates consume.
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity
   #mediaQueries = new Map<string, MediaQueryList>();
   #matches = $state<Record<string, boolean>>({});
   #initialized = $state(false);

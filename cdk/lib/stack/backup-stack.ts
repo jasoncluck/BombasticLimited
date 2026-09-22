@@ -165,36 +165,28 @@ export class BackupStack extends Stack {
     );
 
     // CloudWatch Alarm for backup failures
-    const backupErrorAlarm = new cloudwatch.Alarm(
-      this,
-      'BackupLambdaErrorAlarm',
-      {
-        metric: backupLambda.metricErrors({
-          period: Duration.minutes(5),
-        }),
-        threshold: 1,
-        evaluationPeriods: 1,
-        actionsEnabled: false,
-        alarmDescription: 'Alarm if the database backup Lambda has any errors',
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      }
-    );
+    new cloudwatch.Alarm(this, 'BackupLambdaErrorAlarm', {
+      metric: backupLambda.metricErrors({
+        period: Duration.minutes(5),
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      actionsEnabled: false,
+      alarmDescription: 'Alarm if the database backup Lambda has any errors',
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
 
     // CloudWatch Alarm for restore failures
-    const restoreErrorAlarm = new cloudwatch.Alarm(
-      this,
-      'RestoreLambdaErrorAlarm',
-      {
-        metric: restoreLambda.metricErrors({
-          period: Duration.minutes(5),
-        }),
-        threshold: 1,
-        evaluationPeriods: 1,
-        actionsEnabled: false,
-        alarmDescription: 'Alarm if the database restore Lambda has any errors',
-        treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
-      }
-    );
+    new cloudwatch.Alarm(this, 'RestoreLambdaErrorAlarm', {
+      metric: restoreLambda.metricErrors({
+        period: Duration.minutes(5),
+      }),
+      threshold: 1,
+      evaluationPeriods: 1,
+      actionsEnabled: false,
+      alarmDescription: 'Alarm if the database restore Lambda has any errors',
+      treatMissingData: cloudwatch.TreatMissingData.NOT_BREACHING,
+    });
 
     // Schedule daily backups at 2 AM UTC
     const backupRule = new events.Rule(this, 'DailyBackupRule', {

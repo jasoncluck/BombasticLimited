@@ -31,7 +31,7 @@ export function sanitizeNotificationHtml(html: string): string {
       const tagName = element.tagName.toLowerCase();
 
       // Only allow whitelisted tags
-      if (!ALLOWED_TAGS.includes(tagName as any)) {
+      if (!(ALLOWED_TAGS as readonly string[]).includes(tagName)) {
         // For disallowed tags, just return their text content
         const textNode = document.createTextNode(element.textContent || '');
         return textNode;

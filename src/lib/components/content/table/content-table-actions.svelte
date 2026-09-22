@@ -3,7 +3,7 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Video } from '$lib/supabase/videos';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import ContentDropdown from '../content-dropdown.svelte';
   import {
     DEFAULT_SECTION_ID,

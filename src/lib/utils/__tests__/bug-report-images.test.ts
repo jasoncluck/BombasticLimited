@@ -127,7 +127,9 @@ describe('bug-report-images utils', () => {
         src: '',
       };
 
-      global.Image = vi.fn(() => mockImage) as any;
+      global.Image = vi.fn(function () {
+        return mockImage;
+      }) as any;
 
       // Mock the compressed file to still be large
       mockToBlob.mockImplementation((callback) => {

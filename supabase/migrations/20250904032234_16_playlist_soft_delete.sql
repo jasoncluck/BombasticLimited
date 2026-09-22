@@ -976,8 +976,7 @@ $$;
 DROP TRIGGER IF EXISTS playlist_deletion_notification_trigger ON public.playlists;
 
 CREATE TRIGGER playlist_deletion_notification_trigger
-AFTER
-UPDATE OF deleted_at ON public.playlists FOR EACH ROW
+AFTER UPDATE OF deleted_at ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.notify_playlist_deletion ();
 
 -- Add documentation
@@ -1051,7 +1050,8 @@ $$;
 -- Create the trigger that fires BEFORE user deletion
 DROP TRIGGER IF EXISTS "on_auth_user_deletion" ON "auth"."users";
 
-CREATE TRIGGER "on_auth_user_deletion" BEFORE DELETE ON "auth"."users" FOR EACH ROW
+CREATE TRIGGER "on_auth_user_deletion"
+BEFORE DELETE ON "auth"."users" FOR EACH ROW
 EXECUTE PROCEDURE "public"."handle_user_deletion_cleanup" ();
 
 CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void

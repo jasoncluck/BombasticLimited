@@ -69,8 +69,7 @@ function transformVideoHistoryFromStartSession(
 
 function transformVideoHistoryFromUpdate(
   rpcData:
-    | UpdateVideoHistorySecondsWatchedResponse
-    | UpdateVideoHistoryEndTimeResponse
+    UpdateVideoHistorySecondsWatchedResponse | UpdateVideoHistoryEndTimeResponse
 ): VideoHistoryRecord {
   return {
     id: rpcData.id,

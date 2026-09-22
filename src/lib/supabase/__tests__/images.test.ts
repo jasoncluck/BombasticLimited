@@ -151,6 +151,5 @@ describe('images module', () => {
         expect(validFormats).toContain(format);
       });
     });
-
   });
 });

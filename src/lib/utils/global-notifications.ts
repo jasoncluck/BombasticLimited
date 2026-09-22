@@ -4,7 +4,7 @@
  */
 
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database, Json } from '$lib/supabase/database.types';
 import type { NotificationType } from '$lib/supabase/notifications';
 
 /**
@@ -16,8 +16,12 @@ export async function sendGlobalNotification(
   type: NotificationType,
   title: string,
   message: string,
-  metadata: Record<string, any> = {},
+  metadata: Record<string, Json> = {},
   actionUrl?: string
+  // Return error can come from either the resolved query result (a
+  // PostgrestError) or a thrown exception in the catch block below (an
+  // unknown JS error) — not worth forcing one shape onto both sources.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ count: number | null; error: any }> {
   try {
     const { data, error } = await supabase.rpc(
@@ -95,9 +99,10 @@ export async function sendTemplateNotification(
   customizations?: {
     title?: string;
     message?: string;
-    metadata?: Record<string, any>;
+    metadata?: Record<string, Json>;
     actionUrl?: string;
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ count: number | null; error: any }> {
   const template = NOTIFICATION_TEMPLATES[templateName];
 

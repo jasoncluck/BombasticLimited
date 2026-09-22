@@ -25,7 +25,7 @@
   import type { ContentView } from './content';
   import { handleUpdatePlaylistSort } from '../playlist/playlist-service';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import Button, { buttonVariants } from '../ui/button/button.svelte';

@@ -1,4 +1,3 @@
-import { browser } from '$app/environment';
 import { invalidateAll } from '$app/navigation';
 import type { ContentState } from '$lib/state/content.svelte.js';
 import type { MediaQueryState } from '$lib/state/media-query.svelte.js';

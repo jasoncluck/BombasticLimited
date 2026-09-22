@@ -125,8 +125,8 @@ BEGIN
 END;
 $$;
 
-CREATE TRIGGER trigger_update_image_processing_jobs_updated_at BEFORE
-UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
+CREATE TRIGGER trigger_update_image_processing_jobs_updated_at
+BEFORE UPDATE ON "public"."image_processing_jobs" FOR EACH ROW
 EXECUTE FUNCTION public.update_image_processing_jobs_updated_at ();
 
 -- Helper function to generate hash for image properties
@@ -942,14 +942,12 @@ COMMENT ON FUNCTION public.handle_playlist_image_on_video_removal () IS 'Automat
 ALTER TABLE "public"."image_processing_jobs" ENABLE ROW LEVEL SECURITY;
 
 -- Create optimized triggers (SINGLE TRIGGER PER TABLE)
-CREATE TRIGGER trigger_videos_queue_image_processing BEFORE INSERT
-OR
-UPDATE ON "public"."videos" FOR EACH ROW
+CREATE TRIGGER trigger_videos_queue_image_processing
+BEFORE INSERT OR UPDATE ON "public"."videos" FOR EACH ROW
 EXECUTE FUNCTION public.trigger_queue_video_image_processing ();
 
-CREATE TRIGGER trigger_playlists_queue_image_processing BEFORE INSERT
-OR
-UPDATE ON "public"."playlists" FOR EACH ROW
+CREATE TRIGGER trigger_playlists_queue_image_processing
+BEFORE INSERT OR UPDATE ON "public"."playlists" FOR EACH ROW
 EXECUTE FUNCTION public.trigger_queue_playlist_image_processing ();
 
 -- Setup Supabase cron for process images edge function, run every minute

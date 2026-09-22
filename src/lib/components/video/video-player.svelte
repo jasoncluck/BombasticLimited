@@ -6,7 +6,7 @@
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Video } from '$lib/supabase/videos';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { CombinedContentFilter } from '../content/content-filter';
   import ContentDropdown from '../content/content-dropdown.svelte';
   import { Ellipsis } from '@lucide/svelte';
@@ -61,7 +61,7 @@ import type { AppSession as Session } from '$lib/types/session';
 
       if (matches.length > 0) {
         const [, hoursOrMinutes, minutesOrSeconds, maybeSeconds] = matches[0];
-        let totalSeconds = 0;
+        let totalSeconds: number;
 
         if (maybeSeconds !== undefined) {
           // Format is hh:mm:ss

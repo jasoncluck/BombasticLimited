@@ -53,7 +53,10 @@
 
   const { form: formData, enhance } = forgotPasswordFormHandler || {
     form: writable({ email: '' }),
-    enhance: (node: HTMLFormElement) => ({ destroy: () => {} }),
+    // Matches the use:enhance action signature; this no-op fallback never
+    // needs the form node itself.
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    enhance: (_node: HTMLFormElement) => ({ destroy: () => {} }),
   };
 </script>
 

@@ -144,9 +144,8 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should handle different page numbers', async () => {
-      const { getPaginationQueryParams } = await import(
-        '$lib/components/pagination/pagination'
-      );
+      const { getPaginationQueryParams } =
+        await import('$lib/components/pagination/pagination');
       vi.mocked(getPaginationQueryParams).mockReturnValue(3);
 
       mockGetInProgressVideos.mockResolvedValue(
@@ -167,9 +166,8 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should pass pagination query params correctly', async () => {
-      const { getPaginationQueryParams } = await import(
-        '$lib/components/pagination/pagination'
-      );
+      const { getPaginationQueryParams } =
+        await import('$lib/components/pagination/pagination');
 
       await load(mockLoadEvent);
 
@@ -191,9 +189,8 @@ describe('continue/+page.server.ts load function', () => {
     });
 
     it('should throw error for invalid content filter', async () => {
-      const { isTimestampFilter } = await import(
-        '$lib/components/content/content-filter'
-      );
+      const { isTimestampFilter } =
+        await import('$lib/components/content/content-filter');
       vi.mocked(isTimestampFilter).mockReturnValue(false);
 
       await expect(load(mockLoadEvent)).rejects.toThrow(
@@ -232,9 +229,8 @@ describe('continue/+page.server.ts load function', () => {
         };
       });
 
-      const { getPaginationQueryParams } = await import(
-        '$lib/components/pagination/pagination'
-      );
+      const { getPaginationQueryParams } =
+        await import('$lib/components/pagination/pagination');
       vi.mocked(getPaginationQueryParams).mockImplementation(() => {
         paginationCallTime = Date.now();
         return 1;

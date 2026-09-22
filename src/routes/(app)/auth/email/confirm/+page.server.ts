@@ -21,13 +21,20 @@ export const actions: Actions = {
     const { error } = await verifyEmailAttribute({ accessToken, code });
 
     if (error) {
-      setFlash({ type: 'error', message: error.message, field: 'email' }, cookies);
+      setFlash(
+        { type: 'error', message: error.message, field: 'email' },
+        cookies
+      );
       return fail(400, { error: error.message });
     }
 
     redirect(
       '/account',
-      { type: 'success', message: 'Email updated successfully', field: 'email' },
+      {
+        type: 'success',
+        message: 'Email updated successfully',
+        field: 'email',
+      },
       cookies
     );
   },

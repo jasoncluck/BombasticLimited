@@ -4,8 +4,6 @@
   import SignupForm from './signup-form.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { Database } from '$lib/supabase/database.types';
-  import { Alert, AlertDescription } from '$lib/components/ui/alert';
-  import { AlertTriangle } from '@lucide/svelte';
 
   let {
     data,

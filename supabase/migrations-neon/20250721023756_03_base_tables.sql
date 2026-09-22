@@ -25,7 +25,6 @@ CREATE TABLE IF NOT EXISTS "public"."videos" (
   "views" bigint DEFAULT 0 NOT NULL
 );
 
-
 COMMENT ON COLUMN "public"."videos"."pending_delete" IS 'Pending delete flag is used for detecting and removing deleted videos from YouTube';
 
 COMMENT ON COLUMN "public"."videos"."thumbnail_url" IS 'Primary thumbnail URL for video display and processing source';
@@ -123,7 +122,6 @@ CREATE TABLE IF NOT EXISTS "public"."timestamps" (
   "sort_order" "public"."playlist_sort_order" DEFAULT NULL
 );
 
-
 COMMENT ON COLUMN "public"."timestamps"."video_start_seconds" IS 'Offset in seconds to start video playback.';
 
 COMMENT ON COLUMN "public"."timestamps"."watched_at" IS 'Datetime for when the video was last watched.';
@@ -179,6 +177,5 @@ CREATE TABLE IF NOT EXISTS "public"."user_playlists" (
   "added_at" TIMESTAMP WITH TIME ZONE DEFAULT "now" () NOT NULL,
   PRIMARY KEY ("id", "user_id")
 );
-
 
 COMMENT ON COLUMN "public"."user_playlists"."playlist_position" IS 'Ordering of playlists for each user (1-indexed).';

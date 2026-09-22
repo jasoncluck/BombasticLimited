@@ -100,7 +100,9 @@ export const populateVideos = async ({
     auth: process.env.GOOGLE_API_KEY,
   });
 
-  const client = new Client({ connectionString: process.env.NEON_DATABASE_URL });
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+  });
   await client.connect();
 
   let curPage = 1;
@@ -296,7 +298,9 @@ export const populateVideos = async ({
             error: markError,
           })
         );
-        throw new Error('Failed to mark videos for deletion');
+        throw new Error('Failed to mark videos for deletion', {
+          cause: markError,
+        });
       }
     }
 
@@ -317,7 +321,9 @@ export const populateVideos = async ({
           error: queryError,
         })
       );
-      throw new Error('Failed to query videos marked for deletion');
+      throw new Error('Failed to query videos marked for deletion', {
+        cause: queryError,
+      });
     }
 
     const deletionCandidates = videosToDelete || [];
@@ -350,7 +356,9 @@ export const populateVideos = async ({
             error: deleteError,
           })
         );
-        throw new Error('Failed to delete videos marked as pending_delete');
+        throw new Error('Failed to delete videos marked as pending_delete', {
+          cause: deleteError,
+        });
       }
     } else {
       console.log(

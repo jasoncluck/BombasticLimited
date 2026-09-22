@@ -1,5 +1,3 @@
-import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database } from '../database.types';
 import type { Source } from '$lib/constants/source';
 import { PUBLIC_CONTENT_IMAGES_URL } from '$env/static/public';
 import type {
@@ -30,8 +28,7 @@ export function getFullImageUrl(storagePath: string | null): string | null {
  * Transform RPC response to client-friendly Playlist type
  */
 export function transformPlaylistFromRPC(
-  rpcData: GetPlaylistDataResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: GetPlaylistDataResponse
 ): Playlist {
   return {
     id: rpcData.playlist_id,
@@ -60,8 +57,7 @@ export function transformPlaylistFromRPC(
  * Transform RPC response to UserPlaylist type
  */
 export function transformUserPlaylistFromRPC(
-  rpcData: GetUserPlaylistsResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: GetUserPlaylistsResponse
 ): UserPlaylist {
   return {
     id: rpcData.id,
@@ -91,8 +87,7 @@ export function transformUserPlaylistFromRPC(
  * Transform RPC response to PlaylistVideoWithTimestamp type
  */
 export function transformVideoFromRPC(
-  rpcData: GetPlaylistDataResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: GetPlaylistDataResponse
 ): PlaylistVideoWithTimestamp {
   return {
     id: rpcData.video_id,
@@ -117,8 +112,7 @@ export function transformVideoFromRPC(
  * Transform context RPC response to PlaylistVideoWithTimestamp type
  */
 export function transformVideoFromContextRPC(
-  rpcData: GetPlaylistVideoContextResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: GetPlaylistVideoContextResponse
 ): PlaylistVideoWithTimestamp {
   return {
     id: rpcData.video_id,

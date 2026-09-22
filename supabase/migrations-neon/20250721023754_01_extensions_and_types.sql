@@ -123,9 +123,7 @@ DO $$ BEGIN
   );
 EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
-
 -- Create sequences for tables
 CREATE SEQUENCE IF NOT EXISTS "public"."playlists_custom_seq" START
 WITH
   1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
-

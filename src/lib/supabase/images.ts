@@ -108,4 +108,3 @@ function supportsWebP(): boolean {
     return false;
   }
 }
-

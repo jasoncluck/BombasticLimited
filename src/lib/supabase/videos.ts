@@ -59,16 +59,14 @@ export type SourceVideosCount = Record<Source, number | null>;
 
 // Transform functions for different RPC responses
 function transformVideoFromGetVideosWithTimestamps(
-  rpcData: GetVideosWithTimestampsResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: GetVideosWithTimestampsResponse
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
-    image_url:
-      getFullImageUrl(rpcData.image_url) ?? rpcData.thumbnail_url,
+    image_url: getFullImageUrl(rpcData.image_url) ?? rpcData.thumbnail_url,
     thumbnail_url: rpcData.thumbnail_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
@@ -85,16 +83,14 @@ function transformVideoFromGetVideosWithTimestamps(
 }
 
 function transformVideoFromSearchVideos(
-  rpcData: SearchVideosResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: SearchVideosResponse
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
-    image_url:
-      getFullImageUrl(rpcData.image_url) ?? rpcData.image_url,
+    image_url: getFullImageUrl(rpcData.image_url) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
@@ -111,16 +107,14 @@ function transformVideoFromSearchVideos(
 }
 
 function transformVideoFromGetInProgressVideos(
-  rpcData: GetInProgressVideosResponse,
-  supabase: NeonPostgrestClient<Database>
+  rpcData: GetInProgressVideosResponse
 ): VideoWithTimestamp {
   return {
     id: rpcData.id,
     source: rpcData.source as Source,
     title: rpcData.title,
     description: rpcData.description,
-    image_url:
-      getFullImageUrl(rpcData.image_url) ?? rpcData.image_url,
+    image_url: getFullImageUrl(rpcData.image_url) ?? rpcData.image_url,
     thumbnail_url: rpcData.thumbnail_url,
     published_at: rpcData.published_at,
     duration: rpcData.duration,
@@ -145,8 +139,9 @@ interface VideoQuerySingleProps extends VideoQueryCommonProps {
   videoId: string;
 }
 
-interface VideoQueryMultipleProps<T extends Video | VideoWithTimestamp>
-  extends VideoQueryCommonProps {
+interface VideoQueryMultipleProps<
+  T extends Video | VideoWithTimestamp,
+> extends VideoQueryCommonProps {
   videoIds?: string[];
   searchString?: string;
   limit?: number;
@@ -227,12 +222,11 @@ export async function getVideos({
   // Transform videos using appropriate transform function with type assertions
   const transformedVideos = searchString
     ? (videos || []).map((video) =>
-        transformVideoFromSearchVideos(video as SearchVideosResponse, supabase)
+        transformVideoFromSearchVideos(video as SearchVideosResponse)
       )
     : (videos || []).map((video) =>
         transformVideoFromGetVideosWithTimestamps(
-          video as GetVideosWithTimestampsResponse,
-          supabase
+          video as GetVideosWithTimestampsResponse
         )
       );
 
@@ -263,8 +257,7 @@ export async function getVideo({
 
   const transformedVideo = video
     ? transformVideoFromGetVideosWithTimestamps(
-        video as GetVideosWithTimestampsResponse,
-        supabase
+        video as GetVideosWithTimestampsResponse
       )
     : null;
 
@@ -335,10 +328,7 @@ export async function getInProgressVideos({
   }
 
   const transformedVideos = (videos || []).map((video) =>
-    transformVideoFromGetInProgressVideos(
-      video as GetInProgressVideosResponse,
-      supabase
-    )
+    transformVideoFromGetInProgressVideos(video as GetInProgressVideosResponse)
   );
 
   return { videos: transformedVideos, count, error };

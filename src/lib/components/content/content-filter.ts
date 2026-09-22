@@ -31,9 +31,7 @@ export type TimestampFilter = ContentFilter<VideoWithTimestamp> & {
 };
 
 export type CombinedContentFilter =
-  | VideoFilter
-  | PlaylistVideosFilter
-  | TimestampFilter;
+  VideoFilter | PlaylistVideosFilter | TimestampFilter;
 
 interface SortOptionInfo<T extends Video | VideoWithTimestamp | PlaylistVideo> {
   displayName: string;
@@ -85,6 +83,11 @@ export const SORT_OPTIONS_VIDEO: Record<
 
 export const SORT_OPTIONS_PLAYLIST_VIDEOS: Record<
   SortKey<PlaylistVideo>,
+  // tableColumn values below (published_at, title, video_position) belong to
+  // the joined video/playlist row, not the bare playlist_videos join-table
+  // row SortOptionInfo's constraint allows — pre-existing mismatch, not
+  // introduced here.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   SortOptionInfo<any>
 > = {
   datePublished: {
@@ -100,7 +103,7 @@ export const SORT_OPTIONS_PLAYLIST_VIDEOS: Record<
 
 export const SORT_OPTIONS_TIMESTAMPS: Record<
   SortKey<VideoWithTimestamp>,
-  SortOptionInfo<any>
+  SortOptionInfo<VideoWithTimestamp>
 > = {
   datePublished: {
     displayName: 'Date Published',
@@ -173,7 +176,8 @@ export function getFilterOptionFromQueryParams({
       : 'descending';
 
     baseFilter.sort = {
-      key: querySortKey as any,
+      key: querySortKey as
+        SortKey<Video> | SortKey<VideoWithTimestamp> | SortKey<PlaylistVideo>,
       order: querySortOrder,
     };
   }

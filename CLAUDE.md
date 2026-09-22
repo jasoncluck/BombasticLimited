@@ -10,13 +10,12 @@ from gaming media creators (Giant Bomb, Jeff Gerstmann, Nextlander, Remap).
 Users can browse videos by source, manage playlists, track watch history
 (continue watching), and search across content.
 
-It originally ran on Vercel + Supabase. As of September 2026 it's fully
-migrated off both: hosting is SvelteKit's Node build running in a Lambda
-container image behind CloudFront, the database is Neon (serverless
-Postgres), and auth is AWS Cognito (with Discord federated as a generic OIDC
-provider). See "Migration history" below for why, and for some
-non-obvious platform gotchas worth knowing before touching auth or the SSR
-Lambda.
+It originally ran on Vercel + Supabase. As of September 2026 it's fully migrated
+off both: hosting is SvelteKit's Node build running in a Lambda container image
+behind CloudFront, the database is Neon (serverless Postgres), and auth is AWS
+Cognito (with Discord federated as a generic OIDC provider). See "Migration
+history" below for why, and for some non-obvious platform gotchas worth knowing
+before touching auth or the SSR Lambda.
 
 ## Commands
 
@@ -45,8 +44,8 @@ npm run test:e2e:single -- --grep "test name"  # Run a specific test
 ```
 
 Note: `tests/e2e/utils/TestDataManager.ts` still calls the Supabase Admin API
-and hasn't been rewritten for Cognito yet — e2e tests that create/delete
-users are currently broken. Everything else (unit/integration) runs fine.
+and hasn't been rewritten for Cognito yet — e2e tests that create/delete users
+are currently broken. Everything else (unit/integration) runs fine.
 
 ## Architecture
 
@@ -54,18 +53,18 @@ users are currently broken. Everything else (unit/integration) runs fine.
 
 - **SvelteKit** with Svelte 5 (runes), TypeScript, Tailwind CSS v4
 - **Neon** (serverless Postgres) via its PostgREST-compatible Data API
-  (`@neondatabase/postgrest-js`) for client- and most server-side queries;
-  raw `pg` (`src/lib/server/db.ts`) for server-only operations that need to
-  bypass RLS (account deletion, profile creation)
-- **AWS Cognito** for auth, with Discord as a federated OIDC identity
-  provider. Cognito's Discord integration never exposes a real username or
-  avatar (confirmed empirically — Discord's OIDC userinfo endpoint only
-  returns `sub`/`email`), so `src/lib/server/discord.ts` calls Discord's
-  REST API directly with a bot token to get those.
+  (`@neondatabase/postgrest-js`) for client- and most server-side queries; raw
+  `pg` (`src/lib/server/db.ts`) for server-only operations that need to bypass
+  RLS (account deletion, profile creation)
+- **AWS Cognito** for auth, with Discord as a federated OIDC identity provider.
+  Cognito's Discord integration never exposes a real username or avatar
+  (confirmed empirically — Discord's OIDC userinfo endpoint only returns
+  `sub`/`email`), so `src/lib/server/discord.ts` calls Discord's REST API
+  directly with a bot token to get those.
 - **S3** for content thumbnails and bug-report uploads
-- **AWS Lambda** (container image, via Lambda Web Adapter) + **CloudFront**
-  for hosting the SSR app; **AWS Lambda + EventBridge** for background jobs
-  (YouTube catalog sync, Twitch polling, image processing, cleanup)
+- **AWS Lambda** (container image, via Lambda Web Adapter) + **CloudFront** for
+  hosting the SSR app; **AWS Lambda + EventBridge** for background jobs (YouTube
+  catalog sync, Twitch polling, image processing, cleanup)
 - **Vitest** + **Playwright** for testing
 - **MDsveX** for Markdown support (`.md`/`.svx` files)
 
@@ -92,29 +91,28 @@ All main app routes live under `src/routes/(app)/`. Key routes:
 `src/hooks.server.ts` does three things per request:
 
 1. Verifies the request actually came through CloudFront (checks an
-   `x-origin-verify` header against a shared secret) — see "CloudFront /
-   Lambda gotchas" below for why this exists.
-2. Resolves the session from cookies (`src/lib/server/session.ts`) and
-   builds a `NeonPostgrestClient` for `event.locals.supabase` (yes, still
-   named `supabase` — it's the Data API client now, not Supabase), using the
-   real user's token if logged in, or a dedicated anonymous service user's
-   token otherwise (Neon's Data API requires a valid JWT on every request,
-   with no unauthenticated fallback).
+   `x-origin-verify` header against a shared secret) — see "CloudFront / Lambda
+   gotchas" below for why this exists.
+2. Resolves the session from cookies (`src/lib/server/session.ts`) and builds a
+   `NeonPostgrestClient` for `event.locals.supabase` (yes, still named
+   `supabase` — it's the Data API client now, not Supabase), using the real
+   user's token if logged in, or a dedicated anonymous service user's token
+   otherwise (Neon's Data API requires a valid JWT on every request, with no
+   unauthenticated fallback).
 3. Redirects unauthenticated requests away from `/account`.
 
-`src/routes/(app)/+layout.ts`'s browser branch reads a readable mirror
-cookie (`ID_TOKEN_CLIENT_COOKIE`, see `src/lib/constants/auth-cookies.ts`)
-to build a client-side `NeonPostgrestClient` for direct browser→Data API
-calls (playlist mutations, etc.) — that's why the delete-account /
-reset-password / etc. server actions and the playlist-create button hit
-different failure modes when something's wrong: they go through completely
-different request paths.
+`src/routes/(app)/+layout.ts`'s browser branch reads a readable mirror cookie
+(`ID_TOKEN_CLIENT_COOKIE`, see `src/lib/constants/auth-cookies.ts`) to build a
+client-side `NeonPostgrestClient` for direct browser→Data API calls (playlist
+mutations, etc.) — that's why the delete-account / reset-password / etc. server
+actions and the playlist-create button hit different failure modes when
+something's wrong: they go through completely different request paths.
 
 ### Data Layer (`src/lib/supabase/`)
 
-Yes, the directory is still called `supabase/` — not renamed, just
-re-plumbed. Thin wrappers organized by domain, now querying Neon's Data API
-instead of Supabase:
+Yes, the directory is still called `supabase/` — not renamed, just re-plumbed.
+Thin wrappers organized by domain, now querying Neon's Data API instead of
+Supabase:
 
 - `videos.ts` — Video queries
 - `playlists/` — Playlist queries, mutations, transforms, utils, duration
@@ -126,9 +124,9 @@ instead of Supabase:
 - `images.ts` — Image format detection (WebP/AVIF)
 - `database.types.ts` — Generated types (do not edit manually)
 
-Most RPC functions take an explicit `p_user_id`/`userId` parameter now
-instead of deriving it from `auth.user_id()` inside the SQL — see "Neon
-gotchas" below for why.
+Most RPC functions take an explicit `p_user_id`/`userId` parameter now instead
+of deriving it from `auth.user_id()` inside the SQL — see "Neon gotchas" below
+for why.
 
 ### State Management (`src/lib/state/`)
 
@@ -159,18 +157,18 @@ metadata.
 ### Image Processing
 
 Playlist thumbnails only, as of September 2026 — video thumbnails render
-straight from `thumbnail_url` (YouTube's own JPEG); they used to go through
-the same WebP/AVIF pipeline but it was removed (custom cropping/sizing is
-only needed for playlists, and video thumbnails have a much higher volume,
-which was burning through Trigger.dev's compute quota).
+straight from `thumbnail_url` (YouTube's own JPEG); they used to go through the
+same WebP/AVIF pipeline but it was removed (custom cropping/sizing is only
+needed for playlists, and video thumbnails have a much higher volume, which was
+burning through Trigger.dev's compute quota).
 
 - `src/lib/server/image-processing.ts` — Server-side Sharp processing
 - `src/trigger/image-processing-worker.ts` — Trigger.dev background job
   (crop/resize/encode a playlist thumbnail to WebP+AVIF, upload to S3).
   Triggered by `cdk/lib/lambda/process-images.ts`, an EventBridge-scheduled
   queue orchestrator that polls the `image_processing_jobs` table.
-- `scripts/process-images-locally.ts` — drains that same queue in-process
-  (no Trigger.dev) for when Trigger.dev compute is exhausted; run with
+- `scripts/process-images-locally.ts` — drains that same queue in-process (no
+  Trigger.dev) for when Trigger.dev compute is exhausted; run with
   `npx tsx scripts/process-images-locally.ts`
 - `DISABLE_IMAGE_PROCESSING=true` env var disables processing in dev
 
@@ -185,50 +183,49 @@ which was burning through Trigger.dev's compute quota).
 ### Database
 
 Postgres via Neon. Migration files that predate the Neon cutover are in
-`supabase/migrations/` (kept for history); adapted versions used to set up
-Neon are in `supabase/migrations-neon/`. **That directory is not fully in
-sync with the live schema** — several functions were patched directly
-against Neon via its MCP tools during debugging and never backported to a
-migration file. Diff against the live schema before trusting it.
+`supabase/migrations/` (kept for history); adapted versions used to set up Neon
+are in `supabase/migrations-neon/`. **That directory is not fully in sync with
+the live schema** — several functions were patched directly against Neon via its
+MCP tools during debugging and never backported to a migration file. Diff
+against the live schema before trusting it.
 
 ## CDK Infrastructure (`cdk/`)
 
-A separate AWS CDK project (TypeScript) with its own `package.json` and
-`.env`. See `cdk/README.md` for the stack layout and deploy commands.
+A separate AWS CDK project (TypeScript) with its own `package.json` and `.env`.
+See `cdk/README.md` for the stack layout and deploy commands.
 
 ### CloudFront / Lambda gotchas (read before touching auth or web-stack.ts)
 
-Two non-obvious AWS platform limitations shaped how `WebStack` is built —
-worth knowing before "fixing" either of these back to something that looks
-more standard:
+Two non-obvious AWS platform limitations shaped how `WebStack` is built — worth
+knowing before "fixing" either of these back to something that looks more
+standard:
 
 1. **CloudFront OAC/SigV4 can't sign POST/PUT bodies for browser-originated
-   requests.** AWS requires the *original client* to precompute
-   `x-amz-content-sha256`, which browsers never do. So the Lambda Function
-   URL is public (`authType: NONE`), and access is gated instead by a
-   secret `x-origin-verify` header CloudFront attaches, which
-   `hooks.server.ts` checks on every request.
+   requests.** AWS requires the _original client_ to precompute
+   `x-amz-content-sha256`, which browsers never do. So the Lambda Function URL
+   is public (`authType: NONE`), and access is gated instead by a secret
+   `x-origin-verify` header CloudFront attaches, which `hooks.server.ts` checks
+   on every request.
 2. **AWS Lambda Function URLs reject query strings with no `=`** — e.g.
-   `?/resetPassword`, which is exactly SvelteKit's named-form-action
-   convention. Every named action (anything but a lone `default` action)
-   was silently broken until a CloudFront Function
-   (`FixNamedActionQueryString`) started percent-encoding the leading `/`
-   at the edge.
+   `?/resetPassword`, which is exactly SvelteKit's named-form-action convention.
+   Every named action (anything but a lone `default` action) was silently broken
+   until a CloudFront Function (`FixNamedActionQueryString`) started
+   percent-encoding the leading `/` at the edge.
 
 ### Neon gotchas
 
 - `auth.user_id()` (Neon's RLS helper) can't be called from inside a SQL
-  function body's `SECURITY INVOKER` context unless the calling role has
-  `USAGE` on the `auth` schema — which customer roles can't grant
-  themselves, and Neon won't grant either. Functions that need the current
-  user's id take it as an explicit parameter instead.
-- A schema-USAGE error doesn't always mean the same fix applies, though:
-  check `pg_namespace.nspowner` first. `auth` is Neon-owned (can't fix via
-  GRANT); `extensions` is owned by `bombify_owner` (a plain `GRANT USAGE ON
-  SCHEMA extensions TO authenticated, anonymous` works fine).
-- Node's `pg` driver doesn't know how to parse arrays of *custom* Postgres
-  types (enum arrays, etc.) — they round-trip as the raw `"{a,b,c}"` literal
-  string unless a type parser is registered (see `src/lib/server/db.ts`).
+  function body's `SECURITY INVOKER` context unless the calling role has `USAGE`
+  on the `auth` schema — which customer roles can't grant themselves, and Neon
+  won't grant either. Functions that need the current user's id take it as an
+  explicit parameter instead.
+- A schema-USAGE error doesn't always mean the same fix applies, though: check
+  `pg_namespace.nspowner` first. `auth` is Neon-owned (can't fix via GRANT);
+  `extensions` is owned by `bombify_owner` (a plain
+  `GRANT USAGE ON SCHEMA extensions TO authenticated, anonymous` works fine).
+- Node's `pg` driver doesn't know how to parse arrays of _custom_ Postgres types
+  (enum arrays, etc.) — they round-trip as the raw `"{a,b,c}"` literal string
+  unless a type parser is registered (see `src/lib/server/db.ts`).
 
 ### What CDK manages
 
@@ -236,15 +233,14 @@ more standard:
   Pre-Token-Generation Lambda trigger (stamps a `role` claim Neon's Data API
   needs).
 - **WebStack** — S3 (static assets) + CloudFront + the SSR Lambda.
-- **AppStack / VideoStack** — Lambdas that sync YouTube videos/playlists
-  into Neon. EventBridge schedules (production: every 30 min for videos,
-  daily for playlists). `RepopulateStateMachine` (Step Functions)
-  orchestrates a full repopulation of all sources.
+- **AppStack / VideoStack** — Lambdas that sync YouTube videos/playlists into
+  Neon. EventBridge schedules (production: every 30 min for videos, daily for
+  playlists). `RepopulateStateMachine` (Step Functions) orchestrates a full
+  repopulation of all sources.
 - **CronStack** — Twitch stream polling, image processing, playlist/
   notification cleanup.
-- **BackupStack** — still references Supabase, currently disabled
-  (commented out in `app-stack.ts`) and not migrated to Neon. See
-  `cdk/BACKUP_README.md`.
+- **BackupStack** — still references Supabase, currently disabled (commented out
+  in `app-stack.ts`) and not migrated to Neon. See `cdk/BACKUP_README.md`.
 
 ### CDK Commands
 
@@ -258,18 +254,18 @@ npx cdk diff <stack>                  # preview changes vs deployed state
 npx cdk synth <stack>                 # emit CloudFormation template
 ```
 
-`VideoStack` is instantiated inside `AppStack`'s constructor but extends
-`Stack` (not `NestedStack`), so it's a fully separate CloudFormation stack —
+`VideoStack` is instantiated inside `AppStack`'s constructor but extends `Stack`
+(not `NestedStack`), so it's a fully separate CloudFormation stack —
 `cdk deploy BombasticStack-Production` does **not** deploy it automatically.
 
 Deploying `BombasticWebStack` requires building the Docker image first via
-`cdk/scripts/prepare-web-lambda.sh`; see the root `README.md` for the
-buildx workaround needed on machines where Docker Desktop produces an
-OCI-manifest-list image Lambda rejects.
+`cdk/scripts/prepare-web-lambda.sh`; see the root `README.md` for the buildx
+workaround needed on machines where Docker Desktop produces an OCI-manifest-list
+image Lambda rejects.
 
 ## Migration history
 
-Moved off Vercel/Supabase in September 2026 after a multi-day Supabase
-outage. Rough shape: Postgres → Neon, Auth → Cognito, Storage → S3,
-cron/edge functions → Lambda + EventBridge. Catalog fully repopulated from
-the YouTube API (13k+ videos). The old Supabase project has been deleted.
+Moved off Vercel/Supabase in September 2026 after a multi-day Supabase outage.
+Rough shape: Postgres → Neon, Auth → Cognito, Storage → S3, cron/edge functions
+→ Lambda + EventBridge. Catalog fully repopulated from the YouTube API (13k+
+videos). The old Supabase project has been deleted.

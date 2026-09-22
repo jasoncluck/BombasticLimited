@@ -113,7 +113,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
         });
 
         // Simulate closing dialog
-        let open = false;
+        const open = false;
         if (mockProps.onOpenChange) {
           mockProps.onOpenChange(false);
         }
@@ -159,7 +159,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
         });
 
         // Dialog should still close even on error
-        let open = false;
+        const open = false;
         if (mockProps.onOpenChange) {
           mockProps.onOpenChange(false);
         }
@@ -239,7 +239,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
 
       // Simulate the cancelDelete function logic
       const cancelDelete = () => {
-        let open = false;
+        const open = false;
         if (propsWithoutCallback.onOpenChange) {
           propsWithoutCallback.onOpenChange(false);
         }

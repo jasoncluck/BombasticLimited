@@ -15,7 +15,6 @@
 --     test/seed user creation needs a new Cognito-Admin-API-based approach
 --     (out of scope here).
 -- ============================================================================
-
 -- delete_user(): now only handles the Postgres-side cleanup (soft-deleting
 -- the user's playlists, queuing public ones for cleanup). It no longer
 -- deletes the account itself — the app must call Cognito's AdminDeleteUser
@@ -93,6 +92,6 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create the trigger on the playlists table
-CREATE TRIGGER playlists_update_deleted_at_trigger BEFORE
-UPDATE ON public.playlists FOR EACH ROW
+CREATE TRIGGER playlists_update_deleted_at_trigger
+BEFORE UPDATE ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.update_deleted_at_on_created_by_null ();

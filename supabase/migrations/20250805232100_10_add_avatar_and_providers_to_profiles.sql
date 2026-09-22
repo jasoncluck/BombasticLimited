@@ -108,10 +108,7 @@ DROP TRIGGER IF EXISTS trigger_update_profile_from_identity_changes ON auth.iden
 
 -- Create optimized trigger
 CREATE TRIGGER trigger_update_profile_from_identity_changes
-AFTER INSERT
-OR
-UPDATE
-OR DELETE ON auth.identities FOR EACH ROW
+AFTER INSERT OR UPDATE OR DELETE ON auth.identities FOR EACH ROW
 EXECUTE FUNCTION public.update_profile_from_identity_changes ();
 
 -- Optimized bulk update for existing profiles

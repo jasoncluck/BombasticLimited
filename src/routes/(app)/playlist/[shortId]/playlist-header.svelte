@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { Circle, ListVideo, Youtube } from '@lucide/svelte';
+  import { Circle, ListVideo } from '@lucide/svelte';
+  import YoutubeIcon from '$lib/assets/icons/YoutubeIcon.svelte';
   import type { SuperValidated } from 'sveltekit-superforms';
   import type { BreadcrumbItem } from '$lib/components/breadcrumb-layout.svelte';
   import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
   import { type Playlist, type UserPlaylist } from '$lib/supabase/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import SharedContentHeader from '$lib/components/content/shared-content-header.svelte';
@@ -272,9 +273,9 @@ import type { AppSession as Session } from '$lib/types/session';
                       ? 'hover:underline'
                       : ''}"
                   >
-                    <Youtube
-                      size="20"
-                      class="stroke-muted-foreground shrink-0 justify-center"
+                    <YoutubeIcon
+                      size={20}
+                      class="text-muted-foreground shrink-0 justify-center"
                     />
                     <p class="text-sm">YouTube</p>
                   </a>

@@ -41,7 +41,14 @@ export async function ensureProfileExists({
     `INSERT INTO profiles (id, username, avatar_url, providers, account_type, username_history)
      VALUES ($1, $2, $3, $4, $5, $6::jsonb)
      ON CONFLICT (id) DO NOTHING`,
-    [userId, username, avatarUrl ?? null, providers, accountType, usernameHistory]
+    [
+      userId,
+      username,
+      avatarUrl ?? null,
+      providers,
+      accountType,
+      usernameHistory,
+    ]
   );
 }
 

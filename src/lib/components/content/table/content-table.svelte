@@ -10,11 +10,10 @@
   import { type Video } from '$lib/supabase/videos';
   import { getContentState } from '$lib/state/content.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import type { CombinedContentFilter } from '../content-filter';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
-  import { onMount } from 'svelte';
 
   type DataTableProps<TValue> = {
     columns: ColumnDef<Video, TValue>[];

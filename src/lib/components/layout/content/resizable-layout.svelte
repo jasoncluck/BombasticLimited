@@ -65,7 +65,7 @@
 
   // Additional safety: Listen for global events to detect when native context menus might interfere
   onMount(() => {
-    const handleGlobalClick = (event: MouseEvent) => {
+    const handleGlobalClick = () => {
       // If we think a context menu is open but user is clicking elsewhere, force validation
       if (contentState.openContextMenuSection !== null) {
         // Small delay to let any menu close animations complete
@@ -75,7 +75,7 @@
       }
     };
 
-    const handleContextMenu = (event: MouseEvent) => {
+    const handleContextMenu = () => {
       // If a native context menu is about to open while we have app context menu open,
       // force validation after a delay
       if (contentState.openContextMenuSection !== null) {

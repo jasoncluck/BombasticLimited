@@ -6,7 +6,6 @@
     getContentState,
     DEFAULT_SECTION_ID,
   } from '$lib/state/content.svelte';
-  import { onMount } from 'svelte';
 
   type ContentTilesProps = ContentDisplayProps & {
     allowVideoReorder?: boolean;

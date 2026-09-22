@@ -207,7 +207,9 @@ async function processJob(
 }
 
 export const handler = async (): Promise<ApiResponse> => {
-  const client = new Client({ connectionString: process.env.NEON_DATABASE_URL });
+  const client = new Client({
+    connectionString: process.env.NEON_DATABASE_URL,
+  });
   await client.connect();
 
   try {
@@ -223,7 +225,12 @@ export const handler = async (): Promise<ApiResponse> => {
     );
 
     if (allJobs.length === 0) {
-      return { success: true, processed: 0, queueStatus, message: 'No jobs in queue' };
+      return {
+        success: true,
+        processed: 0,
+        queueStatus,
+        message: 'No jobs in queue',
+      };
     }
 
     const pendingJobs = allJobs.filter((job) => job.status === 'pending');
@@ -245,9 +252,10 @@ export const handler = async (): Promise<ApiResponse> => {
 
     // Backup cleanup for very old stuck jobs (30+ minutes)
     if (processingJobs.length > 0) {
-      await client.query('SELECT * FROM reset_stuck_image_processing_jobs($1)', [
-        30,
-      ]);
+      await client.query(
+        'SELECT * FROM reset_stuck_image_processing_jobs($1)',
+        [30]
+      );
     }
 
     const eligibleJobs = [...pendingJobs, ...failedJobs]
@@ -284,7 +292,12 @@ export const handler = async (): Promise<ApiResponse> => {
           skippedJobsCount++;
           continue;
         }
-        const processedJob = await processJob(client, job, entity, needsFreshRetry);
+        const processedJob = await processJob(
+          client,
+          job,
+          entity,
+          needsFreshRetry
+        );
         processedJobs.push(processedJob);
       } catch (jobError) {
         console.error(`Job ${job.id} processing failed:`, jobError);

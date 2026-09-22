@@ -1,4 +1,4 @@
-import sharp from 'sharp';
+import sharp, { type Metadata } from 'sharp';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { validateAndAdjustCropDimensions } from '$lib/utils/dynamic-crop-dimensions';
 import { PUBLIC_CONTENT_IMAGES_URL } from '$env/static/public';
@@ -49,7 +49,7 @@ export function getMemoryUsage() {
 
 // **SPEED-BALANCED: Improved quality for WebP processing efficiency**
 export function calculateOptimalQuality(
-  metadata: Partial<sharp.Metadata>,
+  metadata: Partial<Metadata>,
   targetFormat: string,
   baseQuality = 80 // **IMPROVED: Slightly higher base, not too aggressive**
 ): number {
@@ -128,7 +128,7 @@ export async function processImageServer({
     const imageBuffer = await response.arrayBuffer();
 
     const sharpInstance = sharp(imageBuffer, {
-      failOnError: false,
+      failOn: 'none',
       density: 96, // **IMPROVED: Better density without going overboard (was 72)**
       pages: 1,
     });

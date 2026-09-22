@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { Playlist } from '$lib/supabase/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import {
     DEFAULT_SECTION_ID,
@@ -36,13 +36,6 @@ import type { AppSession as Session } from '$lib/types/session';
 
   let selectedVideos = $derived(
     contentState.selectedVideosBySection[sectionId] ?? []
-  );
-
-  // Check if playlist should hide dropdown (created by current user AND has deleted_at timestamp)
-  let shouldHideDropdown = $derived(
-    playlist &&
-      playlist.created_by === session?.user.id &&
-      playlist.deleted_at !== null
   );
 
   function handleSelectAll() {

@@ -102,8 +102,7 @@ export async function getPlaylistData({
 
   const firstRow = data[0];
 
-  // Transform using function with supabase client
-  const basePlaylist = transformPlaylistFromRPC(firstRow, supabase);
+  const basePlaylist = transformPlaylistFromRPC(firstRow);
 
   // Properly construct the playlist with all available fields
   const playlist: UserPlaylist = {
@@ -118,10 +117,9 @@ export async function getPlaylistData({
     playlist_position: firstRow.playlist_position,
   };
 
-  // Transform videos with supabase client
   const videos: PlaylistVideoWithTimestamp[] = data
     .filter((row) => !row.is_duration_row && row.video_id) // Make sure we have valid video data
-    .map((row) => transformVideoFromRPC(row, supabase));
+    .map((row) => transformVideoFromRPC(row));
 
   // Convert total seconds to hours, minutes, seconds
   const totalSeconds = firstRow.total_duration_seconds || 0;
@@ -371,9 +369,8 @@ export async function getPlaylistVideoContext({
     }),
   };
 
-  // Convert video rows to video objects using the correct transform function
   const allVideos: PlaylistVideoWithTimestamp[] = videoRows.map((row) =>
-    transformVideoFromContextRPC(row, supabase)
+    transformVideoFromContextRPC(row)
   );
 
   // Find current video and next videos
@@ -424,9 +421,8 @@ export async function getUserPlaylists({
     console.error('Error when fetching playlists:', error);
   }
 
-  // Pass supabase client to transform function
   const userPlaylists = (data || []).map((playlist) =>
-    transformUserPlaylistFromRPC(playlist, supabase)
+    transformUserPlaylistFromRPC(playlist)
   );
 
   return { userPlaylists, count, error };

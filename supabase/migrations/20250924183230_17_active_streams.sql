@@ -26,8 +26,8 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_active_streams_updated_at BEFORE
-UPDATE ON public.active_streams FOR EACH ROW
+CREATE TRIGGER update_active_streams_updated_at
+BEFORE UPDATE ON public.active_streams FOR EACH ROW
 EXECUTE FUNCTION public.update_active_streams_updated_at ();
 
 -- Insert initial records for all sources

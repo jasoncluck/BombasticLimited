@@ -21,7 +21,7 @@
     disabled?: boolean;
     placeholder?: string;
     description?: string;
-    [key: string]: any;
+    [key: string]: unknown;
   } = $props();
 
   let localValue = $derived('');

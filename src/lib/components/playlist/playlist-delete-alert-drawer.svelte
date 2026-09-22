@@ -1,17 +1,15 @@
 <script lang="ts">
   import * as Drawer from '$lib/components/ui/drawer';
-  import Button, {
-    buttonVariants,
-  } from '$lib/components/ui/button/button.svelte';
+  import Button from '$lib/components/ui/button/button.svelte';
   import type { Playlist } from '$lib/supabase/playlists';
   import type { Database } from '$lib/supabase/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { SidebarState } from '$lib/state/sidebar.svelte';
   import { handleDeletePlaylist } from './playlist-service';
   import { goto } from '$app/navigation';
   import { page } from '$app/state';
-  import { CircleMinus, ListVideo } from '@lucide/svelte';
+  import { ListVideo } from '@lucide/svelte';
 
   interface PlaylistDeleteAlertDrawerProps {
     playlist: Playlist;

@@ -9,7 +9,11 @@ import {
   updateUsername as updateUsernameInDb,
   syncDiscordIdentity,
 } from '$lib/supabase/user-profiles';
-import { updateEmailAttribute, forgotPassword, adminDeleteUser } from '$lib/server/cognito';
+import {
+  updateEmailAttribute,
+  forgotPassword,
+  adminDeleteUser,
+} from '$lib/server/cognito';
 import { deleteUserData } from '$lib/server/profile';
 import { clearSessionCookies } from '$lib/server/session';
 import type { Actions, PageServerLoad } from './$types';
@@ -25,18 +29,15 @@ export const load: PageServerLoad = async ({
 
   // hooks.server.ts already redirects unauthenticated requests away from
   // /account, so userId/userEmail are guaranteed here.
-  const [{ profile }, discordResult, emailForm, usernameForm] = await Promise.all([
-    getProfileById({ userId }),
-    getUserDiscordIdentity({ userId }),
-    superValidate({ email: userEmail ?? '' }, zod(emailSchema), {
-      errors: true,
-    }),
-    superValidate(
-      { username: '' },
-      zod(usernameSchema),
-      { errors: false }
-    ),
-  ]);
+  const [{ profile }, discordResult, emailForm, usernameForm] =
+    await Promise.all([
+      getProfileById({ userId }),
+      getUserDiscordIdentity({ userId }),
+      superValidate({ email: userEmail ?? '' }, zod(emailSchema), {
+        errors: true,
+      }),
+      superValidate({ username: '' }, zod(usernameSchema), { errors: false }),
+    ]);
 
   return {
     profile,
@@ -189,7 +190,11 @@ export const actions: Actions = {
     }
 
     setFlash(
-      { type: 'success', message: 'Discord account unlinked', field: 'discord' },
+      {
+        type: 'success',
+        message: 'Discord account unlinked',
+        field: 'discord',
+      },
       cookies
     );
   },

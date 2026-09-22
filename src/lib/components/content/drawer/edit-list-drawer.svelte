@@ -33,12 +33,7 @@
     subtitle?: string;
     triggerClass?: string;
     triggerVariant?:
-      | 'default'
-      | 'destructive'
-      | 'outline'
-      | 'secondary'
-      | 'ghost'
-      | 'link';
+      'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
     onClose?: () => void;
     onReorder?: (
       oldIndex: number,
@@ -93,8 +88,8 @@
 
     if (!orderChanged) {
       // Revert to original order
-      const originalItems = storedOriginalOrder.map(
-        (id) => items.find((item) => item.id === id)!
+      const originalItems = storedOriginalOrder.map((id) =>
+        items.find((item) => item.id === id)!
       );
       items = originalItems;
       return;
@@ -126,8 +121,8 @@
           await onReorder(oldIndex, newIndex, movedItem);
         } catch {
           // Revert to original order on error
-          const originalItems = storedOriginalOrder.map(
-            (id) => items.find((item) => item.id === id)!
+          const originalItems = storedOriginalOrder.map((id) =>
+            items.find((item) => item.id === id)!
           );
           items = originalItems;
           return;

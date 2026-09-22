@@ -82,7 +82,7 @@ export const handler = async (
     await pgClient.connect();
     console.log('Connected to PostgreSQL database');
 
-    const backupData: Record<string, any> = {};
+    const backupData: Record<string, unknown[]> = {};
 
     // Backup public schema tables only
     console.log('Backing up public schema tables...');
@@ -97,7 +97,9 @@ export const handler = async (
         );
       } catch (error) {
         console.error(`Error backing up table public.${table}:`, error);
-        throw new Error(`Failed to backup table public.${table}: ${error}`);
+        throw new Error(`Failed to backup table public.${table}: ${error}`, {
+          cause: error,
+        });
       }
     }
 

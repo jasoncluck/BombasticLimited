@@ -37,8 +37,9 @@ const mockDocument = {
   removeEventListener: vi.fn(),
 };
 
-// Mock global document
-global.document = mockDocument as any;
+// Mock global document. document is getter-only on the jsdom window
+// object, so direct assignment throws — use vi.stubGlobal instead.
+vi.stubGlobal('document', mockDocument as any);
 
 describe('ContentState', () => {
   let contentState: ContentState;
@@ -406,21 +407,20 @@ describe('ContentState', () => {
   describe('error handling and edge cases', () => {
     it('should handle undefined document in clearHoverStatesDuringDrag', () => {
       const originalDocument = global.document;
-      // @ts-ignore
-      global.document = undefined;
+      vi.stubGlobal('document', undefined);
 
       expect(() => contentState.clearHoverStatesDuringDrag()).not.toThrow();
 
-      global.document = originalDocument;
+      vi.stubGlobal('document', originalDocument);
     });
 
     it('should handle undefined document.body in clearHoverStatesDuringDrag', () => {
       const originalDocument = global.document;
-      global.document = {} as any;
+      vi.stubGlobal('document', {} as any);
 
       expect(() => contentState.clearHoverStatesDuringDrag()).not.toThrow();
 
-      global.document = originalDocument;
+      vi.stubGlobal('document', originalDocument);
     });
 
     it('should handle empty selectedVideosBySection in isContextMenuOpenForAnySection', () => {

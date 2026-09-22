@@ -11,7 +11,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_timestamp" () RETURNS "trigger" LANGUAGE "plpgsql"
 SET
   search_path = '' AS $$
@@ -21,7 +20,6 @@ BEGIN
 END;
 $$;
 
-
 -- Search vector functions
 CREATE OR REPLACE FUNCTION "public"."set_playlist_search_vector" () RETURNS "trigger" LANGUAGE "plpgsql"
 SET
@@ -29,7 +27,6 @@ SET
   NEW.search_vector := to_tsvector('english', NEW.name);
   RETURN NEW;
 END;$$;
-
 
 CREATE OR REPLACE FUNCTION "public"."set_video_search_vector" () RETURNS "trigger" LANGUAGE "plpgsql"
 SET
@@ -40,7 +37,6 @@ SET
       setweight(to_tsvector('english', coalesce(NEW.description, '')), 'C');  -- Lower weight for description
   RETURN NEW;
 END;$$;
-
 
 -- Table configuration
 SET
@@ -53,4 +49,3 @@ SET
 CREATE SEQUENCE IF NOT EXISTS "public"."playlists_custom_seq" START
 WITH
   1 INCREMENT BY 1 NO MINVALUE NO MAXVALUE CACHE 1;
-

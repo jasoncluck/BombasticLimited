@@ -5,17 +5,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 describe('HTML Sanitizer', () => {
   // Mock browser environment properly
   beforeEach(() => {
-    // Basic DOM mocking for the sanitizer
-    global.DOMParser = vi.fn().mockImplementation(() => ({
-      parseFromString: vi.fn().mockReturnValue({
-        querySelector: vi.fn().mockReturnValue({
-          childNodes: [],
-          innerHTML: '',
-        }),
-      }),
-    }));
+    // Basic DOM mocking for the sanitizer. Uses vi.stubGlobal rather than
+    // direct assignment since document/DOMParser/Node are getter-only on
+    // the jsdom window object.
+    vi.stubGlobal(
+      'DOMParser',
+      vi.fn().mockImplementation(function () {
+        return {
+          parseFromString: vi.fn().mockReturnValue({
+            querySelector: vi.fn().mockReturnValue({
+              childNodes: [],
+              innerHTML: '',
+            }),
+          }),
+        };
+      })
+    );
 
-    global.document = {
+    vi.stubGlobal('document', {
       createElement: vi.fn().mockReturnValue({
         setAttribute: vi.fn(),
         appendChild: vi.fn(),
@@ -25,12 +32,12 @@ describe('HTML Sanitizer', () => {
         nodeType: 3,
         textContent: '',
       }),
-    } as any;
+    } as any);
 
-    global.Node = {
+    vi.stubGlobal('Node', {
       TEXT_NODE: 3,
       ELEMENT_NODE: 1,
-    } as any;
+    } as any);
   });
 
   describe('sanitizeNotificationHtml', () => {
@@ -70,9 +77,8 @@ describe('HTML Sanitizer', () => {
 
   describe('createSafeHtml', () => {
     it('should be an alias for sanitizeNotificationHtml', async () => {
-      const { createSafeHtml, sanitizeNotificationHtml } = await import(
-        '../html-sanitizer'
-      );
+      const { createSafeHtml, sanitizeNotificationHtml } =
+        await import('../html-sanitizer');
 
       // Should not throw
       expect(() => createSafeHtml('<b>test</b>')).not.toThrow();

@@ -658,7 +658,8 @@ const cacheStaticAsset = async (request: Request): Promise<Response> => {
     return response;
   } catch (error) {
     throw new Error(
-      `Static asset fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      `Static asset fetch failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { cause: error }
     );
   }
 };

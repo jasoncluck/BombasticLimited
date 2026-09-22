@@ -3,7 +3,6 @@ import { browser } from '$app/environment';
 import type { AppSession as Session } from '$lib/types/session';
 import type {
   BugReportFormData,
-  BugReportMetadata,
   BugReportEvent,
   BugReportSubmissionResult,
   ImageUploadResult,

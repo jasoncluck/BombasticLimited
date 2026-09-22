@@ -18,7 +18,7 @@
     handleUpdatePlaylistPosition,
   } from './playlist/playlist-service';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { AppSession as Session } from '$lib/types/session';
+  import type { AppSession as Session } from '$lib/types/session';
   import type { Database } from '$lib/supabase/database.types';
   import { fade } from 'svelte/transition';
   import type { Playlist } from '$lib/supabase/playlists';

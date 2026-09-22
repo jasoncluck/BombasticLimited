@@ -21,10 +21,7 @@ const BACKUP_BUCKET_NAME =
 
 interface DisasterRecoveryOptions {
   scenario:
-    | 'point-in-time'
-    | 'latest'
-    | 'validate-and-restore'
-    | 'full-recovery';
+    'point-in-time' | 'latest' | 'validate-and-restore' | 'full-recovery';
   timestamp?: string;
   tables?: string[];
   validateFirst?: boolean;

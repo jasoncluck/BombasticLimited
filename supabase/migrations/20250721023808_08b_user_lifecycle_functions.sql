@@ -277,9 +277,7 @@ $$;
 
 -- Trigger to handle user profile creation (remains the same)
 CREATE TRIGGER "on_auth_user_changes"
-AFTER INSERT
-OR
-UPDATE ON "auth"."users" FOR EACH ROW
+AFTER INSERT OR UPDATE ON "auth"."users" FOR EACH ROW
 EXECUTE PROCEDURE "public"."handle_user_changes" ();
 
 CREATE OR REPLACE FUNCTION "public"."delete_user" () RETURNS void
@@ -360,8 +358,8 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create the trigger on the playlists table
-CREATE TRIGGER playlists_update_deleted_at_trigger BEFORE
-UPDATE ON public.playlists FOR EACH ROW
+CREATE TRIGGER playlists_update_deleted_at_trigger
+BEFORE UPDATE ON public.playlists FOR EACH ROW
 EXECUTE FUNCTION public.update_deleted_at_on_created_by_null ();
 
 -- Update the create_user function to not automatically confirm users

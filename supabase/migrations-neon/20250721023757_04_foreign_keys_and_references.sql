@@ -44,7 +44,6 @@ EXCEPTION WHEN OTHERS THEN NULL; END $$;
 
 -- Profiles: no FK to auth.users anymore — profiles.id IS the canonical user
 -- id (the Cognito sub), populated directly rather than referencing GoTrue.
-
 -- User playlists foreign keys
 DO $$ BEGIN
   ALTER TABLE ONLY "public"."user_playlists"
