@@ -3,6 +3,8 @@
   import { onMount } from 'svelte';
   import { browser } from '$app/environment';
   import AspectRatio from '../ui/aspect-ratio/aspect-ratio.svelte';
+  import Button from '../ui/button/button.svelte';
+  import { PanelRightClose, PanelRightOpen } from '@lucide/svelte';
 
   interface Props {
     channel: string;
@@ -59,7 +61,39 @@
   let hostname = $state('localhost');
 
   const mediaQuery = getMediaQueryState();
-  let shouldShowChat = $derived(mediaQuery.isLg);
+
+  // User-controlled on top of the screen-size check: chat still never shows
+  // on small screens (no room for it), but on large screens the user can
+  // manually collapse it to let the video use the full width at 16:9
+  // instead of sharing a shorter 21:9 box with the chat panel.
+  const CHAT_HIDDEN_STORAGE_KEY = 'bombastic-twitch-chat-hidden';
+  let chatManuallyHidden = $state(false);
+  let shouldShowChat = $derived(mediaQuery.isLg && !chatManuallyHidden);
+
+  function loadChatPreferenceFromLocalStorage(): void {
+    if (!browser) return;
+    try {
+      const saved = localStorage.getItem(CHAT_HIDDEN_STORAGE_KEY);
+      if (saved !== null) {
+        chatManuallyHidden = JSON.parse(saved);
+      }
+    } catch (error) {
+      console.error('Failed to load Twitch chat preference:', error);
+    }
+  }
+
+  function toggleChat(): void {
+    chatManuallyHidden = !chatManuallyHidden;
+    if (!browser) return;
+    try {
+      localStorage.setItem(
+        CHAT_HIDDEN_STORAGE_KEY,
+        JSON.stringify(chatManuallyHidden)
+      );
+    } catch (error) {
+      console.error('Failed to save Twitch chat preference:', error);
+    }
+  }
 
   function getParentDomains(): string[] {
     if (!browser) return ['localhost'];
@@ -137,6 +171,7 @@
     if (browser) {
       hostname = getParentDomains()[0];
     }
+    loadChatPreferenceFromLocalStorage();
 
     const cleanup = mediaQuery.initialize();
 
@@ -155,32 +190,48 @@
   });
 </script>
 
-<!-- Use 21:9 aspect ratio when chat is enabled, 16:9 when not -->
-<AspectRatio ratio={shouldShowChat ? 21 / 9 : 16 / 9}>
-  <div
-    class="grid h-full w-full gap-4 transition-all duration-300 ease-in-out {shouldShowChat
-      ? 'grid-cols-[1fr_320px]'
-      : 'grid-cols-1'}"
-  >
-    <!-- Video container -->
-    <div class="relative">
-      <div
-        id="twitch-embed"
-        bind:this={embedElement}
-        class="absolute inset-0 h-full w-full rounded bg-black"
-      ></div>
+<div class="flex w-full flex-col gap-2">
+  {#if mediaQuery.isLg}
+    <div class="flex justify-end">
+      <Button variant="outline" size="sm" onclick={toggleChat}>
+        {#if chatManuallyHidden}
+          <PanelRightOpen class="size-4" />
+          Show Chat
+        {:else}
+          <PanelRightClose class="size-4" />
+          Hide Chat
+        {/if}
+      </Button>
     </div>
+  {/if}
 
-    <!-- Chat container - only rendered when needed -->
-    {#if shouldShowChat}
-      <div class="overflow-hidden rounded bg-gray-900">
-        <iframe
-          src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={hostname}"
-          class="h-full w-full border-0"
-          title="Twitch Chat for {channel}"
-          allow="microphone; camera;"
-        ></iframe>
+  <!-- Use 21:9 aspect ratio when chat is enabled, 16:9 when not -->
+  <AspectRatio ratio={shouldShowChat ? 21 / 9 : 16 / 9}>
+    <div
+      class="grid h-full w-full gap-4 transition-all duration-300 ease-in-out {shouldShowChat
+        ? 'grid-cols-[1fr_320px]'
+        : 'grid-cols-1'}"
+    >
+      <!-- Video container -->
+      <div class="relative">
+        <div
+          id="twitch-embed"
+          bind:this={embedElement}
+          class="absolute inset-0 h-full w-full rounded bg-black"
+        ></div>
       </div>
-    {/if}
-  </div>
-</AspectRatio>
+
+      <!-- Chat container - only rendered when needed -->
+      {#if shouldShowChat}
+        <div class="overflow-hidden rounded bg-gray-900">
+          <iframe
+            src="https://www.twitch.tv/embed/{channel}/chat?darkpopout&parent={hostname}"
+            class="h-full w-full border-0"
+            title="Twitch Chat for {channel}"
+            allow="microphone; camera;"
+          ></iframe>
+        </div>
+      {/if}
+    </div>
+  </AspectRatio>
+</div>
