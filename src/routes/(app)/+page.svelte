@@ -45,7 +45,7 @@
       url.searchParams.delete('code');
       goto(url.pathname + url.search, {
         replaceState: true,
-        invalidate: ['neon:db:profiles', 'supbase:db:notifications'],
+        invalidate: ['neon:db:profiles'],
       });
       sidebarState.refreshData();
       navigationState.refreshData();

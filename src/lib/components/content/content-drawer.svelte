@@ -34,6 +34,7 @@
     TimerReset,
   } from '@lucide/svelte';
   import { SOURCE_INFO } from '$lib/constants/source';
+  import { getCardThumbnailUrl } from '$lib/utils/youtube-thumbnail';
   import { invalidate } from '$app/navigation';
   import { page } from '$app/state';
   import FullHeightDrawer from './drawer/full-height-drawer.svelte';
@@ -170,7 +171,9 @@
             {@const video = operationVideos[0]}
             <div class="flex items-center gap-2">
               <img
-                src={video.image_url ?? video.thumbnail_url}
+                src={getCardThumbnailUrl(
+                  video.image_url ?? video.thumbnail_url
+                )}
                 alt={video.title}
                 class="aspect-video h-12"
                 loading="lazy"
@@ -263,7 +266,9 @@
             {#snippet itemRenderer(item)}
               {@const video = item as Video}
               <img
-                src={video.image_url ?? video.thumbnail_url}
+                src={getCardThumbnailUrl(
+                  video.image_url ?? video.thumbnail_url
+                )}
                 alt={video.title}
                 class="pointer-events-none aspect-video h-[60px]"
                 loading="lazy"

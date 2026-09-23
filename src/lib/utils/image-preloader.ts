@@ -3,6 +3,8 @@
  * Provides Promise-based image loading with loading state management
  */
 
+import { getCardThumbnailUrl } from './youtube-thumbnail';
+
 export interface PreloadResult {
   success: boolean;
   failed: string[];
@@ -67,12 +69,17 @@ export async function preloadImages(
 /**
  * Extracts image URLs from video objects
  * Prioritizes image_url over thumbnail_url
+ *
+ * Downsized the same way content-card.svelte/content-table-image.svelte
+ * render them (see getCardThumbnailUrl) — otherwise this preloads a
+ * different (larger) YouTube thumbnail variant than the one actually
+ * displayed, downloading the image twice.
  */
 export function extractImageUrls(
   videos: Array<{ image_url?: string | null; thumbnail_url?: string | null }>
 ): string[] {
   return videos
-    .map((video) => video.image_url || video.thumbnail_url)
+    .map((video) => getCardThumbnailUrl(video.image_url || video.thumbnail_url))
     .filter((url): url is string => Boolean(url));
 }
 

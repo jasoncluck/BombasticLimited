@@ -33,7 +33,14 @@ const CACHE_CONFIG: CacheConfig = {
   maxRequestAge: 2000, // Reduced from 3000ms
   abandonAfterMs: 6000, // Reduced from 8000ms
   maxRetries: 1, // Reduced for faster failure handling
-  immediateFetchThreshold: 5, // Process immediately if fewer active fetches
+  // Process immediately if fewer active fetches. A single carousel row
+  // alone can fire 5+ image requests, so the old threshold of 5 pushed
+  // almost every ordinary page load's images into the ~150ms batch queue
+  // (batchTimeoutMs below) instead of fetching them right away. Raised to
+  // comfortably cover a typical page's initial burst (a couple of visible
+  // carousel rows) while the queue still exists as a safety valve for
+  // genuinely high activity (e.g. rapid scrolling through a large grid).
+  immediateFetchThreshold: 24,
 };
 
 // Cache names
@@ -449,6 +456,21 @@ const processBatch = (
       return;
     }
 
+    // Hard ceiling on in-flight fetches. Normal page loads never get near
+    // this (a batch tops out at maxBatchSize=50), but pages that queue up
+    // hundreds of images at once (e.g. a large playlist view) could
+    // otherwise blow past any reasonable concurrency without this — defer
+    // back into the queue instead of piling on.
+    if (state.activeFetches.size >= CACHE_CONFIG.maxConcurrentRequests) {
+      state.pendingRequests.set(trackedRequest.id, trackedRequest);
+      setTimeout(() => {
+        if (state.pendingRequests.has(trackedRequest.id)) {
+          processPendingRequests();
+        }
+      }, 50);
+      return;
+    }
+
     const { url, resolve, reject, id } = trackedRequest;
 
     try {
@@ -568,6 +590,13 @@ const queueRequest = (request: Request): Promise<Response> => {
   });
 };
 
+// Stamped on every cached image response so getFromCache can enforce
+// CACHE_CONFIG.maxCacheAgeMs — without this, entries only ever get evicted
+// by the size cap in performCleanup, never by age, so a genuinely-updated
+// origin image (same URL, new bytes) stays stale in a returning visitor's
+// cache indefinitely.
+const CACHE_TIMESTAMP_HEADER = 'x-sw-cached-at';
+
 // Optimized cache response function
 const cacheResponse = async (
   request: Request,
@@ -582,7 +611,14 @@ const cacheResponse = async (
         Accept: request.headers.get('Accept') || 'image/*',
       }),
     });
-    await cache.put(cacheRequest, response);
+    const headers = new Headers(response.headers);
+    headers.set(CACHE_TIMESTAMP_HEADER, Date.now().toString());
+    const stampedResponse = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+    await cache.put(cacheRequest, stampedResponse);
   } catch (error) {
     console.warn('Failed to cache response:', error);
   }
@@ -603,7 +639,21 @@ const getFromCache = async (
       }),
     });
 
-    return await cache.match(cacheRequest);
+    const cached = await cache.match(cacheRequest);
+    if (!cached) return cached;
+
+    // Only images are stamped with CACHE_TIMESTAMP_HEADER (cacheResponse);
+    // static assets are versioned by build hash instead, so they never go
+    // stale in place and don't need age-based eviction.
+    if (cacheName === IMAGE_CACHE) {
+      const cachedAt = Number(cached.headers.get(CACHE_TIMESTAMP_HEADER));
+      if (cachedAt && Date.now() - cachedAt > CACHE_CONFIG.maxCacheAgeMs) {
+        await cache.delete(cacheRequest);
+        return null;
+      }
+    }
+
+    return cached;
   } catch {
     return null;
   }

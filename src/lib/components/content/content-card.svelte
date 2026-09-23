@@ -19,6 +19,7 @@
   } from './content-filter';
   import ContentCardSkeleton from './content-card-skeleton.svelte';
   import LazyImage from './LazyImage.svelte';
+  import { getCardThumbnailUrl } from '$lib/utils/youtube-thumbnail';
   import { onMount } from 'svelte';
   import {
     handleContentNavigation,
@@ -398,7 +399,7 @@
         {#if video.image_url ?? video.thumbnail_url}
           <!-- Use the optimized image_url directly from the database -->
           <LazyImage
-            src={video.image_url ?? video.thumbnail_url}
+            src={getCardThumbnailUrl(video.image_url ?? video.thumbnail_url)}
             alt={video.title}
             class="aspect-[16/9] h-auto w-full"
             {index}

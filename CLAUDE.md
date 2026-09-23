@@ -85,8 +85,8 @@ All main app routes live under `src/routes/(app)/`. Key routes:
 - `/account` — Account settings (auth-guarded)
 - `/auth/*` — Login, signup, forgot password, verify, Discord callback/link
 - `src/routes/(docs)/` — Documentation pages (MDsveX)
-- `src/routes/(app)/api/*` — API endpoints: save-timestamp, navigation,
-  video-thumbnail, sidebar, admin/notifications
+- `src/routes/(app)/api/*` — API endpoints: save-timestamp, navigation, sidebar,
+  profile, bug-report, username-available, admin/notifications
 
 ### Auth & Session Lifecycle
 

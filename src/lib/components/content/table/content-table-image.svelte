@@ -4,6 +4,7 @@
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
   import LazyImage from '../LazyImage.svelte';
+  import { getCardThumbnailUrl } from '$lib/utils/youtube-thumbnail';
 
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { Database } from '$lib/neon/database.types';
@@ -25,7 +26,7 @@
 >
   <!-- Use the optimized image_url directly from the database -->
   <LazyImage
-    src={video.image_url ?? video.thumbnail_url}
+    src={getCardThumbnailUrl(video.image_url ?? video.thumbnail_url)}
     alt={video.title}
     class="h-full w-full object-cover"
     {index}
