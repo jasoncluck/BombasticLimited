@@ -28,6 +28,14 @@ describe('getCardThumbnailUrl', () => {
     ).toBe('https://i.ytimg.com/vi/abc123/hqdefault.jpg');
   });
 
+  it('downsizes a live-stream thumbnail while preserving the _live suffix', () => {
+    expect(
+      getCardThumbnailUrl(
+        'https://i.ytimg.com/vi/abc123/maxresdefault_live.jpg'
+      )
+    ).toBe('https://i.ytimg.com/vi/abc123/hqdefault_live.jpg');
+  });
+
   it('leaves non-YouTube URLs untouched', () => {
     const url = 'https://content-images.bombastic.ltd/playlists/1/foo.webp';
     expect(getCardThumbnailUrl(url)).toBe(url);
