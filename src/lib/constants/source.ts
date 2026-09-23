@@ -117,7 +117,16 @@ export const SOURCE_INFO: Record<Source, SourceInfo> = {
     twitchId: '465794598',
     youtubeId: 'UCiUhKqsBH-Is2VeC2sykEfg',
     youtubeUrl: 'https://www.youtube.com/@minnmax',
-    highlightedPlaylists: [],
+    highlightedPlaylists: [
+      {
+        name: 'The MinnMax Show',
+        youtubeId: 'PL6FR1Lkt9IiPuk2Xvs6Z2psbgAHnLM4Ux',
+      },
+      {
+        name: 'New Show Plus',
+        youtubeId: 'PL6FR1Lkt9IiPAslT8rkVSprRXRL2A43Xn',
+      },
+    ],
     supportUrl: 'https://www.patreon.com/minnmax',
   },
 } as const;
