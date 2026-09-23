@@ -1,4 +1,4 @@
-import { getInProgressVideos } from '$lib/supabase/videos';
+import { getInProgressVideos } from '$lib/neon/videos';
 import type { PageServerLoad } from './$types';
 import { isTimestampFilter } from '$lib/components/content/content-filter';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
@@ -6,10 +6,10 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 export const load: PageServerLoad = async ({
   parent,
   url,
-  locals: { supabase, userId },
+  locals: { neon, userId },
   depends,
 }) => {
-  depends('supabase:db:videos');
+  depends('neon:db:videos');
 
   // Run parent() and pagination parsing in parallel (though pagination is synchronous)
   const [{ contentFilter, preferredImageFormat }, currentPage] =
@@ -29,7 +29,7 @@ export const load: PageServerLoad = async ({
   const { videos, count: videosCount } = await getInProgressVideos({
     currentPage,
     contentFilter,
-    supabase,
+    neon,
     userId,
     preferredImageFormat,
   });

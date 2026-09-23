@@ -1,8 +1,8 @@
 <script lang="ts">
   import * as Drawer from '$lib/components/ui/drawer';
   import Button from '$lib/components/ui/button/button.svelte';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Playlist } from '$lib/neon/playlists';
+  import type { Database } from '$lib/neon/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import type { SidebarState } from '$lib/state/sidebar.svelte';
@@ -15,7 +15,7 @@
     playlist: Playlist;
     sidebarState: SidebarState;
     session: Session | null;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     open?: boolean;
     onOpenChange?: (open: boolean) => void;
   }
@@ -24,7 +24,7 @@
     playlist,
     sidebarState,
     session,
-    supabase,
+    neon,
     open = $bindable(false),
     onOpenChange,
   }: PlaylistDeleteAlertDrawerProps = $props();
@@ -34,7 +34,7 @@
       playlist,
       sidebarState,
       session,
-      supabase,
+      neon,
     });
 
     // Close the drawer

@@ -3,13 +3,13 @@
   import type { CombinedContentFilter } from './content-filter';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import SharedContentHeader from './shared-content-header.svelte';
   import type { Source } from '$lib/constants/source';
   import type { ContentView } from './content';
-  import type { Video } from '$lib/supabase/videos';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Video } from '$lib/neon/videos';
+  import type { UserProfile } from '$lib/neon/user-profiles';
+  import type { Playlist } from '$lib/neon/playlists';
 
   let {
     breadcrumbs,
@@ -19,7 +19,7 @@
     session,
     showFloatingBreadcrumbs = $bindable(),
     source,
-    supabase,
+    neon,
     heading,
     subHeading,
     subHeadingHref,
@@ -36,7 +36,7 @@
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     source?: Source;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     heading: string;
     subHeading?: string;
     subHeadingHref?: string;
@@ -56,7 +56,7 @@
   {videos}
   playlist={profilePlaylist}
   {userProfile}
-  {supabase}
+  {neon}
   {session}
 >
   <div class="flex gap-6">

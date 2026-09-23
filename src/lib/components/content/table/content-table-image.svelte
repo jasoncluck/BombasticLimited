@@ -1,16 +1,16 @@
 <script lang="ts">
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import Progress from '$lib/components/ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '$lib/components/video/video-service';
   import { Check } from '@lucide/svelte';
   import LazyImage from '../LazyImage.svelte';
 
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
 
   type ContentCardProps = {
     video: Video;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     index?: number;
   };
 

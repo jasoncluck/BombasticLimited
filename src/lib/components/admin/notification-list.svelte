@@ -11,7 +11,7 @@
     CircleX,
     FlaskConical,
   } from '@lucide/svelte';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import { formatDateWithTimezone, formatDateTime } from '$lib/utils/datetime';
 
   type NotificationRow = Database['public']['Tables']['notifications']['Row'];

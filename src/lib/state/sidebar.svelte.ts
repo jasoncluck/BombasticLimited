@@ -1,5 +1,5 @@
-import type { Playlist } from '$lib/supabase/playlists';
-import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { Playlist } from '$lib/neon/playlists';
+import type { UserProfile } from '$lib/neon/user-profiles';
 import type { AppSession as Session } from '$lib/types/session';
 import { getContext, setContext } from 'svelte';
 import { browser } from '$app/environment';

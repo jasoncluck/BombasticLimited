@@ -7,7 +7,7 @@ import {
 import type {
   NotificationWithMeta,
   NotificationType,
-} from '$lib/supabase/notifications';
+} from '$lib/neon/notifications';
 
 describe('demo-notifications', () => {
   let consoleSpy: ReturnType<typeof vi.spyOn>;

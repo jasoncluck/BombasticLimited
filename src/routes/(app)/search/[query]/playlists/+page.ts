@@ -1,4 +1,4 @@
-import { DEFAULT_PRELOAD_VIDEOS_LIST } from '$lib/supabase/videos';
+import { DEFAULT_PRELOAD_VIDEOS_LIST } from '$lib/neon/videos';
 import {
   preloadImages,
   extractPlaylistImageUrls,

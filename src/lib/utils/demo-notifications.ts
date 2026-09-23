@@ -1,7 +1,7 @@
 import type {
   NotificationWithMeta,
   NotificationType,
-} from '$lib/supabase/notifications';
+} from '$lib/neon/notifications';
 // NOTE: Demo notifications are for testing bell notifications only
 // They should NOT trigger toast popups
 

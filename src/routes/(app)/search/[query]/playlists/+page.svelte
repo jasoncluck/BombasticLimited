@@ -8,11 +8,11 @@
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { getNavigationState } from '$lib/state/navigation.svelte.js';
-  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
+  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/neon/playlists';
   import { onMount } from 'svelte';
 
   const { data } = $props();
-  let { playlistResults, playlistsCount, session, supabase } = $derived(data);
+  let { playlistResults, playlistsCount, session, neon } = $derived(data);
 
   const navigationState = getNavigationState();
 
@@ -75,11 +75,11 @@
       updatePaginationQueryParams({
         pageNum,
         url: page.url,
-        invalidate: ['supabase:db:playlists'],
+        invalidate: ['neon:db:playlists'],
       });
     }}
   />
 {/if}
 
 <!-- Direct use of server-processed playlists -->
-<PlaylistTiles playlists={playlistResults} {supabase} {session} />
+<PlaylistTiles playlists={playlistResults} {neon} {session} />

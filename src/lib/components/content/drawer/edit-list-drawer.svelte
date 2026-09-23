@@ -4,8 +4,8 @@
   import { flip } from 'svelte/animate';
   import { Menu } from '@lucide/svelte';
   import FullHeightDrawer from './full-height-drawer.svelte';
-  import type { Video } from '$lib/supabase/videos';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Video } from '$lib/neon/videos';
+  import type { Playlist } from '$lib/neon/playlists';
   import type { Snippet } from 'svelte';
 
   // Base interface that all reorderable items must implement

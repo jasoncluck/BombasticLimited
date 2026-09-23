@@ -38,7 +38,7 @@ vi.mock('$lib/components/pagination/pagination', () => ({
   updatePaginationQueryParams: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/videos', () => ({
+vi.mock('$lib/neon/videos', () => ({
   DEFAULT_NUM_VIDEOS_PAGINATION: 20,
 }));
 
@@ -59,7 +59,7 @@ describe('continue/+page.svelte Component Logic', () => {
   ];
 
   const mockData = {
-    supabase: {},
+    neon: {},
     videos: mockContinueVideos,
     videosCount: 25,
     session: createMockSession(),
@@ -84,7 +84,7 @@ describe('continue/+page.svelte Component Logic', () => {
 
     it('should handle missing optional data', () => {
       const minimalData = {
-        supabase: {},
+        neon: {},
         videos: [],
         videosCount: null,
         session: null,
@@ -307,13 +307,13 @@ describe('continue/+page.svelte Component Logic', () => {
       updatePaginationQueryParams({
         pageNum: newPageNum,
         url: mockUrl,
-        invalidate: ['supabase:db:videos'],
+        invalidate: ['neon:db:videos'],
       });
 
       expect(updatePaginationQueryParams).toHaveBeenCalledWith({
         pageNum: newPageNum,
         url: mockUrl,
-        invalidate: ['supabase:db:videos'],
+        invalidate: ['neon:db:videos'],
       });
     });
 
@@ -324,12 +324,12 @@ describe('continue/+page.svelte Component Logic', () => {
       updatePaginationQueryParams({
         pageNum: 3,
         url: mockUrl,
-        invalidate: ['supabase:db:videos'],
+        invalidate: ['neon:db:videos'],
       });
 
       expect(updatePaginationQueryParams).toHaveBeenCalledWith(
         expect.objectContaining({
-          invalidate: ['supabase:db:videos'],
+          invalidate: ['neon:db:videos'],
         })
       );
     });
@@ -351,7 +351,7 @@ describe('continue/+page.svelte Component Logic', () => {
         tilesDisplay: 'TILES',
         isContinueVideos: true,
         contentFilter: mockData.contentFilter,
-        supabase: mockData.supabase,
+        neon: mockData.neon,
         session: mockData.session,
       };
 

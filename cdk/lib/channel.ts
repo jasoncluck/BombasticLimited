@@ -1,4 +1,4 @@
-import { type Database } from '../../src/lib/supabase/database.types';
+import { type Database } from '../../src/lib/neon/database.types';
 
 export const CHANNEL_SOURCES: Database['public']['Enums']['source'][] = [
   'giantbomb',

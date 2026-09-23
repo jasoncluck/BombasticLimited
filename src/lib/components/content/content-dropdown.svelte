@@ -10,12 +10,12 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from '$lib/state/content.svelte';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import ScrollArea from '../ui/scroll-area/scroll-area.svelte';
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import {
     handleAddVideoTimestamps,
     handleDeleteVideosTimestamp,
@@ -36,7 +36,7 @@
     CirclePlus,
     Pencil,
   } from '@lucide/svelte';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import type { CombinedContentFilter } from './content-filter';
   import PlaylistDeleteAlertDialog from '../playlist/playlist-delete-alert-dialog.svelte';
@@ -49,7 +49,7 @@
     sectionId = DEFAULT_SECTION_ID,
     contentFilter,
     userProfile,
-    supabase,
+    neon,
     session,
     preserveSelectionAfterAction = true,
   }: {
@@ -59,7 +59,7 @@
     sectionId?: string;
     contentFilter?: CombinedContentFilter;
     userProfile?: UserProfile;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
     preserveSelectionAfterAction?: boolean;
@@ -415,7 +415,7 @@
                           videos: frozenOperationVideos,
                           playlist: addPlaylist,
                           sidebarState,
-                          supabase,
+                          neon,
                           session,
                         });
 
@@ -442,7 +442,7 @@
                 videos: frozenOperationVideos,
                 sidebarState,
                 playlist,
-                supabase,
+                neon,
                 userId: session.user.id,
               });
 
@@ -473,7 +473,7 @@
                 playlist,
                 sidebarState,
                 thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
-                supabase,
+                neon,
               });
 
               if (!error) {
@@ -495,7 +495,7 @@
           onclick={async () => {
             const { updatedVideos, error } = await handleDeleteVideosTimestamp({
               videos: frozenOperationVideos,
-              supabase,
+              neon,
               session,
             });
 
@@ -542,7 +542,7 @@
                 watchedAt: new Date(),
               })),
               session,
-              supabase,
+              neon,
             });
 
             if (!error) {
@@ -581,7 +581,7 @@
               playlist,
               sidebarState,
               contentFilter,
-              supabase,
+              neon,
               session,
             });
           }}
@@ -601,7 +601,7 @@
             handleUnfollowPlaylist({
               playlist,
               sidebarState,
-              supabase,
+              neon,
               session,
             });
           }}
@@ -622,7 +622,7 @@
     {playlist}
     {sidebarState}
     {session}
-    {supabase}
+    {neon}
     bind:open={showDeleteDialog}
   />
 {/if}

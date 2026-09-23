@@ -83,7 +83,7 @@ describe('+page.svelte Component Logic', () => {
     continueWatchingVideos: createMockContinueVideos(),
     userProfile: createMockUserProfile(),
     session: createMockSession(),
-    supabase: {},
+    neon: {},
   };
 
   beforeEach(() => {
@@ -113,7 +113,7 @@ describe('+page.svelte Component Logic', () => {
         continueWatchingVideos: [],
         userProfile: null,
         session: null,
-        supabase: {},
+        neon: {},
       };
 
       expect(minimalData.sourceVideos).toBeDefined();

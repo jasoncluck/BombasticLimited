@@ -23,7 +23,7 @@
     allowVideoReorder = false,
     contentFilter,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
   }: ContentTilesProps = $props();
 
@@ -61,7 +61,7 @@
         {contentFilter}
         {isContinueVideos}
         {sectionId}
-        {supabase}
+        {neon}
         {session}
         {allowVideoReorder}
         index={i}

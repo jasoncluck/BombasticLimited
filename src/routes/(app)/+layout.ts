@@ -3,10 +3,10 @@ import { browser } from '$app/environment';
 import { PUBLIC_NEON_DATA_API_URL } from '$env/static/public';
 import type { LayoutLoad } from './$types';
 import type { CombinedContentFilter } from '$lib/components/content/content-filter';
-import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { UserProfile } from '$lib/neon/user-profiles';
 import type { ImageFormat } from '$lib/utils/image-format-detection';
 import type { AppSession } from '$lib/types/session';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 import { ID_TOKEN_CLIENT_COOKIE } from '$lib/constants/auth-cookies';
 
 function getClientIdToken(): string | null {
@@ -25,7 +25,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
   // instance here is effectively inert and stays unauthenticated.
   const idToken = browser ? getClientIdToken() : null;
 
-  const supabase = new NeonPostgrestClient<Database>({
+  const neon = new NeonPostgrestClient<Database>({
     dataApiUrl: PUBLIC_NEON_DATA_API_URL,
     options: {
       global: {
@@ -51,7 +51,7 @@ export const load: LayoutLoad = async ({ data, depends, fetch }) => {
 
   return {
     session,
-    supabase,
+    neon,
     contentFilter: contentFilter || null,
     userProfile,
     preferredImageFormat,

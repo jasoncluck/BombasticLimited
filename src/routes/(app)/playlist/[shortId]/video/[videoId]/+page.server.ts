@@ -2,19 +2,19 @@ import { isPlaylistVideosFilter } from '$lib/components/content/content-filter';
 import {
   getPlaylistVideoContext,
   parseImageProperties,
-} from '$lib/supabase/playlists';
-import { incrementVideoView } from '$lib/supabase/videos';
+} from '$lib/neon/playlists';
+import { incrementVideoView } from '$lib/neon/videos';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, userId },
+  locals: { neon, userId },
   depends,
   params,
   parent,
 }) => {
-  depends('supabase:db:videos');
+  depends('neon:db:videos');
 
   const videoId = params.videoId;
 
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({
     shortId: params.shortId,
     videoId,
     contentFilter,
-    supabase,
+    neon,
     userId,
     contextLimit: 5,
     preferredImageFormat,
@@ -63,7 +63,7 @@ export const load: PageServerLoad = async ({
     });
   }
 
-  incrementVideoView({ videoId, supabase });
+  incrementVideoView({ videoId, neon });
 
   return {
     video: currentVideo,

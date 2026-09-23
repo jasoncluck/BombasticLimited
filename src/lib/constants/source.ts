@@ -13,7 +13,7 @@ import giantbombImage from '$lib/assets/giantbomb.jpg?enhanced';
 import jeffgerstmannImage from '$lib/assets/jeffgerstmann.jpg?enhanced';
 import remapImage from '$lib/assets/remap.jpg?enhanced';
 import minnmaxImage from '$lib/assets/minnmax.jpg?enhanced';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 
 export type HighlightPlaylist = {
   youtubeId: string;

@@ -4,15 +4,15 @@
  */
 
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database, Json } from '$lib/supabase/database.types';
-import type { NotificationType } from '$lib/supabase/notifications';
+import type { Database, Json } from '$lib/neon/database.types';
+import type { NotificationType } from '$lib/neon/notifications';
 
 /**
  * Send a notification to all users using the database RPC function
  * This is the preferred way to send global notifications from the application
  */
 export async function sendGlobalNotification(
-  supabase: NeonPostgrestClient<Database>,
+  neon: NeonPostgrestClient<Database>,
   type: NotificationType,
   title: string,
   message: string,
@@ -24,7 +24,7 @@ export async function sendGlobalNotification(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<{ count: number | null; error: any }> {
   try {
-    const { data, error } = await supabase.rpc(
+    const { data, error } = await neon.rpc(
       'create_notification_for_all_users',
       {
         notification_type: type,
@@ -46,7 +46,7 @@ export async function sendGlobalNotification(
  *
  * // Send a welcome notification to all users
  * const result = await sendGlobalNotification(
- *   supabase,
+ *   neon,
  *   'system',
  *   'Welcome to Bombastic!',
  *   'Thanks for being part of our community.',
@@ -94,7 +94,7 @@ export const NOTIFICATION_TEMPLATES = {
  * Send a notification using a predefined template
  */
 export async function sendTemplateNotification(
-  supabase: NeonPostgrestClient<Database>,
+  neon: NeonPostgrestClient<Database>,
   templateName: keyof typeof NOTIFICATION_TEMPLATES,
   customizations?: {
     title?: string;
@@ -107,7 +107,7 @@ export async function sendTemplateNotification(
   const template = NOTIFICATION_TEMPLATES[templateName];
 
   return sendGlobalNotification(
-    supabase,
+    neon,
     template.type,
     customizations?.title || template.title,
     customizations?.message || template.message,

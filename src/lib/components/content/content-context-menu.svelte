@@ -4,8 +4,8 @@
     getContentState,
     DEFAULT_SECTION_ID,
   } from '$lib/state/content.svelte';
-  import { type Playlist } from '$lib/supabase/playlists';
-  import type { Database } from '$lib/supabase/database.types';
+  import { type Playlist } from '$lib/neon/playlists';
+  import type { Database } from '$lib/neon/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import {
@@ -15,7 +15,7 @@
   } from '../playlist/playlist-service';
   import type { Snippet } from 'svelte';
   import { ScrollArea } from '../ui/scroll-area';
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import {
     handleAddVideoTimestamps,
@@ -31,7 +31,7 @@
     TimerReset,
   } from '@lucide/svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import { type ContentSelectVariant } from './content';
 
   interface ContentContextMenuProps {
@@ -39,7 +39,7 @@
     playlists: Playlist[];
     sectionId: string;
     children: Snippet<[]>;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     variant?: ContentSelectVariant;
     userProfile?: UserProfile;
@@ -51,7 +51,7 @@
     playlist,
     playlists,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
     children,
     variant = 'list-items',
@@ -291,7 +291,7 @@
                         videos: frozenOperationVideos,
                         playlist: addPlaylist,
                         sidebarState,
-                        supabase,
+                        neon,
                         session,
                       });
 
@@ -319,7 +319,7 @@
               videos: frozenOperationVideos,
               sidebarState,
               playlist,
-              supabase,
+              neon,
               userId: session.user.id,
             });
 
@@ -344,7 +344,7 @@
               playlist,
               sidebarState,
               thumbnailUrl: frozenOperationVideos[0].thumbnail_url,
-              supabase,
+              neon,
             });
 
             if (!error) {
@@ -364,7 +364,7 @@
           onclick={async () => {
             const { updatedVideos, error } = await handleDeleteVideosTimestamp({
               videos: frozenOperationVideos,
-              supabase,
+              neon,
               session,
             });
 
@@ -402,7 +402,7 @@
                 watchedAt: new Date(),
               })),
               session,
-              supabase,
+              neon,
             });
 
             if (!error) {

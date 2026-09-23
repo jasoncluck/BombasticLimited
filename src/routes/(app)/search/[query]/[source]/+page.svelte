@@ -4,7 +4,7 @@
   import ContentHeader from '$lib/components/content/content-header.svelte';
   import Content from '$lib/components/content/content.svelte';
   import type { Snapshot } from '../$types.js';
-  import { type Video } from '$lib/supabase/videos.js';
+  import { type Video } from '$lib/neon/videos.js';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
@@ -19,7 +19,7 @@
     videos,
     videosCount,
     source,
-    supabase,
+    neon,
     session,
     userProfile,
     contentFilter,
@@ -110,7 +110,7 @@
         label: SOURCE_INFO[source].displayName,
       },
     ]}
-    {supabase}
+    {neon}
     {session}
   />
   <Content
@@ -119,7 +119,7 @@
     tilesDisplay="TILES"
     {contentFilter}
     {userProfile}
-    {supabase}
+    {neon}
     {session}
   />
 </div>

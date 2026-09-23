@@ -3,14 +3,14 @@
   import type { SignupSchema } from '$lib/schema/auth-schema';
   import SignupForm from './signup-form.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
 
   let {
     data,
   }: {
     data: {
       signupForm: SuperValidated<SignupSchema>;
-      supabase: NeonPostgrestClient<Database>;
+      neon: NeonPostgrestClient<Database>;
       isBombasticDomain: boolean;
     };
   } = $props();

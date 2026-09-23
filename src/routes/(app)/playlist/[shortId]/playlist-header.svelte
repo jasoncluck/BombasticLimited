@@ -4,16 +4,16 @@
   import type { SuperValidated } from 'sveltekit-superforms';
   import type { BreadcrumbItem } from '$lib/components/breadcrumb-layout.svelte';
   import type { PlaylistVideosFilter } from '$lib/components/content/content-filter';
-  import { type Playlist, type UserPlaylist } from '$lib/supabase/playlists';
+  import { type Playlist, type UserPlaylist } from '$lib/neon/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import SharedContentHeader from '$lib/components/content/shared-content-header.svelte';
   import PlaylistEditDialog from '$lib/components/playlist/playlist-edit-dialog.svelte';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
-  import type { Video } from '$lib/supabase/videos';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { Video } from '$lib/neon/videos';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import PlaylistEditDrawer from '$lib/components/playlist/playlist-edit-drawer.svelte';
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
@@ -34,7 +34,7 @@
     videosCount: number;
     userProfile: UserProfile | null;
     currentPage: number;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
   }
 
@@ -49,7 +49,7 @@
     videosCount,
     currentPage,
     userProfile,
-    supabase,
+    neon,
     session,
     ...props
   }: PlaylistHeaderProps = $props();
@@ -130,7 +130,7 @@
   {videos}
   bind:currentPage
   {userProfile}
-  {supabase}
+  {neon}
   {session}
   {...props}
 >

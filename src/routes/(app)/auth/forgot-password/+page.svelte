@@ -15,7 +15,7 @@
   } from '$lib/schema/auth-schema';
   import { goto } from '$app/navigation';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import { writable } from 'svelte/store';
 
   let {
@@ -23,7 +23,7 @@
   }: {
     data: {
       form: SuperValidated<ForgotPasswordSchema>;
-      supabase: NeonPostgrestClient<Database>;
+      neon: NeonPostgrestClient<Database>;
     };
   } = $props();
 

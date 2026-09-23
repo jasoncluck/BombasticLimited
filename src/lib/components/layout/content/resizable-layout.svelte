@@ -8,7 +8,7 @@
   import { getPageState } from '$lib/state/page.svelte.js';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import type { Snippet } from 'svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
@@ -16,13 +16,13 @@
   import { onMount, onDestroy } from 'svelte';
 
   let {
-    supabase,
+    neon,
     session,
     refreshSidebar,
     isNavigatingToContent,
     children,
   }: {
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     refreshSidebar: () => Promise<void>;
     isNavigatingToContent: boolean;
@@ -171,7 +171,7 @@
             <Loader variant="block" size="md" message="" />
           </div>
         {:else}
-          <Sidebar {isSidebarCollapsed} {supabase} {session} {refreshSidebar} />
+          <Sidebar {isSidebarCollapsed} {neon} {session} {refreshSidebar} />
         {/if}
       </div>
     </ScrollArea>

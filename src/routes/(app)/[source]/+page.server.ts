@@ -1,5 +1,5 @@
 import { isSource, SOURCE_INFO } from '$lib/constants/source';
-import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos } from '$lib/supabase/videos';
+import { DEFAULT_NUM_VIDEOS_OVERVIEW, getVideos } from '$lib/neon/videos';
 import { redirect } from '@sveltejs/kit';
 import {
   isVideoFilter,
@@ -10,7 +10,7 @@ import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
   parseImageProperties,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import type { PageServerLoad } from './$types';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
@@ -18,9 +18,9 @@ export const load: PageServerLoad = async ({
   params,
   parent,
   depends,
-  locals: { supabase, userId },
+  locals: { neon, userId },
 }) => {
-  depends('supabase:db:videos');
+  depends('neon:db:videos');
 
   const source = params.source;
 
@@ -47,7 +47,7 @@ export const load: PageServerLoad = async ({
         source,
         limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
         contentFilter,
-        supabase,
+        neon,
         userId,
         preferredImageFormat,
       }).then((result) => result.videos),
@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({
               youtubeId: highlightPlaylist.youtubeId,
               contentFilter: playlistContentFilter,
               limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
-              supabase,
+              neon,
               preferredImageFormat,
             });
 
@@ -79,7 +79,7 @@ export const load: PageServerLoad = async ({
       getPlaylistsForUsername({
         username: source,
         limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
-        supabase,
+        neon,
         preferredImageFormat,
       }),
     ]);

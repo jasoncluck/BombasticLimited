@@ -6,7 +6,7 @@ import {
   updatePlaylistInfo,
   type PlaylistImageProperties,
   type PlaylistVideo,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import { type Actions, type RequestEvent } from '@sveltejs/kit';
 import type { PageServerLoad } from '../[shortId]/$types';
 import { fail, superValidate } from 'sveltekit-superforms';
@@ -18,21 +18,21 @@ import {
   type SortOrder,
   type PlaylistVideosFilter,
 } from '$lib/components/content/content-filter';
-import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos';
+import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/neon/videos';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { Filter } from 'bad-words';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
-import { getProfileById } from '$lib/supabase/user-profiles';
+import { getProfileById } from '$lib/neon/user-profiles';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, userId },
+  locals: { neon, userId },
   url,
   parent,
   params,
   depends,
 }) => {
-  depends('supabase:db:videos', 'supabase:db:playlists');
+  depends('neon:db:videos', 'neon:db:playlists');
 
   const { contentFilter, preferredImageFormat } = await parent();
 
@@ -59,7 +59,7 @@ export const load: PageServerLoad = async ({
       currentPage,
       limit: DEFAULT_NUM_VIDEOS_PAGINATION,
       preferredImageFormat,
-      supabase,
+      neon,
       userId,
     });
 
@@ -157,7 +157,7 @@ function imagePropertiesChanged(
 export const actions: Actions = {
   default: async ({
     request,
-    locals: { supabase, userId },
+    locals: { neon, userId },
     cookies,
     params,
   }: RequestEvent) => {
@@ -220,7 +220,7 @@ export const actions: Actions = {
       currentPage: 1,
       limit: 1,
       preferredImageFormat: 'avif',
-      supabase,
+      neon,
       userId,
     });
 
@@ -233,7 +233,7 @@ export const actions: Actions = {
         playlistId: id,
         imageProperties: null,
         thumbnailUrl: null,
-        supabase,
+        neon,
       });
     } else {
       // Normalize zero values to null
@@ -262,7 +262,7 @@ export const actions: Actions = {
           playlistId: id,
           imageProperties: image_properties,
           thumbnailUrl: thumbnail_url,
-          supabase,
+          neon,
         });
       }
     }
@@ -274,7 +274,7 @@ export const actions: Actions = {
       description,
       imageProperties: image_properties,
       type,
-      supabase,
+      neon,
     });
 
     // Return the updated playlist data for optimistic updates

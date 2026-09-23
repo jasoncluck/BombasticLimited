@@ -7,14 +7,14 @@ import {
   isUserPlaylist,
   updatePlaylistInfo,
   updatePlaylistThumbnail,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import { getPaginationQueryParams } from '$lib/components/pagination/pagination';
 import { parseImageProperties } from '$lib/components/playlist/playlist';
 import {
   getCroppedPlaylistImageUrlServer,
   generatePlaylistImageUrl,
 } from '$lib/server/image-processing';
-import { getUserProfile, getProfileById } from '$lib/supabase/user-profiles';
+import { getUserProfile, getProfileById } from '$lib/neon/user-profiles';
 import { redirect as flashRedirect } from 'sveltekit-flash-message/server';
 import {
   createMockPlaylist,
@@ -38,7 +38,7 @@ vi.mock('sveltekit-superforms/adapters', () => ({
   zod: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/playlists', () => ({
+vi.mock('$lib/neon/playlists', () => ({
   getPlaylistData: vi.fn(),
   isUserPlaylist: vi.fn(),
   updatePlaylistInfo: vi.fn(),
@@ -74,7 +74,7 @@ vi.mock('bad-words', () => ({
   })),
 }));
 
-vi.mock('$lib/supabase/user-profiles', () => ({
+vi.mock('$lib/neon/user-profiles', () => ({
   getUserProfile: vi.fn(),
   getProfileById: vi.fn(),
 }));
@@ -97,7 +97,7 @@ const mockGetUserProfile = vi.mocked(getUserProfile);
 const mockGetProfileById = vi.mocked(getProfileById);
 
 describe('playlist/[shortId]/+page.server.ts', () => {
-  const mockSupabase = {
+  const mockNeon = {
     auth: {
       getClaims: vi.fn().mockResolvedValue({
         data: {
@@ -118,7 +118,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
 
   const mockLoadEvent: any = {
     locals: {
-      supabase: mockSupabase,
+      neon: mockNeon,
       session: mockSession,
     },
     url: new URL('http://localhost:5173/playlist/abc123'),
@@ -137,7 +137,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       formData: vi.fn(),
     },
     locals: {
-      supabase: mockSupabase,
+      neon: mockNeon,
       session: mockSession,
     },
     params: {
@@ -197,8 +197,8 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       const result = await load(mockLoadEvent);
 
       expect(mockLoadEvent.depends).toHaveBeenCalledWith(
-        'supabase:db:videos',
-        'supabase:db:playlists'
+        'neon:db:videos',
+        'neon:db:playlists'
       );
       expect(mockGetPlaylistData).toHaveBeenCalledWith({
         shortId: 'abc123',
@@ -209,7 +209,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         },
         currentPage: 1,
         limit: 100,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(result).toEqual({
@@ -318,8 +318,8 @@ describe('playlist/[shortId]/+page.server.ts', () => {
     });
 
     it('should redirect when user is not authenticated', async () => {
-      const unauthenticatedSupabase = {
-        ...mockSupabase,
+      const unauthenticatedNeon = {
+        ...mockNeon,
         auth: {
           getClaims: vi.fn().mockResolvedValue({
             data: null,
@@ -332,7 +332,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         ...mockActionEvent,
         locals: {
           ...mockActionEvent.locals,
-          supabase: unauthenticatedSupabase,
+          neon: unauthenticatedNeon,
         },
       };
 
@@ -382,7 +382,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         description: 'Updated description',
         imageProperties: { x: 10, y: 10, width: 200, height: 200 },
         type: 'Public',
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(result).toEqual({
@@ -413,7 +413,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
       expect(mockUpdatePlaylistThumbnail).toHaveBeenCalledWith({
         playlistId: 1,
         imageProperties: null,
-        supabase: mockSupabase,
+        neon: mockNeon,
         thumbnailUrl: null,
       });
     });
@@ -443,7 +443,7 @@ describe('playlist/[shortId]/+page.server.ts', () => {
         description: null,
         imageProperties: null, // Should be null when all values are 0
         type: 'Private',
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
     });
   });

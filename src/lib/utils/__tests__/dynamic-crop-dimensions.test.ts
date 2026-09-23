@@ -3,7 +3,7 @@ import {
   calculateDynamicCropDimensions,
   validateAndAdjustCropDimensions,
 } from '../dynamic-crop-dimensions';
-import type { PlaylistImageProperties } from '$lib/supabase/playlists';
+import type { PlaylistImageProperties } from '$lib/neon/playlists';
 
 describe('dynamic-crop-dimensions', () => {
   describe('calculateDynamicCropDimensions', () => {

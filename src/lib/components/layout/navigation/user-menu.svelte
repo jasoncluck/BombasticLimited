@@ -21,8 +21,8 @@
   } from '$lib/components/profile/profile-service';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { Database } from '$lib/neon/database.types';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import { getContentState } from '$lib/state/content.svelte';
   import { getNavigationState } from '$lib/state/navigation.svelte';
@@ -30,12 +30,12 @@
   let {
     userProfile,
     session,
-    supabase,
+    neon,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     openAccountDrawer: boolean;
   } = $props();
 
@@ -120,7 +120,7 @@
 <!-- Notifications Bell -->
 {#if session && userNotifications.length > 0}
   <div class="relative">
-    <NotificationBell {supabase} />
+    <NotificationBell {neon} />
   </div>
 {/if}
 

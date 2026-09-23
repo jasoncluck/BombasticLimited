@@ -1,6 +1,6 @@
 <script lang="ts">
   import { getContentState } from '$lib/state/content.svelte';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Video } from '$lib/neon/videos';
 
   let {
     video,

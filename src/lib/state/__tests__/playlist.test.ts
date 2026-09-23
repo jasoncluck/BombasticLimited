@@ -3,7 +3,7 @@ import { PlaylistStateClass } from '../playlist.svelte';
 import type { PageState } from '../page.svelte';
 import type { ContentState } from '../content.svelte';
 import type { SidebarState } from '../sidebar.svelte';
-import type { Playlist } from '$lib/supabase/playlists';
+import type { Playlist } from '$lib/neon/playlists';
 
 // Mock dependencies
 vi.mock('$lib/utils/dragdrop', () => ({

@@ -15,18 +15,18 @@
     type CombinedContentFilter,
   } from './content-filter';
   import { page } from '$app/state';
-  import type { VideoWithTimestamp, Video } from '$lib/supabase/videos';
+  import type { VideoWithTimestamp, Video } from '$lib/neon/videos';
   import { parseDate, type DateValue } from '@internationalized/date';
   import {
     isUserPlaylist,
     type Playlist,
     type PlaylistVideo,
-  } from '$lib/supabase/playlists';
+  } from '$lib/neon/playlists';
   import type { ContentView } from './content';
   import { handleUpdatePlaylistSort } from '../playlist/playlist-service';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
@@ -35,13 +35,13 @@
     contentFilter,
     view = 'default',
     playlist,
-    supabase,
+    neon,
     session,
   }: {
     contentFilter: CombinedContentFilter;
     view?: ContentView;
     playlist?: Playlist;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 
@@ -158,7 +158,7 @@
               ? 'ascending'
               : sortOrder,
           sortedBy: newContentFilter.sort.key,
-          supabase,
+          neon,
           session,
         });
       }

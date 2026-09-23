@@ -7,7 +7,7 @@ import {
   checkIfUsernameIsUnique,
   getUserDiscordIdentity,
   syncDiscordIdentity,
-} from '$lib/supabase/user-profiles';
+} from '$lib/neon/user-profiles';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({}));
@@ -44,7 +44,7 @@ vi.mock('$lib/server/session', () => ({
   clearSessionCookies: vi.fn(),
 }));
 // TODO: this suite still asserts against the old Supabase-based
-// implementation (supabase.auth.*, supabase.rpc('delete_user')) and
+// implementation (neon.auth.*, neon.rpc('delete_user')) and
 // pre-dates the zod4 migration (mocks only `zod`, not `zod4`, which
 // `+page.server.ts` now imports) — it compiles but doesn't meaningfully
 // test the current Cognito-based actions. Needs a real rewrite.
@@ -82,7 +82,7 @@ vi.mock('bad-words', () => {
   return mockModule;
 });
 
-vi.mock('$lib/supabase/user-profiles', () => ({
+vi.mock('$lib/neon/user-profiles', () => ({
   getUserProfile: vi.fn(),
   checkIfUsernameIsUnique: vi.fn(),
   getUserDiscordIdentity: vi.fn(),
@@ -117,7 +117,7 @@ describe('account/+page.server.ts', () => {
     delete: vi.fn(),
   } as any;
 
-  const mockSupabase = {
+  const mockNeon = {
     auth: {
       getClaims: vi.fn().mockResolvedValue({
         data: {
@@ -152,7 +152,7 @@ describe('account/+page.server.ts', () => {
     const mockLoadEvent: any = {
       depends: vi.fn(),
       locals: {
-        supabase: mockSupabase,
+        neon: mockNeon,
       },
     };
 
@@ -175,21 +175,19 @@ describe('account/+page.server.ts', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(mockLoadEvent.depends).toHaveBeenCalledWith(
-        'supabase:db:profiles'
-      );
+      expect(mockLoadEvent.depends).toHaveBeenCalledWith('neon:db:profiles');
       expect(mockGetUserProfile).toHaveBeenCalledWith({
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
       expect(mockGetUserDiscordIdentity).toHaveBeenCalledWith({
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
       expect((result as any).profile).toEqual(mockUserProfile);
     });
 
     it('should redirect when no session', async () => {
       // Mock getClaims to return no claims/error for this test
-      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+      mockNeon.auth.getClaims.mockResolvedValueOnce({
         data: null,
         error: { message: 'No session' },
       });
@@ -298,7 +296,7 @@ describe('account/+page.server.ts', () => {
       url: new URL('http://localhost:5173'),
       request: mockRequest,
       cookies: mockCookies,
-      locals: { supabase: mockSupabase },
+      locals: { neon: mockNeon },
     };
 
     beforeEach(() => {
@@ -308,7 +306,7 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should update email successfully', async () => {
-      mockSupabase.auth.updateUser.mockResolvedValue({
+      mockNeon.auth.updateUser.mockResolvedValue({
         data: {
           user: {
             email: 'test@example.com',
@@ -320,7 +318,7 @@ describe('account/+page.server.ts', () => {
 
       await actions.updateEmail(mockActionEvent);
 
-      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith(
+      expect(mockNeon.auth.updateUser).toHaveBeenCalledWith(
         { email: 'newemail@example.com' },
         { emailRedirectTo: 'http://localhost:5173/auth/email/confirm' }
       );
@@ -334,7 +332,7 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should handle email update error', async () => {
-      mockSupabase.auth.updateUser.mockResolvedValue({
+      mockNeon.auth.updateUser.mockResolvedValue({
         data: null,
         error: { message: 'Email already exists', code: 'user_already_exists' },
       });
@@ -352,7 +350,7 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should handle generic email update error', async () => {
-      mockSupabase.auth.updateUser.mockResolvedValue({
+      mockNeon.auth.updateUser.mockResolvedValue({
         data: null,
         error: { message: 'Generic error' },
       });
@@ -374,7 +372,7 @@ describe('account/+page.server.ts', () => {
     const mockActionEvent: any = {
       request: mockRequest,
       cookies: mockCookies,
-      locals: { supabase: mockSupabase },
+      locals: { neon: mockNeon },
     };
 
     beforeEach(() => {
@@ -385,7 +383,7 @@ describe('account/+page.server.ts', () => {
 
     it('should update username successfully', async () => {
       mockCheckIfUsernameIsUnique.mockResolvedValue(true);
-      mockSupabase.auth.updateUser.mockResolvedValue({
+      mockNeon.auth.updateUser.mockResolvedValue({
         data: { user: {} },
         error: null,
       });
@@ -394,9 +392,9 @@ describe('account/+page.server.ts', () => {
 
       expect(mockCheckIfUsernameIsUnique).toHaveBeenCalledWith({
         username: 'newusername',
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
-      expect(mockSupabase.auth.updateUser).toHaveBeenCalledWith({
+      expect(mockNeon.auth.updateUser).toHaveBeenCalledWith({
         data: { username: 'newusername' },
       });
       expect(mockSetFlash).toHaveBeenCalledWith(
@@ -447,7 +445,7 @@ describe('account/+page.server.ts', () => {
 
     it('should handle username update error', async () => {
       mockCheckIfUsernameIsUnique.mockResolvedValue(true);
-      mockSupabase.auth.updateUser.mockResolvedValue({
+      mockNeon.auth.updateUser.mockResolvedValue({
         data: null,
         error: { message: 'Update failed' },
       });
@@ -485,7 +483,7 @@ describe('account/+page.server.ts', () => {
         };
       });
 
-      mockSupabase.auth.updateUser.mockResolvedValue({
+      mockNeon.auth.updateUser.mockResolvedValue({
         data: { user: {} },
         error: null,
       });
@@ -507,18 +505,18 @@ describe('account/+page.server.ts', () => {
   describe('resetPassword action', () => {
     const mockActionEvent: any = {
       cookies: mockCookies,
-      locals: { supabase: mockSupabase, session: mockSession },
+      locals: { neon: mockNeon, session: mockSession },
     };
 
     it('should send password reset email successfully', async () => {
-      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+      mockNeon.auth.resetPasswordForEmail.mockResolvedValue({
         data: {},
         error: null,
       });
 
       const result = await actions.resetPassword(mockActionEvent);
 
-      expect(mockSupabase.auth.resetPasswordForEmail).toHaveBeenCalledWith(
+      expect(mockNeon.auth.resetPasswordForEmail).toHaveBeenCalledWith(
         mockSession.user.email,
         { redirectTo: '/auth/password/update' }
       );
@@ -533,7 +531,7 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should handle password reset error', async () => {
-      mockSupabase.auth.resetPasswordForEmail.mockResolvedValue({
+      mockNeon.auth.resetPasswordForEmail.mockResolvedValue({
         data: null,
         error: { message: 'Email not found' },
       });
@@ -553,7 +551,7 @@ describe('account/+page.server.ts', () => {
 
     it('should throw error when session has no email', async () => {
       // Mock getClaims to return claims without email
-      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+      mockNeon.auth.getClaims.mockResolvedValueOnce({
         data: {
           claims: {
             sub: mockSession.user.id,
@@ -583,7 +581,7 @@ describe('account/+page.server.ts', () => {
 
     it('should throw error when no session', async () => {
       // Mock getClaims to return error for no session
-      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+      mockNeon.auth.getClaims.mockResolvedValueOnce({
         data: null,
         error: { message: 'No session' },
       });
@@ -602,15 +600,15 @@ describe('account/+page.server.ts', () => {
   describe('deleteAccount action', () => {
     const mockActionEvent: any = {
       cookies: mockCookies,
-      locals: { supabase: mockSupabase, session: mockSession },
+      locals: { neon: mockNeon, session: mockSession },
     };
 
     it('should delete account successfully', async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockNeon.rpc.mockResolvedValue({
         data: null,
         error: null,
       });
-      mockSupabase.auth.signOut.mockResolvedValue({
+      mockNeon.auth.signOut.mockResolvedValue({
         error: null,
       });
 
@@ -618,8 +616,8 @@ describe('account/+page.server.ts', () => {
         'Redirect'
       );
 
-      expect(mockSupabase.rpc).toHaveBeenCalledWith('delete_user');
-      expect(mockSupabase.auth.signOut).toHaveBeenCalled();
+      expect(mockNeon.rpc).toHaveBeenCalledWith('delete_user');
+      expect(mockNeon.auth.signOut).toHaveBeenCalled();
       expect(mockCookies.delete).toHaveBeenCalledWith('sb-access-token', {
         path: '/',
       });
@@ -629,7 +627,7 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should handle delete account error', async () => {
-      mockSupabase.rpc.mockResolvedValue({
+      mockNeon.rpc.mockResolvedValue({
         data: null,
         error: { message: 'Delete failed' },
       });
@@ -649,7 +647,7 @@ describe('account/+page.server.ts', () => {
 
     it('should redirect when no session', async () => {
       // Mock getClaims to return error for no session
-      mockSupabase.auth.getClaims.mockResolvedValueOnce({
+      mockNeon.auth.getClaims.mockResolvedValueOnce({
         data: null,
         error: { message: 'No session' },
       });
@@ -666,8 +664,8 @@ describe('account/+page.server.ts', () => {
     });
 
     it('should clean up auth cookies on successful deletion', async () => {
-      mockSupabase.rpc.mockResolvedValue({ data: null, error: null });
-      mockSupabase.auth.signOut.mockResolvedValue({ error: null });
+      mockNeon.rpc.mockResolvedValue({ data: null, error: null });
+      mockNeon.auth.signOut.mockResolvedValue({ error: null });
 
       await expect(actions.deleteAccount(mockActionEvent)).rejects.toThrow(
         'Redirect'
@@ -687,7 +685,7 @@ describe('account/+page.server.ts', () => {
       const mockLoadEvent: any = {
         depends: vi.fn(),
         locals: {
-          supabase: mockSupabase,
+          neon: mockNeon,
           session: mockSession,
         },
       };
@@ -701,7 +699,7 @@ describe('account/+page.server.ts', () => {
       const mockLoadEvent: any = {
         depends: vi.fn(),
         locals: {
-          supabase: mockSupabase,
+          neon: mockNeon,
           session: mockSession,
         },
       };
@@ -720,7 +718,7 @@ describe('account/+page.server.ts', () => {
       const mockActionEvent: any = {
         request: mockRequest,
         cookies: mockCookies,
-        locals: { supabase: mockSupabase },
+        locals: { neon: mockNeon },
       };
 
       mockSuperValidate.mockResolvedValue(
@@ -739,7 +737,7 @@ describe('account/+page.server.ts', () => {
       const mockLoadEvent: any = {
         depends: vi.fn(),
         locals: {
-          supabase: mockSupabase,
+          neon: mockNeon,
           session: mockSession,
         },
       };
@@ -770,7 +768,7 @@ describe('account/+page.server.ts', () => {
       const mockLoadEvent: any = {
         depends: vi.fn(),
         locals: {
-          supabase: mockSupabase,
+          neon: mockNeon,
           session: mockSession,
         },
       };

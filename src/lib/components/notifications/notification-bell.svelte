@@ -7,14 +7,14 @@
   import NotificationList from './notification-list.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-  import type { Database } from '$lib/supabase/database.types';
-  import { markAsRead } from '$lib/supabase/notifications';
+  import type { Database } from '$lib/neon/database.types';
+  import { markAsRead } from '$lib/neon/notifications';
   import { getNavigationState } from '$lib/state/navigation.svelte';
 
   let {
-    supabase,
+    neon,
   }: {
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
   } = $props();
 
   const mediaQueryState = getMediaQueryState();
@@ -39,7 +39,7 @@
   // Auto-mark all notifications as read when bell menu opens
   async function handleMenuOpen() {
     if (unreadNotifications) {
-      await markAsRead({ notificationIds, supabase });
+      await markAsRead({ notificationIds, neon });
       navigationState.refreshData();
     }
   }
@@ -78,7 +78,7 @@
       </div>
 
       <div class="max-h-80 overflow-y-auto">
-        <NotificationList {supabase} />
+        <NotificationList {neon} />
       </div>
     </DropdownMenu.Content>
   </DropdownMenu.Root>
@@ -116,7 +116,7 @@
         </div>
 
         <div class="max-h-96 overflow-y-auto px-4 pb-4">
-          <NotificationList {supabase} onNotificationClick={closeDrawer} />
+          <NotificationList {neon} onNotificationClick={closeDrawer} />
         </div>
 
         <Drawer.Footer>

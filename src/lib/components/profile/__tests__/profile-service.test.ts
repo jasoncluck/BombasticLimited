@@ -52,7 +52,7 @@ describe('profile service module', () => {
         })
       );
       expect(invalidate).toHaveBeenCalledWith('app:profile');
-      expect(invalidate).toHaveBeenCalledWith('supabase:db:profiles');
+      expect(invalidate).toHaveBeenCalledWith('neon:db:profiles');
       expect(error).toBeUndefined();
     });
 

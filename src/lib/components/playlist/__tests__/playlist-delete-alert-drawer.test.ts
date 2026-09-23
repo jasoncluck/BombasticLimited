@@ -74,13 +74,13 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
   const mockSidebarState = {
     refreshData: vi.fn(),
   } as any;
-  const mockSupabase = {} as any;
+  const mockNeon = {} as any;
 
   const mockProps = {
     playlist: mockPublicPlaylist,
     sidebarState: mockSidebarState,
     session: mockSession,
-    supabase: mockSupabase,
+    neon: mockNeon,
     open: false,
     onOpenChange: vi.fn(),
   };
@@ -94,7 +94,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
       expect(mockProps.playlist).toBeDefined();
       expect(mockProps.sidebarState).toBeDefined();
       expect(mockProps.session).toBeDefined();
-      expect(mockProps.supabase).toBeDefined();
+      expect(mockProps.neon).toBeDefined();
     });
 
     it('should handle optional props', () => {
@@ -127,7 +127,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         // Simulate closing drawer
@@ -151,7 +151,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
         playlist: mockProps.playlist,
         sidebarState: mockProps.sidebarState,
         session: mockProps.session,
-        supabase: mockProps.supabase,
+        neon: mockProps.neon,
       });
       expect(mockProps.onOpenChange).toHaveBeenCalledWith(false);
       expect(mockGoto).toHaveBeenCalledWith('/');
@@ -173,7 +173,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         // Drawer should still close even on error
@@ -213,7 +213,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         // Check current page path
@@ -399,7 +399,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         isOpen = false;
@@ -416,7 +416,7 @@ describe('PlaylistDeleteAlertDrawer Component Logic', () => {
       expect(mockProps.playlist).toBeDefined();
       expect(mockProps.sidebarState).toBeDefined();
       expect(mockProps.session).toBeDefined();
-      expect(mockProps.supabase).toBeDefined();
+      expect(mockProps.neon).toBeDefined();
     });
 
     it('should validate mock data consistency for drawer', () => {

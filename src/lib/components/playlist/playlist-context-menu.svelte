@@ -4,8 +4,8 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from '$lib/state/content.svelte';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Playlist } from '$lib/neon/playlists';
+  import type { Database } from '$lib/neon/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import PlaylistDeleteAlertDialog from './playlist-delete-alert-dialog.svelte';
@@ -21,7 +21,7 @@
     selectedPlaylistIdParam?: string;
     isSidebarCollapsed: boolean;
     sectionId?: string;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     children: Snippet<[]>;
   }
@@ -29,7 +29,7 @@
   let {
     playlist,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
     children,
   }: ContentContextMenuProps = $props();
@@ -80,7 +80,7 @@
       const data = await handleUnfollowPlaylist({
         playlist,
         sidebarState,
-        supabase,
+        neon,
         session,
       });
 
@@ -119,6 +119,6 @@
   {playlist}
   {sidebarState}
   {session}
-  {supabase}
+  {neon}
   bind:open={showDeleteDialog}
 />

@@ -116,7 +116,7 @@ describe('[source]/+page.svelte Component Logic', () => {
     highlightPlaylists: mockHighlightPlaylists,
     userProfile: createMockUserProfile(),
     session: createMockSession(),
-    supabase: {},
+    neon: {},
     source: 'giantbomb' as const,
     contentFilter: {
       sort: { key: 'datePublished', order: 'descending' },
@@ -143,7 +143,7 @@ describe('[source]/+page.svelte Component Logic', () => {
         highlightPlaylists: [],
         userProfile: null,
         session: null,
-        supabase: {},
+        neon: {},
         source: 'giantbomb' as const,
         contentFilter: {},
         processedSourcePlaylists: [],

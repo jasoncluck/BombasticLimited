@@ -3,12 +3,12 @@
   import { Badge } from '$lib/components/ui/badge';
   import * as Card from '$lib/components/ui/card';
   import { Loader, Trash2, Activity } from '@lucide/svelte';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import {
     isNotificationCleanupLog,
     isNotificationRemovedLog,
     isUserNotificationDismissedLog,
-  } from '$lib/supabase/notifications';
+  } from '$lib/neon/notifications';
   import { formatDateWithTimezone } from '$lib/utils/datetime';
 
   type SystemLogRow = Database['public']['Tables']['system_logs']['Row'];

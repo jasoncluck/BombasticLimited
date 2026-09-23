@@ -43,9 +43,11 @@ npm run test:e2e:headed      # Run with browser visible
 npm run test:e2e:single -- --grep "test name"  # Run a specific test
 ```
 
-Note: `tests/e2e/utils/TestDataManager.ts` still calls the Supabase Admin API
-and hasn't been rewritten for Cognito yet — e2e tests that create/delete users
-are currently broken. Everything else (unit/integration) runs fine.
+Note: `tests/e2e/utils/TestDataManager.ts` still calls the Supabase Admin API (a
+genuine, still-installed dependency — the old Supabase project it pointed to is
+deleted, so these calls fail) and hasn't been rewritten for Cognito yet — e2e
+tests that create/delete users are currently broken. Everything else
+(unit/integration) runs fine.
 
 ## Architecture
 
@@ -94,11 +96,10 @@ All main app routes live under `src/routes/(app)/`. Key routes:
    `x-origin-verify` header against a shared secret) — see "CloudFront / Lambda
    gotchas" below for why this exists.
 2. Resolves the session from cookies (`src/lib/server/session.ts`) and builds a
-   `NeonPostgrestClient` for `event.locals.supabase` (yes, still named
-   `supabase` — it's the Data API client now, not Supabase), using the real
-   user's token if logged in, or a dedicated anonymous service user's token
-   otherwise (Neon's Data API requires a valid JWT on every request, with no
-   unauthenticated fallback).
+   `NeonPostgrestClient` for `event.locals.neon`, using the real user's token if
+   logged in, or a dedicated anonymous service user's token otherwise (Neon's
+   Data API requires a valid JWT on every request, with no unauthenticated
+   fallback).
 3. Redirects unauthenticated requests away from `/account`.
 
 `src/routes/(app)/+layout.ts`'s browser branch reads a readable mirror cookie
@@ -108,11 +109,9 @@ mutations, etc.) — that's why the delete-account / reset-password / etc. serve
 actions and the playlist-create button hit different failure modes when
 something's wrong: they go through completely different request paths.
 
-### Data Layer (`src/lib/supabase/`)
+### Data Layer (`src/lib/neon/`)
 
-Yes, the directory is still called `supabase/` — not renamed, just re-plumbed.
-Thin wrappers organized by domain, now querying Neon's Data API instead of
-Supabase:
+Thin wrappers organized by domain, querying Neon's Data API:
 
 - `videos.ts` — Video queries
 - `playlists/` — Playlist queries, mutations, transforms, utils, duration
@@ -183,11 +182,11 @@ burning through Trigger.dev's compute quota).
 ### Database
 
 Postgres via Neon. Migration files that predate the Neon cutover are in
-`supabase/migrations/` (kept for history); adapted versions used to set up Neon
-are in `supabase/migrations-neon/`. **That directory is not fully in sync with
-the live schema** — several functions were patched directly against Neon via its
-MCP tools during debugging and never backported to a migration file. Diff
-against the live schema before trusting it.
+`neon/legacy-supabase-migrations/` (kept for history); adapted versions used to
+set up Neon are in `neon/migrations/`. **That directory is not fully in sync
+with the live schema** — several functions were patched directly against Neon
+via its MCP tools during debugging and never backported to a migration file.
+Diff against the live schema before trusting it.
 
 ## CDK Infrastructure (`cdk/`)
 
@@ -239,8 +238,6 @@ standard:
   repopulation of all sources.
 - **CronStack** — Twitch stream polling, image processing, playlist/
   notification cleanup.
-- **BackupStack** — still references Supabase, currently disabled (commented out
-  in `app-stack.ts`) and not migrated to Neon. See `cdk/BACKUP_README.md`.
 
 ### CDK Commands
 

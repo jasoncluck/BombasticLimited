@@ -3,8 +3,8 @@
   import YoutubeEmbed from '$lib/components/video/youtube-embed.svelte';
   import { getPageState } from '$lib/state/page.svelte';
   import { page } from '$app/state';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Playlist } from '$lib/neon/playlists';
+  import type { Video } from '$lib/neon/videos';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import type { CombinedContentFilter } from '../content/content-filter';
@@ -24,13 +24,13 @@
     video,
     playlist,
     contentFilter,
-    supabase,
+    neon,
     session,
   }: {
     video: Video;
     playlist?: Playlist | null;
     contentFilter: CombinedContentFilter;
-    supabase: NeonPostgrestClient;
+    neon: NeonPostgrestClient;
     session: Session | null;
   } = $props();
 
@@ -108,7 +108,7 @@
        the component is destroyed and recreated. -->
   {#key video.id}
     <YoutubeEmbed
-      {supabase}
+      {neon}
       {session}
       {video}
       {contentFilter}
@@ -136,7 +136,7 @@
           videos={[video]}
           variant="item"
           {contentFilter}
-          {supabase}
+          {neon}
           {session}
         />
       {:else}

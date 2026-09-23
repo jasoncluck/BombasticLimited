@@ -1,4 +1,4 @@
-import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
+import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/neon/playlists';
 import {
   preloadImages,
   extractPlaylistImageUrls,

@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 
-// Ported from supabase/functions/poll-twitch-streams (Supabase Edge Function).
+// Replaces a Supabase Edge Function of the same name from before the
+// Neon/Cognito migration (see CLAUDE.md's migration history).
 type Source =
   'giantbomb' | 'jeffgerstmann' | 'nextlander' | 'remap' | 'minnmax';
 

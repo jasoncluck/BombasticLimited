@@ -4,7 +4,7 @@ import { superValidate, fail } from 'sveltekit-superforms';
 import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import type { PageServerLoad } from './$types';
 import { signupSchema } from '$lib/schema/auth-schema';
-import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
+import { checkIfUsernameIsUnique } from '$lib/neon/user-profiles';
 import { ensureProfileExists } from '$lib/server/profile';
 import { signUp } from '$lib/server/cognito';
 import { Filter } from 'bad-words';

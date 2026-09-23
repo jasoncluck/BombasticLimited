@@ -1,4 +1,4 @@
-import { PLAYLIST_TYPES } from '$lib/supabase/playlists';
+import { PLAYLIST_TYPES } from '$lib/neon/playlists';
 import { z } from 'zod';
 
 // Define the expected structure of your image properties

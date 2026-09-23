@@ -1,6 +1,7 @@
 import { Client } from 'pg';
 
-// Ported from supabase/functions/cleanup-playlists (Supabase Edge Function).
+// Replaces a Supabase Edge Function of the same name from before the
+// Neon/Cognito migration (see CLAUDE.md's migration history).
 export interface CleanupResponse {
   success: boolean;
   processedCount: number;

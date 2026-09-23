@@ -8,7 +8,7 @@
   import * as Form from '$lib/components/ui/form';
   import { Send, TestTube, RotateCcw, Loader } from '@lucide/svelte';
   import { superForm, type SuperValidated } from 'sveltekit-superforms';
-  import type { NotificationType } from '$lib/supabase/notifications';
+  import type { NotificationType } from '$lib/neon/notifications';
   import {
     notificationTemplates,
     notificationTypes,

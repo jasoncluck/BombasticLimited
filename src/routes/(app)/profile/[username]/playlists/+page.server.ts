@@ -3,7 +3,7 @@ import { isSource } from '$lib/constants/source';
 import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
   getPlaylistsForUsername,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
@@ -11,9 +11,9 @@ export const load: PageServerLoad = async ({
   params,
   depends,
   url,
-  locals: { supabase },
+  locals: { neon },
 }) => {
-  depends('supabase:db:playlistsForProfile');
+  depends('neon:db:playlistsForProfile');
 
   const username = params.username;
 
@@ -32,7 +32,7 @@ export const load: PageServerLoad = async ({
       preferredImageFormat: 'avif',
       limit: DEFAULT_NUM_PLAYLISTS_PAGINATION,
       currentPage,
-      supabase,
+      neon,
     });
 
   // Return playlists directly with optimized image paths from database

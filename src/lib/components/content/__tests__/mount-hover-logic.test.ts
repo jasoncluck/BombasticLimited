@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ContentState } from '../../../state/content.svelte';
 import type { PageState } from '../../../state/page.svelte';
-import type { Video } from '$lib/supabase/videos';
+import type { Video } from '$lib/neon/videos';
 
 describe('ContentCard Robust Mount Hover Detection Logic', () => {
   let mockPageState: Partial<PageState>;

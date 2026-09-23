@@ -10,7 +10,7 @@ describe('YouTube Playlist Sync Image Processing Fix', () => {
       .fn()
       .mockImplementation(
         (
-          supabaseClient: any,
+          neonClient: any,
           playlistId: number,
           thumbnailUrl: string | null,
           priority: number
@@ -48,7 +48,7 @@ describe('YouTube Playlist Sync Image Processing Fix', () => {
       .fn()
       .mockImplementation(
         (
-          supabaseClient: any,
+          neonClient: any,
           playlistId: number,
           thumbnailUrl: string | null,
           priority: number
@@ -123,7 +123,7 @@ describe('YouTube Playlist Sync Image Processing Fix', () => {
       .fn()
       .mockImplementation(
         (
-          supabaseClient: any,
+          neonClient: any,
           playlistId: number,
           thumbnailUrl: string | null,
           priority: number

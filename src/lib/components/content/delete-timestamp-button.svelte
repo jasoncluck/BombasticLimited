@@ -1,7 +1,7 @@
 <script lang="ts">
   import { X } from '@lucide/svelte';
   import Button from '../ui/button/button.svelte';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Video } from '$lib/neon/videos';
   import type { ContentDisplayProps } from './content';
   import { handleDeleteVideosTimestamp } from '../video/video-service';
   import {
@@ -13,11 +13,11 @@
     video = $bindable(),
     isContinueVideos,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
   }: Pick<
     ContentDisplayProps,
-    'isContinueVideos' | 'videos' | 'sectionId' | 'supabase' | 'session'
+    'isContinueVideos' | 'videos' | 'sectionId' | 'neon' | 'session'
   > & {
     video: Video;
 
@@ -37,7 +37,7 @@
     handleDeleteVideosTimestamp({
       videos: [video],
       session,
-      supabase,
+      neon,
     });
   }}
 >

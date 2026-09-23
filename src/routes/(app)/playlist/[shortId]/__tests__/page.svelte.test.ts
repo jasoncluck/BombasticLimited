@@ -47,7 +47,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
     form: { valid: true, data: mockPlaylist },
     userProfile: mockUserProfile,
     session: mockSession,
-    supabase: {},
+    neon: {},
   };
 
   beforeEach(() => {
@@ -114,7 +114,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
         playlist: mockData.playlist,
         userProfile: mockData.userProfile,
         session: mockData.session,
-        supabase: mockData.supabase,
+        neon: mockData.neon,
         // Additional props that would be derived
         contentFilter: mockData.contentFilter,
         form: mockData.form,
@@ -124,7 +124,7 @@ describe('playlist/[shortId]/+page.svelte Component Logic', () => {
       expect(playlistHeaderProps).toHaveProperty('playlist');
       expect(playlistHeaderProps).toHaveProperty('userProfile');
       expect(playlistHeaderProps).toHaveProperty('session');
-      expect(playlistHeaderProps).toHaveProperty('supabase');
+      expect(playlistHeaderProps).toHaveProperty('neon');
     });
   });
 

@@ -6,12 +6,12 @@
   } from '$lib/components/ui/data-table/index.js';
   import * as Table from '$lib/components/ui/table/index.js';
   import { handleContentNavigation } from '../content';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import { type Video } from '$lib/supabase/videos';
+  import type { Playlist } from '$lib/neon/playlists';
+  import { type Video } from '$lib/neon/videos';
   import { getContentState } from '$lib/state/content.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import type { CombinedContentFilter } from '../content-filter';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
@@ -23,7 +23,7 @@
     isContinueVideos?: boolean;
     allowVideoReorder?: boolean;
     sectionId: string;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     videosCount?: number | null;
     handleDragStart?: (
@@ -40,7 +40,7 @@
     contentFilter,
     allowVideoReorder = false,
     videosCount,
-    supabase,
+    neon,
     session,
   }: DataTableProps<TValue> = $props();
 
@@ -67,7 +67,7 @@
 
       clearSelection: mediaQueryState.canHover ? false : true,
 
-      supabase,
+      neon,
       userId: session?.user.id,
       onVideosUpdate: (updatedVideos) => {
         videos = updatedVideos;

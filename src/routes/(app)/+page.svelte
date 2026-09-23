@@ -7,7 +7,7 @@
 
   import type { Snapshot } from './$types.js';
   import { getContentState } from '$lib/state/content.svelte.js';
-  import type { Video } from '$lib/supabase/videos.js';
+  import type { Video } from '$lib/neon/videos.js';
   import {
     getContentView,
     sourceWithContinueStateKeys,
@@ -27,7 +27,7 @@
     continueWatchingVideos,
     userProfile,
     session,
-    supabase,
+    neon,
   } = $derived(data);
 
   const contentState = getContentState();
@@ -45,7 +45,7 @@
       url.searchParams.delete('code');
       goto(url.pathname + url.search, {
         replaceState: true,
-        invalidate: ['supabase:db:profiles', 'supbase:db:notifications'],
+        invalidate: ['neon:db:profiles', 'supbase:db:notifications'],
       });
       sidebarState.refreshData();
       navigationState.refreshData();
@@ -104,7 +104,7 @@
         tilesDisplay="CAROUSEL"
         sectionId="continue"
         {userProfile}
-        {supabase}
+        {neon}
         {session}
       />
     </div>
@@ -131,7 +131,7 @@
           tilesDisplay="CAROUSEL"
           sectionId={source}
           {userProfile}
-          {supabase}
+          {neon}
           {session}
         />
       </div>

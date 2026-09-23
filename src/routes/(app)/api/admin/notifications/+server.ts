@@ -1,13 +1,13 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 
-export const GET: RequestHandler = async ({ locals: { supabase, userId } }) => {
+export const GET: RequestHandler = async ({ locals: { neon, userId } }) => {
   if (!userId) {
     return json({ error: 'Not authenticated' }, { status: 401 });
   }
 
   // Get user profile to check admin status
-  const { data: userProfile, error: profileError } = await supabase
+  const { data: userProfile, error: profileError } = await neon
     .from('profiles')
     .select('account_type')
     .eq('id', userId)
@@ -19,7 +19,7 @@ export const GET: RequestHandler = async ({ locals: { supabase, userId } }) => {
 
   // Get all system notifications for admin management
   // We'll sort them after fetching since we need custom logic
-  const { data: allNotifications, error: notificationError } = await supabase
+  const { data: allNotifications, error: notificationError } = await neon
     .from('notifications')
     .select('*')
     .eq('type', 'system');
@@ -82,7 +82,7 @@ export const GET: RequestHandler = async ({ locals: { supabase, userId } }) => {
   });
 
   // Get system logs
-  const { data: systemLogs, error: logsError } = await supabase
+  const { data: systemLogs, error: logsError } = await neon
     .from('system_logs')
     .select('*')
     .in('event_type', [

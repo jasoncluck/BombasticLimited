@@ -1,9 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { load } from '../+page.server';
-import { searchPlaylists } from '$lib/supabase/playlists';
+import { searchPlaylists } from '$lib/neon/playlists';
 
 // Mock the dependencies
-vi.mock('$lib/supabase/playlists', () => ({
+vi.mock('$lib/neon/playlists', () => ({
   searchPlaylists: vi.fn(),
   DEFAULT_NUM_PLAYLISTS_PAGINATION: 30,
 }));
@@ -56,7 +56,7 @@ describe('Search Playlists Page Server Load', () => {
       depends: vi.fn(),
       params: { query: 'test' },
       url: new URL('http://localhost/search/test/playlists'),
-      locals: { supabase: {} as any, session: null },
+      locals: { neon: {} as any, session: null },
       parent: vi.fn().mockResolvedValue({
         preferredImageFormat: 'avif',
       }),

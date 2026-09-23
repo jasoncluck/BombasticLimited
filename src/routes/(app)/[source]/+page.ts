@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { DEFAULT_PRELOAD_VIDEOS_CAROUSEL } from '$lib/supabase/videos';
+import { DEFAULT_PRELOAD_VIDEOS_CAROUSEL } from '$lib/neon/videos';
 import {
   preloadImages,
   extractImageUrls,

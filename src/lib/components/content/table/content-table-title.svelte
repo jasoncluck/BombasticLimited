@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import { ArrowDown, ArrowUp, Circle, ListVideo } from '@lucide/svelte';
   import {
     getSortDisplayName,

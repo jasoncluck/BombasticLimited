@@ -1,20 +1,17 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import {
-  getUserPlaylists,
-  parseImageProperties,
-} from '$lib/supabase/playlists';
-import { getProfileById } from '$lib/supabase/user-profiles';
+import { getUserPlaylists, parseImageProperties } from '$lib/neon/playlists';
+import { getProfileById } from '$lib/neon/user-profiles';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { getCroppedPlaylistImageUrlServer } from '$lib/server/image-processing';
-import { getActiveStreams } from '$lib/supabase/streams';
+import { getActiveStreams } from '$lib/neon/streams';
 
 interface RequestBody {
   preferredImageFormat?: string;
 }
 
 export const POST: RequestHandler = async ({ locals, request }) => {
-  const { supabase, userId } = locals;
+  const { neon, userId } = locals;
 
   // Parse the request body
   const body: RequestBody = await request.json();
@@ -23,7 +20,7 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     detectOptimalFormat(request.headers.get('accept') || '');
 
   if (!userId) {
-    const [{ sources }] = await Promise.all([getActiveStreams({ supabase })]);
+    const [{ sources }] = await Promise.all([getActiveStreams({ neon })]);
     return json({
       playlists: [],
       userProfile: null,
@@ -37,9 +34,9 @@ export const POST: RequestHandler = async ({ locals, request }) => {
     { profile: userProfile },
     { sources },
   ] = await Promise.all([
-    getUserPlaylists({ supabase, userId, preferredImageFormat }),
+    getUserPlaylists({ neon, userId, preferredImageFormat }),
     getProfileById({ userId }),
-    getActiveStreams({ supabase }),
+    getActiveStreams({ neon }),
   ]);
 
   // Process image URLs in parallel

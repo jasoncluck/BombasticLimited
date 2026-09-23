@@ -5,22 +5,22 @@ import {
   DEFAULT_NUM_PLAYLISTS_OVERVIEW,
   parseImageProperties,
   searchPlaylists,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import {
   getVideos,
   type SourceVideos,
   type SourceVideosCount,
-} from '$lib/supabase/videos';
+} from '$lib/neon/videos';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
   params,
   parent,
-  locals: { supabase, userId },
+  locals: { neon, userId },
   depends,
 }) => {
-  depends('supabase:db:videos');
-  depends('supabase:db:profiles');
+  depends('neon:db:videos');
+  depends('neon:db:profiles');
 
   const { contentFilter, preferredImageFormat, userProfile } = await parent();
   const searchString = params.query;
@@ -41,7 +41,7 @@ export const load: PageServerLoad = async ({
           source,
           contentFilter,
           searchString,
-          supabase,
+          neon,
           userId,
           preferredImageFormat,
         });
@@ -52,7 +52,7 @@ export const load: PageServerLoad = async ({
     searchPlaylists({
       searchString,
       limit: DEFAULT_NUM_PLAYLISTS_OVERVIEW,
-      supabase,
+      neon,
       userId,
       preferredImageFormat,
       enabledSources: userProfile?.sources,

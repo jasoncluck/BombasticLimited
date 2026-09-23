@@ -1,14 +1,14 @@
 <script lang="ts">
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
   } from '$lib/state/content.svelte';
   import ContentDropdown from './content-dropdown.svelte';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Video } from '$lib/neon/videos';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import Button from '../ui/button/button.svelte';
   import { Ellipsis } from '@lucide/svelte';
@@ -19,7 +19,7 @@
     playlist,
     sectionId = DEFAULT_SECTION_ID,
     contentFilter,
-    supabase,
+    neon,
     session,
   }: {
     videos: Video[];
@@ -27,7 +27,7 @@
     displayLabel: boolean;
     contentFilter?: CombinedContentFilter;
     sectionId?: string;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 
@@ -63,7 +63,7 @@
       {sectionId}
       {contentFilter}
       onSelectAll={handleSelectAll}
-      {supabase}
+      {neon}
       {session}
     />
   </div>

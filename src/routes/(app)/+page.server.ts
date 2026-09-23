@@ -8,17 +8,17 @@ import {
   getInProgressVideos,
   getVideos,
   type SourceVideos,
-} from '$lib/supabase/videos';
+} from '$lib/neon/videos';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, userId },
+  locals: { neon, userId },
   url,
   depends,
   parent,
 }) => {
-  depends('supabase:db:videos');
+  depends('neon:db:videos');
 
   const { preferredImageFormat } = await parent();
 
@@ -51,7 +51,7 @@ export const load: PageServerLoad = async ({
           source,
           limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
           contentFilter: sourceVideosContentFilters,
-          supabase,
+          neon,
           userId,
           preferredImageFormat,
         });
@@ -62,7 +62,7 @@ export const load: PageServerLoad = async ({
     getInProgressVideos({
       contentFilter: continueWatchingContentFilters,
       limit: DEFAULT_NUM_VIDEOS_OVERVIEW,
-      supabase,
+      neon,
       userId,
       preferredImageFormat,
     }).then((result) => result.videos),

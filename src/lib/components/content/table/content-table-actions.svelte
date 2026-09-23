@@ -1,7 +1,7 @@
 <script lang="ts">
-  import type { Database } from '$lib/supabase/database.types';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Database } from '$lib/neon/database.types';
+  import type { Playlist } from '$lib/neon/playlists';
+  import type { Video } from '$lib/neon/videos';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import ContentDropdown from '../content-dropdown.svelte';
@@ -17,13 +17,13 @@
     videos,
     playlist,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
   }: {
     videos: Video[];
     playlist?: Playlist;
     sectionId?: string;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 
@@ -39,7 +39,7 @@
         {playlist}
         {sectionId}
         variant="list-items"
-        {supabase}
+        {neon}
         {session}
       />
     </div>

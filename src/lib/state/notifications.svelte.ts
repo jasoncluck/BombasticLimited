@@ -3,7 +3,7 @@ import { toast } from 'svelte-sonner';
 import type {
   NotificationWithMeta,
   NotificationPreferences,
-} from '$lib/supabase/notifications';
+} from '$lib/neon/notifications';
 
 export class NotificationStateClass {
   notifications = $state<NotificationWithMeta[]>([]);

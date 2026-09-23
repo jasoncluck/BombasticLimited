@@ -2,7 +2,7 @@
   import { SOURCE_INFO, SOURCES } from '$lib/constants/source.js';
   import Content from '$lib/components/content/content.svelte';
   import type { Snapshot } from '@sveltejs/kit';
-  import type { Video } from '$lib/supabase/videos.js';
+  import type { Video } from '$lib/neon/videos.js';
   import { getContentState } from '$lib/state/content.svelte.js';
   import {
     getContentView,
@@ -19,7 +19,7 @@
 
   let { data }: { data: PageData } = $props();
   let {
-    supabase,
+    neon,
     session,
     searchString, // Now comes from the server load function
     sourceVideos,
@@ -112,7 +112,7 @@
           {playlistsCount === 1 ? 'playlist' : 'playlists'}
         </p>
 
-        <PlaylistTiles playlists={playlistSearchResults} {supabase} {session} />
+        <PlaylistTiles playlists={playlistSearchResults} {neon} {session} />
       </div>
     {/if}
 
@@ -141,7 +141,7 @@
               sectionId={source}
               {contentFilter}
               {session}
-              {supabase}
+              {neon}
             />
           {/key}
         </div>

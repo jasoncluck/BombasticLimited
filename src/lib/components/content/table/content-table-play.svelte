@@ -3,10 +3,10 @@
     DEFAULT_SECTION_ID,
     getContentState,
   } from '$lib/state/content.svelte';
-  import { type Video } from '$lib/supabase/videos';
+  import { type Video } from '$lib/neon/videos';
   import { Play } from '@lucide/svelte';
   import { handleContentNavigation } from '../content';
-  import { type Playlist } from '$lib/supabase/playlists';
+  import { type Playlist } from '$lib/neon/playlists';
   import Button from '$lib/components/ui/button/button.svelte';
   import type { CombinedContentFilter } from '../content-filter';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';

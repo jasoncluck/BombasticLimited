@@ -15,7 +15,7 @@
   } from '$lib/components/ui/button/button.svelte';
   import { getFlash, updateFlash } from 'sveltekit-flash-message';
   import { page } from '$app/state';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import { onMount } from 'svelte';
   import { enhance } from '$app/forms';
   import * as Dialog from '$lib/components/ui/dialog/index.js';

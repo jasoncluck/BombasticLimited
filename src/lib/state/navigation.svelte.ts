@@ -4,13 +4,13 @@ import { invalidateAll } from '$app/navigation';
 import { showToast } from '$lib/state/notifications.svelte.js';
 import debounce from 'debounce';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 import type { AppSession as Session } from '$lib/types/session';
-import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { UserProfile } from '$lib/neon/user-profiles';
 import { preloadData } from '$app/navigation';
 import { browser } from '$app/environment';
-import type { NotificationWithMeta } from '$lib/supabase/notifications';
-import { getRandomVideoId } from '$lib/supabase/videos';
+import type { NotificationWithMeta } from '$lib/neon/notifications';
+import { getRandomVideoId } from '$lib/neon/videos';
 
 /**
  * Navigation item interface defining structure for navigation elements
@@ -72,7 +72,7 @@ export interface NavigationState {
   // User context
   session: Session | null;
   userProfile: UserProfile | null;
-  supabase: NeonPostgrestClient<Database> | null;
+  neon: NeonPostgrestClient<Database> | null;
 
   // Account drawer state
   openAccountDrawer: boolean;
@@ -120,7 +120,7 @@ export interface NavigationState {
   updateContext: (updates: {
     session?: Session | null;
     userProfile?: UserProfile | null;
-    supabase?: NeonPostgrestClient<Database>;
+    neon?: NeonPostgrestClient<Database>;
   }) => void;
   updateActiveRoute: (pathname: string) => void;
   updateConfig: (updates: Partial<NavigationConfig>) => void;
@@ -205,7 +205,7 @@ export class NavigationStateClass implements NavigationState {
   // User context - now properly reactive
   session = $state<Session | null>(null);
   userProfile = $state<UserProfile | null>(null);
-  supabase = $state<NeonPostgrestClient<Database> | null>(null);
+  neon = $state<NeonPostgrestClient<Database> | null>(null);
 
   // Account drawer state (shared with user menu)
   openAccountDrawer = $state(false);
@@ -413,7 +413,7 @@ export class NavigationStateClass implements NavigationState {
   updateContext(updates: {
     session?: Session | null;
     userProfile?: UserProfile | null;
-    supabase?: NeonPostgrestClient<Database>;
+    neon?: NeonPostgrestClient<Database>;
   }): void {
     if (updates.session !== undefined) {
       this.session = updates.session;
@@ -421,8 +421,8 @@ export class NavigationStateClass implements NavigationState {
     if (updates.userProfile !== undefined) {
       this.userProfile = updates.userProfile;
     }
-    if (updates.supabase !== undefined) {
-      this.supabase = updates.supabase;
+    if (updates.neon !== undefined) {
+      this.neon = updates.neon;
     }
   }
 
@@ -500,13 +500,13 @@ export class NavigationStateClass implements NavigationState {
    * they've customized them (see profiles.sources / sidebar.svelte).
    */
   handleRandomVideo = async (): Promise<void> => {
-    if (!browser || !this.supabase || this.isLoadingRandomVideo) return;
+    if (!browser || !this.neon || this.isLoadingRandomVideo) return;
 
     this.isLoadingRandomVideo = true;
 
     try {
       const { videoId, error } = await getRandomVideoId({
-        supabase: this.supabase,
+        neon: this.neon,
         sources: this.userProfile?.sources,
       });
 

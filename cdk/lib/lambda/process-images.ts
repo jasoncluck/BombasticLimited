@@ -1,7 +1,8 @@
 import { Client } from 'pg';
 import { tasks } from '@trigger.dev/sdk/v3';
 
-// Ported from supabase/functions/process-images (Supabase Edge Function).
+// Replaces a Supabase Edge Function of the same name from before the
+// Neon/Cognito migration (see CLAUDE.md's migration history).
 // This is a queue orchestrator: it doesn't process images itself, it marks
 // jobs as processing and triggers the Trigger.dev task that does the real
 // work (src/trigger/image-processing-worker.ts, a separate workspace this

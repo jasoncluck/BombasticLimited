@@ -32,12 +32,6 @@ export class AppStack extends cdk.Stack {
       cognitoRegion,
     });
 
-    if (stage === 'Production') {
-      // new BackupStack(this, 'BackupStack', {
-      //   stackName: `BackupStack-${stage}`,
-      // });
-    }
-
     new cdk.CfnOutput(this, 'Region', {
       value: this.region,
     });

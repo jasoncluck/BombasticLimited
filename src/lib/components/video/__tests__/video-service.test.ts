@@ -14,7 +14,7 @@ import {
 } from '../video-service';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 
 // Mock external dependencies
 vi.mock('$app/navigation', () => ({
@@ -26,28 +26,28 @@ vi.mock('$lib/state/notifications.svelte', () => ({
   showToast: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/notifications', () => ({
+vi.mock('$lib/neon/notifications', () => ({
   showNotification: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/timestamps', () => ({
+vi.mock('$lib/neon/timestamps', () => ({
   saveVideoTimestamp: vi.fn(),
   saveVideoTimestamps: vi.fn(),
   deleteVideoTimestamps: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/video-history', () => ({
+vi.mock('$lib/neon/video-history', () => ({
   VideoWatchTimeTracker: vi.fn(),
   startVideoHistorySession: vi.fn(),
   updateVideoHistoryEndTime: vi.fn(),
 }));
 
 describe('video service module', () => {
-  let mockSupabase: NeonPostgrestClient<Database>;
+  let mockNeon: NeonPostgrestClient<Database>;
   let mockSession: Session;
 
   beforeEach(() => {
-    mockSupabase = {} as NeonPostgrestClient<Database>;
+    mockNeon = {} as NeonPostgrestClient<Database>;
     mockSession = { user: { id: 'user123' } } as Session;
     vi.clearAllMocks();
   });
@@ -68,7 +68,7 @@ describe('video service module', () => {
         },
       ];
 
-      const { saveVideoTimestamp } = await import('$lib/supabase/timestamps');
+      const { saveVideoTimestamp } = await import('$lib/neon/timestamps');
       (saveVideoTimestamp as any).mockResolvedValue({
         videos: mockUpdatedVideos,
         error: null,
@@ -77,20 +77,20 @@ describe('video service module', () => {
       const result = await handleAddVideoTimestamp({
         videoTimestamp: mockVideoTimestamp,
         session: mockSession,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(saveVideoTimestamp).toHaveBeenCalledWith({
         videoTimestamp: mockVideoTimestamp,
         session: mockSession,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
       expect(result.error).toBeNull();
     });
 
     it('should handle timestamp save errors', async () => {
       const mockError = { message: 'Database error', code: '500' };
-      const { saveVideoTimestamp } = await import('$lib/supabase/timestamps');
+      const { saveVideoTimestamp } = await import('$lib/neon/timestamps');
       (saveVideoTimestamp as any).mockResolvedValue({
         videos: null,
         error: mockError,
@@ -103,7 +103,7 @@ describe('video service module', () => {
           watchedAt: new Date(),
         },
         session: mockSession,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(result.error).toEqual(mockError);
@@ -130,7 +130,7 @@ describe('video service module', () => {
         { id: 'video2', title: 'Video 2', video_start_seconds: 120 },
       ];
 
-      const { saveVideoTimestamps } = await import('$lib/supabase/timestamps');
+      const { saveVideoTimestamps } = await import('$lib/neon/timestamps');
       const { invalidate } = await import('$app/navigation');
 
       (saveVideoTimestamps as any).mockResolvedValue({
@@ -141,21 +141,21 @@ describe('video service module', () => {
       const result = await handleAddVideoTimestamps({
         videoTimestamps: mockVideoTimestamps,
         session: mockSession,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(saveVideoTimestamps).toHaveBeenCalledWith({
         videoTimestamps: mockVideoTimestamps,
         session: mockSession,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
-      expect(invalidate).toHaveBeenCalledWith('supabase:db:videos');
+      expect(invalidate).toHaveBeenCalledWith('neon:db:videos');
       expect(result.error).toBeNull();
     });
 
     it('should handle batch timestamp save errors', async () => {
       const mockError = { message: 'Batch operation failed', code: '400' };
-      const { saveVideoTimestamps } = await import('$lib/supabase/timestamps');
+      const { saveVideoTimestamps } = await import('$lib/neon/timestamps');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (saveVideoTimestamps as any).mockResolvedValue({
@@ -172,7 +172,7 @@ describe('video service module', () => {
           },
         ],
         session: mockSession,
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(showToast).toHaveBeenCalledWith('Unable to save timestamp');
@@ -212,8 +212,7 @@ describe('video service module', () => {
         { id: 'video2', title: 'Video 2', video_start_seconds: null },
       ];
 
-      const { deleteVideoTimestamps } =
-        await import('$lib/supabase/timestamps');
+      const { deleteVideoTimestamps } = await import('$lib/neon/timestamps');
       const { invalidate } = await import('$app/navigation');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
@@ -225,23 +224,22 @@ describe('video service module', () => {
       const result = await handleDeleteVideosTimestamp({
         videos: mockVideos,
         isContinueVideos: true,
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
       expect(deleteVideoTimestamps).toHaveBeenCalledWith({
         videoIds: ['video1', 'video2'],
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
-      expect(invalidate).toHaveBeenCalledWith('supabase:db:videos');
+      expect(invalidate).toHaveBeenCalledWith('neon:db:videos');
       expect(showToast).toHaveBeenCalledWith('Removed from Continue Watching');
       expect(result.updatedVideos).toEqual(mockUpdatedVideos);
     });
 
     it('should show different toast message for non-continue videos', async () => {
-      const { deleteVideoTimestamps } =
-        await import('$lib/supabase/timestamps');
+      const { deleteVideoTimestamps } = await import('$lib/neon/timestamps');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (deleteVideoTimestamps as any).mockResolvedValue({
@@ -264,7 +262,7 @@ describe('video service module', () => {
           },
         ],
         isContinueVideos: false,
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
@@ -288,7 +286,7 @@ describe('video service module', () => {
             views: 100,
           },
         ],
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: null,
       });
 
@@ -298,8 +296,7 @@ describe('video service module', () => {
 
     it('should handle deletion errors', async () => {
       const mockError = { message: 'Permission denied', code: '403' };
-      const { deleteVideoTimestamps } =
-        await import('$lib/supabase/timestamps');
+      const { deleteVideoTimestamps } = await import('$lib/neon/timestamps');
       const { showToast } = await import('$lib/state/notifications.svelte');
 
       (deleteVideoTimestamps as any).mockResolvedValue({
@@ -321,7 +318,7 @@ describe('video service module', () => {
             views: 100,
           },
         ],
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
@@ -457,20 +454,19 @@ describe('video service module', () => {
 
   describe('createVideoWatchTimeTracker', () => {
     it('should create VideoWatchTimeTracker instance', async () => {
-      const { VideoWatchTimeTracker } =
-        await import('$lib/supabase/video-history');
+      const { VideoWatchTimeTracker } = await import('$lib/neon/video-history');
       const mockConstructor = vi.fn();
       (VideoWatchTimeTracker as any).mockImplementation(mockConstructor);
 
       createVideoWatchTimeTracker({
         videoId: 'video123',
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
       expect(VideoWatchTimeTracker).toHaveBeenCalledWith(
         'video123',
-        mockSupabase,
+        mockNeon,
         mockSession
       );
     });
@@ -479,7 +475,7 @@ describe('video service module', () => {
   describe('startSimpleVideoHistory', () => {
     it('should start video history session successfully', async () => {
       const { startVideoHistorySession } =
-        await import('$lib/supabase/video-history');
+        await import('$lib/neon/video-history');
       const mockHistory = { id: 'session123', video_id: 'video1' };
 
       (startVideoHistorySession as any).mockResolvedValue({
@@ -490,14 +486,14 @@ describe('video service module', () => {
       const result = await startSimpleVideoHistory({
         videoId: 'video1',
         sessionStartTime: new Date('2023-01-01T10:00:00Z'),
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
       expect(startVideoHistorySession).toHaveBeenCalledWith({
         videoId: 'video1',
         sessionStartTime: new Date('2023-01-01T10:00:00Z'),
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
       expect(result.success).toBe(true);
@@ -507,7 +503,7 @@ describe('video service module', () => {
     it('should handle unauthenticated user', async () => {
       const result = await startSimpleVideoHistory({
         videoId: 'video1',
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: null,
       });
 
@@ -522,8 +518,8 @@ describe('video service module', () => {
 
     it('should handle video history start errors', async () => {
       const { startVideoHistorySession } =
-        await import('$lib/supabase/video-history');
-      const { showNotification } = await import('$lib/supabase/notifications');
+        await import('$lib/neon/video-history');
+      const { showNotification } = await import('$lib/neon/notifications');
 
       const mockError = { message: 'Database error', code: '500' };
       (startVideoHistorySession as any).mockResolvedValue({
@@ -533,7 +529,7 @@ describe('video service module', () => {
 
       const result = await startSimpleVideoHistory({
         videoId: 'video1',
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
@@ -549,7 +545,7 @@ describe('video service module', () => {
   describe('endSimpleVideoHistory', () => {
     it('should end video history session successfully', async () => {
       const { updateVideoHistoryEndTime } =
-        await import('$lib/supabase/video-history');
+        await import('$lib/neon/video-history');
       const mockHistory = { id: 'session123', seconds_watched: 300 };
 
       (updateVideoHistoryEndTime as any).mockResolvedValue({
@@ -564,7 +560,7 @@ describe('video service module', () => {
         videoId: 'video1',
         sessionStartTime,
         sessionEndTime,
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
@@ -572,7 +568,7 @@ describe('video service module', () => {
         videoId: 'video1',
         sessionStartTime,
         sessionEndTime,
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
       expect(result.success).toBe(true);
@@ -582,7 +578,7 @@ describe('video service module', () => {
       const result = await endSimpleVideoHistory({
         videoId: 'video1',
         sessionStartTime: new Date(),
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: null,
       });
 
@@ -592,8 +588,8 @@ describe('video service module', () => {
 
     it('should handle video history end errors', async () => {
       const { updateVideoHistoryEndTime } =
-        await import('$lib/supabase/video-history');
-      const { showNotification } = await import('$lib/supabase/notifications');
+        await import('$lib/neon/video-history');
+      const { showNotification } = await import('$lib/neon/notifications');
 
       const mockError = { message: 'Update failed', code: '400' };
       (updateVideoHistoryEndTime as any).mockResolvedValue({
@@ -604,7 +600,7 @@ describe('video service module', () => {
       const result = await endSimpleVideoHistory({
         videoId: 'video1',
         sessionStartTime: new Date(),
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
@@ -620,7 +616,7 @@ describe('video service module', () => {
   describe('recordCompleteVideoHistory', () => {
     it('should record complete video history session', async () => {
       const { startVideoHistorySession, updateVideoHistoryEndTime } =
-        await import('$lib/supabase/video-history');
+        await import('$lib/neon/video-history');
 
       (startVideoHistorySession as any).mockResolvedValue({
         history: { id: 'session123' },
@@ -639,7 +635,7 @@ describe('video service module', () => {
         videoId: 'video1',
         sessionStartTime,
         sessionEndTime,
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 
@@ -649,7 +645,7 @@ describe('video service module', () => {
 
     it('should use current time when no start time provided', async () => {
       const { startVideoHistorySession } =
-        await import('$lib/supabase/video-history');
+        await import('$lib/neon/video-history');
 
       (startVideoHistorySession as any).mockResolvedValue({
         history: { id: 'session123' },
@@ -659,7 +655,7 @@ describe('video service module', () => {
       const beforeCall = new Date();
       const result = await recordCompleteVideoHistory({
         videoId: 'video1',
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
       const afterCall = new Date();
@@ -676,7 +672,7 @@ describe('video service module', () => {
 
     it('should handle start session failure', async () => {
       const { startVideoHistorySession } =
-        await import('$lib/supabase/video-history');
+        await import('$lib/neon/video-history');
 
       const mockError = { message: 'Start failed', code: '500' };
       (startVideoHistorySession as any).mockResolvedValue({
@@ -686,7 +682,7 @@ describe('video service module', () => {
 
       const result = await recordCompleteVideoHistory({
         videoId: 'video1',
-        supabase: mockSupabase,
+        neon: mockNeon,
         session: mockSession,
       });
 

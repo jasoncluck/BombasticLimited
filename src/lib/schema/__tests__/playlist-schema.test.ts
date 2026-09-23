@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { playlistSchema, type PlaylistSchema } from '../playlist-schema';
-import type { PlaylistType } from '$lib/supabase/playlists';
+import type { PlaylistType } from '$lib/neon/playlists';
 
 describe('playlistSchema', () => {
   describe('valid data', () => {

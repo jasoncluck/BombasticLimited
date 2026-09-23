@@ -3,12 +3,12 @@
   import { ScrollArea } from '$lib/components/ui/scroll-area';
   import { X, Bell } from '@lucide/svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import {
     type NotificationWithMeta,
     type NotificationType,
     deleteNotifications,
-  } from '$lib/supabase/notifications';
+  } from '$lib/neon/notifications';
   import { createSafeHtml } from '$lib/utils/html-sanitizer';
   import FaviconIcon from '$lib/components/icons/favicon-icon.svelte';
   import { slide, fade } from 'svelte/transition';
@@ -17,11 +17,11 @@
   import Loader from '../loader.svelte';
 
   let {
-    supabase,
+    neon,
     filterType,
     onNotificationClick,
   }: {
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     filterType?: NotificationType;
     onNotificationClick?: () => void;
   } = $props();
@@ -34,7 +34,7 @@
   async function handleDelete(notification: NotificationWithMeta) {
     await deleteNotifications({
       notificationIds: [notification.notification_id],
-      supabase,
+      neon,
     });
 
     console.log('refreshing after delete');

@@ -32,9 +32,6 @@ stack.
   that matters).
 - **`BombasticCronStack`** — Twitch stream polling, image processing,
   playlist/notification cleanup.
-- **`BackupStack`** — database backup infrastructure. Still references the
-  now-deleted Supabase project and isn't wired up to Neon; currently disabled
-  (commented out in `lib/stack/app-stack.ts`). See `BACKUP_README.md`.
 
 ## Deploying
 

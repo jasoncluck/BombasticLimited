@@ -1,5 +1,5 @@
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 
 // MDsveX module declarations
 declare module '*.md' {
@@ -50,7 +50,7 @@ declare global {
   namespace App {
     // interface Error {}
     interface Locals {
-      supabase: NeonPostgrestClient<Database>;
+      neon: NeonPostgrestClient<Database>;
       userId: string | null;
       userEmail: string | null;
     }

@@ -59,13 +59,13 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
   const mockSidebarState = {
     refreshData: vi.fn(),
   } as any;
-  const mockSupabase = {} as any;
+  const mockNeon = {} as any;
 
   const mockProps = {
     playlist: mockPublicPlaylist,
     sidebarState: mockSidebarState,
     session: mockSession,
-    supabase: mockSupabase,
+    neon: mockNeon,
     open: false,
     onOpenChange: vi.fn(),
   };
@@ -79,7 +79,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
       expect(mockProps.playlist).toBeDefined();
       expect(mockProps.sidebarState).toBeDefined();
       expect(mockProps.session).toBeDefined();
-      expect(mockProps.supabase).toBeDefined();
+      expect(mockProps.neon).toBeDefined();
     });
 
     it('should handle optional props', () => {
@@ -109,7 +109,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         // Simulate closing dialog
@@ -133,7 +133,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
         playlist: mockProps.playlist,
         sidebarState: mockProps.sidebarState,
         session: mockProps.session,
-        supabase: mockProps.supabase,
+        neon: mockProps.neon,
       });
       expect(mockProps.onOpenChange).toHaveBeenCalledWith(false);
       expect(mockGoto).toHaveBeenCalledWith('/');
@@ -155,7 +155,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         // Dialog should still close even on error
@@ -195,7 +195,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
           playlist: mockProps.playlist,
           sidebarState: mockProps.sidebarState,
           session: mockProps.session,
-          supabase: mockProps.supabase,
+          neon: mockProps.neon,
         });
 
         // Check current page path
@@ -333,7 +333,7 @@ describe('PlaylistDeleteAlertDialog Component Logic', () => {
       expect(mockProps.playlist).toBeDefined();
       expect(mockProps.sidebarState).toBeDefined();
       expect(mockProps.session).toBeDefined();
-      expect(mockProps.supabase).toBeDefined();
+      expect(mockProps.neon).toBeDefined();
     });
 
     it('should validate mock data consistency', () => {

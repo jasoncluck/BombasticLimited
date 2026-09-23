@@ -1,11 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { redirect } from '@sveltejs/kit';
 import { load } from '../+page.server';
-import { getVideos } from '$lib/supabase/videos';
+import { getVideos } from '$lib/neon/videos';
 import {
   getPlaylistDataByYoutubeId,
   getPlaylistsForUsername,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 
 // Mock dependencies
 vi.mock('@sveltejs/kit', () => ({
@@ -14,12 +14,12 @@ vi.mock('@sveltejs/kit', () => ({
   }),
 }));
 
-vi.mock('$lib/supabase/videos', () => ({
+vi.mock('$lib/neon/videos', () => ({
   getVideos: vi.fn(),
   DEFAULT_NUM_VIDEOS_OVERVIEW: 10,
 }));
 
-vi.mock('$lib/supabase/playlists', () => ({
+vi.mock('$lib/neon/playlists', () => ({
   getPlaylistDataByYoutubeId: vi.fn(),
   getPlaylistsForUsername: vi.fn(),
   DEFAULT_NUM_PLAYLISTS_OVERVIEW: 12,
@@ -85,7 +85,7 @@ import {
 const mockIsVideoFilter = vi.mocked(isVideoFilter);
 
 describe('[source]/+page.server.ts load function', () => {
-  const mockSupabase = {} as any;
+  const mockNeon = {} as any;
   const mockSession = createMockSession();
   const mockUserProfile = createMockUserProfile();
 
@@ -125,7 +125,7 @@ describe('[source]/+page.server.ts load function', () => {
     parent: vi.fn(),
     depends: vi.fn(),
     locals: {
-      supabase: mockSupabase,
+      neon: mockNeon,
       session: mockSession,
     },
     setHeaders: vi.fn(),
@@ -166,7 +166,7 @@ describe('[source]/+page.server.ts load function', () => {
 
       const result = await load(mockLoadEvent);
 
-      expect(mockLoadEvent.depends).toHaveBeenCalledWith('supabase:db:videos');
+      expect(mockLoadEvent.depends).toHaveBeenCalledWith('neon:db:videos');
       expect((result as any).source).toBe('giantbomb');
       expect((result as any).videos).toEqual(mockVideos);
     });
@@ -231,7 +231,7 @@ describe('[source]/+page.server.ts load function', () => {
           sort: { key: 'datePublished', order: 'descending' },
           type: 'video',
         },
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
     });
 
@@ -245,7 +245,7 @@ describe('[source]/+page.server.ts load function', () => {
           type: 'playlist',
         },
         limit: 12,
-        supabase: mockSupabase,
+        neon: mockNeon,
         preferredImageFormat: 'webp',
       });
 
@@ -256,7 +256,7 @@ describe('[source]/+page.server.ts load function', () => {
           type: 'playlist',
         },
         limit: 12,
-        supabase: mockSupabase,
+        neon: mockNeon,
         preferredImageFormat: 'webp',
       });
     });
@@ -268,7 +268,7 @@ describe('[source]/+page.server.ts load function', () => {
         username: 'giantbomb',
         limit: 12,
         preferredImageFormat: 'webp',
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
     });
 
@@ -284,7 +284,7 @@ describe('[source]/+page.server.ts load function', () => {
           sort: { key: 'datePublished', order: 'descending' },
           type: 'video',
         },
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
 
       expect(mockGetPlaylistDataByYoutubeId).toHaveBeenCalledWith({
@@ -294,7 +294,7 @@ describe('[source]/+page.server.ts load function', () => {
           type: 'playlist',
         },
         limit: 12,
-        supabase: mockSupabase,
+        neon: mockNeon,
         preferredImageFormat: 'webp',
       });
 
@@ -302,7 +302,7 @@ describe('[source]/+page.server.ts load function', () => {
         username: 'giantbomb',
         limit: 12,
         preferredImageFormat: 'webp',
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
     });
   });

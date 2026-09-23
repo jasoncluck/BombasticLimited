@@ -1,6 +1,6 @@
 import { goto, invalidate } from '$app/navigation';
-import type { Database } from '$lib/supabase/database.types';
-import { showNotification } from '$lib/supabase/notifications';
+import type { Database } from '$lib/neon/database.types';
+import { showNotification } from '$lib/neon/notifications';
 import {
   addVideosToPlaylist,
   createPlaylist,
@@ -16,17 +16,17 @@ import {
   USER_PLAYLIST_LIMIT,
   type Playlist,
   type PlaylistVideo,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import { type NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';
-import type { Video } from '$lib/supabase/videos';
+import type { Video } from '$lib/neon/videos';
 import {
   isPlaylistVideosFilter,
   type CombinedContentFilter,
   type SortKey,
   type SortOrder,
 } from '../content/content-filter';
-import { type PlaylistImageProperties } from '$lib/supabase/playlists';
+import { type PlaylistImageProperties } from '$lib/neon/playlists';
 import type { SidebarState } from '$lib/state/sidebar.svelte';
 import { showToast } from '$lib/state/notifications.svelte';
 
@@ -35,11 +35,11 @@ export type PlaylistImages = Record<string, string | undefined>;
 export async function handleCreatePlaylist({
   sidebarState,
   session,
-  supabase,
+  neon,
 }: {
   sidebarState: SidebarState;
   session: Session | null;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
 }) {
   if (!session) {
     goto('/login');
@@ -47,7 +47,7 @@ export async function handleCreatePlaylist({
   }
 
   const { playlist, error } = await createPlaylist({
-    supabase,
+    neon,
     userId: session.user.id,
   });
 
@@ -76,12 +76,12 @@ export async function handleDeletePlaylist({
   session,
   playlist,
   sidebarState,
-  supabase,
+  neon,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
   session: Session | null;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
 }) {
   if (!session?.user.id) {
     goto('/login');
@@ -90,7 +90,7 @@ export async function handleDeletePlaylist({
 
   const { error } = await deletePlaylist({
     playlistId: playlist.id,
-    supabase,
+    neon,
     userId: session.user.id,
   });
 
@@ -107,13 +107,13 @@ export async function handleAddVideosToPlaylist({
   playlist,
   videos,
   sidebarState,
-  supabase,
+  neon,
   session,
 }: {
   playlist: Playlist;
   videos: Video[];
   sidebarState: SidebarState;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
   if (!session) {
@@ -129,7 +129,7 @@ export async function handleAddVideosToPlaylist({
   const { error } = await addVideosToPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
-    supabase,
+    neon,
     userId: session.user.id,
   });
 
@@ -150,7 +150,7 @@ export async function handleAddVideosToPlaylist({
   );
 
   // Refresh data
-  invalidate('supabase:db:videos');
+  invalidate('neon:db:videos');
   await sidebarState.refreshData();
 
   return { error: null };
@@ -160,19 +160,19 @@ export async function handleRemoveVideosFromPlaylist({
   videos,
   sidebarState,
   playlist,
-  supabase,
+  neon,
   userId,
 }: {
   videos: Video[];
   sidebarState: SidebarState;
   playlist: Playlist;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   userId: string;
 }) {
   const { error } = await deleteVideosFromPlaylist({
     videoIds: videos.map((v) => v.id),
     playlistId: playlist.id,
-    supabase,
+    neon,
     userId,
   });
 
@@ -183,7 +183,7 @@ export async function handleRemoveVideosFromPlaylist({
   }
 
   sidebarState.refreshData();
-  invalidate('supabase:db:videos');
+  invalidate('neon:db:videos');
   return { error };
 }
 
@@ -192,19 +192,19 @@ export async function handleUpdatePlaylistImage({
   sidebarState,
   thumbnailUrl,
   imageProperties = null,
-  supabase,
+  neon,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
   thumbnailUrl: string | null;
   imageProperties?: PlaylistImageProperties | null;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
 }) {
   const { error } = await updatePlaylistThumbnail({
     playlistId: playlist.id,
     thumbnailUrl,
     imageProperties,
-    supabase,
+    neon,
   });
 
   if (error) {
@@ -212,7 +212,7 @@ export async function handleUpdatePlaylistImage({
   }
 
   sidebarState.refreshData();
-  invalidate('supabase:db:videos');
+  invalidate('neon:db:videos');
   return { error };
 }
 
@@ -220,20 +220,20 @@ export async function handleUpdatePlaylistVideoPosition({
   playlist,
   position,
   videos,
-  supabase,
+  neon,
   userId,
 }: {
   playlist: Playlist;
   videos: Video[];
   position: number;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   userId: string;
 }) {
   const { error } = await updatePlaylistVideoPosition({
     playlistId: playlist.id,
     position,
     videoIds: videos.map((v) => v.id),
-    supabase,
+    neon,
     userId,
   });
 
@@ -247,12 +247,12 @@ export async function handleUpdatePlaylistVideoPosition({
 export async function handleUpdatePlaylistPosition({
   playlist,
   position,
-  supabase,
+  neon,
   session,
 }: {
   playlist: Playlist;
   position: number;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
   if (!session) {
@@ -263,7 +263,7 @@ export async function handleUpdatePlaylistPosition({
   await updatePlaylistPosition({
     playlistId: playlist.id,
     position,
-    supabase,
+    neon,
     userId: session.user.id,
   });
 }
@@ -272,14 +272,14 @@ export async function handleFollowPlaylist({
   playlist,
   sidebarState,
   contentFilter,
-  supabase,
+  neon,
   session,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
   position?: number;
   contentFilter?: CombinedContentFilter;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
   if (!session) {
@@ -294,7 +294,7 @@ export async function handleFollowPlaylist({
 
   const { error } = await followPlaylist({
     playlistId: playlist.id,
-    supabase,
+    neon,
     userId: session.user.id,
   });
 
@@ -306,7 +306,7 @@ export async function handleFollowPlaylist({
       playlist,
       sortedBy: contentFilter.sort.key,
       sortOrder: contentFilter.sort.order,
-      supabase,
+      neon,
       session,
     });
   }
@@ -332,13 +332,13 @@ export async function handleFollowPlaylist({
 export async function handleUnfollowPlaylist({
   playlist,
   sidebarState,
-  supabase,
+  neon,
   session,
 }: {
   playlist: Playlist;
   sidebarState: SidebarState;
   position?: number;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
   if (!session) {
@@ -348,7 +348,7 @@ export async function handleUnfollowPlaylist({
 
   const { error } = await unfollowPlaylist({
     playlistId: playlist.id,
-    supabase,
+    neon,
     userId: session.user.id,
   });
 
@@ -366,13 +366,13 @@ export async function handleUpdatePlaylistSort({
   playlist,
   sortedBy,
   sortOrder,
-  supabase,
+  neon,
   session,
 }: {
   playlist: Playlist;
   sortedBy: SortKey<PlaylistVideo>;
   sortOrder: SortOrder;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   session: Session | null;
 }) {
   if (!session) {
@@ -384,7 +384,7 @@ export async function handleUpdatePlaylistSort({
     playlistId: playlist.id,
     sortedBy,
     sortOrder,
-    supabase,
+    neon,
   });
 
   if (error) {

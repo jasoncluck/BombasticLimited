@@ -2,14 +2,14 @@ import type { PageServerLoad, Actions } from './$types';
 import {
   createNotificationForAllUsers,
   createNotification,
-} from '$lib/supabase/notifications';
+} from '$lib/neon/notifications';
 import { fail, superValidate } from 'sveltekit-superforms';
 import { zod4 as zod } from 'sveltekit-superforms/adapters';
 import { adminNotificationSchema } from '$lib/schema/admin-notification-schema';
 import { redirect, setFlash } from 'sveltekit-flash-message/server';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, userId },
+  locals: { neon, userId },
   parent,
 }) => {
   if (!userId) {
@@ -30,7 +30,7 @@ export const load: PageServerLoad = async ({
   // Categorize notifications by their status
 
   // Get all users for reference
-  const { data: users, error: usersError } = await supabase
+  const { data: users, error: usersError } = await neon
     .from('profiles')
     .select('id, username')
     .limit(1000);
@@ -49,7 +49,7 @@ export const actions: Actions = {
   sendGlobalNotification: async ({
     request,
     cookies,
-    locals: { supabase, userId },
+    locals: { neon, userId },
   }) => {
     if (!userId) {
       return fail(401, { error: 'Not authenticated' });
@@ -68,7 +68,7 @@ export const actions: Actions = {
     const endDatetimeUtc = convertLocalToUtc(endDatetime);
 
     const { data, error } = await createNotificationForAllUsers({
-      supabase,
+      neon,
       params: {
         type,
         title,
@@ -117,7 +117,7 @@ export const actions: Actions = {
   sendTestNotification: async ({
     request,
     cookies,
-    locals: { supabase, userId },
+    locals: { neon, userId },
   }) => {
     if (!userId) {
       return fail(401, { error: 'Not authenticated' });
@@ -144,7 +144,7 @@ export const actions: Actions = {
 
     try {
       const { error } = await createNotification({
-        supabase,
+        neon,
         params: {
           type,
           title,
@@ -202,13 +202,13 @@ export const actions: Actions = {
     }
   },
 
-  manualCleanup: async ({ cookies, locals: { supabase, userId } }) => {
+  manualCleanup: async ({ cookies, locals: { neon, userId } }) => {
     if (!userId) {
       return fail(401, { error: 'Not authenticated' });
     }
 
     try {
-      const { data: deletedCount, error } = await supabase.rpc(
+      const { data: deletedCount, error } = await neon.rpc(
         'cleanup_expired_notifications'
       );
 
@@ -253,7 +253,7 @@ export const actions: Actions = {
   cancelNotification: async ({
     request,
     cookies,
-    locals: { supabase, userId },
+    locals: { neon, userId },
   }) => {
     if (!userId) {
       return fail(401, { error: 'Not authenticated' });
@@ -266,7 +266,7 @@ export const actions: Actions = {
       return fail(400, { error: 'Notification ID is required' });
     }
 
-    const { data: success, error } = await supabase.rpc('remove_notification', {
+    const { data: success, error } = await neon.rpc('remove_notification', {
       notification_id: parseInt(notificationId.toString(), 10),
     });
 

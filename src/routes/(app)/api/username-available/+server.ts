@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { json } from '@sveltejs/kit';
-import { checkIfUsernameIsUnique } from '$lib/supabase/user-profiles';
+import { checkIfUsernameIsUnique } from '$lib/neon/user-profiles';
 
 export const GET: RequestHandler = async ({ url }) => {
   const username = url.searchParams.get('username');

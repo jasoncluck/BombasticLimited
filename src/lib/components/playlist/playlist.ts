@@ -1,10 +1,10 @@
 import { goto } from '$app/navigation';
-import type { Json } from '$lib/supabase/database.types';
+import type { Json } from '$lib/neon/database.types';
 import {
   type Playlist,
   type PlaylistImageProperties,
   isUserPlaylist,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import {
   type CombinedContentFilter,
   getSortKeysForView,

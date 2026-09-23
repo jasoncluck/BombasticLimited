@@ -19,9 +19,9 @@
   } from './playlist/playlist-service';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import { fade } from 'svelte/transition';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import ScrollArea from './ui/scroll-area/scroll-area.svelte';
   import { page } from '$app/state';
   import { flip } from 'svelte/animate';
@@ -34,10 +34,10 @@
   let {
     handleLogout,
     session,
-    supabase,
+    neon,
   }: {
     handleLogout: () => void;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
   } = $props();
 
@@ -67,7 +67,7 @@
         position: newPosition,
         playlist: item as Playlist,
         session,
-        supabase,
+        neon,
       });
     } catch (error) {
       console.error('Error updating video position:', error);
@@ -147,7 +147,7 @@
                 subtitle="Drag the handle to reorder sources."
                 onReorder={handleSourceReorder}
                 onClose={() => {
-                  invalidate('supabase:db:profiles');
+                  invalidate('neon:db:profiles');
                 }}
               >
                 {#snippet trigger()}
@@ -271,7 +271,7 @@
                 const { playlist } = await handleCreatePlaylist({
                   sidebarState,
                   session,
-                  supabase,
+                  neon,
                 });
 
                 if (playlist) {

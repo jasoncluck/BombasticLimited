@@ -31,7 +31,7 @@ vi.mock('sveltekit-flash-message', () => ({
   updateFlash: vi.fn(),
 }));
 
-vi.mock('$lib/supabase/user-profiles', () => ({
+vi.mock('$lib/neon/user-profiles', () => ({
   checkIfUsernameIsUnique: vi.fn(),
 }));
 
@@ -135,7 +135,7 @@ describe('account/+page.svelte Component Logic', () => {
     profile: mockUserProfile,
     emailForm: { data: { email: 'test@example.com' } },
     usernameForm: { data: { username: 'testuser' } },
-    supabase: {},
+    neon: {},
     session: mockSession,
   };
 
@@ -149,7 +149,7 @@ describe('account/+page.svelte Component Logic', () => {
       expect(mockData.emailForm).toBeDefined();
       expect(mockData.usernameForm).toBeDefined();
       expect(mockData.session).toBeDefined();
-      expect(mockData.supabase).toBeDefined();
+      expect(mockData.neon).toBeDefined();
     });
 
     it('should validate profile structure', () => {

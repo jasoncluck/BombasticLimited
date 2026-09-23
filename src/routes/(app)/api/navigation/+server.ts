@@ -1,15 +1,15 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { getProfileById } from '$lib/supabase/user-profiles';
-import { getNotifications } from '$lib/supabase/notifications';
+import { getProfileById } from '$lib/neon/user-profiles';
+import { getNotifications } from '$lib/neon/notifications';
 
 export const GET: RequestHandler = async ({ locals }) => {
-  const { supabase, userId } = locals;
+  const { neon, userId } = locals;
 
   // For navigation, we mainly need user profile for personalization
   const [{ profile: userProfile }, { notifications }] = await Promise.all([
     getProfileById({ userId }),
-    getNotifications({ supabase }),
+    getNotifications({ neon }),
   ]);
 
   return json(

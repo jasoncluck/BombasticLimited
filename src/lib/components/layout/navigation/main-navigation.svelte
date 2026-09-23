@@ -7,8 +7,8 @@
   import UserMenu from './user-menu.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { Database } from '$lib/neon/database.types';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import BrandLogo from '$lib/assets/brand-logo.svelte';
   import { getNavigationState } from '$lib/state/navigation.svelte';
   import Loader from '$lib/components/loader.svelte';
@@ -16,12 +16,12 @@
   let {
     userProfile,
     session,
-    supabase,
+    neon,
     openAccountDrawer = $bindable(),
   }: {
     userProfile: UserProfile | null;
     session: Session | null;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     openAccountDrawer: boolean;
   } = $props();
 
@@ -32,7 +32,7 @@
     navigationState.updateContext({
       session,
       userProfile,
-      supabase,
+      neon,
     });
   });
 
@@ -65,7 +65,7 @@
     <!-- Mobile Menu -->
     <div class="sm:hidden">
       <SideDrawer
-        {supabase}
+        {neon}
         {session}
         handleLogout={() => navigationState.handleLogout()}
       />
@@ -135,7 +135,7 @@
       <UserMenu
         {userProfile}
         {session}
-        {supabase}
+        {neon}
         bind:openAccountDrawer={navigationState.openAccountDrawer}
       />
     </div>

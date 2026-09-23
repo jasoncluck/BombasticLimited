@@ -4,14 +4,14 @@
   import FloatingBreadcrumbs from '$lib/components/floating-breadcrumbs.svelte';
   import IntersectionObserver from '$lib/components/intersection-observer.svelte';
   import ContentSelect from '$lib/components/content/content-select.svelte';
-  import type { Playlist, UserPlaylist } from '$lib/supabase/playlists';
+  import type { Playlist, UserPlaylist } from '$lib/neon/playlists';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import type { HTMLAttributes } from 'svelte/elements';
   import type { Snippet } from 'svelte';
   import type { CombinedContentFilter } from './content-filter';
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import {
     getContentView,
     handleContentNavigation,
@@ -25,7 +25,7 @@
   import { fade } from 'svelte/transition';
   import Button from '../ui/button/button.svelte';
   import * as Popover from '$lib/components/ui/popover';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import { getSidebarState } from '$lib/state/sidebar.svelte';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
@@ -39,7 +39,7 @@
     session: Session | null;
     showFloatingBreadcrumbs: boolean;
     userProfile: UserProfile | null;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     videos: Video[];
     view: ContentView;
   }
@@ -58,7 +58,7 @@
     session,
     showFloatingBreadcrumbs = $bindable(),
     userProfile,
-    supabase,
+    neon,
     videos,
     view,
     ...restProps
@@ -97,7 +97,7 @@
       {breadcrumbs}
       playlist={profilePlaylist}
       {userProfile}
-      {supabase}
+      {neon}
       {session}
     />
   </div>
@@ -151,7 +151,7 @@
                   playlist: profilePlaylist,
                   sidebarState,
                   contentFilter,
-                  supabase,
+                  neon,
                   session,
                 });
               }}
@@ -168,7 +168,7 @@
               handleUnfollowPlaylist({
                 playlist: profilePlaylist,
                 sidebarState,
-                supabase,
+                neon,
                 session,
               });
             }}
@@ -185,7 +185,7 @@
             {videos}
             playlist={profilePlaylist}
             {contentFilter}
-            {supabase}
+            {neon}
             {session}
             displayLabel={true}
           />
@@ -198,7 +198,7 @@
           {contentFilter}
           {view}
           playlist={profilePlaylist}
-          {supabase}
+          {neon}
           {session}
         />
       </div>

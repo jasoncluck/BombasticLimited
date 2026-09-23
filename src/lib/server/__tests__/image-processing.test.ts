@@ -7,7 +7,7 @@ import {
   calculateOptimalQuality,
 } from '../image-processing';
 import { detectOptimalFormat } from '../../utils/image-format-detection';
-import type { PlaylistImageProperties } from '$lib/supabase/playlists';
+import type { PlaylistImageProperties } from '$lib/neon/playlists';
 
 // Mock sharp
 const mockExtract = vi.fn();

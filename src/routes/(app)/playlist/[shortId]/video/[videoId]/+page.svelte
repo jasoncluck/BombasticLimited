@@ -7,15 +7,8 @@
   import { ArrowDown, ArrowUp, ListVideo } from '@lucide/svelte';
 
   const { data } = $props();
-  let {
-    video,
-    videos,
-    playlist,
-    contentFilter,
-    supabase,
-    session,
-    userProfile,
-  } = $derived(data);
+  let { video, videos, playlist, contentFilter, neon, session, userProfile } =
+    $derived(data);
 
   let carouselState = $state<CarouselState>({ lastViewedIndex: 0 });
 </script>
@@ -23,7 +16,7 @@
 <div class="mx-auto w-full max-w-[1100px]">
   <div class="mb-10">
     {#key video.id}
-      <VideoPlayer {video} {contentFilter} {playlist} {supabase} {session} />
+      <VideoPlayer {video} {contentFilter} {playlist} {neon} {session} />
     {/key}
   </div>
 
@@ -89,7 +82,7 @@
         bind:carouselState
         {playlist}
         {userProfile}
-        {supabase}
+        {neon}
         {session}
       />
     </div>

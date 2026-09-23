@@ -1,5 +1,5 @@
 import { browser } from '$app/environment';
-import { DEFAULT_PRELOAD_VIDEOS_LIST } from '$lib/supabase/videos';
+import { DEFAULT_PRELOAD_VIDEOS_LIST } from '$lib/neon/videos';
 import { preloadImages, extractImageUrls } from '$lib/utils/image-preloader';
 import { getPageLoadingState } from '$lib/state/page-loading.svelte';
 import type { PageLoad } from './$types';

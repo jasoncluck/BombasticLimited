@@ -1,10 +1,10 @@
 /* eslint-disable svelte/prefer-svelte-reactivity */
 
-import type { Video } from '$lib/supabase/videos';
-import type { Playlist } from '$lib/supabase/playlists';
+import type { Video } from '$lib/neon/videos';
+import type { Playlist } from '$lib/neon/playlists';
 import type { PostgrestError } from '@supabase/postgrest-js';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 import { getContext, setContext } from 'svelte';
 import { createDragImage } from '$lib/utils/dragdrop';
 import {
@@ -44,7 +44,7 @@ export interface DragDropOptions {
   videosCount?: number | null;
   playlist?: Playlist;
   contentFilter?: CombinedContentFilter;
-  supabase?: NeonPostgrestClient<Database>;
+  neon?: NeonPostgrestClient<Database>;
   userId?: string | null;
   onVideosUpdate?: (videos: Video[]) => void;
   setDraggedAsSelected?: boolean;
@@ -833,7 +833,7 @@ export class ContentState {
       index: number,
       sectionId: string = DEFAULT_SECTION_ID
     ): void => {
-      if (!options.allowVideoReorder || !options.supabase) return;
+      if (!options.allowVideoReorder || !options.neon) return;
       if (
         !options.playlist ||
         options.contentFilter?.sort.key !== 'playlistOrder'
@@ -910,7 +910,7 @@ export class ContentState {
           videos: sortedVideosToMove,
           position: newPosition,
           playlist: options.playlist,
-          supabase: options.supabase,
+          neon: options.neon,
           userId: options.userId,
         });
       }

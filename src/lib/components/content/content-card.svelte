@@ -1,7 +1,7 @@
 <script lang="ts">
   import Progress from '../ui/progress/progress.svelte';
   import { getVideoSecondsOffset } from '../video/video-service';
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import { userPreferences } from '$lib/state/user-preferences.svelte';
   import type { HTMLAnchorAttributes } from 'svelte/elements';
   import {
@@ -25,8 +25,8 @@
     generateContentNavigationUrl,
   } from './content';
   import { handlePlaylistNavigationByShortId } from '$lib/components/playlist/playlist';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { Playlist } from '$lib/neon/playlists';
+  import type { UserProfile } from '$lib/neon/user-profiles';
 
   type ContentCardProps = {
     video?: Video;
@@ -51,7 +51,7 @@
     | 'videos'
     | 'playlists'
     | 'sectionId'
-    | 'supabase'
+    | 'neon'
     | 'session'
   > &
     HTMLAnchorAttributes;
@@ -60,7 +60,7 @@
     video,
     isLoading = false,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
     // Drag and drop props
     allowVideoReorder = false,
@@ -116,7 +116,7 @@
           videosCount,
           playlist,
           contentFilter,
-          supabase,
+          neon,
           userId: session?.user.id,
           setDraggedAsSelected: false,
           clearSelection: true,
@@ -420,7 +420,7 @@
             variant="list-items"
             {playlist}
             {sectionId}
-            {supabase}
+            {neon}
             {session}
           />
         </div>

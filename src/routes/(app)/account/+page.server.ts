@@ -8,7 +8,7 @@ import {
   getUserDiscordIdentity,
   updateUsername as updateUsernameInDb,
   syncDiscordIdentity,
-} from '$lib/supabase/user-profiles';
+} from '$lib/neon/user-profiles';
 import {
   updateEmailAttribute,
   forgotPassword,

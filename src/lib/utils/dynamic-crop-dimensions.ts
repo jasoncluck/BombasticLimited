@@ -1,4 +1,4 @@
-import type { PlaylistImageProperties } from '$lib/supabase/playlists';
+import type { PlaylistImageProperties } from '$lib/neon/playlists';
 
 /**
  * Calculate dynamic crop dimensions for any image size and aspect ratio

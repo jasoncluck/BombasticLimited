@@ -11,7 +11,7 @@ import {
   calculateDynamicCropDimensions,
   validateAndAdjustCropDimensions,
 } from '$lib/utils/dynamic-crop-dimensions';
-import type { PlaylistImageProperties } from '$lib/supabase/playlists';
+import type { PlaylistImageProperties } from '$lib/neon/playlists';
 
 const IMAGES_BUCKET = process.env.CONTENT_IMAGES_BUCKET!;
 

@@ -14,17 +14,17 @@
   import { handleCreatePlaylist } from '../playlist/playlist-service';
   import Button, { buttonVariants } from '../ui/button/button.svelte';
   import PlaylistContextMenu from '../playlist/playlist-context-menu.svelte';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import StreamingIndicator from '../streaming/streaming-indicator.svelte';
   import Loader from '../loader.svelte';
 
   let {
-    supabase,
+    neon,
     session,
     isSidebarCollapsed,
     refreshSidebar,
   }: {
-    supabase: NeonPostgrestClient;
+    neon: NeonPostgrestClient;
     session: Session | null;
     isSidebarCollapsed: boolean;
     refreshSidebar?: () => Promise<void>;
@@ -72,7 +72,7 @@
   const playlistDragDropHandlers = $derived(
     playlistState.createPlaylistDragDrop({
       playlists: sidebarState.playlists ?? [],
-      supabase,
+      neon,
       session,
       onPlaylistsUpdate: (updatedPlaylists) => {
         sidebarState.playlists = updatedPlaylists;
@@ -180,7 +180,7 @@
 
           // Refresh sidebar to get updated profile
           await refreshSidebar?.();
-          invalidate('supabase:db:profiles');
+          invalidate('neon:db:profiles');
         } catch (error) {
           console.error('Failed to update source ordering:', error);
           showToast('An error occurred, unable to reorder.');
@@ -338,7 +338,7 @@
             class="my-1 cursor-pointer rounded-full"
             size="icon"
             onclick={() =>
-              handleCreatePlaylist({ sidebarState, supabase, session })}
+              handleCreatePlaylist({ sidebarState, neon, session })}
           >
             <Plus />
           </Button>
@@ -366,7 +366,7 @@
               {playlist}
               {selectedPlaylistIdParam}
               {isSidebarCollapsed}
-              {supabase}
+              {neon}
               {session}
             >
               <Button

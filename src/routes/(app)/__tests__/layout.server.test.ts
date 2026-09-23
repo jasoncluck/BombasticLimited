@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { load } from '../+layout.server';
-import { getProfile } from '$lib/supabase/user-profiles';
+import { getProfile } from '$lib/neon/user-profiles';
 import { getFilterOptionFromQueryParams } from '$lib/components/content/content-filter';
 import {
   createMockSession,
@@ -9,7 +9,7 @@ import {
 } from '$lib/tests/test-utils';
 
 // Mock dependencies
-vi.mock('$lib/supabase/user-profiles', () => ({
+vi.mock('$lib/neon/user-profiles', () => ({
   getProfile: vi.fn(),
 }));
 
@@ -23,7 +23,7 @@ const mockGetFilterOptionFromQueryParams = vi.mocked(
 );
 
 describe('+layout.server.ts load function', () => {
-  const mockSupabase = {
+  const mockNeon = {
     auth: {
       getClaims: vi.fn(),
     },
@@ -35,7 +35,7 @@ describe('+layout.server.ts load function', () => {
   const mockLayoutEvent: any = {
     locals: {
       safeGetSession: mockSafeGetSession,
-      supabase: mockSupabase,
+      neon: mockNeon,
     },
     cookies: {
       get: vi.fn(),
@@ -58,7 +58,7 @@ describe('+layout.server.ts load function', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockSafeGetSession.mockResolvedValue({ session: mockSession });
-    mockSupabase.auth.getClaims.mockResolvedValue({
+    mockNeon.auth.getClaims.mockResolvedValue({
       data: {
         claims: { sub: 'user-1' },
       },
@@ -76,9 +76,9 @@ describe('+layout.server.ts load function', () => {
   it('should fetch session and user profile', async () => {
     const result = (await load(mockLayoutEvent)) as any;
 
-    expect(mockSupabase.auth.getClaims).toHaveBeenCalled();
+    expect(mockNeon.auth.getClaims).toHaveBeenCalled();
     expect(mockGetProfile).toHaveBeenCalledWith({
-      supabase: mockSupabase,
+      neon: mockNeon,
     });
 
     expect(result.claims).toEqual({ sub: 'user-1' });
@@ -138,7 +138,7 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should set appropriate cache headers for anonymous users', async () => {
-    mockSupabase.auth.getClaims.mockResolvedValue({
+    mockNeon.auth.getClaims.mockResolvedValue({
       data: { claims: null },
       error: null,
     });
@@ -183,7 +183,7 @@ describe('+layout.server.ts load function', () => {
   });
 
   it('should work without session (anonymous user)', async () => {
-    mockSupabase.auth.getClaims.mockResolvedValue({
+    mockNeon.auth.getClaims.mockResolvedValue({
       data: { claims: null },
       error: null,
     });

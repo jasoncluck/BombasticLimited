@@ -1,4 +1,4 @@
-import { DEFAULT_NUM_VIDEOS_PAGINATION, getVideos } from '$lib/supabase/videos';
+import { DEFAULT_NUM_VIDEOS_PAGINATION, getVideos } from '$lib/neon/videos';
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { isSource } from '$lib/constants/source';
@@ -9,10 +9,10 @@ export const load: PageServerLoad = async ({
   params,
   url,
   parent,
-  locals: { supabase, userId },
+  locals: { neon, userId },
   depends,
 }) => {
-  depends('supabase:db:videos');
+  depends('neon:db:videos');
 
   const source = params.source;
   if (!source || !isSource(source)) {
@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({
     limit: DEFAULT_NUM_VIDEOS_PAGINATION,
     contentFilter,
     preferredImageFormat,
-    supabase,
+    neon,
     userId,
   });
 

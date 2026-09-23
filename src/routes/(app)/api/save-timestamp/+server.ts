@@ -1,10 +1,10 @@
 // Example Edge Function or API route handler for sendBeacon
-import type { TimestampWithVideoId } from '$lib/supabase/timestamps';
+import type { TimestampWithVideoId } from '$lib/neon/timestamps';
 import type { RequestHandler } from '@sveltejs/kit';
 
 export const POST: RequestHandler = async ({
   request,
-  locals: { supabase, userId },
+  locals: { neon, userId },
 }) => {
   const data = await request.json();
 
@@ -12,7 +12,7 @@ export const POST: RequestHandler = async ({
   const { videoTimestamp }: { videoTimestamp: TimestampWithVideoId } = data;
 
   if (userId) {
-    const { error } = await supabase.from('timestamps').upsert(
+    const { error } = await neon.from('timestamps').upsert(
       {
         user_id: userId,
         video_id: videoTimestamp.videoId,

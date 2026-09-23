@@ -1,4 +1,4 @@
-import type { NotificationType } from '$lib/supabase/notifications';
+import type { NotificationType } from '$lib/neon/notifications';
 import { z } from 'zod';
 
 const NOTIFICATION_TYPES = [

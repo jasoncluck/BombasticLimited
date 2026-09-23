@@ -26,7 +26,7 @@
   import { createVisibilityAwareInterval } from '$lib/utils/tab-visibility.js';
 
   let { data, children } = $props();
-  let { session, supabase, userProfile, preferredImageFormat } = $derived(data);
+  let { session, neon, userProfile, preferredImageFormat } = $derived(data);
 
   // Initialize all state
   const pageState = setPageState();
@@ -91,7 +91,7 @@
     if (from?.url.pathname.includes('/video')) {
       // Wait for any pending video operations (like timestamp saves)
       contentState.waitForPendingVideoOperations().then(() => {
-        invalidate('supabase:db:videos');
+        invalidate('neon:db:videos');
       });
     }
   });
@@ -122,7 +122,7 @@
       if (session) {
         navigationState.updateContext({
           session: data.session,
-          supabase: data.supabase,
+          neon: data.neon,
         });
       }
 
@@ -388,13 +388,8 @@
     </div>
   {:else}
     <!-- Full UI - sidebar may still be loading data -->
-    <MainNavigation {userProfile} {session} {supabase} bind:openAccountDrawer />
-    <ResizableLayout
-      {supabase}
-      {session}
-      {refreshSidebar}
-      {isNavigatingToContent}
-    >
+    <MainNavigation {userProfile} {session} {neon} bind:openAccountDrawer />
+    <ResizableLayout {neon} {session} {refreshSidebar} {isNavigatingToContent}>
       {@render children()}
     </ResizableLayout>
   {/if}

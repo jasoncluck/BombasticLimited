@@ -8,11 +8,11 @@
     updatePaginationQueryParams,
   } from '$lib/components/pagination/pagination.js';
   import Pagination from '$lib/components/pagination/pagination.svelte';
-  import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/supabase/videos.js';
+  import { DEFAULT_NUM_VIDEOS_PAGINATION } from '$lib/neon/videos.js';
   import type { Snapshot } from '../$types.js';
 
   const { data } = $props();
-  const { supabase, videos, videosCount, session, contentFilter, userProfile } =
+  const { neon, videos, videosCount, session, contentFilter, userProfile } =
     $derived(data);
 
   let showFloatingBreadcrumbs = $state(false);
@@ -81,7 +81,7 @@
           ]
         : []),
     ]}
-    {supabase}
+    {neon}
     {session}
   />
 
@@ -91,7 +91,7 @@
     tilesDisplay="TILES"
     isContinueVideos={true}
     {contentFilter}
-    {supabase}
+    {neon}
     {session}
   />
   {#if currentPage && numPages > 1}
@@ -103,7 +103,7 @@
         updatePaginationQueryParams({
           pageNum,
           url: page.url,
-          invalidate: ['supabase:db:videos'],
+          invalidate: ['neon:db:videos'],
         });
       }}
     />

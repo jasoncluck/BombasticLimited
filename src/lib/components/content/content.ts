@@ -1,7 +1,7 @@
 import { SOURCES } from '$lib/constants/source';
-import type { Database } from '$lib/supabase/database.types';
-import { isUserPlaylist, type Playlist } from '$lib/supabase/playlists';
-import { isVideoWithPlaylistTimestamp, type Video } from '$lib/supabase/videos';
+import type { Database } from '$lib/neon/database.types';
+import { isUserPlaylist, type Playlist } from '$lib/neon/playlists';
+import { isVideoWithPlaylistTimestamp, type Video } from '$lib/neon/videos';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';
 import {
@@ -14,7 +14,7 @@ import {
 } from './content-filter';
 import { goto } from '$app/navigation';
 import type { MediaQueryState } from '$lib/state/media-query.svelte';
-import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { UserProfile } from '$lib/neon/user-profiles';
 
 export interface CarouselVideoDragInfo {
   readonly videoId: string;
@@ -55,7 +55,7 @@ export interface ContentDisplayProps {
   readonly contentFilter: CombinedContentFilter;
   readonly playlistContentFilter?: PlaylistVideosFilter;
   readonly sectionId?: string;
-  readonly supabase: NeonPostgrestClient<Database>;
+  readonly neon: NeonPostgrestClient<Database>;
   readonly session: Session | null;
 }
 
@@ -164,7 +164,7 @@ export function handleContentNavigation({
   });
 
   goto(url, {
-    invalidate: ['supabase:db:videos'],
+    invalidate: ['neon:db:videos'],
   });
 }
 

@@ -1,6 +1,6 @@
 import type { HighlightPlaylist } from '$lib/constants/source';
-import type { Playlist } from '$lib/supabase/playlists';
-import type { Video } from '$lib/supabase/videos';
+import type { Playlist } from '$lib/neon/playlists';
+import type { Video } from '$lib/neon/videos';
 
 interface CachedPlaylistData {
   playlist: Playlist;

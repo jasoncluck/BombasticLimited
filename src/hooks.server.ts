@@ -5,7 +5,7 @@ import { dev } from '$app/environment';
 import { getSession } from '$lib/server/session';
 import { getAnonymousToken } from '$lib/server/cognito';
 import { PUBLIC_NEON_DATA_API_URL } from '$env/static/public';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 import { ID_TOKEN_CLIENT_COOKIE } from '$lib/constants/auth-cookies';
 
 // CloudFront attaches this header to every request it forwards to the SSR
@@ -39,7 +39,7 @@ export const handle: Handle = async ({ event, resolve }) => {
   // anonymous service user's token when nobody's signed in.
   const dataApiToken = session?.token ?? (await getAnonymousToken());
 
-  event.locals.supabase = new NeonPostgrestClient<Database>({
+  event.locals.neon = new NeonPostgrestClient<Database>({
     dataApiUrl: PUBLIC_NEON_DATA_API_URL,
     options: {
       global: {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { redirect } from '@sveltejs/kit';
 import { load } from '../+page.server';
-import { getVideos, getInProgressVideos } from '$lib/supabase/videos';
+import { getVideos, getInProgressVideos } from '$lib/neon/videos';
 import { SOURCES } from '$lib/constants/source';
 import {
   createMockSession,
@@ -19,7 +19,7 @@ vi.mock('@sveltejs/kit', () => ({
   }),
 }));
 
-vi.mock('$lib/supabase/videos', () => ({
+vi.mock('$lib/neon/videos', () => ({
   getVideos: vi.fn(),
   getInProgressVideos: vi.fn(),
   DEFAULT_NUM_VIDEOS_OVERVIEW: 10,
@@ -34,14 +34,14 @@ const mockGetInProgressVideos = vi.mocked(getInProgressVideos);
 const mockRedirect = vi.mocked(redirect);
 
 describe('+page.server.ts load function', () => {
-  const mockSupabase = {} as any;
+  const mockNeon = {} as any;
   const mockSession = createMockSession();
   const mockSourceVideos = createMockSourceVideos();
   const mockContinueVideos = createMockContinueVideos();
 
   const mockLoadEvent: any = {
     locals: {
-      supabase: mockSupabase,
+      neon: mockNeon,
       session: mockSession,
     },
     url: new URL('http://localhost:5173'),
@@ -80,7 +80,7 @@ describe('+page.server.ts load function', () => {
 
     const result = await load(mockLoadEvent);
 
-    expect(mockDepends).toHaveBeenCalledWith('supabase:db:videos');
+    expect(mockDepends).toHaveBeenCalledWith('neon:db:videos');
 
     // Verify all sources were fetched
     expect(mockGetVideos).toHaveBeenCalledTimes(SOURCES.length);
@@ -96,7 +96,7 @@ describe('+page.server.ts load function', () => {
           type: 'video',
         },
         preferredImageFormat: 'webp',
-        supabase: mockSupabase,
+        neon: mockNeon,
       });
     });
 
@@ -111,7 +111,7 @@ describe('+page.server.ts load function', () => {
         type: 'timestamp',
       },
       preferredImageFormat: 'webp',
-      supabase: mockSupabase,
+      neon: mockNeon,
     });
 
     // Verify result structure
@@ -178,7 +178,7 @@ describe('+page.server.ts load function', () => {
         type: 'timestamp',
       },
       preferredImageFormat: 'webp',
-      supabase: mockSupabase,
+      neon: mockNeon,
     });
 
     expect(result.sourceVideos).toEqual({

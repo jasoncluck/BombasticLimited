@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { PlaylistImageProperties } from '$lib/supabase/playlists';
+import type { PlaylistImageProperties } from '$lib/neon/playlists';
 import {
   calculateDynamicCropDimensions,
   validateAndAdjustCropDimensions,

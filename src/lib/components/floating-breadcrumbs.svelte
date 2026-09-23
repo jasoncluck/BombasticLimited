@@ -5,15 +5,15 @@
     type BreadcrumbItem,
   } from '$lib/components/breadcrumb-layout.svelte';
   import { getPageState } from '$lib/state/page.svelte';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import ContentSelect from './content/content-select.svelte';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
-  import type { Database } from '$lib/supabase/database.types';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Database } from '$lib/neon/database.types';
+  import type { Video } from '$lib/neon/videos';
   import type { CombinedContentFilter } from './content/content-filter';
   import { getContentView } from './content/content';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
 
   interface BreacrumbLayoutProps {
@@ -22,7 +22,7 @@
     contentFilter?: CombinedContentFilter;
     playlist?: Playlist;
     userProfile: UserProfile | null;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
   }
   const {
@@ -31,7 +31,7 @@
     contentFilter,
     playlist,
     userProfile,
-    supabase,
+    neon,
     session,
   }: BreacrumbLayoutProps = $props();
 
@@ -52,7 +52,7 @@
         {videos}
         {playlist}
         {contentFilter}
-        {supabase}
+        {neon}
         {session}
         displayLabel={false}
       />

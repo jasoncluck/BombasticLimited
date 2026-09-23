@@ -34,7 +34,7 @@ describe('Navigation State Management', () => {
     expect(navigationState).toHaveProperty('config');
     expect(navigationState).toHaveProperty('session');
     expect(navigationState).toHaveProperty('userProfile');
-    expect(navigationState).toHaveProperty('supabase');
+    expect(navigationState).toHaveProperty('neon');
   });
 
   it('should update active route correctly', () => {
@@ -82,17 +82,17 @@ describe('Navigation State Management', () => {
   it('should update context like sidebar state pattern', () => {
     const mockSession = { user: { id: 'test-user' } } as any;
     const mockUserProfile = { id: 'test-user', username: 'test' } as any;
-    const mockSupabase = {} as any;
+    const mockNeon = {} as any;
 
     navigationState.updateContext({
       session: mockSession,
       userProfile: mockUserProfile,
-      supabase: mockSupabase,
+      neon: mockNeon,
     });
 
     expect(navigationState.session).toStrictEqual(mockSession);
     expect(navigationState.userProfile).toStrictEqual(mockUserProfile);
-    expect(navigationState.supabase).toStrictEqual(mockSupabase);
+    expect(navigationState.neon).toStrictEqual(mockNeon);
   });
 
   it('should provide configuration management like sidebar', () => {

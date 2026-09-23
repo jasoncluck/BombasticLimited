@@ -2,7 +2,7 @@ import sharp, { type Metadata } from 'sharp';
 import { detectOptimalFormat } from '$lib/utils/image-format-detection';
 import { validateAndAdjustCropDimensions } from '$lib/utils/dynamic-crop-dimensions';
 import { PUBLIC_CONTENT_IMAGES_URL } from '$env/static/public';
-import type { PlaylistImageProperties } from '$lib/supabase/playlists';
+import type { PlaylistImageProperties } from '$lib/neon/playlists';
 
 // **SPEED-BALANCED** image processing configuration
 export interface ImageProcessingOptions {

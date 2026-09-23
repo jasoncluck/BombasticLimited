@@ -1,8 +1,8 @@
-import type { Playlist } from '$lib/supabase/playlists';
-import type { Video } from '$lib/supabase/videos';
+import type { Playlist } from '$lib/neon/playlists';
+import type { Video } from '$lib/neon/videos';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 import { getContext, setContext } from 'svelte';
 import { createDragImage } from '$lib/utils/dragdrop';
 import {
@@ -15,7 +15,7 @@ import type { SidebarState } from './sidebar.svelte';
 
 export interface PlaylistDragDropOptions {
   playlists: Playlist[];
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
   session: Session | null;
   onPlaylistsUpdate?: (playlists: Playlist[]) => void;
 }
@@ -301,7 +301,7 @@ export class PlaylistStateClass {
             playlist: options.playlists[playlistTargetIndex],
             videos: allVideos,
             sidebarState: this.sidebarState,
-            supabase: options.supabase,
+            neon: options.neon,
             session: options.session,
           });
         }
@@ -320,7 +320,7 @@ export class PlaylistStateClass {
         handleUpdatePlaylistPosition({
           playlist: options.playlists[this.draggedIndex],
           position: options.playlists.length - playlistTargetIndex,
-          supabase: options.supabase,
+          neon: options.neon,
           session: options.session,
         });
       }

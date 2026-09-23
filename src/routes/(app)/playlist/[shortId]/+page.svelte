@@ -6,7 +6,7 @@
   import PlaylistHeader from './playlist-header.svelte';
   import Content from '$lib/components/content/content.svelte';
   import type { Snapshot } from '@sveltejs/kit';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Video } from '$lib/neon/videos';
 
   const { data } = $props();
   const {
@@ -18,7 +18,7 @@
     videosCount,
     userProfile,
     creatorProfile,
-    supabase,
+    neon,
     session,
     playlistDuration,
   } = $derived(data);
@@ -55,7 +55,7 @@
     playlistDuration,
     videosCount: videosCount ?? 0,
     creatorProfile,
-    supabase,
+    neon,
     session,
   });
 </script>
@@ -77,7 +77,7 @@
     allowVideoReorder={contentFilter.sort.key === 'playlistOrder' &&
       playlist.created_by === session?.user.id}
     {contentFilter}
-    {supabase}
+    {neon}
     {session}
     {form}
   />

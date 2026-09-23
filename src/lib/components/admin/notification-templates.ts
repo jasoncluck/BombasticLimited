@@ -1,4 +1,4 @@
-import type { NotificationType } from '$lib/supabase/notifications';
+import type { NotificationType } from '$lib/neon/notifications';
 
 export interface NotificationTemplate {
   type: NotificationType;

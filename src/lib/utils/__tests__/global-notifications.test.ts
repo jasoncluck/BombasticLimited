@@ -5,10 +5,10 @@ import {
   NOTIFICATION_TEMPLATES,
 } from '../global-notifications';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
-import type { Database } from '$lib/supabase/database.types';
-import type { NotificationType } from '$lib/supabase/notifications';
+import type { Database } from '$lib/neon/database.types';
+import type { NotificationType } from '$lib/neon/notifications';
 
-// Mock Supabase client
+// Mock Neon client
 const createMockNeonPostgrestClient = () => {
   const mockRpc = vi.fn();
 
@@ -19,20 +19,20 @@ const createMockNeonPostgrestClient = () => {
 };
 
 describe('global-notifications', () => {
-  let mockSupabase: ReturnType<typeof createMockNeonPostgrestClient>;
+  let mockNeon: ReturnType<typeof createMockNeonPostgrestClient>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockSupabase = createMockNeonPostgrestClient();
+    mockNeon = createMockNeonPostgrestClient();
   });
 
   describe('sendGlobalNotification', () => {
     it('should send a global notification successfully', async () => {
       const mockResponse = { data: 100, error: null };
-      mockSupabase.mockRpc.mockResolvedValue(mockResponse);
+      mockNeon.mockRpc.mockResolvedValue(mockResponse);
 
       const result = await sendGlobalNotification(
-        mockSupabase,
+        mockNeon,
         'system',
         'Test Title',
         'Test Message',
@@ -40,7 +40,7 @@ describe('global-notifications', () => {
         '/test/url'
       );
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -56,16 +56,16 @@ describe('global-notifications', () => {
 
     it('should handle missing optional parameters', async () => {
       const mockResponse = { data: 50, error: null };
-      mockSupabase.mockRpc.mockResolvedValue(mockResponse);
+      mockNeon.mockRpc.mockResolvedValue(mockResponse);
 
       const result = await sendGlobalNotification(
-        mockSupabase,
+        mockNeon,
         'system',
         'Simple Title',
         'Simple Message'
       );
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -79,13 +79,13 @@ describe('global-notifications', () => {
       expect(result).toEqual({ count: 50, error: null });
     });
 
-    it('should handle RPC errors from Supabase', async () => {
+    it('should handle RPC errors from Neon', async () => {
       const mockError = { message: 'Database error', code: 'DB_ERROR' };
       const mockResponse = { data: null, error: mockError };
-      mockSupabase.mockRpc.mockResolvedValue(mockResponse);
+      mockNeon.mockRpc.mockResolvedValue(mockResponse);
 
       const result = await sendGlobalNotification(
-        mockSupabase,
+        mockNeon,
         'system',
         'Error Test',
         'This should fail'
@@ -96,10 +96,10 @@ describe('global-notifications', () => {
 
     it('should handle exceptions thrown by RPC call', async () => {
       const thrownError = new Error('Network error');
-      mockSupabase.mockRpc.mockRejectedValue(thrownError);
+      mockNeon.mockRpc.mockRejectedValue(thrownError);
 
       const result = await sendGlobalNotification(
-        mockSupabase,
+        mockNeon,
         'system',
         'Exception Test',
         'This will throw'
@@ -112,16 +112,16 @@ describe('global-notifications', () => {
       const types: NotificationType[] = ['system'];
 
       for (const type of types) {
-        mockSupabase.mockRpc.mockResolvedValue({ data: 10, error: null });
+        mockNeon.mockRpc.mockResolvedValue({ data: 10, error: null });
 
         const result = await sendGlobalNotification(
-          mockSupabase,
+          mockNeon,
           type,
           `${type} title`,
           `${type} message`
         );
 
-        expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+        expect(mockNeon.mockRpc).toHaveBeenCalledWith(
           'create_notification_for_all_users',
           {
             notification_type: type,
@@ -151,10 +151,10 @@ describe('global-notifications', () => {
         },
       };
 
-      mockSupabase.mockRpc.mockResolvedValue({ data: 75, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 75, error: null });
 
       const result = await sendGlobalNotification(
-        mockSupabase,
+        mockNeon,
         'system',
         'Complex Notification',
         'This has complex metadata',
@@ -162,7 +162,7 @@ describe('global-notifications', () => {
         '/admin/dashboard'
       );
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -177,10 +177,10 @@ describe('global-notifications', () => {
     });
 
     it('should handle empty strings and null values', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 0, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 0, error: null });
 
       const result = await sendGlobalNotification(
-        mockSupabase,
+        mockNeon,
         'system',
         '',
         '',
@@ -188,7 +188,7 @@ describe('global-notifications', () => {
         ''
       );
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -300,11 +300,11 @@ describe('global-notifications', () => {
 
   describe('sendTemplateNotification', () => {
     it('should send notification using welcome template', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 150, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 150, error: null });
 
-      const result = await sendTemplateNotification(mockSupabase, 'welcome');
+      const result = await sendTemplateNotification(mockNeon, 'welcome');
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -320,14 +320,11 @@ describe('global-notifications', () => {
     });
 
     it('should send notification using maintenance template', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 200, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 200, error: null });
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'maintenance'
-      );
+      const result = await sendTemplateNotification(mockNeon, 'maintenance');
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -343,11 +340,11 @@ describe('global-notifications', () => {
     });
 
     it('should send notification using newFeature template', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 100, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 100, error: null });
 
-      const result = await sendTemplateNotification(mockSupabase, 'newFeature');
+      const result = await sendTemplateNotification(mockNeon, 'newFeature');
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -363,13 +360,13 @@ describe('global-notifications', () => {
     });
 
     it('should apply custom title override', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 75, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 75, error: null });
 
-      const result = await sendTemplateNotification(mockSupabase, 'welcome', {
+      const result = await sendTemplateNotification(mockNeon, 'welcome', {
         title: 'Custom Welcome Title',
       });
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -385,17 +382,13 @@ describe('global-notifications', () => {
     });
 
     it('should apply custom message override', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 50, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 50, error: null });
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'maintenance',
-        {
-          message: 'Custom maintenance message with specific timing.',
-        }
-      );
+      const result = await sendTemplateNotification(mockNeon, 'maintenance', {
+        message: 'Custom maintenance message with specific timing.',
+      });
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -411,20 +404,16 @@ describe('global-notifications', () => {
     });
 
     it('should merge custom metadata with template metadata', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 80, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 80, error: null });
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'newFeature',
-        {
-          metadata: {
-            version: '2.1.0',
-            priority: 'high',
-          },
-        }
-      );
+      const result = await sendTemplateNotification(mockNeon, 'newFeature', {
+        metadata: {
+          version: '2.1.0',
+          priority: 'high',
+        },
+      });
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -444,16 +433,16 @@ describe('global-notifications', () => {
     });
 
     it('should override template metadata properties with custom ones', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 90, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 90, error: null });
 
-      const result = await sendTemplateNotification(mockSupabase, 'welcome', {
+      const result = await sendTemplateNotification(mockNeon, 'welcome', {
         metadata: {
           source: 'custom_welcome', // This should override the template source
           campaign: 'spring2024',
         },
       });
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -472,17 +461,13 @@ describe('global-notifications', () => {
     });
 
     it('should apply custom action URL override', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 60, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 60, error: null });
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'maintenance',
-        {
-          actionUrl: '/custom/maintenance/page',
-        }
-      );
+      const result = await sendTemplateNotification(mockNeon, 'maintenance', {
+        actionUrl: '/custom/maintenance/page',
+      });
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -498,25 +483,21 @@ describe('global-notifications', () => {
     });
 
     it('should apply all customizations simultaneously', async () => {
-      mockSupabase.mockRpc.mockResolvedValue({ data: 125, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 125, error: null });
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'newFeature',
-        {
-          title: 'Awesome New Feature!',
-          message:
-            'We have launched an incredible new feature that will change everything!',
-          metadata: {
-            version: '3.0.0',
-            breaking_changes: true,
-            source: 'major_release',
-          },
-          actionUrl: '/features/v3',
-        }
-      );
+      const result = await sendTemplateNotification(mockNeon, 'newFeature', {
+        title: 'Awesome New Feature!',
+        message:
+          'We have launched an incredible new feature that will change everything!',
+        metadata: {
+          version: '3.0.0',
+          breaking_changes: true,
+          source: 'major_release',
+        },
+        actionUrl: '/features/v3',
+      });
 
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         {
           notification_type: 'system',
@@ -537,21 +518,18 @@ describe('global-notifications', () => {
 
     it('should handle RPC errors when using templates', async () => {
       const mockError = { message: 'Template error', code: 'TEMPLATE_ERROR' };
-      mockSupabase.mockRpc.mockResolvedValue({ data: null, error: mockError });
+      mockNeon.mockRpc.mockResolvedValue({ data: null, error: mockError });
 
-      const result = await sendTemplateNotification(mockSupabase, 'welcome');
+      const result = await sendTemplateNotification(mockNeon, 'welcome');
 
       expect(result).toEqual({ count: null, error: mockError });
     });
 
     it('should handle exceptions when using templates', async () => {
       const thrownError = new Error('Template exception');
-      mockSupabase.mockRpc.mockRejectedValue(thrownError);
+      mockNeon.mockRpc.mockRejectedValue(thrownError);
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'maintenance'
-      );
+      const result = await sendTemplateNotification(mockNeon, 'maintenance');
 
       expect(result).toEqual({ count: null, error: thrownError });
     });
@@ -564,12 +542,9 @@ describe('global-notifications', () => {
       >;
 
       for (const templateName of templateNames) {
-        mockSupabase.mockRpc.mockResolvedValue({ data: 100, error: null });
+        mockNeon.mockRpc.mockResolvedValue({ data: 100, error: null });
 
-        const result = await sendTemplateNotification(
-          mockSupabase,
-          templateName
-        );
+        const result = await sendTemplateNotification(mockNeon, templateName);
 
         expect(result.count).toBe(100);
         expect(result.error).toBeNull();
@@ -578,24 +553,20 @@ describe('global-notifications', () => {
 
     it('should work in admin notification workflow', async () => {
       // Simulate an admin sending a maintenance notification
-      mockSupabase.mockRpc.mockResolvedValue({ data: 500, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 500, error: null });
 
       const maintenanceTime = '2:00 AM EST';
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'maintenance',
-        {
-          message: `Scheduled maintenance will begin at ${maintenanceTime}. Please save your work.`,
-          metadata: {
-            maintenance_window: maintenanceTime,
-            estimated_duration: '2 hours',
-            admin_id: 'admin_123',
-          },
-        }
-      );
+      const result = await sendTemplateNotification(mockNeon, 'maintenance', {
+        message: `Scheduled maintenance will begin at ${maintenanceTime}. Please save your work.`,
+        metadata: {
+          maintenance_window: maintenanceTime,
+          estimated_duration: '2 hours',
+          admin_id: 'admin_123',
+        },
+      });
 
       expect(result.count).toBe(500);
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         expect.objectContaining({
           notification_metadata: expect.objectContaining({
@@ -609,26 +580,22 @@ describe('global-notifications', () => {
 
     it('should work in feature release workflow', async () => {
       // Simulate announcing a new feature
-      mockSupabase.mockRpc.mockResolvedValue({ data: 750, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 750, error: null });
 
-      const result = await sendTemplateNotification(
-        mockSupabase,
-        'newFeature',
-        {
-          title: 'Dark Mode Now Available!',
-          message:
-            'Switch to dark mode in your account settings for a better viewing experience.',
-          metadata: {
-            feature_name: 'dark_mode',
-            release_date: new Date().toISOString(),
-            requires_refresh: false,
-          },
-          actionUrl: '/account/settings#appearance',
-        }
-      );
+      const result = await sendTemplateNotification(mockNeon, 'newFeature', {
+        title: 'Dark Mode Now Available!',
+        message:
+          'Switch to dark mode in your account settings for a better viewing experience.',
+        metadata: {
+          feature_name: 'dark_mode',
+          release_date: new Date().toISOString(),
+          requires_refresh: false,
+        },
+        actionUrl: '/account/settings#appearance',
+      });
 
       expect(result.count).toBe(750);
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         expect.objectContaining({
           notification_title: 'Dark Mode Now Available!',
@@ -639,9 +606,9 @@ describe('global-notifications', () => {
 
     it('should work in user onboarding workflow', async () => {
       // Simulate sending welcome notifications for new user cohorts
-      mockSupabase.mockRpc.mockResolvedValue({ data: 25, error: null });
+      mockNeon.mockRpc.mockResolvedValue({ data: 25, error: null });
 
-      const result = await sendTemplateNotification(mockSupabase, 'welcome', {
+      const result = await sendTemplateNotification(mockNeon, 'welcome', {
         metadata: {
           cohort: 'december_2024',
           campaign: 'holiday_signup',
@@ -650,7 +617,7 @@ describe('global-notifications', () => {
       });
 
       expect(result.count).toBe(25);
-      expect(mockSupabase.mockRpc).toHaveBeenCalledWith(
+      expect(mockNeon.mockRpc).toHaveBeenCalledWith(
         'create_notification_for_all_users',
         expect.objectContaining({
           notification_metadata: expect.objectContaining({

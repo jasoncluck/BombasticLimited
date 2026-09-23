@@ -1,13 +1,13 @@
 import { renderComponent } from '$lib/components/ui/data-table';
-import type { Video } from '$lib/supabase/videos';
+import type { Video } from '$lib/neon/videos';
 import type { ColumnDef, Row } from '@tanstack/table-core';
 import ContentTableTitle from './content-table-title.svelte';
 import ContentTableActions from './content-table-actions.svelte';
 import ContentTableImage from './content-table-image.svelte';
-import type { Database } from '$lib/supabase/database.types';
+import type { Database } from '$lib/neon/database.types';
 import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
 import type { AppSession as Session } from '$lib/types/session';
-import type { Playlist } from '$lib/supabase/playlists';
+import type { Playlist } from '$lib/neon/playlists';
 import ContentTableDescription from './content-table-description.svelte';
 import ContentTablePlay from './content-table-play.svelte';
 import type { CombinedContentFilter } from '../content-filter';
@@ -20,7 +20,7 @@ export function createContentColumns({
   getIsSm,
   getIsContinueVideos,
   sectionId,
-  supabase,
+  neon,
   session,
 }: {
   getPlaylist: () => Playlist | undefined;
@@ -32,7 +32,7 @@ export function createContentColumns({
   getContentFilter: () => CombinedContentFilter;
   sectionId: string;
   session: Session | null;
-  supabase: NeonPostgrestClient<Database>;
+  neon: NeonPostgrestClient<Database>;
 }): ColumnDef<Video>[] {
   return [
     ...(getCanHover()
@@ -61,7 +61,7 @@ export function createContentColumns({
         const video = row.original;
         return renderComponent(ContentTableImage, {
           video,
-          supabase,
+          neon,
           index: row.index,
         });
       },
@@ -104,7 +104,7 @@ export function createContentColumns({
           playlists: getPlaylists(),
           sectionId,
           session,
-          supabase,
+          neon,
         });
       },
     },

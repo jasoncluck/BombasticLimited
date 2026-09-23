@@ -36,7 +36,7 @@ export async function handleUpdateProfileSources(props: {
 
     await Promise.all([
       invalidate('app:profile'),
-      invalidate('supabase:db:profiles'),
+      invalidate('neon:db:profiles'),
     ]);
 
     return {};

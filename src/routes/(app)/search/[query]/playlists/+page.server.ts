@@ -2,7 +2,7 @@ import { getPaginationQueryParams } from '$lib/components/pagination/pagination'
 import {
   DEFAULT_NUM_PLAYLISTS_PAGINATION,
   searchPlaylists,
-} from '$lib/supabase/playlists';
+} from '$lib/neon/playlists';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
@@ -10,9 +10,9 @@ export const load: PageServerLoad = async ({
   params,
   parent,
   url,
-  locals: { supabase, userId },
+  locals: { neon, userId },
 }) => {
-  depends('supabase:db:playlistsForProfile');
+  depends('neon:db:playlistsForProfile');
 
   const currentPage = getPaginationQueryParams({
     searchParams: url.searchParams,
@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({
       searchString,
       limit: DEFAULT_NUM_PLAYLISTS_PAGINATION,
       currentPage,
-      supabase,
+      neon,
       userId,
       preferredImageFormat,
       enabledSources: userProfile?.sources,

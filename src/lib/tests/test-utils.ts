@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
-import type { Video, VideoWithTimestamp } from '$lib/supabase/videos';
+import type { Video, VideoWithTimestamp } from '$lib/neon/videos';
 import type { AppSession as Session } from '$lib/types/session';
-import type { UserProfile } from '$lib/supabase/user-profiles';
+import type { UserProfile } from '$lib/neon/user-profiles';
 import type { PostgrestError } from '@supabase/postgrest-js';
 
 /**

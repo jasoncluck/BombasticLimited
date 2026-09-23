@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
 import { json, error } from '@sveltejs/kit';
-import { updateProfileSources } from '$lib/supabase/user-profiles';
+import { updateProfileSources } from '$lib/neon/user-profiles';
 
 export const POST: RequestHandler = async ({ request, locals: { userId } }) => {
   if (!userId) {

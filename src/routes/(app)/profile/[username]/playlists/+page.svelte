@@ -8,10 +8,10 @@
   import Pagination from '$lib/components/pagination/pagination.svelte';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
-  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/supabase/playlists';
+  import { DEFAULT_NUM_PLAYLISTS_PAGINATION } from '$lib/neon/playlists';
 
   const { data } = $props();
-  let { playlists, playlistsCount, session, supabase } = $derived(data);
+  let { playlists, playlistsCount, session, neon } = $derived(data);
 
   const username = page.params.username;
 
@@ -69,11 +69,11 @@
         updatePaginationQueryParams({
           pageNum,
           url: page.url,
-          invalidate: ['supabase:db:playlistsForProfile'],
+          invalidate: ['neon:db:playlistsForProfile'],
         });
       }}
     />
   {/if}
 
-  <PlaylistTiles {playlists} {supabase} {session} showUsername={false} />
+  <PlaylistTiles {playlists} {neon} {session} showUsername={false} />
 </div>

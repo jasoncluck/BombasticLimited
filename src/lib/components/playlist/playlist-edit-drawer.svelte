@@ -6,7 +6,7 @@
   import * as Dialog from '$lib/components/ui/dialog';
   import * as Form from '$lib/components/ui/form';
   import { Button, buttonVariants } from '$lib/components/ui/button';
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import { zod4Client as zodClient } from 'sveltekit-superforms/adapters';
   import { Pencil, ListVideo, Loader, Crop, X } from '@lucide/svelte';
   import Textarea from '$lib/components/ui/textarea/textarea.svelte';
@@ -181,7 +181,7 @@
         // Now close drawer and refresh data
         open = false;
         sidebarState.refreshData();
-        invalidate('supabase:db:playlists');
+        invalidate('neon:db:playlists');
       }
 
       isSubmitting = false;

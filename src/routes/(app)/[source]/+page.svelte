@@ -8,7 +8,7 @@
   import type { Snapshot } from './$types';
   import { handlePlaylistNavigation } from '$lib/components/playlist/playlist';
   import PlaylistTiles from '$lib/components/playlist/playlist-tiles.svelte';
-  import type { Video } from '$lib/supabase/videos';
+  import type { Video } from '$lib/neon/videos';
   import {
     getContentView,
     type SourceWithCarouselState,
@@ -23,7 +23,7 @@
     playlistContentFilter,
     userProfile,
     session,
-    supabase,
+    neon,
     source,
     contentFilter,
     sourcePlaylists = [],
@@ -130,7 +130,7 @@
         sectionId="latestVideos"
         {contentFilter}
         {session}
-        {supabase}
+        {neon}
       />
     </div>
     {#each highlightPlaylists as highlightPlaylist (highlightPlaylist.playlist.name)}
@@ -167,7 +167,7 @@
           tilesDisplay="CAROUSEL"
           contentFilter={playlistContentFilter}
           {session}
-          {supabase}
+          {neon}
         />
       </div>
     {/each}
@@ -184,7 +184,7 @@
       <PlaylistTiles
         playlists={sourcePlaylists}
         showUsername={false}
-        {supabase}
+        {neon}
         {session}
       />
     </div>

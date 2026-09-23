@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Database } from '$lib/supabase/database.types';
+  import type { Database } from '$lib/neon/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import { type CarouselState, type TilesDisplay } from './content';
@@ -7,9 +7,9 @@
     DEFAULT_NUM_VIDEOS_PAGINATION,
     type Video,
     type VideoWithTimestamp,
-  } from '$lib/supabase/videos';
+  } from '$lib/neon/videos';
   import type { HTMLAttributes } from 'svelte/elements';
-  import { type Playlist } from '$lib/supabase/playlists';
+  import { type Playlist } from '$lib/neon/playlists';
   import {
     DEFAULT_SECTION_ID,
     getContentState,
@@ -20,7 +20,7 @@
   import { getPlaylistState } from '$lib/state/playlist.svelte';
   import ContentCarousel from './content-carousel.svelte';
   import ContentTiles from './content-tiles.svelte';
-  import type { UserProfile } from '$lib/supabase/user-profiles';
+  import type { UserProfile } from '$lib/neon/user-profiles';
   import ContentContextMenu from './content-context-menu.svelte';
   import ContentDrawer from './content-drawer.svelte';
   import { onNavigate } from '$app/navigation';
@@ -49,7 +49,7 @@
     userProfile: UserProfile | null;
     sectionId?: string;
     tilesDisplay: TilesDisplay;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     form?: import('sveltekit-superforms').SuperValidated<PlaylistSchema>;
   };
@@ -60,7 +60,7 @@
     carouselState = $bindable(),
     playlist,
     isContinueVideos = false,
-    supabase,
+    neon,
     session,
     allowVideoReorder,
     contentFilter,
@@ -103,7 +103,7 @@
       getContentFilter: () => contentFilter,
       getIsContinueVideos: () => isContinueVideos,
       sectionId,
-      supabase,
+      neon,
       session,
     })
   );
@@ -155,7 +155,7 @@
           updatePaginationQueryParams({
             pageNum,
             url: page.url,
-            invalidate: ['supabase:db:videos'],
+            invalidate: ['neon:db:videos'],
           });
         }}
       />
@@ -167,7 +167,7 @@
       (!mediaQueryState.isSm && !mediaQueryState.canHover)}
     {sectionId}
     {playlists}
-    {supabase}
+    {neon}
     {session}
   >
     <ContentDrawer
@@ -176,7 +176,7 @@
       {playlists}
       {contentFilter}
       {sectionId}
-      {supabase}
+      {neon}
       {session}
       {form}
     >
@@ -191,7 +191,7 @@
             {columns}
             {playlist}
             {sectionId}
-            {supabase}
+            {neon}
             {session}
           />
         {:else if tilesDisplay === 'CAROUSEL'}
@@ -204,7 +204,7 @@
             {contentFilter}
             bind:carouselState
             {sectionId}
-            {supabase}
+            {neon}
             {session}
             {allowVideoReorder}
           />
@@ -219,7 +219,7 @@
               {allowVideoReorder}
               {contentFilter}
               {sectionId}
-              {supabase}
+              {neon}
               {session}
             />
           </div>
@@ -238,7 +238,7 @@
           updatePaginationQueryParams({
             pageNum,
             url: page.url,
-            invalidate: ['supabase:db:videos'],
+            invalidate: ['neon:db:videos'],
           });
 
           pageState.contentScrollPosition = { scrollTop: 0, scrollLeft: 0 };

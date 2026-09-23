@@ -3,7 +3,7 @@
   import { SOURCE_INFO } from '$lib/constants/source';
   import ContentHeader from '$lib/components/content/content-header.svelte';
   import Content from '$lib/components/content/content.svelte';
-  import { type Video } from '$lib/supabase/videos.js';
+  import { type Video } from '$lib/neon/videos.js';
   import type { Snapshot } from '@sveltejs/kit';
   import {
     DEFAULT_SECTION_ID,
@@ -13,7 +13,7 @@
 
   const { data } = $props();
   const {
-    supabase,
+    neon,
     videos,
     videosCount,
     userProfile,
@@ -91,7 +91,7 @@
         label: 'Latest',
       },
     ]}
-    {supabase}
+    {neon}
     {session}
   />
   <Content
@@ -100,7 +100,7 @@
     tilesDisplay="TILES"
     {userProfile}
     {contentFilter}
-    {supabase}
+    {neon}
     {session}
   />
 </div>

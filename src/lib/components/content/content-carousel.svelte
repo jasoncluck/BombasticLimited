@@ -28,7 +28,7 @@
     carouselState = $bindable(),
     allowVideoReorder = false,
     contentFilter,
-    supabase,
+    neon,
     session,
   }: ContentCarouselProps = $props();
 
@@ -308,7 +308,7 @@
           {contentFilter}
           {isContinueVideos}
           {sectionId}
-          {supabase}
+          {neon}
           {session}
           {allowVideoReorder}
           index={i}

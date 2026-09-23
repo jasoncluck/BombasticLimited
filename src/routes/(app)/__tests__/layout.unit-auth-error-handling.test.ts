@@ -7,14 +7,14 @@ vi.mock('$app/navigation', () => ({
 
 // Test auth error handling logic in isolation
 describe('Layout Auth Error Handling Logic', () => {
-  let mockSupabaseAuth: any;
-  let mockSupabase: any;
+  let mockNeonAuth: any;
+  let mockNeon: any;
   let mockInvalidate: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();
 
-    mockSupabaseAuth = {
+    mockNeonAuth = {
       signOut: vi.fn().mockResolvedValue({ error: null }),
       getClaims: vi.fn(),
       getSession: vi
@@ -25,8 +25,8 @@ describe('Layout Auth Error Handling Logic', () => {
       }),
     };
 
-    mockSupabase = {
-      auth: mockSupabaseAuth,
+    mockNeon = {
+      auth: mockNeonAuth,
     };
 
     // Get the mocked invalidate function
@@ -35,7 +35,7 @@ describe('Layout Auth Error Handling Logic', () => {
   });
 
   // Create the auth error handler function to test
-  const createHandleAuthError = (supabase: any, invalidate: any) => {
+  const createHandleAuthError = (neon: any, invalidate: any) => {
     return async function handleAuthError(
       error: any,
       context: string
@@ -55,10 +55,10 @@ describe('Layout Auth Error Handling Logic', () => {
 
         try {
           // Clean up auth state using signOut
-          await supabase.auth.signOut();
+          await neon.auth.signOut();
 
           // Invalidate auth to ensure fresh state
-          await invalidate('supabase:auth');
+          await invalidate('neon:auth');
 
           console.log(
             `✅ Auth state cleaned up successfully after 403 error in ${context}`
@@ -78,51 +78,51 @@ describe('Layout Auth Error Handling Logic', () => {
   };
 
   it('should detect 403 error by status property and clean up auth state', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error403 = { status: 403, message: 'Forbidden' };
 
     const result = await handleAuthError(error403, 'test context');
 
     expect(result).toBe(true);
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
-    expect(mockInvalidate).toHaveBeenCalledWith('supabase:auth');
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockInvalidate).toHaveBeenCalledWith('neon:auth');
   });
 
   it('should detect 403 error by code property', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error403 = { code: 403, message: 'Authentication failed' };
 
     const result = await handleAuthError(error403, 'test context');
 
     expect(result).toBe(true);
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
-    expect(mockInvalidate).toHaveBeenCalledWith('supabase:auth');
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockInvalidate).toHaveBeenCalledWith('neon:auth');
   });
 
   it('should detect 403 error in message text', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error403 = { message: 'Error 403: Access denied' };
 
     const result = await handleAuthError(error403, 'test context');
 
     expect(result).toBe(true);
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
-    expect(mockInvalidate).toHaveBeenCalledWith('supabase:auth');
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockInvalidate).toHaveBeenCalledWith('neon:auth');
   });
 
   it('should detect 403 error in response.status', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error403 = { response: { status: 403 } };
 
     const result = await handleAuthError(error403, 'test context');
 
     expect(result).toBe(true);
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
-    expect(mockInvalidate).toHaveBeenCalledWith('supabase:auth');
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockInvalidate).toHaveBeenCalledWith('neon:auth');
   });
 
   it('should not trigger cleanup for non-403 errors', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error404 = { status: 404, message: 'Not found' };
     const error500 = { status: 500, message: 'Internal server error' };
     const genericError = { message: 'Something went wrong' };
@@ -134,27 +134,27 @@ describe('Layout Auth Error Handling Logic', () => {
     expect(result404).toBe(false);
     expect(result500).toBe(false);
     expect(resultGeneric).toBe(false);
-    expect(mockSupabaseAuth.signOut).not.toHaveBeenCalled();
+    expect(mockNeonAuth.signOut).not.toHaveBeenCalled();
     expect(mockInvalidate).not.toHaveBeenCalled();
   });
 
   it('should handle signOut errors gracefully', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error403 = { status: 403 };
 
     // Mock signOut to throw an error
-    mockSupabaseAuth.signOut.mockRejectedValue(new Error('SignOut failed'));
+    mockNeonAuth.signOut.mockRejectedValue(new Error('SignOut failed'));
 
     const result = await handleAuthError(error403, 'test context');
 
     expect(result).toBe(false); // Should return false when cleanup fails
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
     // invalidate should not be called when signOut fails
     expect(mockInvalidate).not.toHaveBeenCalled();
   });
 
   it('should handle invalidate errors gracefully', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
     const error403 = { status: 403 };
 
     // Mock invalidate to throw an error
@@ -163,8 +163,8 @@ describe('Layout Auth Error Handling Logic', () => {
     const result = await handleAuthError(error403, 'test context');
 
     expect(result).toBe(false); // Should return false when cleanup fails
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
-    expect(mockInvalidate).toHaveBeenCalledWith('supabase:auth');
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockInvalidate).toHaveBeenCalledWith('neon:auth');
   });
 
   // Test the data refresh function with auth error handling
@@ -182,7 +182,7 @@ describe('Layout Auth Error Handling Logic', () => {
       try {
         // Step 1: Invalidate auth first if requested
         if (includeAuth) {
-          await invalidate('supabase:auth');
+          await invalidate('neon:auth');
         }
 
         // Step 2: Refresh sidebar and navigation state concurrently
@@ -222,10 +222,7 @@ describe('Layout Auth Error Handling Logic', () => {
   it('should retry data refresh after successful auth cleanup', async () => {
     // Reset invalidate to not fail for this test
     const workingInvalidate = vi.fn().mockResolvedValue(undefined);
-    const handleAuthError = createHandleAuthError(
-      mockSupabase,
-      workingInvalidate
-    );
+    const handleAuthError = createHandleAuthError(mockNeon, workingInvalidate);
 
     const mockSidebarState = {
       refreshData: vi.fn(),
@@ -255,17 +252,17 @@ describe('Layout Auth Error Handling Logic', () => {
     await performDataRefresh('test refresh');
 
     // Verify auth cleanup was triggered
-    expect(mockSupabaseAuth.signOut).toHaveBeenCalledOnce();
+    expect(mockNeonAuth.signOut).toHaveBeenCalledOnce();
 
     // Verify retry happened (original call + retry call)
     expect(mockSidebarState.refreshData).toHaveBeenCalledTimes(2);
   });
 
   it('should not retry if cleanup was not successful', async () => {
-    const handleAuthError = createHandleAuthError(mockSupabase, mockInvalidate);
+    const handleAuthError = createHandleAuthError(mockNeon, mockInvalidate);
 
     // Mock signOut to fail
-    mockSupabaseAuth.signOut.mockRejectedValue(new Error('SignOut failed'));
+    mockNeonAuth.signOut.mockRejectedValue(new Error('SignOut failed'));
 
     const mockSidebarState = {
       refreshData: vi.fn().mockRejectedValue({ status: 403 }),

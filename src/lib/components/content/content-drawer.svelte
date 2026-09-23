@@ -4,8 +4,8 @@
     getContentState,
   } from '$lib/state/content.svelte';
   import * as Drawer from '$lib/components/ui/drawer';
-  import { type Playlist } from '$lib/supabase/playlists';
-  import type { Database } from '$lib/supabase/database.types';
+  import { type Playlist } from '$lib/neon/playlists';
+  import type { Database } from '$lib/neon/database.types';
   import type { NeonPostgrestClient } from '@neondatabase/postgrest-js';
   import type { AppSession as Session } from '$lib/types/session';
   import {
@@ -15,7 +15,7 @@
     handleUpdatePlaylistVideoPosition,
   } from '../playlist/playlist-service';
   import type { Snippet } from 'svelte';
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import { getMediaQueryState } from '$lib/state/media-query.svelte';
   import {
     handleAddVideoTimestamps,
@@ -52,7 +52,7 @@
     playlists: Playlist[];
     sectionId?: string;
     children: Snippet<[]>;
-    supabase: NeonPostgrestClient<Database>;
+    neon: NeonPostgrestClient<Database>;
     session: Session | null;
     onSelectAll?: () => void;
     form?: SuperValidated<PlaylistSchema>;
@@ -64,7 +64,7 @@
     playlists,
     contentFilter,
     sectionId = DEFAULT_SECTION_ID,
-    supabase,
+    neon,
     session,
     children,
     form,
@@ -141,7 +141,7 @@
         playlist,
         position: newPosition,
         videos: [item as Video],
-        supabase,
+        neon,
         userId: session.user.id,
       });
     } catch (error) {
@@ -246,7 +246,7 @@
             title="Reorder playlist videos"
             onReorder={handleVideoReorder}
             onClose={() => {
-              invalidate('supabase:db:videos');
+              invalidate('neon:db:videos');
               contentState.openDrawerSection = null;
             }}
           >
@@ -316,7 +316,7 @@
                       videos: operationVideos,
                       playlist: addPlaylist,
                       sidebarState,
-                      supabase,
+                      neon,
                       session,
                     });
 
@@ -366,7 +366,7 @@
                 videos: operationVideos,
                 sidebarState,
                 playlist,
-                supabase,
+                neon,
                 userId: session.user.id,
               });
 
@@ -388,7 +388,7 @@
                 playlist,
                 sidebarState,
                 thumbnailUrl: operationVideos[0].thumbnail_url,
-                supabase,
+                neon,
               });
 
               contentState.openDrawerSection = null;
@@ -407,7 +407,7 @@
             onclick={async () => {
               const { updatedVideos } = await handleDeleteVideosTimestamp({
                 videos: operationVideos,
-                supabase,
+                neon,
                 session,
               });
 
@@ -443,7 +443,7 @@
                   watchedAt: new Date(),
                 })),
                 session,
-                supabase,
+                neon,
               });
 
               contentState.openDrawerSection = null;
@@ -494,7 +494,7 @@
     {playlist}
     {sidebarState}
     {session}
-    {supabase}
+    {neon}
     bind:open={showDeleteDrawer}
   />
 {/if}

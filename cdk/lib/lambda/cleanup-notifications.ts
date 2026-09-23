@@ -1,9 +1,9 @@
 import { Client } from 'pg';
 
 // Ported from the pg_cron job `cleanup-expired-notifications`
-// (supabase/migrations/20250811163855_12_notifications_system.sql), which
-// called cleanup_expired_notifications_cron() directly via SQL (no edge
-// function involved).
+// (neon/legacy-supabase-migrations/20250811163855_12_notifications_system.sql),
+// which called cleanup_expired_notifications_cron() directly via SQL (no
+// edge function involved).
 export interface CleanupResponse {
   success: boolean;
   deletedCount: number;

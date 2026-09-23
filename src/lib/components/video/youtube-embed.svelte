@@ -7,10 +7,10 @@
   import {
     getLatestTimestamp,
     type TimestampWithVideoId,
-  } from '$lib/supabase/timestamps';
+  } from '$lib/neon/timestamps';
   import { beforeNavigate } from '$app/navigation';
-  import type { Playlist } from '$lib/supabase/playlists';
-  import { isVideoWithTimestamp, type Video } from '$lib/supabase/videos';
+  import type { Playlist } from '$lib/neon/playlists';
+  import { isVideoWithTimestamp, type Video } from '$lib/neon/videos';
   import { page } from '$app/state';
   import {
     isPlaylistVideosFilter,
@@ -28,14 +28,14 @@
 
   const {
     video,
-    supabase,
+    neon,
     session,
     playlist,
     durationSeconds,
     contentFilter,
   }: {
     video: Video;
-    supabase: NeonPostgrestClient;
+    neon: NeonPostgrestClient;
     session: Session | null;
     durationSeconds: number;
     contentFilter?: CombinedContentFilter;
@@ -176,7 +176,7 @@
               : null,
         },
         session,
-        supabase,
+        neon,
       });
     } else {
       return handleAddVideoTimestamp({
@@ -195,7 +195,7 @@
               : null,
         },
         session,
-        supabase,
+        neon,
       });
     }
   }
@@ -409,7 +409,7 @@
       // Create new tracker
       watchTimeTracker = createVideoWatchTimeTracker({
         videoId,
-        supabase,
+        neon,
         session,
       });
 
@@ -447,7 +447,7 @@
       const { videoTimestamp } = await getLatestTimestamp({
         videoId: video.id,
         session,
-        supabase,
+        neon,
       });
       if (videoTimestamp) {
         savedTimestamp = videoTimestamp.video_start_seconds ?? 0;

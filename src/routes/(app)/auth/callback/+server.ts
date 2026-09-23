@@ -7,7 +7,7 @@ import {
 } from '$lib/server/cognito';
 import { setSessionCookies } from '$lib/server/session';
 import { ensureProfileExists } from '$lib/server/profile';
-import { syncDiscordIdentity } from '$lib/supabase/user-profiles';
+import { syncDiscordIdentity } from '$lib/neon/user-profiles';
 import { fetchDiscordProfile } from '$lib/server/discord';
 
 interface CallbackState {

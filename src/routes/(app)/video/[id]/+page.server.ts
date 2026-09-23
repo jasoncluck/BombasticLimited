@@ -1,8 +1,8 @@
-import { getVideo, incrementVideoView } from '$lib/supabase/videos';
+import { getVideo, incrementVideoView } from '$lib/neon/videos';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({
-  locals: { supabase, userId },
+  locals: { neon, userId },
   parent,
   params,
 }) => {
@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({
   const { preferredImageFormat } = await parent();
 
   const { video } = await getVideo({
-    supabase,
+    neon,
     userId,
     videoId,
     preferredImageFormat,
@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({
     throw new Error('Could not find video specified.');
   }
 
-  incrementVideoView({ videoId, supabase });
+  incrementVideoView({ videoId, neon });
 
   return {
     video,

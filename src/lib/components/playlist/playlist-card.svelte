@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Playlist } from '$lib/supabase/playlists';
+  import type { Playlist } from '$lib/neon/playlists';
   import { Check, ListVideo } from '@lucide/svelte';
   import * as Avatar from '$lib/components/ui/avatar';
   import { isSource, SOURCE_INFO } from '$lib/constants/source';
