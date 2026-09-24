@@ -22,6 +22,7 @@
     createVideoWatchTimeTracker,
   } from './video-service';
   import { getContentState } from '$lib/state/content.svelte';
+  import { waitForYouTubeIframeAPI } from '$lib/utils/youtube-iframe-api';
 
   const VIDEO_SAVE_SECONDS_START = 15;
   const VIDEO_DELETE_SECONDS_PERCENT = 0.95;
@@ -456,10 +457,20 @@
   });
 
   onMount(() => {
-    if (typeof window !== 'undefined') {
-      const windowRef = window as unknown as WindowWithYouTube;
+    if (typeof window === 'undefined') return;
 
-      if (windowRef.YT) {
+    // `window.YT` can exist as a partial stub before `YT.Player` is
+    // actually a usable constructor — constructing against it directly
+    // (the old code just checked `if (windowRef.YT)`) throws "YT.Player is
+    // not a constructor" on a cold page load, which was breaking the whole
+    // video page, not just the player. See youtube-iframe-api.ts.
+    let cancelled = false;
+    waitForYouTubeIframeAPI()
+      .then(() => {
+        if (cancelled) return;
+        const windowRef = window as unknown as WindowWithYouTube;
+        if (!windowRef.YT) return;
+
         player = new windowRef.YT.Player('player', {
           videoId: video.id,
           playerVars: {
@@ -477,21 +488,22 @@
             onStateChange: onPlayerStateChange,
           },
         });
-      }
-      window.addEventListener('beforeunload', handleBeforeUnload);
-      document.addEventListener('visibilitychange', handleVisibilityChange);
+      })
+      .catch((error) => {
+        console.error('Failed to load YouTube IFrame API:', error);
+      });
 
-      // Add cleanup for event listeners
-      const cleanup = () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload);
-        document.removeEventListener(
-          'visibilitychange',
-          handleVisibilityChange
-        );
-      };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-      cleanupFunctions.push(cleanup);
-    }
+    // Add cleanup for event listeners
+    const cleanup = () => {
+      cancelled = true;
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+
+    cleanupFunctions.push(cleanup);
   });
 
   beforeNavigate(async () => {
