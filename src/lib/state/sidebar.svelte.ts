@@ -530,6 +530,7 @@ export class SidebarStateClass implements SidebarState {
       });
       if (response.ok) {
         this.data = await response.json();
+        this.updateStreamingSources(this.data?.streamingSources);
         this.#hasLoadedOnce = true; // Mark that we've successfully loaded data
       } else {
         this.error = `Failed to load sidebar data: ${response.statusText}`;
